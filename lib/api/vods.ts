@@ -1,0 +1,93 @@
+import "server-only";
+import { and, desc, eq, ne } from "drizzle-orm";
+import { db, schema } from "@/lib/db";
+import type { Vod, Clip } from "@/lib/types";
+
+function toVod(r: typeof schema.vods.$inferSelect): Vod {
+  return {
+    id: r.id,
+    streamId: r.streamId,
+    title: r.title,
+    description: r.description,
+    gameId: r.gameId,
+    durationSec: r.durationSec,
+    hlsUrl: r.hlsPath,
+    mp4Url: r.mp4Path,
+    thumbnailUrl: r.thumbnailUrl,
+    publishedAt: r.publishedAt,
+    chapters: r.chapters,
+    viewCount: r.viewCount,
+    likeCount: r.likeCount,
+    isPremium: r.isPremium,
+  };
+}
+
+function toClip(r: typeof schema.clips.$inferSelect): Clip {
+  return {
+    id: r.id,
+    vodId: r.vodId,
+    streamId: r.streamId,
+    title: r.title,
+    creatorHandle: r.creatorHandle,
+    creatorAvatarUrl: r.creatorAvatarUrl,
+    durationSec: r.durationSec,
+    mp4Url: r.mp4Path,
+    thumbnailUrl: r.thumbnailUrl,
+    viewCount: r.viewCount,
+    likeCount: r.likeCount,
+    createdAt: r.createdAt,
+    gameId: r.gameId,
+  };
+}
+
+export async function listVods(filter?: {
+  gameId?: string;
+  isPremium?: boolean;
+  limit?: number;
+}): Promise<Vod[]> {
+  const conds = [];
+  if (filter?.gameId) conds.push(eq(schema.vods.gameId, filter.gameId));
+  if (typeof filter?.isPremium === "boolean")
+    conds.push(eq(schema.vods.isPremium, filter.isPremium));
+  let q = db
+    .select()
+    .from(schema.vods)
+    .orderBy(desc(schema.vods.publishedAt))
+    .$dynamic();
+  if (conds.length > 0) q = q.where(and(...conds));
+  if (filter?.limit) q = q.limit(filter.limit);
+  return q.all().map(toVod);
+}
+
+export async function getVodById(id: string): Promise<Vod | null> {
+  const r = db.select().from(schema.vods).where(eq(schema.vods.id, id)).get();
+  return r ? toVod(r) : null;
+}
+
+export async function listRelatedVods(vodId: string, limit = 6): Promise<Vod[]> {
+  const base = db.select().from(schema.vods).where(eq(schema.vods.id, vodId)).get();
+  if (!base) return db.select().from(schema.vods).limit(limit).all().map(toVod);
+  return db
+    .select()
+    .from(schema.vods)
+    .where(and(eq(schema.vods.gameId, base.gameId), ne(schema.vods.id, vodId)))
+    .orderBy(desc(schema.vods.publishedAt))
+    .limit(limit)
+    .all()
+    .map(toVod);
+}
+
+export async function listTrendingClips(limit = 10): Promise<Clip[]> {
+  return db
+    .select()
+    .from(schema.clips)
+    .orderBy(desc(schema.clips.viewCount))
+    .limit(limit)
+    .all()
+    .map(toClip);
+}
+
+export async function getClipById(id: string): Promise<Clip | null> {
+  const r = db.select().from(schema.clips).where(eq(schema.clips.id, id)).get();
+  return r ? toClip(r) : null;
+}

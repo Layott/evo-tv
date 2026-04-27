@@ -1,0 +1,47 @@
+"use client";
+
+import { ArrowDownRight, ArrowUpRight } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+interface MetricCardProps {
+  title: string;
+  value: string | number;
+  delta?: number;
+  deltaLabel?: string;
+  icon?: React.ComponentType<{ className?: string }>;
+  hint?: string;
+}
+
+export function MetricCard({ title, value, delta, deltaLabel, icon: Icon, hint }: MetricCardProps) {
+  const isPositive = typeof delta === "number" ? delta >= 0 : true;
+  const showDelta = typeof delta === "number";
+
+  return (
+    <div className="rounded-xl border border-neutral-800 bg-neutral-900/50 p-4">
+      <div className="flex items-start justify-between">
+        <div className="text-xs font-medium uppercase tracking-wider text-neutral-400">{title}</div>
+        {Icon ? (
+          <div className="rounded-md bg-neutral-800/50 p-1.5 text-neutral-400">
+            <Icon className="h-3.5 w-3.5" />
+          </div>
+        ) : null}
+      </div>
+      <div className="mt-2 text-2xl font-semibold text-neutral-100 tabular-nums">{value}</div>
+      <div className="mt-1 flex items-center gap-1.5 text-xs">
+        {showDelta ? (
+          <span
+            className={cn(
+              "inline-flex items-center gap-0.5 font-medium",
+              isPositive ? "text-sky-400" : "text-red-400",
+            )}
+          >
+            {isPositive ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+            {Math.abs(delta!).toFixed(1)}%
+          </span>
+        ) : null}
+        {deltaLabel ? <span className="text-neutral-500">{deltaLabel}</span> : null}
+        {hint && !deltaLabel ? <span className="text-neutral-500">{hint}</span> : null}
+      </div>
+    </div>
+  );
+}

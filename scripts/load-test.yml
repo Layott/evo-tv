@@ -1,0 +1,38 @@
+config:
+  target: "http://localhost:3000"
+  phases:
+    - name: "ramp to 500 VUs"
+      duration: 60
+      arrivalRate: 10
+      rampTo: 500
+  http:
+    timeout: 10
+  ensure:
+    thresholds:
+      - "http.response_time.p95": 200
+  defaults:
+    headers:
+      accept: "application/json"
+
+scenarios:
+  - name: "Live streams list"
+    weight: 5
+    flow:
+      - get:
+          url: "/api/streams"
+
+  - name: "Stream viewer count SSE"
+    weight: 3
+    flow:
+      - get:
+          url: "/api/sse/stream/stream_lagos_final"
+          headers:
+            accept: "text/event-stream"
+          # SSE is long-lived; cap how long each VU holds it so we cycle.
+          timeout: 5
+
+  - name: "Trending clips"
+    weight: 2
+    flow:
+      - get:
+          url: "/api/vods?clips=trending"

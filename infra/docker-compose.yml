@@ -1,0 +1,19 @@
+services:
+  nginx-rtmp:
+    image: tiangolo/nginx-rtmp
+    container_name: evotv_nginx_rtmp
+    restart: unless-stopped
+    ports:
+      - "1935:1935"     # RTMP ingest (OBS)
+      - "8080:8080"     # HLS + stats
+    volumes:
+      - ./nginx-rtmp/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../uploads/hls:/var/hls
+
+  mailhog:
+    image: mailhog/mailhog
+    container_name: evotv_mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025"     # SMTP
+      - "8025:8025"     # Web UI → http://localhost:8025
