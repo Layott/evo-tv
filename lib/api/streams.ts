@@ -34,31 +34,33 @@ export async function listLiveStreams(filter?: {
   if (filter?.gameId) conds.push(eq(schema.streams.gameId, filter.gameId));
   if (typeof filter?.isPremium === "boolean")
     conds.push(eq(schema.streams.isPremium, filter.isPremium));
-  return db
-    .select()
-    .from(schema.streams)
-    .where(and(...conds))
-    .orderBy(desc(schema.streams.viewerCount))
-    .all()
-    .map(toStream);
+  return (
+    await db
+      .select()
+      .from(schema.streams)
+      .where(and(...conds))
+      .orderBy(desc(schema.streams.viewerCount))
+  ).map(toStream);
 }
 
 export async function getStreamById(id: string): Promise<Stream | null> {
-  const r = db
-    .select()
-    .from(schema.streams)
-    .where(eq(schema.streams.id, id))
-    .get();
+  const r = (
+    await db
+      .select()
+      .from(schema.streams)
+      .where(eq(schema.streams.id, id))
+      .limit(1)
+  )[0];
   return r ? toStream(r) : null;
 }
 
 export async function listFeaturedStreams(): Promise<Stream[]> {
-  return db
-    .select()
-    .from(schema.streams)
-    .where(eq(schema.streams.isLive, true))
-    .orderBy(desc(schema.streams.viewerCount))
-    .limit(3)
-    .all()
-    .map(toStream);
+  return (
+    await db
+      .select()
+      .from(schema.streams)
+      .where(eq(schema.streams.isLive, true))
+      .orderBy(desc(schema.streams.viewerCount))
+      .limit(3)
+  ).map(toStream);
 }

@@ -38,14 +38,14 @@ export async function POST(req: NextRequest) {
   const id = generateId("player");
   const { kda, teamId, ...rest } = parsed.data;
   try {
-    db.insert(schema.players)
+    await db
+      .insert(schema.players)
       .values({
         id,
         ...rest,
         teamId: teamId ?? null,
         kda: Math.round(kda * 100),
-      })
-      .run();
+      });
   } catch (err) {
     const conflict = mapSqliteUniqueError(err);
     if (conflict) return conflict;

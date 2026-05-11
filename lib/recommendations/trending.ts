@@ -36,7 +36,7 @@ function decayFactor(publishedAt: string): number {
 }
 
 export async function trendingVods(limit = 20): Promise<Vod[]> {
-  const rows = db.select().from(schema.vods).all().map(toVod);
+  const rows = (await db.select().from(schema.vods)).map(toVod);
   const scored = rows.map((v) => ({
     vod: v,
     score: v.viewCount * (0.5 + 0.5 * decayFactor(v.publishedAt)),

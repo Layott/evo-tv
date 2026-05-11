@@ -74,11 +74,13 @@ export async function GET(
 
     // Decrement inventory per line (variant-aware).
     for (const item of order.items) {
-      const product = db
-        .select()
-        .from(schema.products)
-        .where(eq(schema.products.id, item.productId))
-        .get();
+      const product = (
+        await db
+          .select()
+          .from(schema.products)
+          .where(eq(schema.products.id, item.productId))
+          .limit(1)
+      )[0];
       if (!product) continue;
       if (item.variantId) {
         const newVariants = product.variants.map((v) =>
@@ -86,15 +88,15 @@ export async function GET(
             ? { ...v, inventory: Math.max(0, v.inventory - item.qty) }
             : v
         );
-        db.update(schema.products)
+        await db
+          .update(schema.products)
           .set({ variants: newVariants })
-          .where(eq(schema.products.id, product.id))
-          .run();
+          .where(eq(schema.products.id, product.id));
       } else {
-        db.update(schema.products)
+        await db
+          .update(schema.products)
           .set({ inventory: Math.max(0, product.inventory - item.qty) })
-          .where(eq(schema.products.id, product.id))
-          .run();
+          .where(eq(schema.products.id, product.id));
       }
     }
 
@@ -110,11 +112,13 @@ export async function GET(
     emit(`user:${order.userId}:notification`, { type: "order_update", order });
 
     // Email receipt. Look up email from the users table (avoids pulling auth).
-    const buyer = db
-      .select({ email: schema.user.email })
-      .from(schema.user)
-      .where(eq(schema.user.id, order.userId))
-      .get();
+    const buyer = (
+      await db
+        .select({ email: schema.user.email })
+        .from(schema.user)
+        .where(eq(schema.user.id, order.userId))
+        .limit(1)
+    )[0];
     if (buyer?.email) {
       try {
         await sendMail({

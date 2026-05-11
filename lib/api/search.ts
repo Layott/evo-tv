@@ -37,13 +37,12 @@ export async function globalSearch(query: string): Promise<SearchResults> {
       p.realName.toLowerCase().includes(q.toLowerCase())
   );
 
-  const eventRows = db
+  const eventRows = await db
     .select()
     .from(schema.events)
-    .where(or(like(schema.events.title, pat), like(schema.events.slug, pat)))
-    .all();
+    .where(or(like(schema.events.title, pat), like(schema.events.slug, pat)));
   const teamRelRows = eventRows.length
-    ? db.select().from(schema.eventTeams).all()
+    ? await db.select().from(schema.eventTeams)
     : [];
   const eventTeams: EsportsEvent[] = eventRows.map((r) => ({
     id: r.id,
@@ -64,11 +63,10 @@ export async function globalSearch(query: string): Promise<SearchResults> {
     viewerCount: r.viewerCount,
   }));
 
-  const streamRows = db
+  const streamRows = await db
     .select()
     .from(schema.streams)
-    .where(like(schema.streams.title, pat))
-    .all();
+    .where(like(schema.streams.title, pat));
   const streams: Stream[] = streamRows.map((r) => ({
     id: r.id,
     title: r.title,
@@ -90,11 +88,10 @@ export async function globalSearch(query: string): Promise<SearchResults> {
     isPremium: r.isPremium,
   }));
 
-  const vodRows = db
+  const vodRows = await db
     .select()
     .from(schema.vods)
-    .where(like(schema.vods.title, pat))
-    .all();
+    .where(like(schema.vods.title, pat));
   const vods: Vod[] = vodRows.map((r) => ({
     id: r.id,
     streamId: r.streamId,

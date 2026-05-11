@@ -10,16 +10,18 @@ export interface VodProgress {
 }
 
 export async function getProgress(userId: string, vodId: string): Promise<VodProgress | null> {
-  const r = db
-    .select()
-    .from(schema.vodProgress)
-    .where(
-      and(
-        eq(schema.vodProgress.userId, userId),
-        eq(schema.vodProgress.vodId, vodId)
+  const r = (
+    await db
+      .select()
+      .from(schema.vodProgress)
+      .where(
+        and(
+          eq(schema.vodProgress.userId, userId),
+          eq(schema.vodProgress.vodId, vodId)
+        )
       )
-    )
-    .get();
+      .limit(1)
+  )[0];
   if (!r) return null;
   return {
     userId: r.userId,
@@ -35,21 +37,22 @@ export async function upsertProgress(
   positionSec: number
 ): Promise<void> {
   const nowIso = new Date().toISOString();
-  db.insert(schema.vodProgress)
+  await db
+    .insert(schema.vodProgress)
     .values({ userId, vodId, positionSec, updatedAt: nowIso })
     .onConflictDoUpdate({
       target: [schema.vodProgress.userId, schema.vodProgress.vodId],
       set: { positionSec, updatedAt: nowIso },
-    })
-    .run();
+    });
 }
 
 export async function listProgressForUser(userId: string, limit = 20): Promise<VodProgress[]> {
-  return db
-    .select()
-    .from(schema.vodProgress)
-    .where(eq(schema.vodProgress.userId, userId))
-    .all()
+  return (
+    await db
+      .select()
+      .from(schema.vodProgress)
+      .where(eq(schema.vodProgress.userId, userId))
+  )
     .slice(0, limit)
     .map((r) => ({
       userId: r.userId,

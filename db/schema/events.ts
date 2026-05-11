@@ -1,7 +1,7 @@
-import { sqliteTable, text, integer, primaryKey, index } from "drizzle-orm/sqlite-core";
+import { pgTable, text, integer, primaryKey, index } from "drizzle-orm/pg-core";
 import { games, teams } from "./catalog";
 
-export const events = sqliteTable(
+export const events = pgTable(
   "events",
   {
     id: text("id").primaryKey(),
@@ -24,10 +24,10 @@ export const events = sqliteTable(
     format: text("format").notNull().default(""),
     viewerCount: integer("viewer_count").notNull().default(0),
   },
-  (t) => [index("events_status_idx").on(t.status), index("events_game_idx").on(t.gameId)]
+  (t) => [index("events_status_idx").on(t.status), index("events_game_idx").on(t.gameId)],
 );
 
-export const eventTeams = sqliteTable(
+export const eventTeams = pgTable(
   "event_teams",
   {
     eventId: text("event_id")
@@ -37,10 +37,10 @@ export const eventTeams = sqliteTable(
       .notNull()
       .references(() => teams.id, { onDelete: "cascade" }),
   },
-  (t) => [primaryKey({ columns: [t.eventId, t.teamId] })]
+  (t) => [primaryKey({ columns: [t.eventId, t.teamId] })],
 );
 
-export const matches = sqliteTable(
+export const matches = pgTable(
   "matches",
   {
     id: text("id").primaryKey(),
@@ -56,5 +56,5 @@ export const matches = sqliteTable(
     round: text("round").notNull().default(""),
     bestOf: integer("best_of").notNull().default(1),
   },
-  (t) => [index("matches_event_idx").on(t.eventId)]
+  (t) => [index("matches_event_idx").on(t.eventId)],
 );

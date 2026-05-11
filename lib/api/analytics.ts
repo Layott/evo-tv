@@ -16,48 +16,56 @@ export interface OverviewMetrics {
 }
 
 export async function overviewMetrics(): Promise<OverviewMetrics> {
-  const liveStreamsRow = db
-    .select({ c: sql<number>`count(*)` })
-    .from(schema.streams)
-    .where(eq(schema.streams.isLive, true))
-    .get();
+  const liveStreamsRow = (
+    await db
+      .select({ c: sql<number>`count(*)` })
+      .from(schema.streams)
+      .where(eq(schema.streams.isLive, true))
+      .limit(1)
+  )[0];
 
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
 
-  const todaySignupsRow = db
-    .select({ c: sql<number>`count(*)` })
-    .from(schema.user)
-    .where(gte(schema.user.createdAt, startOfToday))
-    .get();
+  const todaySignupsRow = (
+    await db
+      .select({ c: sql<number>`count(*)` })
+      .from(schema.user)
+      .where(gte(schema.user.createdAt, startOfToday))
+      .limit(1)
+  )[0];
 
-  const activePremiumRow = db
-    .select({ c: sql<number>`count(*)` })
-    .from(schema.subscriptions)
-    .where(
-      and(
-        eq(schema.subscriptions.status, "active"),
-        sql`${schema.subscriptions.tier} IN (${sql.join(
-          PREMIUM_TIERS.map((t) => sql`${t}`),
-          sql`, `
-        )})`
+  const activePremiumRow = (
+    await db
+      .select({ c: sql<number>`count(*)` })
+      .from(schema.subscriptions)
+      .where(
+        and(
+          eq(schema.subscriptions.status, "active"),
+          sql`${schema.subscriptions.tier} IN (${sql.join(
+            PREMIUM_TIERS.map((t) => sql`${t}`),
+            sql`, `
+          )})`
+        )
       )
-    )
-    .get();
+      .limit(1)
+  )[0];
 
-  const mrrRow = db
-    .select({ total: sql<number>`coalesce(sum(${schema.subscriptions.priceNgn}), 0)` })
-    .from(schema.subscriptions)
-    .where(
-      and(
-        eq(schema.subscriptions.status, "active"),
-        sql`${schema.subscriptions.tier} IN (${sql.join(
-          PREMIUM_TIERS.map((t) => sql`${t}`),
-          sql`, `
-        )})`
+  const mrrRow = (
+    await db
+      .select({ total: sql<number>`coalesce(sum(${schema.subscriptions.priceNgn}), 0)` })
+      .from(schema.subscriptions)
+      .where(
+        and(
+          eq(schema.subscriptions.status, "active"),
+          sql`${schema.subscriptions.tier} IN (${sql.join(
+            PREMIUM_TIERS.map((t) => sql`${t}`),
+            sql`, `
+          )})`
+        )
       )
-    )
-    .get();
+      .limit(1)
+  )[0];
 
   return {
     liveStreams: Number(liveStreamsRow?.c ?? 0),
@@ -89,15 +97,14 @@ export async function viewsOverTime(days = 30): Promise<ViewsPoint[]> {
   start.setHours(0, 0, 0, 0);
   const startIso = start.toISOString();
 
-  const rows = db
+  const rows = await db
     .select({
       day: sql<string>`substr(${schema.vodProgress.updatedAt}, 1, 10)`,
       views: sql<number>`count(*)`,
     })
     .from(schema.vodProgress)
     .where(gte(schema.vodProgress.updatedAt, startIso))
-    .groupBy(sql`substr(${schema.vodProgress.updatedAt}, 1, 10)`)
-    .all();
+    .groupBy(sql`substr(${schema.vodProgress.updatedAt}, 1, 10)`);
 
   const byDay = new Map<string, number>();
   for (const r of rows) {
@@ -146,11 +153,10 @@ export async function retentionCohort(weeks = 8): Promise<{
   // cohortStarts is oldest-first.
 
   const earliest = cohortStarts[0];
-  const users = db
+  const users = await db
     .select({ id: schema.user.id, createdAt: schema.user.createdAt })
     .from(schema.user)
-    .where(gte(schema.user.createdAt, earliest))
-    .all();
+    .where(gte(schema.user.createdAt, earliest));
 
   // Bucket users into their signup cohort index.
   const cohortUsers: string[][] = cohortStarts.map(() => []);
@@ -168,14 +174,13 @@ export async function retentionCohort(weeks = 8): Promise<{
   }
 
   // Pull all vod_progress rows for any user we care about (>= earliest).
-  const progressRows = db
+  const progressRows = await db
     .select({
       userId: schema.vodProgress.userId,
       updatedAt: schema.vodProgress.updatedAt,
     })
     .from(schema.vodProgress)
-    .where(gte(schema.vodProgress.updatedAt, earliest.toISOString()))
-    .all();
+    .where(gte(schema.vodProgress.updatedAt, earliest.toISOString()));
 
   // userId -> Set of week offsets (since their cohort start) where they had activity.
   const userToCohortIdx = new Map<string, number>();
@@ -244,17 +249,16 @@ export async function revenueByMonth(months = 6): Promise<RevenuePoint[]> {
   );
   const firstIso = firstMonth.toISOString();
 
-  const subRows = db
+  const subRows = await db
     .select({
       month: sql<string>`substr(${schema.subscriptions.createdAt}, 1, 7)`,
       total: sql<number>`coalesce(sum(${schema.subscriptions.priceNgn}), 0)`,
     })
     .from(schema.subscriptions)
     .where(gte(schema.subscriptions.createdAt, firstIso))
-    .groupBy(sql`substr(${schema.subscriptions.createdAt}, 1, 7)`)
-    .all();
+    .groupBy(sql`substr(${schema.subscriptions.createdAt}, 1, 7)`);
 
-  const orderRows = db
+  const orderRows = await db
     .select({
       month: sql<string>`substr(${schema.orders.createdAt}, 1, 7)`,
       total: sql<number>`coalesce(sum(${schema.orders.totalNgn}), 0)`,
@@ -271,8 +275,7 @@ export async function revenueByMonth(months = 6): Promise<RevenuePoint[]> {
         ])
       )
     )
-    .groupBy(sql`substr(${schema.orders.createdAt}, 1, 7)`)
-    .all();
+    .groupBy(sql`substr(${schema.orders.createdAt}, 1, 7)`);
 
   const totals = new Map<string, number>();
   for (const r of subRows) totals.set(r.month, Number(r.total ?? 0));
@@ -299,12 +302,11 @@ export async function topVods(
   limit = 10
 ): Promise<(typeof schema.vods.$inferSelect)[]> {
   const safeLimit = Math.max(1, Math.min(100, Math.trunc(limit)));
-  return db
+  return await db
     .select()
     .from(schema.vods)
     .orderBy(desc(schema.vods.viewCount))
-    .limit(safeLimit)
-    .all();
+    .limit(safeLimit);
 }
 
 /* ------------------------------------------------------------------ */
@@ -316,18 +318,22 @@ export async function freeToPremiumConversionPct(): Promise<{
   convertedUsers: number;
   pct: number;
 }> {
-  const totalRow = db
-    .select({ c: sql<number>`count(*)` })
-    .from(schema.user)
-    .get();
+  const totalRow = (
+    await db
+      .select({ c: sql<number>`count(*)` })
+      .from(schema.user)
+      .limit(1)
+  )[0];
   const totalUsers = Number(totalRow?.c ?? 0);
 
-  const convertedRow = db
-    .select({
-      c: sql<number>`count(distinct ${schema.subscriptions.userId})`,
-    })
-    .from(schema.subscriptions)
-    .get();
+  const convertedRow = (
+    await db
+      .select({
+        c: sql<number>`count(distinct ${schema.subscriptions.userId})`,
+      })
+      .from(schema.subscriptions)
+      .limit(1)
+  )[0];
   const convertedUsers = Number(convertedRow?.c ?? 0);
 
   const pct =

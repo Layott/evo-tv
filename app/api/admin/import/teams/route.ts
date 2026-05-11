@@ -41,30 +41,29 @@ export async function POST(req: NextRequest) {
 
   let created = 0;
   const runtimeErrors: ParseError[] = [];
+  // TODO: pg-port — neon-http has no transaction(); errors collected per-row.
   try {
-    db.transaction((tx) => {
-      for (let i = 0; i < rows.length; i++) {
-        const row = rows[i];
-        const id = generateId("team");
-        try {
-          tx.insert(schema.teams).values({ id, ...row }).run();
-          writeAudit({
-            actorId: guard.user.id,
-            action: "create",
-            targetType: "team",
-            targetId: id,
-            meta: row as unknown as Record<string, unknown>,
-          });
-          created++;
-        } catch (err) {
-          const message =
-            typeof err === "object" && err !== null && "message" in err
-              ? String((err as { message?: unknown }).message ?? "")
-              : String(err);
-          runtimeErrors.push({ row: i, message });
-        }
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      const id = generateId("team");
+      try {
+        await db.insert(schema.teams).values({ id, ...row });
+        writeAudit({
+          actorId: guard.user.id,
+          action: "create",
+          targetType: "team",
+          targetId: id,
+          meta: row as unknown as Record<string, unknown>,
+        });
+        created++;
+      } catch (err) {
+        const message =
+          typeof err === "object" && err !== null && "message" in err
+            ? String((err as { message?: unknown }).message ?? "")
+            : String(err);
+        runtimeErrors.push({ row: i, message });
       }
-    });
+    }
   } catch (err) {
     const message =
       typeof err === "object" && err !== null && "message" in err

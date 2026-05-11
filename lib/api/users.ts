@@ -31,35 +31,35 @@ export async function getCurrentUser(): Promise<Profile | null> {
 }
 
 export async function getUserById(id: string): Promise<Profile | null> {
-  const rows = db
+  const rows = await db
     .select()
     .from(schema.user)
     .leftJoin(schema.profiles, eq(schema.user.id, schema.profiles.userId))
-    .where(eq(schema.user.id, id))
-    .all();
+    .where(eq(schema.user.id, id));
   const row = rows[0];
   if (!row) return null;
   return toProfile(row.user, row.profiles);
 }
 
 export async function getUserByHandle(handle: string): Promise<Profile | null> {
-  const rows = db
+  const rows = await db
     .select()
     .from(schema.user)
     .leftJoin(schema.profiles, eq(schema.user.id, schema.profiles.userId))
-    .where(eq(schema.user.handle, handle))
-    .all();
+    .where(eq(schema.user.handle, handle));
   const row = rows[0];
   if (!row) return null;
   return toProfile(row.user, row.profiles);
 }
 
 export async function getUserPrefs(userId: string): Promise<UserPrefs | null> {
-  const row = db
-    .select()
-    .from(schema.userPrefs)
-    .where(eq(schema.userPrefs.userId, userId))
-    .get();
+  const row = (
+    await db
+      .select()
+      .from(schema.userPrefs)
+      .where(eq(schema.userPrefs.userId, userId))
+      .limit(1)
+  )[0];
   if (!row) return null;
   return {
     userId: row.userId,
@@ -75,7 +75,7 @@ export async function getUserPrefs(userId: string): Promise<UserPrefs | null> {
 
 export async function searchUsers(query: string): Promise<Profile[]> {
   const q = `%${query.toLowerCase()}%`;
-  const rows = db
+  const rows = await db
     .select()
     .from(schema.user)
     .leftJoin(schema.profiles, eq(schema.user.id, schema.profiles.userId))
@@ -85,8 +85,7 @@ export async function searchUsers(query: string): Promise<Profile[]> {
         like(schema.user.name, q),
         like(schema.user.email, q)
       )
-    )
-    .all();
+    );
   return rows.map((r) => toProfile(r.user, r.profiles));
 }
 
@@ -94,13 +93,13 @@ export async function upsertPrefs(
   userId: string,
   prefs: Omit<UserPrefs, "userId">
 ): Promise<void> {
-  db.insert(schema.userPrefs)
+  await db
+    .insert(schema.userPrefs)
     .values({ userId, ...prefs })
     .onConflictDoUpdate({
       target: schema.userPrefs.userId,
       set: prefs,
-    })
-    .run();
+    });
 }
 
 export async function updateProfile(
@@ -108,28 +107,31 @@ export async function updateProfile(
   patch: Partial<Pick<Profile, "displayName" | "avatarUrl" | "bio" | "country">>
 ): Promise<void> {
   if (patch.displayName !== undefined) {
-    db.update(schema.user)
+    await db
+      .update(schema.user)
       .set({ name: patch.displayName, updatedAt: new Date() })
-      .where(eq(schema.user.id, userId))
-      .run();
+      .where(eq(schema.user.id, userId));
   }
-  const existing = db
-    .select()
-    .from(schema.profiles)
-    .where(eq(schema.profiles.userId, userId))
-    .get();
+  const existing = (
+    await db
+      .select()
+      .from(schema.profiles)
+      .where(eq(schema.profiles.userId, userId))
+      .limit(1)
+  )[0];
   if (existing) {
-    db.update(schema.profiles)
+    await db
+      .update(schema.profiles)
       .set({
         ...(patch.displayName !== undefined ? { displayName: patch.displayName } : {}),
         ...(patch.avatarUrl !== undefined ? { avatarUrl: patch.avatarUrl } : {}),
         ...(patch.bio !== undefined ? { bio: patch.bio } : {}),
         ...(patch.country !== undefined ? { country: patch.country } : {}),
       })
-      .where(eq(schema.profiles.userId, userId))
-      .run();
+      .where(eq(schema.profiles.userId, userId));
   } else {
-    db.insert(schema.profiles)
+    await db
+      .insert(schema.profiles)
       .values({
         userId,
         displayName: patch.displayName ?? "",
@@ -138,26 +140,28 @@ export async function updateProfile(
         country: patch.country ?? "NG",
         onboardedAt: null,
         createdAt: new Date().toISOString(),
-      })
-      .run();
+      });
   }
 }
 
 export async function markOnboarded(userId: string): Promise<void> {
   const iso = new Date().toISOString();
-  const existing = db
-    .select()
-    .from(schema.profiles)
-    .where(eq(schema.profiles.userId, userId))
-    .get();
-  if (existing) {
-    db.update(schema.profiles)
-      .set({ onboardedAt: iso })
+  const existing = (
+    await db
+      .select()
+      .from(schema.profiles)
       .where(eq(schema.profiles.userId, userId))
-      .run();
+      .limit(1)
+  )[0];
+  if (existing) {
+    await db
+      .update(schema.profiles)
+      .set({ onboardedAt: iso })
+      .where(eq(schema.profiles.userId, userId));
   } else {
-    const u = db.select().from(schema.user).where(eq(schema.user.id, userId)).get();
-    db.insert(schema.profiles)
+    const u = (await db.select().from(schema.user).where(eq(schema.user.id, userId)).limit(1))[0];
+    await db
+      .insert(schema.profiles)
       .values({
         userId,
         displayName: u?.name ?? "",
@@ -166,7 +170,6 @@ export async function markOnboarded(userId: string): Promise<void> {
         country: "NG",
         onboardedAt: iso,
         createdAt: iso,
-      })
-      .run();
+      });
   }
 }

@@ -11,12 +11,11 @@ export async function GET(req: NextRequest) {
   const raw = Number(url.searchParams.get("limit") ?? "50");
   const limit = Number.isFinite(raw) ? Math.max(1, Math.min(500, Math.trunc(raw))) : 50;
 
-  const rows = db
+  const rows = await db
     .select()
     .from(schema.auditLog)
     .orderBy(desc(schema.auditLog.createdAt))
-    .limit(limit)
-    .all();
+    .limit(limit);
 
   return NextResponse.json(rows);
 }

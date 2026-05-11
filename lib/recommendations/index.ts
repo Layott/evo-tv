@@ -36,13 +36,12 @@ function watchedGameIds(progress: ProgressRow[], vodMap: Map<string, Vod>): Set<
   return gameIds;
 }
 
-function gameIdsFromFollows(userId: string): Set<string> {
+async function gameIdsFromFollows(userId: string): Promise<Set<string>> {
   const gameIds = new Set<string>();
-  const follows = db
+  const follows = await db
     .select()
     .from(schema.follows)
-    .where(eq(schema.follows.userId, userId))
-    .all();
+    .where(eq(schema.follows.userId, userId));
 
   const teamIds: string[] = [];
   const playerIds: string[] = [];
@@ -52,20 +51,18 @@ function gameIdsFromFollows(userId: string): Set<string> {
   }
 
   if (teamIds.length > 0) {
-    const teams = db
+    const teams = await db
       .select({ gameId: schema.teams.gameId })
       .from(schema.teams)
-      .where(inArray(schema.teams.id, teamIds))
-      .all();
+      .where(inArray(schema.teams.id, teamIds));
     for (const t of teams) gameIds.add(t.gameId);
   }
 
   if (playerIds.length > 0) {
-    const players = db
+    const players = await db
       .select({ gameId: schema.players.gameId })
       .from(schema.players)
-      .where(inArray(schema.players.id, playerIds))
-      .all();
+      .where(inArray(schema.players.id, playerIds));
     for (const p of players) gameIds.add(p.gameId);
   }
 
@@ -83,7 +80,7 @@ function recencyScore(publishedAt: string): number {
 export async function recommendForUser(userId: string, limit = 20): Promise<Vod[]> {
   const cutoffIso = new Date(Date.now() - THIRTY_DAYS_MS).toISOString();
 
-  const recentProgress = db
+  const recentProgress = await db
     .select()
     .from(schema.vodProgress)
     .where(
@@ -91,21 +88,20 @@ export async function recommendForUser(userId: string, limit = 20): Promise<Vod[
         eq(schema.vodProgress.userId, userId),
         gte(schema.vodProgress.updatedAt, cutoffIso)
       )
-    )
-    .all();
+    );
 
   // Fetch VODs user already interacted with (for exclusions + signal).
   const interactedVodIds = recentProgress.map((p) => p.vodId);
   const interactedVods =
     interactedVodIds.length > 0
-      ? db
-          .select()
-          .from(schema.vods)
-          .where(inArray(schema.vods.id, interactedVodIds))
-          .all()
-          .map(toVod)
+      ? (
+          await db
+            .select()
+            .from(schema.vods)
+            .where(inArray(schema.vods.id, interactedVodIds))
+        ).map(toVod)
       : [];
-  const interactedVodMap = new Map(interactedVods.map((v) => [v.id, v]));
+  const interactedVodMap = new Map<string, Vod>(interactedVods.map((v) => [v.id, v]));
 
   // Which vods are fully watched (>80%) — exclude these.
   const fullyWatched = new Set<string>();
@@ -119,10 +115,10 @@ export async function recommendForUser(userId: string, limit = 20): Promise<Vod[
 
   // Collect signal game ids (from watched vods + follows).
   const likedGameIds = watchedGameIds(recentProgress, interactedVodMap);
-  const followedGameIds = gameIdsFromFollows(userId);
+  const followedGameIds = await gameIdsFromFollows(userId);
 
   // Candidate pool: all non-fully-watched vods; prioritize signal games but include fallback.
-  const allVods = db.select().from(schema.vods).all().map(toVod);
+  const allVods = (await db.select().from(schema.vods)).map(toVod);
   const eligible = allVods.filter((v) => !fullyWatched.has(v.id));
 
   const maxViews =

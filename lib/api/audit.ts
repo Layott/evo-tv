@@ -25,26 +25,35 @@ export async function listAudit(
 
   const whereClause = conds.length > 0 ? and(...conds) : undefined;
 
-  const rowsBase = db.select().from(schema.auditLog);
   const rows = whereClause
-    ? rowsBase
+    ? await db
+        .select()
+        .from(schema.auditLog)
         .where(whereClause)
         .orderBy(desc(schema.auditLog.createdAt))
         .limit(limit)
         .offset(offset)
-        .all()
-    : rowsBase
+    : await db
+        .select()
+        .from(schema.auditLog)
         .orderBy(desc(schema.auditLog.createdAt))
         .limit(limit)
-        .offset(offset)
-        .all();
+        .offset(offset);
 
-  const totalBase = db
-    .select({ c: sql<number>`count(*)` })
-    .from(schema.auditLog);
   const totalRow = whereClause
-    ? totalBase.where(whereClause).get()
-    : totalBase.get();
+    ? (
+        await db
+          .select({ c: sql<number>`count(*)` })
+          .from(schema.auditLog)
+          .where(whereClause)
+          .limit(1)
+      )[0]
+    : (
+        await db
+          .select({ c: sql<number>`count(*)` })
+          .from(schema.auditLog)
+          .limit(1)
+      )[0];
 
   return { rows, total: Number(totalRow?.c ?? 0) };
 }
@@ -63,7 +72,8 @@ export async function writeAudit(params: {
 }): Promise<AuditRow> {
   const id = generateId("audit");
   const createdAt = new Date().toISOString();
-  db.insert(schema.auditLog)
+  await db
+    .insert(schema.auditLog)
     .values({
       id,
       actorId: params.actorId,
@@ -72,14 +82,15 @@ export async function writeAudit(params: {
       targetId: params.targetId,
       meta: (params.meta ?? null) as Record<string, unknown> | null,
       createdAt,
-    })
-    .run();
+    });
 
-  const row = db
-    .select()
-    .from(schema.auditLog)
-    .where(eq(schema.auditLog.id, id))
-    .get();
+  const row = (
+    await db
+      .select()
+      .from(schema.auditLog)
+      .where(eq(schema.auditLog.id, id))
+      .limit(1)
+  )[0];
   if (!row) throw new Error("Audit insert disappeared");
   return row;
 }

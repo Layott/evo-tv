@@ -36,7 +36,8 @@ export async function POST(req: NextRequest) {
       .join("");
   const nowIso = new Date().toISOString();
 
-  db.insert(schema.streams)
+  await db
+    .insert(schema.streams)
     .values({
       id,
       title: parsed.data.title,
@@ -56,8 +57,7 @@ export async function POST(req: NextRequest) {
       tags: parsed.data.tags,
       isPremium: parsed.data.isPremium,
       createdAt: nowIso,
-    })
-    .run();
+    });
 
   return NextResponse.json({
     id,

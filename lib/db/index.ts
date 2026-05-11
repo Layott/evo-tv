@@ -1,27 +1,30 @@
 import "server-only";
-import Database from "better-sqlite3";
-import { drizzle } from "drizzle-orm/better-sqlite3";
-import fs from "node:fs";
-import path from "node:path";
+import { neon, neonConfig } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/neon-http";
 import * as schema from "@/db/schema";
 
-const DB_PATH = process.env.DATABASE_URL ?? "./data/evo.db";
-
-function connect() {
-  fs.mkdirSync(path.dirname(path.resolve(DB_PATH)), { recursive: true });
-  const sqlite = new Database(DB_PATH);
-  sqlite.pragma("journal_mode = WAL");
-  sqlite.pragma("foreign_keys = ON");
-  sqlite.pragma("synchronous = NORMAL");
-  return drizzle(sqlite, { schema });
+// Vercel Marketplace's Neon integration injects POSTGRES_URL (pooled).
+// Fall back to DATABASE_URL for non-Vercel dev / migrations.
+const DATABASE_URL = process.env.POSTGRES_URL ?? process.env.DATABASE_URL;
+if (!DATABASE_URL) {
+  throw new Error(
+    "No DB connection string. Expected POSTGRES_URL (Vercel Neon integration) " +
+      "or DATABASE_URL (manual). Run `vercel install neon` or `vercel env pull` " +
+      "in the backend repo.",
+  );
 }
+
+// Reuse fetch across invocations on edge/serverless runtimes.
+neonConfig.fetchConnectionCache = true;
+
+const sql = neon(DATABASE_URL);
 
 declare global {
   // eslint-disable-next-line no-var
-  var __evo_db: ReturnType<typeof connect> | undefined;
+  var __evo_db: ReturnType<typeof drizzle<typeof schema>> | undefined;
 }
 
-export const db = globalThis.__evo_db ?? connect();
+export const db = globalThis.__evo_db ?? drizzle(sql, { schema });
 if (process.env.NODE_ENV !== "production") globalThis.__evo_db = db;
 
 export { schema };

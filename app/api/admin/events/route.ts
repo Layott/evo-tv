@@ -45,15 +45,15 @@ export async function POST(req: NextRequest) {
   const { teamIds, ...eventData } = parsed.data;
 
   try {
-    db.insert(schema.events)
+    await db
+      .insert(schema.events)
       .values({
         id,
         ...eventData,
-      })
-      .run();
+      });
     if (teamIds.length > 0) {
       for (const teamId of teamIds) {
-        db.insert(schema.eventTeams).values({ eventId: id, teamId }).run();
+        await db.insert(schema.eventTeams).values({ eventId: id, teamId });
       }
     }
   } catch (err) {
@@ -70,11 +70,13 @@ export async function POST(req: NextRequest) {
     meta: parsed.data as unknown as Record<string, unknown>,
   });
 
-  const created = db
-    .select()
-    .from(schema.events)
-    .where(eq(schema.events.id, id))
-    .get();
+  const created = (
+    await db
+      .select()
+      .from(schema.events)
+      .where(eq(schema.events.id, id))
+      .limit(1)
+  )[0];
 
   return NextResponse.json({ ...created, teamIds }, { status: 201 });
 }

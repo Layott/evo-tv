@@ -19,17 +19,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 });
   }
 
-  const ad = db
-    .select({ clickUrl: schema.ads.clickUrl })
-    .from(schema.ads)
-    .where(eq(schema.ads.id, parsed.data.adId))
-    .get();
+  const ad = (
+    await db
+      .select({ clickUrl: schema.ads.clickUrl })
+      .from(schema.ads)
+      .where(eq(schema.ads.id, parsed.data.adId))
+      .limit(1)
+  )[0];
   if (!ad) return new NextResponse("Not found", { status: 404 });
 
-  db.update(schema.ads)
+  await db
+    .update(schema.ads)
     .set({ clicks: sql`${schema.ads.clicks} + 1` })
-    .where(eq(schema.ads.id, parsed.data.adId))
-    .run();
+    .where(eq(schema.ads.id, parsed.data.adId));
 
   return NextResponse.json({ clickUrl: ad.clickUrl });
 }

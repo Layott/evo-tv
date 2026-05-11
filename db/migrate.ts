@@ -1,17 +1,25 @@
 import "dotenv/config";
-import Database from "better-sqlite3";
-import { drizzle } from "drizzle-orm/better-sqlite3";
-import { migrate } from "drizzle-orm/better-sqlite3/migrator";
-import fs from "node:fs";
-import path from "node:path";
+import { neon } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/neon-http";
+import { migrate } from "drizzle-orm/neon-http/migrator";
 
-const DB_PATH = process.env.DATABASE_URL ?? "./data/evo.db";
-fs.mkdirSync(path.dirname(path.resolve(DB_PATH)), { recursive: true });
-const sqlite = new Database(DB_PATH);
-sqlite.pragma("journal_mode = WAL");
-sqlite.pragma("foreign_keys = ON");
-const db = drizzle(sqlite);
+// Migrations need direct (non-pooled) connection.
+const DATABASE_URL =
+  process.env.POSTGRES_URL_NON_POOLING ??
+  process.env.POSTGRES_URL ??
+  process.env.DATABASE_URL;
+if (!DATABASE_URL) {
+  console.error("[migrate] No DB URL found (POSTGRES_URL_NON_POOLING / POSTGRES_URL / DATABASE_URL)");
+  process.exit(1);
+}
 
-migrate(db, { migrationsFolder: "./db/migrations" });
-console.log(`[migrate] applied migrations to ${DB_PATH}`);
-sqlite.close();
+const sql = neon(DATABASE_URL);
+const db = drizzle(sql);
+
+(async () => {
+  await migrate(db, { migrationsFolder: "./db/migrations" });
+  console.log(`[migrate] applied migrations to ${DATABASE_URL.replace(/:[^:@/]+@/, ":***@")}`);
+})().catch((err) => {
+  console.error("[migrate] failed", err);
+  process.exit(1);
+});

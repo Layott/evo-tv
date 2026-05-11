@@ -73,3 +73,7 @@ The repo root `CLAUDE.md` at `C:\Users\Sweez\Desktop\LAYO\CLAUDE\CLAUDE.md` defi
 ## Environment
 
 Windows 11, bash shell (Unix syntax — forward slashes, `/dev/null` not `NUL`). Node/pnpm run from the repo root. Docker Desktop required only for nginx-rtmp + Mailhog (two containers total) once Phase 0 starts. SQLite is a single file — no DB server process.
+
+## Native app sibling
+
+A React Native / Expo SDK 52 twin of this app lives at **`../EVOTV-app/`** (sibling, NOT a workspace nest). It is a separate repo with its own `package.json`. Same brand, same data, same flows. Stack: Expo Router 4, NativeWind v4, expo-video, lucide-react-native, TanStack Query, Zustand. Mock data is ported 1:1 from `lib/mock/*` (with `localStorage` swapped for an AsyncStorage shim). UI primitives at `EVOTV-app/components/ui/` mirror this app's shadcn primitives by name + API. When this app ships Phase 1A bearer-token API routes, the app will swap `lib/mock` imports for `lib/api` modules with identical signatures. Do not couple the two repos with a shared package — keep the duplication intentional. See `EVOTV-app/README.md` for run instructions and `tasks/todo.md` "App Track" section for status.

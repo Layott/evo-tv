@@ -41,11 +41,13 @@ export async function PATCH(
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 });
   }
 
-  const existing = db
-    .select()
-    .from(schema.ads)
-    .where(eq(schema.ads.id, id))
-    .get();
+  const existing = (
+    await db
+      .select()
+      .from(schema.ads)
+      .where(eq(schema.ads.id, id))
+      .limit(1)
+  )[0];
   if (!existing) return new NextResponse("Ad not found", { status: 404 });
 
   if (Object.keys(parsed.data).length === 0) {
@@ -53,18 +55,20 @@ export async function PATCH(
   }
 
   try {
-    db.update(schema.ads).set(parsed.data).where(eq(schema.ads.id, id)).run();
+    await db.update(schema.ads).set(parsed.data).where(eq(schema.ads.id, id));
   } catch (err) {
     const conflict = mapSqliteUniqueError(err);
     if (conflict) return conflict;
     return NextResponse.json({ error: "Failed to update ad" }, { status: 500 });
   }
 
-  const updated = db
-    .select()
-    .from(schema.ads)
-    .where(eq(schema.ads.id, id))
-    .get();
+  const updated = (
+    await db
+      .select()
+      .from(schema.ads)
+      .where(eq(schema.ads.id, id))
+      .limit(1)
+  )[0];
 
   writeAudit({
     actorId: guard.user.id,
@@ -85,15 +89,17 @@ export async function DELETE(
   if (!guard.ok) return guard.response;
 
   const { id } = await params;
-  const existing = db
-    .select()
-    .from(schema.ads)
-    .where(eq(schema.ads.id, id))
-    .get();
+  const existing = (
+    await db
+      .select()
+      .from(schema.ads)
+      .where(eq(schema.ads.id, id))
+      .limit(1)
+  )[0];
   if (!existing) return new NextResponse("Ad not found", { status: 404 });
 
   try {
-    db.delete(schema.ads).where(eq(schema.ads.id, id)).run();
+    await db.delete(schema.ads).where(eq(schema.ads.id, id));
   } catch {
     return NextResponse.json({ error: "Failed to delete ad" }, { status: 500 });
   }

@@ -36,7 +36,8 @@ export async function POST(req: NextRequest) {
 
   const id = generateId("game");
   try {
-    db.insert(schema.games)
+    await db
+      .insert(schema.games)
       .values({
         id,
         slug: parsed.data.slug,
@@ -47,8 +48,7 @@ export async function POST(req: NextRequest) {
         category: parsed.data.category,
         platform: parsed.data.platform,
         activePlayers: parsed.data.activePlayers,
-      })
-      .run();
+      });
   } catch (err) {
     const conflict = mapSqliteUniqueError(err);
     if (conflict) return conflict;

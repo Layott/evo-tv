@@ -22,17 +22,17 @@ function toTeam(r: typeof schema.teams.$inferSelect): Team {
 
 export async function listTeams(filter?: { gameId?: string }): Promise<Team[]> {
   const rows = filter?.gameId
-    ? db.select().from(schema.teams).where(eq(schema.teams.gameId, filter.gameId)).all()
-    : db.select().from(schema.teams).all();
+    ? await db.select().from(schema.teams).where(eq(schema.teams.gameId, filter.gameId))
+    : await db.select().from(schema.teams);
   return rows.map(toTeam);
 }
 
 export async function getTeamById(id: string): Promise<Team | null> {
-  const r = db.select().from(schema.teams).where(eq(schema.teams.id, id)).get();
+  const r = (await db.select().from(schema.teams).where(eq(schema.teams.id, id)).limit(1))[0];
   return r ? toTeam(r) : null;
 }
 
 export async function getTeamBySlug(slug: string): Promise<Team | null> {
-  const r = db.select().from(schema.teams).where(eq(schema.teams.slug, slug)).get();
+  const r = (await db.select().from(schema.teams).where(eq(schema.teams.slug, slug)).limit(1))[0];
   return r ? toTeam(r) : null;
 }

@@ -19,13 +19,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 });
   }
 
-  const result = db
+  const result = await db
     .update(schema.ads)
     .set({ impressions: sql`${schema.ads.impressions} + 1` })
     .where(eq(schema.ads.id, parsed.data.adId))
-    .run();
+    .returning({ id: schema.ads.id });
 
-  if (!result.changes) {
+  if (!result.length) {
     return new NextResponse("Not found", { status: 404 });
   }
   return NextResponse.json({ ok: true });

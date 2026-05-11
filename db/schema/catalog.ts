@@ -1,6 +1,6 @@
-import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
+import { pgTable, text, integer, index } from "drizzle-orm/pg-core";
 
-export const games = sqliteTable("games", {
+export const games = pgTable("games", {
   id: text("id").primaryKey(),
   slug: text("slug").notNull().unique(),
   name: text("name").notNull(),
@@ -12,7 +12,7 @@ export const games = sqliteTable("games", {
   activePlayers: integer("active_players").notNull().default(0),
 });
 
-export const teams = sqliteTable(
+export const teams = pgTable(
   "teams",
   {
     id: text("id").primaryKey(),
@@ -30,10 +30,10 @@ export const teams = sqliteTable(
     wins: integer("wins").notNull().default(0),
     losses: integer("losses").notNull().default(0),
   },
-  (t) => [index("teams_game_idx").on(t.gameId)]
+  (t) => [index("teams_game_idx").on(t.gameId)],
 );
 
-export const players = sqliteTable(
+export const players = pgTable(
   "players",
   {
     id: text("id").primaryKey(),
@@ -49,5 +49,5 @@ export const players = sqliteTable(
     kda: integer("kda_x100").notNull().default(0),
     followers: integer("followers").notNull().default(0),
   },
-  (t) => [index("players_team_idx").on(t.teamId), index("players_game_idx").on(t.gameId)]
+  (t) => [index("players_team_idx").on(t.teamId), index("players_game_idx").on(t.gameId)],
 );

@@ -1,24 +1,14 @@
 import "server-only";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import Database from "better-sqlite3";
-import { drizzle } from "drizzle-orm/better-sqlite3";
-import fs from "node:fs";
-import path from "node:path";
+import { bearer } from "better-auth/plugins";
+import { db } from "@/lib/db";
 import * as schema from "@/db/schema";
 
-const DB_PATH = process.env.DATABASE_URL ?? "./data/evo.db";
-fs.mkdirSync(path.dirname(path.resolve(DB_PATH)), { recursive: true });
-
-const sqlite = new Database(DB_PATH);
-sqlite.pragma("journal_mode = WAL");
-sqlite.pragma("foreign_keys = ON");
-const db = drizzle(sqlite, { schema });
-
 export const auth = betterAuth({
-  baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
+  baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3060",
   database: drizzleAdapter(db, {
-    provider: "sqlite",
+    provider: "pg",
     schema: {
       user: schema.user,
       session: schema.session,
@@ -60,6 +50,11 @@ export const auth = betterAuth({
         .map((b) => b.toString(16).padStart(2, "0"))
         .join(""),
   },
+  // Bearer plugin: lets the RN client send `Authorization: Bearer <token>`
+  // instead of cookies. The token is the same value as `session.token`.
+  // Sign-in returns the token in the response; the RN client stores it via
+  // expo-secure-store and attaches it to every subsequent request.
+  plugins: [bearer()],
 });
 
 export type Session = typeof auth.$Infer.Session;

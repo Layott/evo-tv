@@ -28,27 +28,27 @@ function toPoll(r: typeof schema.polls.$inferSelect): Poll {
 }
 
 export async function listActivePolls(streamId: string): Promise<Poll[]> {
-  return db
-    .select()
-    .from(schema.polls)
-    .where(and(eq(schema.polls.streamId, streamId), eq(schema.polls.isClosed, false)))
-    .orderBy(desc(schema.polls.createdAt))
-    .all()
-    .map(toPoll);
+  return (
+    await db
+      .select()
+      .from(schema.polls)
+      .where(and(eq(schema.polls.streamId, streamId), eq(schema.polls.isClosed, false)))
+      .orderBy(desc(schema.polls.createdAt))
+  ).map(toPoll);
 }
 
 export async function listPollsForStream(streamId: string): Promise<Poll[]> {
-  return db
-    .select()
-    .from(schema.polls)
-    .where(eq(schema.polls.streamId, streamId))
-    .orderBy(desc(schema.polls.createdAt))
-    .all()
-    .map(toPoll);
+  return (
+    await db
+      .select()
+      .from(schema.polls)
+      .where(eq(schema.polls.streamId, streamId))
+      .orderBy(desc(schema.polls.createdAt))
+  ).map(toPoll);
 }
 
 export async function getPollById(id: string): Promise<Poll | null> {
-  const row = db.select().from(schema.polls).where(eq(schema.polls.id, id)).get();
+  const row = (await db.select().from(schema.polls).where(eq(schema.polls.id, id)).limit(1))[0];
   return row ? toPoll(row) : null;
 }
 
@@ -65,7 +65,8 @@ export async function createPoll(input: {
     label: o.label,
     votes: 0,
   }));
-  db.insert(schema.polls)
+  await db
+    .insert(schema.polls)
     .values({
       id,
       streamId: input.streamId,
@@ -75,8 +76,7 @@ export async function createPoll(input: {
       closesAt: input.closesAt,
       isClosed: false,
       totalVotes: 0,
-    })
-    .run();
+    });
   const poll: Poll = {
     id,
     streamId: input.streamId,
@@ -101,27 +101,31 @@ export async function vote(input: {
   pollId: string;
   optionId: string;
 }): Promise<Poll | null> {
-  const pollRow = db
-    .select()
-    .from(schema.polls)
-    .where(eq(schema.polls.id, input.pollId))
-    .get();
+  const pollRow = (
+    await db
+      .select()
+      .from(schema.polls)
+      .where(eq(schema.polls.id, input.pollId))
+      .limit(1)
+  )[0];
   if (!pollRow) return null;
   if (pollRow.isClosed) return toPoll(pollRow);
 
   const optionExists = pollRow.options.some((o) => o.id === input.optionId);
   if (!optionExists) return toPoll(pollRow);
 
-  const existing = db
-    .select()
-    .from(schema.pollVotes)
-    .where(
-      and(
-        eq(schema.pollVotes.userId, input.userId),
-        eq(schema.pollVotes.pollId, input.pollId)
+  const existing = (
+    await db
+      .select()
+      .from(schema.pollVotes)
+      .where(
+        and(
+          eq(schema.pollVotes.userId, input.userId),
+          eq(schema.pollVotes.pollId, input.pollId)
+        )
       )
-    )
-    .get();
+      .limit(1)
+  )[0];
 
   const now = new Date().toISOString();
   let nextOptions = pollRow.options.map((o) => ({ ...o }));
@@ -138,34 +142,34 @@ export async function vote(input: {
       if (o.id === input.optionId) return { ...o, votes: o.votes + 1 };
       return o;
     });
-    db.update(schema.pollVotes)
+    await db
+      .update(schema.pollVotes)
       .set({ optionId: input.optionId, createdAt: now })
       .where(
         and(
           eq(schema.pollVotes.userId, input.userId),
           eq(schema.pollVotes.pollId, input.pollId)
         )
-      )
-      .run();
+      );
   } else {
     nextOptions = nextOptions.map((o) =>
       o.id === input.optionId ? { ...o, votes: o.votes + 1 } : o
     );
     nextTotal += 1;
-    db.insert(schema.pollVotes)
+    await db
+      .insert(schema.pollVotes)
       .values({
         userId: input.userId,
         pollId: input.pollId,
         optionId: input.optionId,
         createdAt: now,
-      })
-      .run();
+      });
   }
 
-  db.update(schema.polls)
+  await db
+    .update(schema.polls)
     .set({ options: nextOptions, totalVotes: nextTotal })
-    .where(eq(schema.polls.id, input.pollId))
-    .run();
+    .where(eq(schema.polls.id, input.pollId));
 
   const updated: Poll = {
     ...toPoll(pollRow),
@@ -177,12 +181,12 @@ export async function vote(input: {
 }
 
 export async function closePoll(pollId: string): Promise<Poll | null> {
-  const row = db.select().from(schema.polls).where(eq(schema.polls.id, pollId)).get();
+  const row = (await db.select().from(schema.polls).where(eq(schema.polls.id, pollId)).limit(1))[0];
   if (!row) return null;
-  db.update(schema.polls)
+  await db
+    .update(schema.polls)
     .set({ isClosed: true })
-    .where(eq(schema.polls.id, pollId))
-    .run();
+    .where(eq(schema.polls.id, pollId));
   const closed: Poll = { ...toPoll(row), isClosed: true };
   emit(`stream:${row.streamId}:polls`, { type: "closed", poll: closed });
   return closed;

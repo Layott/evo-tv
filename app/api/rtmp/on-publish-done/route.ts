@@ -13,18 +13,20 @@ export async function POST(req: NextRequest) {
   if (!streamKey) return new NextResponse("Missing stream key", { status: 400 });
 
   const keyHash = hashStreamKey(streamKey);
-  const row = db
-    .select()
-    .from(schema.streams)
-    .where(eq(schema.streams.streamKeyHash, keyHash))
-    .get();
+  const row = (
+    await db
+      .select()
+      .from(schema.streams)
+      .where(eq(schema.streams.streamKeyHash, keyHash))
+      .limit(1)
+  )[0];
   if (!row) return new NextResponse("Unknown stream key", { status: 404 });
 
   const nowIso = new Date().toISOString();
-  db.update(schema.streams)
+  await db
+    .update(schema.streams)
     .set({ isLive: false, endedAt: nowIso })
-    .where(eq(schema.streams.id, row.id))
-    .run();
+    .where(eq(schema.streams.id, row.id));
 
   emit(`stream:${row.id}:status`, { isLive: false, endedAt: nowIso });
   emit("stream:enqueue-transcode", { streamId: row.id });

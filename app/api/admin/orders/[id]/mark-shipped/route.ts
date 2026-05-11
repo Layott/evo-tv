@@ -44,7 +44,8 @@ export async function POST(
   // `order` isn't in the shared AuditTargetType enum, so insert directly so
   // we don't widen the helper signature for other agents.
   try {
-    db.insert(schema.auditLog)
+    await db
+      .insert(schema.auditLog)
       .values({
         id: generateId("audit"),
         actorId: guard.user.id,
@@ -56,8 +57,7 @@ export async function POST(
           newStatus: "shipped",
         },
         createdAt: new Date().toISOString(),
-      })
-      .run();
+      });
   } catch {
     // best-effort
   }

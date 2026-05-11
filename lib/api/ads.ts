@@ -20,12 +20,12 @@ function toAd(r: typeof schema.ads.$inferSelect): Ad {
 }
 
 export async function listAds(placement: Ad["placement"]): Promise<Ad[]> {
-  return db
-    .select()
-    .from(schema.ads)
-    .where(and(eq(schema.ads.active, true), eq(schema.ads.placement, placement)))
-    .all()
-    .map(toAd);
+  return (
+    await db
+      .select()
+      .from(schema.ads)
+      .where(and(eq(schema.ads.active, true), eq(schema.ads.placement, placement)))
+  ).map(toAd);
 }
 
 export async function pickAd(placement: Ad["placement"]): Promise<Ad | null> {

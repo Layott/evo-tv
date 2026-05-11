@@ -56,38 +56,38 @@ export async function listVods(filter?: {
     .$dynamic();
   if (conds.length > 0) q = q.where(and(...conds));
   if (filter?.limit) q = q.limit(filter.limit);
-  return q.all().map(toVod);
+  return (await q).map(toVod);
 }
 
 export async function getVodById(id: string): Promise<Vod | null> {
-  const r = db.select().from(schema.vods).where(eq(schema.vods.id, id)).get();
+  const r = (await db.select().from(schema.vods).where(eq(schema.vods.id, id)).limit(1))[0];
   return r ? toVod(r) : null;
 }
 
 export async function listRelatedVods(vodId: string, limit = 6): Promise<Vod[]> {
-  const base = db.select().from(schema.vods).where(eq(schema.vods.id, vodId)).get();
-  if (!base) return db.select().from(schema.vods).limit(limit).all().map(toVod);
-  return db
-    .select()
-    .from(schema.vods)
-    .where(and(eq(schema.vods.gameId, base.gameId), ne(schema.vods.id, vodId)))
-    .orderBy(desc(schema.vods.publishedAt))
-    .limit(limit)
-    .all()
-    .map(toVod);
+  const base = (await db.select().from(schema.vods).where(eq(schema.vods.id, vodId)).limit(1))[0];
+  if (!base) return (await db.select().from(schema.vods).limit(limit)).map(toVod);
+  return (
+    await db
+      .select()
+      .from(schema.vods)
+      .where(and(eq(schema.vods.gameId, base.gameId), ne(schema.vods.id, vodId)))
+      .orderBy(desc(schema.vods.publishedAt))
+      .limit(limit)
+  ).map(toVod);
 }
 
 export async function listTrendingClips(limit = 10): Promise<Clip[]> {
-  return db
-    .select()
-    .from(schema.clips)
-    .orderBy(desc(schema.clips.viewCount))
-    .limit(limit)
-    .all()
-    .map(toClip);
+  return (
+    await db
+      .select()
+      .from(schema.clips)
+      .orderBy(desc(schema.clips.viewCount))
+      .limit(limit)
+  ).map(toClip);
 }
 
 export async function getClipById(id: string): Promise<Clip | null> {
-  const r = db.select().from(schema.clips).where(eq(schema.clips.id, id)).get();
+  const r = (await db.select().from(schema.clips).where(eq(schema.clips.id, id)).limit(1))[0];
   return r ? toClip(r) : null;
 }

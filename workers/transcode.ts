@@ -38,11 +38,12 @@ function runFfmpeg(args: string[]): Promise<void> {
 }
 
 async function transcodeStreamToVod(streamId: string): Promise<string | null> {
-  const stream = db
+  const streamRows = await db
     .select()
     .from(schema.streams)
     .where(eq(schema.streams.id, streamId))
-    .get();
+    .limit(1);
+  const stream = streamRows[0];
   if (!stream) {
     console.log(`[transcode] stream ${streamId} not found — skip`);
     return null;
@@ -124,24 +125,22 @@ async function transcodeStreamToVod(streamId: string): Promise<string | null> {
     );
   }
 
-  db.insert(schema.vods)
-    .values({
-      id: vodId,
-      streamId,
-      title: `${stream.title} — VOD`,
-      description: stream.description,
-      gameId: stream.gameId,
-      durationSec,
-      hlsPath,
-      mp4Path,
-      thumbnailUrl: stream.thumbnailUrl,
-      publishedAt: new Date().toISOString(),
-      chapters: [],
-      viewCount: 0,
-      likeCount: 0,
-      isPremium: stream.isPremium,
-    })
-    .run();
+  await db.insert(schema.vods).values({
+    id: vodId,
+    streamId,
+    title: `${stream.title} — VOD`,
+    description: stream.description,
+    gameId: stream.gameId,
+    durationSec,
+    hlsPath,
+    mp4Path,
+    thumbnailUrl: stream.thumbnailUrl,
+    publishedAt: new Date().toISOString(),
+    chapters: [],
+    viewCount: 0,
+    likeCount: 0,
+    isPremium: stream.isPremium,
+  });
 
   return vodId;
 }

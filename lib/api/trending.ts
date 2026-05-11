@@ -67,7 +67,7 @@ export async function listTrendingClips(limit = 10): Promise<Clip[]> {
     .groupBy(schema.likes.targetId)
     .as("like_agg");
 
-  const rows = db
+  const rows = await db
     .select({
       clip: schema.clips,
       recentLikes: sql<number>`COALESCE(${likeAgg.n}, 0)`.as("recent_likes"),
@@ -77,8 +77,7 @@ export async function listTrendingClips(limit = 10): Promise<Clip[]> {
     .orderBy(
       desc(sql`COALESCE(${likeAgg.n}, 0) * 2 + ${schema.clips.viewCount}`)
     )
-    .limit(limit)
-    .all();
+    .limit(limit);
 
   return rows.map((r) => toClip(r.clip));
 }
@@ -104,7 +103,7 @@ export async function listTrendingVodsNow(limit = 10): Promise<Vod[]> {
     .groupBy(schema.likes.targetId)
     .as("like_agg");
 
-  const rows = db
+  const rows = await db
     .select({
       vod: schema.vods,
       recentLikes: sql<number>`COALESCE(${likeAgg.n}, 0)`.as("recent_likes"),
@@ -115,8 +114,7 @@ export async function listTrendingVodsNow(limit = 10): Promise<Vod[]> {
       desc(sql`COALESCE(${likeAgg.n}, 0)`),
       desc(schema.vods.viewCount)
     )
-    .limit(limit)
-    .all();
+    .limit(limit);
 
   return rows.map((r) => toVod(r.vod));
 }

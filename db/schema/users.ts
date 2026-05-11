@@ -1,22 +1,20 @@
-import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
+import { pgTable, text, boolean, timestamp, jsonb, index } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
 // Better-Auth owned tables (singular names match adapter expectations).
 
-export const user = sqliteTable(
+export const user = pgTable(
   "user",
   {
     id: text("id").primaryKey(),
     name: text("name").notNull().default(""),
     email: text("email").notNull().unique(),
-    emailVerified: integer("email_verified", { mode: "boolean" })
-      .notNull()
-      .default(false),
+    emailVerified: boolean("email_verified").notNull().default(false),
     image: text("image"),
-    createdAt: integer("created_at", { mode: "timestamp_ms" })
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
       .notNull()
       .$defaultFn(() => new Date()),
-    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" })
       .notNull()
       .$defaultFn(() => new Date()),
     // EVO TV additions
@@ -25,19 +23,19 @@ export const user = sqliteTable(
       .default("user"),
     handle: text("handle").unique(),
   },
-  (t) => [index("user_email_idx").on(t.email), index("user_handle_idx").on(t.handle)]
+  (t) => [index("user_email_idx").on(t.email), index("user_handle_idx").on(t.handle)],
 );
 
-export const session = sqliteTable(
+export const session = pgTable(
   "session",
   {
     id: text("id").primaryKey(),
-    expiresAt: integer("expires_at", { mode: "timestamp_ms" }).notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true, mode: "date" }).notNull(),
     token: text("token").notNull().unique(),
-    createdAt: integer("created_at", { mode: "timestamp_ms" })
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
       .notNull()
       .$defaultFn(() => new Date()),
-    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" })
       .notNull()
       .$defaultFn(() => new Date()),
     ipAddress: text("ip_address"),
@@ -46,10 +44,10 @@ export const session = sqliteTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
   },
-  (t) => [index("session_user_idx").on(t.userId)]
+  (t) => [index("session_user_idx").on(t.userId)],
 );
 
-export const account = sqliteTable(
+export const account = pgTable(
   "account",
   {
     id: text("id").primaryKey(),
@@ -61,71 +59,59 @@ export const account = sqliteTable(
     accessToken: text("access_token"),
     refreshToken: text("refresh_token"),
     idToken: text("id_token"),
-    accessTokenExpiresAt: integer("access_token_expires_at", { mode: "timestamp_ms" }),
-    refreshTokenExpiresAt: integer("refresh_token_expires_at", { mode: "timestamp_ms" }),
+    accessTokenExpiresAt: timestamp("access_token_expires_at", { withTimezone: true, mode: "date" }),
+    refreshTokenExpiresAt: timestamp("refresh_token_expires_at", { withTimezone: true, mode: "date" }),
     scope: text("scope"),
     password: text("password"),
-    createdAt: integer("created_at", { mode: "timestamp_ms" })
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
       .notNull()
       .$defaultFn(() => new Date()),
-    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" })
       .notNull()
       .$defaultFn(() => new Date()),
   },
-  (t) => [index("account_user_idx").on(t.userId)]
+  (t) => [index("account_user_idx").on(t.userId)],
 );
 
-export const verification = sqliteTable(
+export const verification = pgTable(
   "verification",
   {
     id: text("id").primaryKey(),
     identifier: text("identifier").notNull(),
     value: text("value").notNull(),
-    expiresAt: integer("expires_at", { mode: "timestamp_ms" }).notNull(),
-    createdAt: integer("created_at", { mode: "timestamp_ms" })
+    expiresAt: timestamp("expires_at", { withTimezone: true, mode: "date" }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
       .notNull()
       .$defaultFn(() => new Date()),
-    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" })
       .notNull()
       .$defaultFn(() => new Date()),
   },
-  (t) => [index("verification_identifier_idx").on(t.identifier)]
+  (t) => [index("verification_identifier_idx").on(t.identifier)],
 );
 
 // App-owned profile + prefs sit alongside Better-Auth `user`.
 
-export const profiles = sqliteTable(
-  "profiles",
-  {
-    userId: text("user_id")
-      .primaryKey()
-      .references(() => user.id, { onDelete: "cascade" }),
-    displayName: text("display_name").notNull(),
-    avatarUrl: text("avatar_url").notNull().default(""),
-    bio: text("bio").notNull().default(""),
-    country: text("country").notNull().default("NG"),
-    onboardedAt: text("onboarded_at"),
-    createdAt: text("created_at").notNull(),
-  }
-);
-
-export const userPrefs = sqliteTable("user_prefs", {
+export const profiles = pgTable("profiles", {
   userId: text("user_id")
     .primaryKey()
     .references(() => user.id, { onDelete: "cascade" }),
-  favoriteGames: text("favorite_games", { mode: "json" })
-    .$type<string[]>()
-    .notNull()
-    .default([]),
-  favoriteTeams: text("favorite_teams", { mode: "json" })
-    .$type<string[]>()
-    .notNull()
-    .default([]),
-  favoritePlayers: text("favorite_players", { mode: "json" })
-    .$type<string[]>()
-    .notNull()
-    .default([]),
-  notifOptIn: text("notif_opt_in", { mode: "json" })
+  displayName: text("display_name").notNull(),
+  avatarUrl: text("avatar_url").notNull().default(""),
+  bio: text("bio").notNull().default(""),
+  country: text("country").notNull().default("NG"),
+  onboardedAt: text("onboarded_at"),
+  createdAt: text("created_at").notNull(),
+});
+
+export const userPrefs = pgTable("user_prefs", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => user.id, { onDelete: "cascade" }),
+  favoriteGames: jsonb("favorite_games").$type<string[]>().notNull().default([]),
+  favoriteTeams: jsonb("favorite_teams").$type<string[]>().notNull().default([]),
+  favoritePlayers: jsonb("favorite_players").$type<string[]>().notNull().default([]),
+  notifOptIn: jsonb("notif_opt_in")
     .$type<{
       goLive: boolean;
       eventReminder: boolean;
@@ -133,7 +119,7 @@ export const userPrefs = sqliteTable("user_prefs", {
       weeklyDigest: boolean;
     }>()
     .notNull(),
-  playback: text("playback", { mode: "json" })
+  playback: jsonb("playback")
     .$type<{
       defaultQuality: "auto" | "1080p" | "720p" | "480p" | "360p";
       captions: boolean;

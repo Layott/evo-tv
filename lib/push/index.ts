@@ -28,11 +28,10 @@ export async function sendPushToUser(userId: string, payload: PushPayload): Prom
   const pub = process.env.VAPID_PUBLIC_KEY;
   if (!pub) return 0;
 
-  const subs = db
+  const subs = await db
     .select()
     .from(schema.pushSubscriptions)
-    .where(eq(schema.pushSubscriptions.userId, userId))
-    .all();
+    .where(eq(schema.pushSubscriptions.userId, userId));
 
   let delivered = 0;
   for (const s of subs) {
@@ -49,9 +48,9 @@ export async function sendPushToUser(userId: string, payload: PushPayload): Prom
       const status = (err as { statusCode?: number }).statusCode;
       if (status === 404 || status === 410) {
         // subscription expired/gone — prune
-        db.delete(schema.pushSubscriptions)
-          .where(eq(schema.pushSubscriptions.id, s.id))
-          .run();
+        await db
+          .delete(schema.pushSubscriptions)
+          .where(eq(schema.pushSubscriptions.id, s.id));
       }
     }
   }

@@ -27,7 +27,8 @@ export async function POST(req: NextRequest) {
       .map((b) => b.toString(16).padStart(2, "0"))
       .join("");
 
-  db.insert(schema.pushSubscriptions)
+  await db
+    .insert(schema.pushSubscriptions)
     .values({
       id,
       userId: user.id,
@@ -36,8 +37,7 @@ export async function POST(req: NextRequest) {
       auth: parsed.data.keys.auth,
       createdAt: new Date().toISOString(),
     })
-    .onConflictDoNothing()
-    .run();
+    .onConflictDoNothing();
 
   return NextResponse.json({ id, ok: true });
 }
@@ -50,8 +50,8 @@ export async function DELETE(req: NextRequest) {
   const endpoint = body?.endpoint;
   if (!endpoint) return new NextResponse("Missing endpoint", { status: 400 });
 
-  db.delete(schema.pushSubscriptions)
-    .where(eq(schema.pushSubscriptions.endpoint, endpoint))
-    .run();
+  await db
+    .delete(schema.pushSubscriptions)
+    .where(eq(schema.pushSubscriptions.endpoint, endpoint));
   return NextResponse.json({ ok: true });
 }

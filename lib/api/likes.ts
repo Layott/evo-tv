@@ -18,22 +18,10 @@ export async function toggleLike(
   targetType: LikeTarget,
   targetId: string
 ): Promise<{ liked: boolean; count: number }> {
-  const existing = db
-    .select()
-    .from(schema.likes)
-    .where(
-      and(
-        eq(schema.likes.userId, userId),
-        eq(schema.likes.targetType, targetType),
-        eq(schema.likes.targetId, targetId)
-      )
-    )
-    .get();
-
-  const parent = parentTable(targetType);
-
-  if (existing) {
-    db.delete(schema.likes)
+  const existing = (
+    await db
+      .select()
+      .from(schema.likes)
       .where(
         and(
           eq(schema.likes.userId, userId),
@@ -41,28 +29,42 @@ export async function toggleLike(
           eq(schema.likes.targetId, targetId)
         )
       )
-      .run();
-    db.update(parent)
-      .set({ likeCount: sql`MAX(0, ${parent.likeCount} - 1)` })
-      .where(eq(parent.id, targetId))
-      .run();
+      .limit(1)
+  )[0];
+
+  const parent = parentTable(targetType);
+
+  if (existing) {
+    await db
+      .delete(schema.likes)
+      .where(
+        and(
+          eq(schema.likes.userId, userId),
+          eq(schema.likes.targetType, targetType),
+          eq(schema.likes.targetId, targetId)
+        )
+      );
+    await db
+      .update(parent)
+      .set({ likeCount: sql`GREATEST(0, ${parent.likeCount} - 1)` })
+      .where(eq(parent.id, targetId));
     const count = await likeCountFor(targetType, targetId);
     return { liked: false, count };
   }
 
-  db.insert(schema.likes)
+  await db
+    .insert(schema.likes)
     .values({
       userId,
       targetType,
       targetId,
       createdAt: new Date().toISOString(),
     })
-    .onConflictDoNothing()
-    .run();
-  db.update(parent)
+    .onConflictDoNothing();
+  await db
+    .update(parent)
     .set({ likeCount: sql`${parent.likeCount} + 1` })
-    .where(eq(parent.id, targetId))
-    .run();
+    .where(eq(parent.id, targetId));
   const count = await likeCountFor(targetType, targetId);
   return { liked: true, count };
 }
@@ -71,7 +73,7 @@ export async function likeCountFor(
   targetType: LikeTarget,
   targetId: string
 ): Promise<number> {
-  const rows = db
+  const rows = await db
     .select({ n: sql<number>`count(*)` })
     .from(schema.likes)
     .where(
@@ -79,8 +81,7 @@ export async function likeCountFor(
         eq(schema.likes.targetType, targetType),
         eq(schema.likes.targetId, targetId)
       )
-    )
-    .all();
+    );
   return Number(rows[0]?.n ?? 0);
 }
 
@@ -89,16 +90,18 @@ export async function hasLiked(
   targetType: LikeTarget,
   targetId: string
 ): Promise<boolean> {
-  const row = db
-    .select()
-    .from(schema.likes)
-    .where(
-      and(
-        eq(schema.likes.userId, userId),
-        eq(schema.likes.targetType, targetType),
-        eq(schema.likes.targetId, targetId)
+  const row = (
+    await db
+      .select()
+      .from(schema.likes)
+      .where(
+        and(
+          eq(schema.likes.userId, userId),
+          eq(schema.likes.targetType, targetType),
+          eq(schema.likes.targetId, targetId)
+        )
       )
-    )
-    .get();
+      .limit(1)
+  )[0];
   return !!row;
 }

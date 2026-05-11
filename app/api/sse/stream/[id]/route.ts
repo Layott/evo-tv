@@ -14,22 +14,24 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const set = viewerCounts.get(id)!;
   set.add(viewerId);
 
-  db.update(schema.streams)
-    .set({ viewerCount: set.size, peakViewerCount: sql`MAX(peak_viewer_count, ${set.size})` })
-    .where(eq(schema.streams.id, id))
-    .run();
+  await db
+    .update(schema.streams)
+    .set({ viewerCount: set.size, peakViewerCount: sql`GREATEST(peak_viewer_count, ${set.size})` })
+    .where(eq(schema.streams.id, id));
   emit(`stream:${id}:viewers`, { count: set.size });
 
   const topic = `stream:${id}:*`;
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream<Uint8Array>({
-    start(controller) {
-      const row = db
-        .select()
-        .from(schema.streams)
-        .where(eq(schema.streams.id, id))
-        .get();
+    async start(controller) {
+      const row = (
+        await db
+          .select()
+          .from(schema.streams)
+          .where(eq(schema.streams.id, id))
+          .limit(1)
+      )[0];
       controller.enqueue(
         encoder.encode(
           `data: ${JSON.stringify({ type: "hello", viewerCount: set.size, isLive: row?.isLive ?? false })}\n\n`
@@ -57,10 +59,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         clearInterval(heartbeat);
         unsubs.forEach((u) => u());
         set.delete(viewerId);
-        db.update(schema.streams)
+        void db
+          .update(schema.streams)
           .set({ viewerCount: set.size })
-          .where(eq(schema.streams.id, id))
-          .run();
+          .where(eq(schema.streams.id, id));
         emit(`stream:${id}:viewers`, { count: set.size });
         try {
           controller.close();

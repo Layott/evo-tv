@@ -27,12 +27,12 @@ export async function listPlayers(filter?: {
   if (filter?.teamId) conds.push(eq(schema.players.teamId, filter.teamId));
   const rows =
     conds.length > 0
-      ? db.select().from(schema.players).where(and(...conds)).all()
-      : db.select().from(schema.players).all();
+      ? await db.select().from(schema.players).where(and(...conds))
+      : await db.select().from(schema.players);
   return rows.map(toPlayer);
 }
 
 export async function getPlayerById(id: string): Promise<Player | null> {
-  const r = db.select().from(schema.players).where(eq(schema.players.id, id)).get();
+  const r = (await db.select().from(schema.players).where(eq(schema.players.id, id)).limit(1))[0];
   return r ? toPlayer(r) : null;
 }

@@ -12,14 +12,14 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   }
 
   const { id } = await params;
-  const row = db.select().from(schema.streams).where(eq(schema.streams.id, id)).get();
+  const row = (await db.select().from(schema.streams).where(eq(schema.streams.id, id)).limit(1))[0];
   if (!row) return new NextResponse("Stream not found", { status: 404 });
 
   const streamKey = generateStreamKey();
-  db.update(schema.streams)
+  await db
+    .update(schema.streams)
     .set({ streamKeyHash: hashStreamKey(streamKey) })
-    .where(eq(schema.streams.id, id))
-    .run();
+    .where(eq(schema.streams.id, id));
 
   return NextResponse.json({
     id,

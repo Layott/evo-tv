@@ -49,7 +49,7 @@ export async function listInitialMessages(
   limit = 50
 ): Promise<ChatMessage[]> {
   // Pull most-recent `limit` rows then reverse so callers get chronological order.
-  const recent = db
+  const recent = await db
     .select({
       id: schema.chatMessages.id,
       streamId: schema.chatMessages.streamId,
@@ -67,8 +67,7 @@ export async function listInitialMessages(
     .leftJoin(schema.user, eq(schema.user.id, schema.chatMessages.userId))
     .where(eq(schema.chatMessages.streamId, streamId))
     .orderBy(desc(schema.chatMessages.createdAt))
-    .limit(limit)
-    .all();
+    .limit(limit);
   return recent.reverse().map(toChatMessage);
 }
 
@@ -83,7 +82,8 @@ export async function postMessage(input: {
 }): Promise<ChatMessage> {
   const id = shortId("msg");
   const createdAt = new Date().toISOString();
-  db.insert(schema.chatMessages)
+  await db
+    .insert(schema.chatMessages)
     .values({
       id,
       streamId: input.streamId,
@@ -92,19 +92,20 @@ export async function postMessage(input: {
       createdAt,
       isDeleted: false,
       isPinned: false,
-    })
-    .run();
+    });
 
-  const userRow = db
-    .select({
-      handle: schema.user.handle,
-      name: schema.user.name,
-      image: schema.user.image,
-      role: schema.user.role,
-    })
-    .from(schema.user)
-    .where(eq(schema.user.id, input.userId))
-    .get();
+  const userRow = (
+    await db
+      .select({
+        handle: schema.user.handle,
+        name: schema.user.name,
+        image: schema.user.image,
+        role: schema.user.role,
+      })
+      .from(schema.user)
+      .where(eq(schema.user.id, input.userId))
+      .limit(1)
+  )[0];
 
   const message: ChatMessage = {
     id,
@@ -123,16 +124,18 @@ export async function postMessage(input: {
 }
 
 export async function deleteMessage(id: string): Promise<ChatMessage | null> {
-  const row = db
-    .select()
-    .from(schema.chatMessages)
-    .where(eq(schema.chatMessages.id, id))
-    .get();
+  const row = (
+    await db
+      .select()
+      .from(schema.chatMessages)
+      .where(eq(schema.chatMessages.id, id))
+      .limit(1)
+  )[0];
   if (!row) return null;
-  db.update(schema.chatMessages)
+  await db
+    .update(schema.chatMessages)
     .set({ isDeleted: true })
-    .where(eq(schema.chatMessages.id, id))
-    .run();
+    .where(eq(schema.chatMessages.id, id));
   emit(`stream:${row.streamId}:chat`, { type: "deleted", messageId: id });
   return {
     id: row.id,
@@ -149,17 +152,19 @@ export async function deleteMessage(id: string): Promise<ChatMessage | null> {
 }
 
 export async function pinMessage(id: string): Promise<{ isPinned: boolean } | null> {
-  const row = db
-    .select()
-    .from(schema.chatMessages)
-    .where(eq(schema.chatMessages.id, id))
-    .get();
+  const row = (
+    await db
+      .select()
+      .from(schema.chatMessages)
+      .where(eq(schema.chatMessages.id, id))
+      .limit(1)
+  )[0];
   if (!row) return null;
   const next = !row.isPinned;
-  db.update(schema.chatMessages)
+  await db
+    .update(schema.chatMessages)
     .set({ isPinned: next })
-    .where(eq(schema.chatMessages.id, id))
-    .run();
+    .where(eq(schema.chatMessages.id, id));
   emit(`stream:${row.streamId}:chat`, {
     type: "pinned",
     messageId: id,
@@ -171,11 +176,13 @@ export async function pinMessage(id: string): Promise<{ isPinned: boolean } | nu
 export async function getMessageById(id: string): Promise<
   (typeof schema.chatMessages.$inferSelect) | null
 > {
-  const row = db
-    .select()
-    .from(schema.chatMessages)
-    .where(eq(schema.chatMessages.id, id))
-    .get();
+  const row = (
+    await db
+      .select()
+      .from(schema.chatMessages)
+      .where(eq(schema.chatMessages.id, id))
+      .limit(1)
+  )[0];
   return row ?? null;
 }
 

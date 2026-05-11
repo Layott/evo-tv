@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
 
   const id = generateId("team");
   try {
-    db.insert(schema.teams).values({ id, ...parsed.data }).run();
+    await db.insert(schema.teams).values({ id, ...parsed.data });
   } catch (err) {
     const conflict = mapSqliteUniqueError(err);
     if (conflict) return conflict;

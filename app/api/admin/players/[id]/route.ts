@@ -42,11 +42,13 @@ export async function PATCH(
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 });
   }
 
-  const existing = db
-    .select()
-    .from(schema.players)
-    .where(eq(schema.players.id, id))
-    .get();
+  const existing = (
+    await db
+      .select()
+      .from(schema.players)
+      .where(eq(schema.players.id, id))
+      .limit(1)
+  )[0];
   if (!existing) return new NextResponse("Player not found", { status: 404 });
 
   const patch: Partial<typeof schema.players.$inferInsert> = {};
@@ -65,18 +67,20 @@ export async function PATCH(
   }
 
   try {
-    db.update(schema.players).set(patch).where(eq(schema.players.id, id)).run();
+    await db.update(schema.players).set(patch).where(eq(schema.players.id, id));
   } catch (err) {
     const conflict = mapSqliteUniqueError(err);
     if (conflict) return conflict;
     return NextResponse.json({ error: "Failed to update player" }, { status: 500 });
   }
 
-  const updated = db
-    .select()
-    .from(schema.players)
-    .where(eq(schema.players.id, id))
-    .get();
+  const updated = (
+    await db
+      .select()
+      .from(schema.players)
+      .where(eq(schema.players.id, id))
+      .limit(1)
+  )[0];
 
   writeAudit({
     actorId: guard.user.id,
@@ -97,15 +101,17 @@ export async function DELETE(
   if (!guard.ok) return guard.response;
 
   const { id } = await params;
-  const existing = db
-    .select()
-    .from(schema.players)
-    .where(eq(schema.players.id, id))
-    .get();
+  const existing = (
+    await db
+      .select()
+      .from(schema.players)
+      .where(eq(schema.players.id, id))
+      .limit(1)
+  )[0];
   if (!existing) return new NextResponse("Player not found", { status: 404 });
 
   try {
-    db.delete(schema.players).where(eq(schema.players.id, id)).run();
+    await db.delete(schema.players).where(eq(schema.players.id, id));
   } catch {
     return NextResponse.json({ error: "Failed to delete player" }, { status: 500 });
   }

@@ -1,12 +1,10 @@
 /**
- * Seed script: reads lib/mock fixtures, upserts into SQLite.
+ * Seed script: reads lib/mock fixtures, upserts into Postgres.
  * Run with `pnpm db:seed`. Idempotent.
  */
 import "dotenv/config";
-import Database from "better-sqlite3";
-import { drizzle } from "drizzle-orm/better-sqlite3";
-import fs from "node:fs";
-import path from "node:path";
+import { neon } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/neon-http";
 import crypto from "node:crypto";
 
 import * as schema from "./schema";
@@ -27,12 +25,16 @@ import { polls as mockPolls } from "../lib/mock/polls";
 import { follows as mockFollows } from "../lib/mock/follows";
 import { featureFlags as mockFlags } from "../lib/mock/flags";
 
-const DB_PATH = process.env.DATABASE_URL ?? "./data/evo.db";
-fs.mkdirSync(path.dirname(path.resolve(DB_PATH)), { recursive: true });
-const sqlite = new Database(DB_PATH);
-sqlite.pragma("journal_mode = WAL");
-sqlite.pragma("foreign_keys = ON");
-const db = drizzle(sqlite, { schema });
+const DATABASE_URL =
+  process.env.POSTGRES_URL_NON_POOLING ??
+  process.env.POSTGRES_URL ??
+  process.env.DATABASE_URL;
+if (!DATABASE_URL) {
+  console.error("[seed] No DB URL found (POSTGRES_URL_NON_POOLING / POSTGRES_URL / DATABASE_URL)");
+  process.exit(1);
+}
+const sql = neon(DATABASE_URL);
+const db = drizzle(sql, { schema });
 
 const SECRET = process.env.AUTH_SECRET ?? "dev_stream_key_secret";
 const hashKey = (key: string) =>
@@ -41,11 +43,11 @@ const hashKey = (key: string) =>
 const nowIso = () => new Date().toISOString();
 
 async function run() {
-  console.log(`[seed] opening ${DB_PATH}`);
+  console.log(`[seed] opening Neon Postgres`);
 
   // Better-Auth `user` table + app-owned `profiles` table.
   for (const p of mockProfiles) {
-    db.insert(schema.user)
+    await db.insert(schema.user)
       .values({
         id: p.id,
         name: p.displayName,
@@ -57,10 +59,9 @@ async function run() {
         createdAt: new Date(p.createdAt),
         updatedAt: new Date(p.createdAt),
       })
-      .onConflictDoNothing()
-      .run();
+      .onConflictDoNothing();
 
-    db.insert(schema.profiles)
+    await db.insert(schema.profiles)
       .values({
         userId: p.id,
         displayName: p.displayName,
@@ -70,13 +71,12 @@ async function run() {
         onboardedAt: p.onboardedAt,
         createdAt: p.createdAt,
       })
-      .onConflictDoNothing()
-      .run();
+      .onConflictDoNothing();
   }
   console.log(`[seed] users + profiles: ${mockProfiles.length}`);
 
   for (const [userId, prefs] of Object.entries(mockPrefs)) {
-    db.insert(schema.userPrefs)
+    await db.insert(schema.userPrefs)
       .values({
         userId,
         favoriteGames: prefs.favoriteGames,
@@ -87,27 +87,25 @@ async function run() {
         language: prefs.language,
         theme: prefs.theme,
       })
-      .onConflictDoNothing()
-      .run();
+      .onConflictDoNothing();
   }
 
   for (const g of games)
-    db.insert(schema.games).values(g).onConflictDoNothing().run();
+    await db.insert(schema.games).values(g).onConflictDoNothing();
   console.log(`[seed] games: ${games.length}`);
 
   for (const t of teams)
-    db.insert(schema.teams).values(t).onConflictDoNothing().run();
+    await db.insert(schema.teams).values(t).onConflictDoNothing();
   console.log(`[seed] teams: ${teams.length}`);
 
   for (const p of players)
-    db.insert(schema.players)
+    await db.insert(schema.players)
       .values({ ...p, kda: Math.round(p.kda * 100) })
-      .onConflictDoNothing()
-      .run();
+      .onConflictDoNothing();
   console.log(`[seed] players: ${players.length}`);
 
   for (const e of events) {
-    db.insert(schema.events)
+    await db.insert(schema.events)
       .values({
         id: e.id,
         slug: e.slug,
@@ -125,24 +123,22 @@ async function run() {
         format: e.format,
         viewerCount: e.viewerCount ?? 0,
       })
-      .onConflictDoNothing()
-      .run();
+      .onConflictDoNothing();
     for (const tid of e.teamIds) {
-      db.insert(schema.eventTeams)
+      await db.insert(schema.eventTeams)
         .values({ eventId: e.id, teamId: tid })
-        .onConflictDoNothing()
-        .run();
+        .onConflictDoNothing();
     }
   }
   console.log(`[seed] events: ${events.length}`);
 
   for (const m of matches)
-    db.insert(schema.matches).values(m).onConflictDoNothing().run();
+    await db.insert(schema.matches).values(m).onConflictDoNothing();
   console.log(`[seed] matches: ${matches.length}`);
 
   for (const s of streams) {
     const streamKey = `sk_live_${s.id.slice(-8)}`;
-    db.insert(schema.streams)
+    await db.insert(schema.streams)
       .values({
         id: s.id,
         title: s.title,
@@ -165,14 +161,13 @@ async function run() {
         isPremium: s.isPremium,
         createdAt: s.startedAt ?? nowIso(),
       })
-      .onConflictDoNothing()
-      .run();
+      .onConflictDoNothing();
   }
   console.log(`[seed] streams: ${streams.length} (stream keys derived from id; dev only)`);
 
   const streamIds = new Set(streams.map((s) => s.id));
   for (const v of vods)
-    db.insert(schema.vods)
+    await db.insert(schema.vods)
       .values({
         id: v.id,
         streamId: v.streamId && streamIds.has(v.streamId) ? v.streamId : null,
@@ -189,13 +184,12 @@ async function run() {
         likeCount: v.likeCount,
         isPremium: v.isPremium,
       })
-      .onConflictDoNothing()
-      .run();
+      .onConflictDoNothing();
   console.log(`[seed] vods: ${vods.length}`);
 
   const vodIds = new Set(vods.map((v) => v.id));
   for (const c of clips)
-    db.insert(schema.clips)
+    await db.insert(schema.clips)
       .values({
         id: c.id,
         vodId: c.vodId && vodIds.has(c.vodId) ? c.vodId : null,
@@ -211,32 +205,31 @@ async function run() {
         createdAt: c.createdAt,
         gameId: c.gameId,
       })
-      .onConflictDoNothing()
-      .run();
+      .onConflictDoNothing();
   console.log(`[seed] clips: ${clips.length}`);
 
   for (const s of mockSubs)
-    db.insert(schema.subscriptions).values(s).onConflictDoNothing().run();
+    await db.insert(schema.subscriptions).values(s).onConflictDoNothing();
   console.log(`[seed] subscriptions: ${mockSubs.length}`);
 
   for (const p of mockProducts)
-    db.insert(schema.products).values(p).onConflictDoNothing().run();
+    await db.insert(schema.products).values(p).onConflictDoNothing();
   console.log(`[seed] products: ${mockProducts.length}`);
 
   for (const o of mockOrders)
-    db.insert(schema.orders).values(o).onConflictDoNothing().run();
+    await db.insert(schema.orders).values(o).onConflictDoNothing();
   console.log(`[seed] orders: ${mockOrders.length}`);
 
   for (const a of mockAds)
-    db.insert(schema.ads).values(a).onConflictDoNothing().run();
+    await db.insert(schema.ads).values(a).onConflictDoNothing();
   console.log(`[seed] ads: ${mockAds.length}`);
 
   for (const n of mockNotifs)
-    db.insert(schema.notifications).values(n).onConflictDoNothing().run();
+    await db.insert(schema.notifications).values(n).onConflictDoNothing();
   console.log(`[seed] notifications: ${mockNotifs.length}`);
 
   for (const p of mockPolls)
-    db.insert(schema.polls)
+    await db.insert(schema.polls)
       .values({
         id: p.id,
         streamId: p.streamId,
@@ -247,19 +240,17 @@ async function run() {
         isClosed: p.isClosed,
         totalVotes: p.totalVotes,
       })
-      .onConflictDoNothing()
-      .run();
+      .onConflictDoNothing();
   console.log(`[seed] polls: ${mockPolls.length}`);
 
   for (const f of mockFollows)
-    db.insert(schema.follows).values(f).onConflictDoNothing().run();
+    await db.insert(schema.follows).values(f).onConflictDoNothing();
   console.log(`[seed] follows: ${mockFollows.length}`);
 
   for (const f of mockFlags)
-    db.insert(schema.featureFlags)
+    await db.insert(schema.featureFlags)
       .values({ key: f.key, enabled: f.enabled, description: f.description })
-      .onConflictDoNothing()
-      .run();
+      .onConflictDoNothing();
   console.log(`[seed] feature flags: ${mockFlags.length}`);
 
   console.log("[seed] done.");

@@ -109,11 +109,13 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
   let subtotalNgn = 0;
 
   for (const line of input.items) {
-    const product = db
-      .select()
-      .from(schema.products)
-      .where(eq(schema.products.id, line.productId))
-      .get();
+    const product = (
+      await db
+        .select()
+        .from(schema.products)
+        .where(eq(schema.products.id, line.productId))
+        .limit(1)
+    )[0];
     if (!product || !product.active) {
       throw new OrderValidationError(
         "product_missing",
@@ -171,7 +173,8 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
   const paymentRef = id.replace(/^ord_/, "ord_");
   const createdAt = new Date().toISOString();
 
-  db.insert(schema.orders)
+  await db
+    .insert(schema.orders)
     .values({
       id,
       userId: input.userId,
@@ -193,43 +196,48 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
       paymentRef,
       createdAt,
       trackingNumber: null,
-    })
-    .run();
+    });
 
-  const row = db
-    .select()
-    .from(schema.orders)
-    .where(eq(schema.orders.id, id))
-    .get();
+  const row = (
+    await db
+      .select()
+      .from(schema.orders)
+      .where(eq(schema.orders.id, id))
+      .limit(1)
+  )[0];
   return toOrder(row!);
 }
 
 export async function getOrderById(id: string): Promise<Order | null> {
-  const r = db
-    .select()
-    .from(schema.orders)
-    .where(eq(schema.orders.id, id))
-    .get();
+  const r = (
+    await db
+      .select()
+      .from(schema.orders)
+      .where(eq(schema.orders.id, id))
+      .limit(1)
+  )[0];
   return r ? toOrder(r) : null;
 }
 
 export async function getOrderByPaymentRef(ref: string): Promise<Order | null> {
-  const r = db
-    .select()
-    .from(schema.orders)
-    .where(eq(schema.orders.paymentRef, ref))
-    .get();
+  const r = (
+    await db
+      .select()
+      .from(schema.orders)
+      .where(eq(schema.orders.paymentRef, ref))
+      .limit(1)
+  )[0];
   return r ? toOrder(r) : null;
 }
 
 export async function listOrdersForUser(userId: string): Promise<Order[]> {
-  return db
-    .select()
-    .from(schema.orders)
-    .where(eq(schema.orders.userId, userId))
-    .orderBy(desc(schema.orders.createdAt))
-    .all()
-    .map(toOrder);
+  return (
+    await db
+      .select()
+      .from(schema.orders)
+      .where(eq(schema.orders.userId, userId))
+      .orderBy(desc(schema.orders.createdAt))
+  ).map(toOrder);
 }
 
 export async function updateOrderStatus(
@@ -239,6 +247,6 @@ export async function updateOrderStatus(
 ): Promise<Order | null> {
   const patch: Partial<typeof schema.orders.$inferInsert> = { status };
   if (trackingNumber !== undefined) patch.trackingNumber = trackingNumber;
-  db.update(schema.orders).set(patch).where(eq(schema.orders.id, id)).run();
+  await db.update(schema.orders).set(patch).where(eq(schema.orders.id, id));
   return getOrderById(id);
 }

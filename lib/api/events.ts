@@ -42,13 +42,12 @@ function toMatch(r: typeof schema.matches.$inferSelect): Match {
   };
 }
 
-function teamsForEvent(eventId: string): string[] {
-  return db
+async function teamsForEvent(eventId: string): Promise<string[]> {
+  const rows = await db
     .select({ teamId: schema.eventTeams.teamId })
     .from(schema.eventTeams)
-    .where(eq(schema.eventTeams.eventId, eventId))
-    .all()
-    .map((r) => r.teamId);
+    .where(eq(schema.eventTeams.eventId, eventId));
+  return rows.map((r) => r.teamId);
 }
 
 export async function listEvents(filter?: {
@@ -60,26 +59,26 @@ export async function listEvents(filter?: {
   if (filter?.gameId) conds.push(eq(schema.events.gameId, filter.gameId));
   const rows =
     conds.length > 0
-      ? db.select().from(schema.events).where(and(...conds)).all()
-      : db.select().from(schema.events).all();
-  return rows.map((r) => toEvent(r, teamsForEvent(r.id)));
+      ? await db.select().from(schema.events).where(and(...conds))
+      : await db.select().from(schema.events);
+  return Promise.all(rows.map(async (r) => toEvent(r, await teamsForEvent(r.id))));
 }
 
 export async function getEventById(id: string): Promise<EsportsEvent | null> {
-  const r = db.select().from(schema.events).where(eq(schema.events.id, id)).get();
-  return r ? toEvent(r, teamsForEvent(r.id)) : null;
+  const r = (await db.select().from(schema.events).where(eq(schema.events.id, id)).limit(1))[0];
+  return r ? toEvent(r, await teamsForEvent(r.id)) : null;
 }
 
 export async function getEventBySlug(slug: string): Promise<EsportsEvent | null> {
-  const r = db.select().from(schema.events).where(eq(schema.events.slug, slug)).get();
-  return r ? toEvent(r, teamsForEvent(r.id)) : null;
+  const r = (await db.select().from(schema.events).where(eq(schema.events.slug, slug)).limit(1))[0];
+  return r ? toEvent(r, await teamsForEvent(r.id)) : null;
 }
 
 export async function listMatchesForEvent(eventId: string): Promise<Match[]> {
-  return db
-    .select()
-    .from(schema.matches)
-    .where(eq(schema.matches.eventId, eventId))
-    .all()
-    .map(toMatch);
+  return (
+    await db
+      .select()
+      .from(schema.matches)
+      .where(eq(schema.matches.eventId, eventId))
+  ).map(toMatch);
 }

@@ -784,3 +784,89 @@ public/demo/sample.mp4      ← NOT CREATED. Optional — player already degrade
 ---
 
 _Last updated: 2026-04-22 (PAUSED)_
+
+---
+
+# App Track — Native iOS + Android (sibling repo)
+
+> **Started 2026-05-05.** Sibling React Native / Expo SDK 52 twin of the web app at `../EVOTV-app/`. Same brand, same data, same flows. Mock-data parity with web's Phase F. Backend swap waits for web's Phase 1A bearer-token routes.
+
+## A0. Locked decisions
+
+- **Stack:** Expo SDK 52, React Native 0.76 (New Architecture), Expo Router 4, NativeWind v4, TypeScript strict.
+- **Repo layout:** sibling folder `GAMEEVO/EVOTV-app/`, NOT a monorepo workspace. Zero risk to live web Vercel deploy. Mild duplication of `lib/mock/` accepted.
+- **UI parity strategy:** design-system-perfect, not pixel-perfect. NativeWind classes map to same Tailwind tokens as web. shadcn-style RN primitives at `components/ui/` mirror web shadcn/ui API surface.
+- **Data layer:** `lib/mock/*` ported 1:1 from web. `localStorage` swapped for AsyncStorage shim at `lib/storage/persist.ts`. Phase 1A swap point: `lib/api/*` modules call web's `/api/*` via fetch + JWT.
+- **Auth:** mock-auth-provider mirrors web's role-switching dev panel. Persists current user to AsyncStorage.
+- **Player:** `expo-video` (native HLS, hardware accel) — replaces web's HLS.js.
+- **Brand:** cyan `#2CD7E3`, dark-first.
+
+## A1. Initial scaffold (DONE 2026-05-05) ✅
+
+- [x] Expo config — `package.json`, `app.json`, `tsconfig.json`, `babel.config.js`, `metro.config.js`, `tailwind.config.js`, `global.css`, `nativewind-env.d.ts`, `.gitignore`, `.env.example`, `README.md`.
+- [x] Design tokens — Tailwind config mirrors web `oklch` tokens as RGB hex, dark theme defaults, brand cyan + Geist fonts wired.
+- [x] RN UI primitive twins of every shadcn component at `components/ui/` (~60 files). Faithful: Button/Card/Badge/Input/Avatar/Tabs/Sheet/Dialog/Switch/Progress/Toast/Slider/Select/Dropdown etc. Stubs only (web-only): command/calendar/input-otp/chart/menubar/navigation-menu/resizable/sidebar — render placeholder, typed correctly so screens compile.
+- [x] Providers — `ThemeProvider` (NativeWind useColorScheme + AsyncStorage persist), `QueryProvider` (TanStack), `MockAuthProvider` (full role + follow + onboarding port), `RoleSwitcher` (`__DEV__` only), `FontLoader` (expo-font useFonts), `SplashGate` (expo-splash-screen).
+- [x] `lib/mock/*` — 45 mock files + `index.ts` ported. `lib/types.ts`, `lib/utils.ts` (`cn`), `lib/storage/persist.ts` (AsyncStorage shim with sync cache + `syncGet`/`syncSet`/`syncRemove`), `lib/theme/tokens.ts`. Web-only deps stripped (`window.localStorage`, `Blob`/`URL.createObjectURL`, `"use client"`).
+- [x] Expo Router tree — every web page mirrored 1:1 (89 screens + 6 group layouts). Route groups `(auth)`, `(public)`, `(authed)`, `(admin)`, `(embed)`. Dynamic params preserved (`[id]`, `[slug]`, `[handle]`, `[eventId]`, `[streamId]`). `(public)` is a Tabs layout (Home/Events/Discover/Shop visible; rest `href: null`).
+- [x] Domain components — `home/top-navbar`, `home/hero-carousel`, `home/live-now-section`, `home/recommendations`, `home/trending-clips-section`, `home/upcoming-events-section`, `home/ad-banner`, `auth/form-field`, `auth/password-strength`, `profile/profile-header`, `profile/watch-history-list`, `profile/profile-tabs`, `stream/hls-player` (expo-video twin), `stream/live-chat`, `library/library-tabs`.
+- [x] Seed screens fully built (replacing initial stubs): `(auth)/login`, `(public)/home`, `(public)/stream/[id]`, `(authed)/library`, `(authed)/profile`.
+
+## A2. Pending — user actions to run app first time
+
+- [ ] `pnpm install` inside `EVOTV-app/`.
+- [ ] Drop Geist font files into `EVOTV-app/assets/fonts/` (`Geist-Regular.ttf`, `Geist-Medium.ttf`, `Geist-SemiBold.ttf`, `Geist-Bold.ttf`, `GeistMono-Regular.ttf` — download from `github.com/vercel/geist-font` and convert otf → ttf with `fontforge` if needed).
+- [ ] Drop app icon + splash + adaptive-icon into `EVOTV-app/assets/` (`icon.png` 1024×1024, `splash.png`, `adaptive-icon.png`, `favicon.png`). Stub with EVO logo for now.
+- [ ] `pnpm start` → scan QR with Expo Go on physical device. Verify boot, home renders, login flow runs against mocks.
+- [ ] Verify `(public)/_layout.tsx` Tabs `name="home/index"` resolves correctly in Expo Router 4 — if not, change to `name="home"`.
+
+## A3. Known follow-ups (not blockers for first boot)
+
+- [ ] **Mock function gaps** — `getWatchHistory`, follow-aggregator, downloads-as-Vods all need shaping inside library/profile screens. `library-tabs.tsx` accepts generic shapes; wire data when ready.
+- [ ] **Cross-group tabs** — current Tabs layout shows only public tabs. "Library"/"Profile" reachable via `router.push("/library")` etc. Future: add a 5th "More" tab or a header drawer linking authed routes from public surface.
+- [ ] **Calendar `.ics` download** — `lib/mock/calendar.ts` `downloadIcs()` is a no-op shim. Wire `expo-file-system` + `expo-sharing` when calendar feature lands on app.
+- [ ] **Embed routes** (`(embed)/embed/*`) — likely web-iframe-only; either rebuild as RN-native or hide on app.
+- [ ] **API access docs/integrations** — web-iframe heavy; rewrite or hide on app.
+- [ ] **Phase 1A swap point** — once web ships `/api/auth/*` + bearer-token routes, replace `lib/mock/*` imports with `lib/api/*` modules at the import-site level. Keep function signatures identical.
+- [ ] **Native modules** — `expo-haptics`, `expo-image-picker`, `expo-secure-store`, `expo-blur` declared in `package.json` but not yet used. Wire when feature requires.
+
+## A3a. Web target via SPA mode (DONE 2026-05-05) ✅
+
+- [x] `app.json` `web.output: "single"` — SPA, no static rendering (sidesteps Reanimated SSR break).
+- [x] `pnpm expo export --platform web` produces `dist/` with `index.html` + `_expo/static/{js,css}/*` + `assets/*`. Web bundle ~4.57 MB JS + 17 kB CSS, 3084 modules.
+- [x] `vercel.json` committed — buildCommand `pnpm expo export --platform web`, outputDirectory `dist`, installCommand `pnpm install --frozen-lockfile`, SPA rewrite `/(.*) → /index.html`, immutable cache headers on `_expo/static/*`.
+- [x] HLS on web — `components/stream/hls-player.web.tsx` ships hls.js polyfill (Metro `.web.tsx` extension resolution; native bundle unaffected at 6.76 MB).
+- [x] **GitHub repo:** `https://github.com/Layott/evotv-app` (private).
+- [x] **Vercel deploy:** production live at **`https://evotv-app.vercel.app`** (HTTP 200, title "EVO TV"). Project `evotv-app` under team `layos-projects-20229cd2`. Auto-deploy on push to `main` enabled by default — same as web.
+- [x] Verified end-to-end on local serve: `/home` (hero + 5 sections), `/login` (form), `/events` (stub), `/stream/stream_lagos_final` (HLS error fallback proves polyfill wired).
+
+## A3b. Full screen port — every route now real (DONE 2026-05-05) ✅
+
+User correction: stub screens were unacceptable. Dispatched 8 parallel agents to port every remaining web page as a fully-implemented RN screen.
+
+- [x] **(auth) — 5 screens** ported: signup (multi-field + zod + country picker), forgot/reset password (with strength meter), email OTP verify (6-slot keypad), 4-step onboarding wizard. New: `components/auth/country-select`.
+- [x] **(public) discovery — 12 screens** ported: events list/detail/bracket, discover (debounced search), shop + product detail, categories + game pages, team list/detail, channel page, calendar. New: `components/events/{event-hero,countdown-timer,team-roster,bracket-view}`, `components/shop/{qty-stepper,variant-picker,product-card}`, `components/calendar/calendar-page`.
+- [x] **(public) content + apps — 15 screens** ported: clips feed + 9:16 player, VOD detail with comments + related + paywall, co-stream view, apps landing per platform (Smart TV/Android/iOS/Desktop), upgrade tiers + FAQ, API access (landing/keys/docs/usage), partners. New: `components/vod/{vod-related,vod-comments}`, `components/apps/{platform-bits,store-landing}`, `components/api-access/shell`.
+- [x] **(authed) commerce + settings — 10 screens** ported: settings + sub-pages, billing + cancel flow, checkout, mobile-money STK push flow, notifications inbox (date-bucketed tabs), cart with promo, order detail, public profile by handle. New: `components/profile/ngn`, `components/settings/section-card`, `components/payment-methods/provider-tile`, `components/shop/{cart-store,order-view}`.
+- [x] **(authed) games + engagement — 21 screens** ported: watch parties (browse/create/join), pickem (bracket + leaderboard), predictions (matches + leaderboard), fantasy (leagues + lineup + leaderboard), multi-stream 2x2 grid, tips, USSD with numeric keypad, rewards (store/history/quests with XP tier), auto-clipper admin gate. New: `components/engagement/{coin-pill,rank-badge,drop-card}`.
+- [x] **(authed) creator + integrations — 10 screens** ported: creator program (apply 3-step wizard + thanks), creator dashboard (overview/earnings/clips/audience with custom RN charts), integrations hub + Discord + Telegram bot config. New: `components/creators/{dashboard-shell,metric-card,program-pitch,relative-time}`, `components/integrations/{bot-config-page,bot-icon}`.
+- [x] **(admin) — 12 screens** ported: overview, streams manager, content, polls, ads, users + roles, analytics, orders, moderation queue, settings, billing (USSD admin), forensic watermark inspector. Mobile adaptation: bottom-sheet Modals replace web Sheets, Card row lists replace tables, View+flex bar charts replace recharts, react-native-svg for forensic manifest. New: `components/admin/{utils,page-header,status-badge,metric-card,overview-page,streams-manager-page,content-manager-page,polls-manager-page,ads-manager-page,users-roles-page,analytics-page,orders-page,moderation-page,admin-settings-page,billing-page,forensic-page}`.
+- [x] **(embed) — 2 screens** ported: embed code generator (premium-gated) + minimal full-bleed player.
+- [x] Type fixes: widened `Icon: ComponentType<{size,color}>` → `LucideIcon` across 8 files. Replaced `toast.message` with `toast()` (sonner-native compat) in 14 files. Typecheck clean (0 errors, was 52).
+- [x] Web bundle: 5.43 MB JS (+860 KB) + 30.7 KB CSS (was 17 KB) — 80+ new screens + ~40 new components added. Native bundle still 6.76 MB Hermes.
+- [x] Pushed to GitHub: commit `a759fb6` on branch `main`, https://github.com/Layott/evotv-app.
+- [x] Vercel auto-deployed: deployment `dpl_3u28Pd5rkjAzrpKEhcsbQ9tWpYQ4`, READY in ~2 min, alias `https://evotv-app.vercel.app` live.
+- [x] Verified routes 200: `/home`, `/admin`, `/fantasy`, `/embed`, plus all dynamic + nested.
+
+## A4. App-only roadmap (post-MVP)
+
+- Push notifications via Expo Notifications (linked to web's notification preferences in `lib/mock/notifications`).
+- Offline downloads using `expo-file-system` + `lib/mock/downloads` (already has data shape).
+- Chromecast / AirPlay via `react-native-google-cast` + `react-native-airplay` (requires dev build, not Expo Go).
+- Picture-in-Picture for stream player (expo-video supports PiP).
+- Background audio for radio/music VODs.
+- Deep linking — `app.json` `scheme: "evotv"` already set. Wire link handlers per route group.
+- EAS Build for store submission (App Store + Play Store). EAS Update for OTA JS bumps without store review.
+- Android TV target — Expo Router supports it via `experiments.tvosEnabled` + Android TV manifest entries.
+
+_App track last updated: 2026-05-05 (initial scaffold complete, awaiting first boot)_

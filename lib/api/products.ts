@@ -39,28 +39,32 @@ export async function listProducts(
   if (filter.teamId) {
     conditions.push(eq(schema.products.teamId, filter.teamId));
   }
-  return db
-    .select()
-    .from(schema.products)
-    .where(and(...conditions))
-    .all()
-    .map(toProduct);
+  return (
+    await db
+      .select()
+      .from(schema.products)
+      .where(and(...conditions))
+  ).map(toProduct);
 }
 
 export async function getProductById(id: string): Promise<Product | null> {
-  const r = db
-    .select()
-    .from(schema.products)
-    .where(eq(schema.products.id, id))
-    .get();
+  const r = (
+    await db
+      .select()
+      .from(schema.products)
+      .where(eq(schema.products.id, id))
+      .limit(1)
+  )[0];
   return r ? toProduct(r) : null;
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
-  const r = db
-    .select()
-    .from(schema.products)
-    .where(eq(schema.products.slug, slug))
-    .get();
+  const r = (
+    await db
+      .select()
+      .from(schema.products)
+      .where(eq(schema.products.slug, slug))
+      .limit(1)
+  )[0];
   return r ? toProduct(r) : null;
 }

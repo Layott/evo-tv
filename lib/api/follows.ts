@@ -17,17 +17,19 @@ export async function isFollowing(
   targetType: FollowTarget,
   targetId: string
 ): Promise<boolean> {
-  const row = db
-    .select()
-    .from(schema.follows)
-    .where(
-      and(
-        eq(schema.follows.userId, userId),
-        eq(schema.follows.targetType, targetType),
-        eq(schema.follows.targetId, targetId)
+  const row = (
+    await db
+      .select()
+      .from(schema.follows)
+      .where(
+        and(
+          eq(schema.follows.userId, userId),
+          eq(schema.follows.targetType, targetType),
+          eq(schema.follows.targetId, targetId)
+        )
       )
-    )
-    .get();
+      .limit(1)
+  )[0];
   return !!row;
 }
 
@@ -40,20 +42,10 @@ export async function toggleFollow(
   targetType: FollowTarget,
   targetId: string
 ): Promise<boolean> {
-  const existing = db
-    .select()
-    .from(schema.follows)
-    .where(
-      and(
-        eq(schema.follows.userId, userId),
-        eq(schema.follows.targetType, targetType),
-        eq(schema.follows.targetId, targetId)
-      )
-    )
-    .get();
-
-  if (existing) {
-    db.delete(schema.follows)
+  const existing = (
+    await db
+      .select()
+      .from(schema.follows)
       .where(
         and(
           eq(schema.follows.userId, userId),
@@ -61,28 +53,40 @@ export async function toggleFollow(
           eq(schema.follows.targetId, targetId)
         )
       )
-      .run();
+      .limit(1)
+  )[0];
+
+  if (existing) {
+    await db
+      .delete(schema.follows)
+      .where(
+        and(
+          eq(schema.follows.userId, userId),
+          eq(schema.follows.targetType, targetType),
+          eq(schema.follows.targetId, targetId)
+        )
+      );
     return false;
   }
 
-  db.insert(schema.follows)
+  await db
+    .insert(schema.follows)
     .values({
       userId,
       targetType,
       targetId,
       createdAt: new Date().toISOString(),
     })
-    .onConflictDoNothing()
-    .run();
+    .onConflictDoNothing();
   return true;
 }
 
 export async function listFollows(userId: string): Promise<Follow[]> {
-  return db
-    .select()
-    .from(schema.follows)
-    .where(eq(schema.follows.userId, userId))
-    .orderBy(desc(schema.follows.createdAt))
-    .all()
-    .map(toFollow);
+  return (
+    await db
+      .select()
+      .from(schema.follows)
+      .where(eq(schema.follows.userId, userId))
+      .orderBy(desc(schema.follows.createdAt))
+  ).map(toFollow);
 }

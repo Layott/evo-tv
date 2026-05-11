@@ -18,28 +18,30 @@ function toSub(r: typeof schema.subscriptions.$inferSelect): Subscription {
 }
 
 export async function getActiveSubscription(userId: string): Promise<Subscription | null> {
-  const r = db
-    .select()
-    .from(schema.subscriptions)
-    .where(
-      and(
-        eq(schema.subscriptions.userId, userId),
-        eq(schema.subscriptions.status, "active")
+  const r = (
+    await db
+      .select()
+      .from(schema.subscriptions)
+      .where(
+        and(
+          eq(schema.subscriptions.userId, userId),
+          eq(schema.subscriptions.status, "active")
+        )
       )
-    )
-    .orderBy(desc(schema.subscriptions.createdAt))
-    .get();
+      .orderBy(desc(schema.subscriptions.createdAt))
+      .limit(1)
+  )[0];
   return r ? toSub(r) : null;
 }
 
 export async function listSubscriptionsForUser(userId: string): Promise<Subscription[]> {
-  return db
-    .select()
-    .from(schema.subscriptions)
-    .where(eq(schema.subscriptions.userId, userId))
-    .orderBy(desc(schema.subscriptions.createdAt))
-    .all()
-    .map(toSub);
+  return (
+    await db
+      .select()
+      .from(schema.subscriptions)
+      .where(eq(schema.subscriptions.userId, userId))
+      .orderBy(desc(schema.subscriptions.createdAt))
+  ).map(toSub);
 }
 
 export async function upsertFromPayment(input: {
@@ -56,7 +58,8 @@ export async function upsertFromPayment(input: {
   ).toISOString();
 
   if (existing) {
-    db.update(schema.subscriptions)
+    await db
+      .update(schema.subscriptions)
       .set({
         status: "active",
         provider: input.provider,
@@ -64,13 +67,14 @@ export async function upsertFromPayment(input: {
         currentPeriodEnd: periodEnd,
         priceNgn: input.priceNgn,
       })
-      .where(eq(schema.subscriptions.id, existing.id))
-      .run();
-    const updated = db
-      .select()
-      .from(schema.subscriptions)
-      .where(eq(schema.subscriptions.id, existing.id))
-      .get();
+      .where(eq(schema.subscriptions.id, existing.id));
+    const updated = (
+      await db
+        .select()
+        .from(schema.subscriptions)
+        .where(eq(schema.subscriptions.id, existing.id))
+        .limit(1)
+    )[0];
     return toSub(updated!);
   }
 
@@ -79,7 +83,8 @@ export async function upsertFromPayment(input: {
     Array.from(crypto.getRandomValues(new Uint8Array(8)))
       .map((b) => b.toString(16).padStart(2, "0"))
       .join("");
-  db.insert(schema.subscriptions)
+  await db
+    .insert(schema.subscriptions)
     .values({
       id,
       userId: input.userId,
@@ -90,14 +95,13 @@ export async function upsertFromPayment(input: {
       currentPeriodEnd: periodEnd,
       priceNgn: input.priceNgn,
       createdAt: nowIso,
-    })
-    .run();
+    });
 
   // Promote user role to premium.
-  db.update(schema.user)
+  await db
+    .update(schema.user)
     .set({ role: "premium", updatedAt: new Date() })
-    .where(eq(schema.user.id, input.userId))
-    .run();
+    .where(eq(schema.user.id, input.userId));
 
   return {
     id,
@@ -113,17 +117,17 @@ export async function upsertFromPayment(input: {
 }
 
 export async function cancelSubscription(userId: string): Promise<void> {
-  db.update(schema.subscriptions)
+  await db
+    .update(schema.subscriptions)
     .set({ status: "canceled" })
     .where(
       and(
         eq(schema.subscriptions.userId, userId),
         eq(schema.subscriptions.status, "active")
       )
-    )
-    .run();
-  db.update(schema.user)
+    );
+  await db
+    .update(schema.user)
     .set({ role: "user", updatedAt: new Date() })
-    .where(eq(schema.user.id, userId))
-    .run();
+    .where(eq(schema.user.id, userId));
 }

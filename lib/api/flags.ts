@@ -6,17 +6,19 @@ export type FeatureFlagRow = typeof schema.featureFlags.$inferSelect;
 
 /** Return all feature-flag rows, ordered by key. */
 export async function listFlags(): Promise<FeatureFlagRow[]> {
-  const rows = db.select().from(schema.featureFlags).all();
+  const rows = await db.select().from(schema.featureFlags);
   return rows.sort((a, b) => a.key.localeCompare(b.key));
 }
 
 /** Fetch a single flag by key, or `null` when missing. */
 export async function getFlag(key: string): Promise<FeatureFlagRow | null> {
-  const row = db
-    .select()
-    .from(schema.featureFlags)
-    .where(eq(schema.featureFlags.key, key))
-    .get();
+  const row = (
+    await db
+      .select()
+      .from(schema.featureFlags)
+      .where(eq(schema.featureFlags.key, key))
+      .limit(1)
+  )[0];
   return row ?? null;
 }
 
@@ -39,12 +41,13 @@ export async function setFlag(
         | Record<string, unknown>
         | undefined;
     }
-    db.update(schema.featureFlags)
+    await db
+      .update(schema.featureFlags)
       .set(update)
-      .where(eq(schema.featureFlags.key, key))
-      .run();
+      .where(eq(schema.featureFlags.key, key));
   } else {
-    db.insert(schema.featureFlags)
+    await db
+      .insert(schema.featureFlags)
       .values({
         key,
         enabled,
@@ -52,8 +55,7 @@ export async function setFlag(
         payload: (payload ?? undefined) as
           | Record<string, unknown>
           | undefined,
-      })
-      .run();
+      });
   }
   const row = await getFlag(key);
   if (!row) throw new Error("Flag upsert failed");
@@ -73,13 +75,13 @@ export async function deleteFlag(
   if (!existing) return { deleted: false, disabled: false };
 
   if (opts?.hard) {
-    db.delete(schema.featureFlags).where(eq(schema.featureFlags.key, key)).run();
+    await db.delete(schema.featureFlags).where(eq(schema.featureFlags.key, key));
     return { deleted: true, disabled: false };
   }
 
-  db.update(schema.featureFlags)
+  await db
+    .update(schema.featureFlags)
     .set({ enabled: false })
-    .where(eq(schema.featureFlags.key, key))
-    .run();
+    .where(eq(schema.featureFlags.key, key));
   return { deleted: false, disabled: true };
 }

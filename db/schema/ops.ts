@@ -1,7 +1,7 @@
-import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
+import { pgTable, text, integer, boolean, jsonb, index } from "drizzle-orm/pg-core";
 import { user } from "./users";
 
-export const ads = sqliteTable(
+export const ads = pgTable(
   "ads",
   {
     id: text("id").primaryKey(),
@@ -11,17 +11,17 @@ export const ads = sqliteTable(
     mediaUrl: text("media_url").notNull(),
     clickUrl: text("click_url").notNull(),
     advertiser: text("advertiser").notNull(),
-    active: integer("active", { mode: "boolean" }).notNull().default(true),
+    active: boolean("active").notNull().default(true),
     startAt: text("start_at").notNull(),
     endAt: text("end_at").notNull(),
     weight: integer("weight").notNull().default(100),
     impressions: integer("impressions").notNull().default(0),
     clicks: integer("clicks").notNull().default(0),
   },
-  (t) => [index("ads_placement_active_idx").on(t.placement, t.active)]
+  (t) => [index("ads_placement_active_idx").on(t.placement, t.active)],
 );
 
-export const notifications = sqliteTable(
+export const notifications = pgTable(
   "notifications",
   {
     id: text("id").primaryKey(),
@@ -36,17 +36,17 @@ export const notifications = sqliteTable(
     readAt: text("read_at"),
     createdAt: text("created_at").notNull(),
   },
-  (t) => [index("notifications_user_read_idx").on(t.userId, t.readAt)]
+  (t) => [index("notifications_user_read_idx").on(t.userId, t.readAt)],
 );
 
-export const featureFlags = sqliteTable("feature_flags", {
+export const featureFlags = pgTable("feature_flags", {
   key: text("key").primaryKey(),
-  enabled: integer("enabled", { mode: "boolean" }).notNull().default(false),
+  enabled: boolean("enabled").notNull().default(false),
   description: text("description").notNull().default(""),
-  payload: text("payload", { mode: "json" }).$type<Record<string, unknown>>(),
+  payload: jsonb("payload").$type<Record<string, unknown>>(),
 });
 
-export const pushSubscriptions = sqliteTable(
+export const pushSubscriptions = pgTable(
   "push_subscriptions",
   {
     id: text("id").primaryKey(),
@@ -58,10 +58,10 @@ export const pushSubscriptions = sqliteTable(
     auth: text("auth").notNull(),
     createdAt: text("created_at").notNull(),
   },
-  (t) => [index("push_user_idx").on(t.userId)]
+  (t) => [index("push_user_idx").on(t.userId)],
 );
 
-export const reminders = sqliteTable(
+export const reminders = pgTable(
   "reminders",
   {
     userId: text("user_id")
@@ -70,10 +70,10 @@ export const reminders = sqliteTable(
     eventId: text("event_id").notNull(),
     createdAt: text("created_at").notNull(),
   },
-  (t) => [index("reminders_user_idx").on(t.userId)]
+  (t) => [index("reminders_user_idx").on(t.userId)],
 );
 
-export const auditLog = sqliteTable(
+export const auditLog = pgTable(
   "audit_log",
   {
     id: text("id").primaryKey(),
@@ -81,8 +81,8 @@ export const auditLog = sqliteTable(
     action: text("action").notNull(),
     targetType: text("target_type").notNull(),
     targetId: text("target_id").notNull(),
-    meta: text("meta", { mode: "json" }).$type<Record<string, unknown>>(),
+    meta: jsonb("meta").$type<Record<string, unknown>>(),
     createdAt: text("created_at").notNull(),
   },
-  (t) => [index("audit_created_idx").on(t.createdAt)]
+  (t) => [index("audit_created_idx").on(t.createdAt)],
 );

@@ -18,15 +18,15 @@ function toGame(r: typeof schema.games.$inferSelect): Game {
 }
 
 export async function listGames(): Promise<Game[]> {
-  return db.select().from(schema.games).all().map(toGame);
+  return (await db.select().from(schema.games)).map(toGame);
 }
 
 export async function getGameById(id: string): Promise<Game | null> {
-  const r = db.select().from(schema.games).where(eq(schema.games.id, id)).get();
+  const r = (await db.select().from(schema.games).where(eq(schema.games.id, id)).limit(1))[0];
   return r ? toGame(r) : null;
 }
 
 export async function getGameBySlug(slug: string): Promise<Game | null> {
-  const r = db.select().from(schema.games).where(eq(schema.games.slug, slug)).get();
+  const r = (await db.select().from(schema.games).where(eq(schema.games.slug, slug)).limit(1))[0];
   return r ? toGame(r) : null;
 }

@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { localStorage } from "@/lib/storage/local";
+import { storage } from "@/lib/storage";
 import path from "node:path";
 
 const MIME_MAP: Record<string, string> = {
@@ -34,16 +34,16 @@ export async function GET(
 
   if (token && expiryStr) {
     const expiry = Number.parseInt(expiryStr, 10);
-    if (!Number.isFinite(expiry) || !localStorage.verifySigned(rel, token, expiry)) {
+    if (!Number.isFinite(expiry) || !storage.verifySigned(rel, token, expiry)) {
       return new NextResponse("Forbidden", { status: 403 });
     }
   }
 
-  if (!(await localStorage.exists(rel))) {
+  if (!(await storage.exists(rel))) {
     return new NextResponse("Not found", { status: 404 });
   }
 
-  const buf = await localStorage.read(rel);
+  const buf = await storage.read(rel);
   return new NextResponse(new Uint8Array(buf), {
     headers: {
       "Content-Type": contentType(rel),

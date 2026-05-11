@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1776880861841,
+      "tag": "0000_clever_blackheart",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1776882032398,
+      "tag": "0001_high_night_nurse",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1776883278277,
+      "tag": "0002_many_harry_osborn",
+      "breakpoints": true
+    }
+  ]
+}

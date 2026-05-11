@@ -41,38 +41,38 @@ export async function POST(req: NextRequest) {
 
   let created = 0;
   const runtimeErrors: ParseError[] = [];
+  // TODO: pg-port — neon-http has no transaction(); ports of bulk imports run
+  // sequentially without atomic rollback. Errors are collected per-row.
   try {
-    db.transaction((tx) => {
-      for (let i = 0; i < rows.length; i++) {
-        const row = rows[i];
-        const id = generateId("player");
-        const { kda, teamId, ...rest } = row;
-        try {
-          tx.insert(schema.players)
-            .values({
-              id,
-              ...rest,
-              teamId: teamId ?? null,
-              kda: Math.round(kda * 100),
-            })
-            .run();
-          writeAudit({
-            actorId: guard.user.id,
-            action: "create",
-            targetType: "player",
-            targetId: id,
-            meta: row as unknown as Record<string, unknown>,
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      const id = generateId("player");
+      const { kda, teamId, ...rest } = row;
+      try {
+        await db
+          .insert(schema.players)
+          .values({
+            id,
+            ...rest,
+            teamId: teamId ?? null,
+            kda: Math.round(kda * 100),
           });
-          created++;
-        } catch (err) {
-          const message =
-            typeof err === "object" && err !== null && "message" in err
-              ? String((err as { message?: unknown }).message ?? "")
-              : String(err);
-          runtimeErrors.push({ row: i, message });
-        }
+        writeAudit({
+          actorId: guard.user.id,
+          action: "create",
+          targetType: "player",
+          targetId: id,
+          meta: row as unknown as Record<string, unknown>,
+        });
+        created++;
+      } catch (err) {
+        const message =
+          typeof err === "object" && err !== null && "message" in err
+            ? String((err as { message?: unknown }).message ?? "")
+            : String(err);
+        runtimeErrors.push({ row: i, message });
       }
-    });
+    }
   } catch (err) {
     const message =
       typeof err === "object" && err !== null && "message" in err

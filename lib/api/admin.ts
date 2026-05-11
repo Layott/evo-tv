@@ -44,15 +44,16 @@ export type AuditAction = "create" | "update" | "delete";
  * Insert a row into audit_log. Best-effort: we wrap in try/catch so an audit
  * failure never blocks the underlying mutation response.
  */
-export function writeAudit(params: {
+export async function writeAudit(params: {
   actorId: string;
   action: AuditAction;
   targetType: AuditTargetType;
   targetId: string;
   meta?: Record<string, unknown> | null;
-}): void {
+}): Promise<void> {
   try {
-    db.insert(schema.auditLog)
+    await db
+      .insert(schema.auditLog)
       .values({
         id: generateId("audit"),
         actorId: params.actorId,
@@ -61,8 +62,7 @@ export function writeAudit(params: {
         targetId: params.targetId,
         meta: (params.meta ?? null) as Record<string, unknown> | null,
         createdAt: new Date().toISOString(),
-      })
-      .run();
+      });
   } catch {
     // Swallow audit errors so they cannot break the primary mutation.
   }
@@ -77,7 +77,7 @@ export function mapSqliteUniqueError(err: unknown): NextResponse | null {
     typeof err === "object" && err !== null && "message" in err
       ? String((err as { message?: unknown }).message ?? "")
       : String(err);
-  if (/UNIQUE constraint failed/i.test(message)) {
+  if (/UNIQUE constraint failed/i.test(message) || /duplicate key value violates unique constraint/i.test(message)) {
     return NextResponse.json(
       { error: "Unique constraint violation", detail: message },
       { status: 409 }
