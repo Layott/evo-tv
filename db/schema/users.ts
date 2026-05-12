@@ -22,6 +22,7 @@ export const user = pgTable(
       .notNull()
       .default("user"),
     handle: text("handle").unique(),
+    deletedAt: timestamp("deleted_at", { withTimezone: true, mode: "date" }),
   },
   (t) => [index("user_email_idx").on(t.email), index("user_handle_idx").on(t.handle)],
 );

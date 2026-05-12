@@ -28,6 +28,17 @@ export const auth = betterAuth({
     updateAge: 60 * 60 * 24,
     cookieCache: { enabled: true, maxAge: 60 * 5 },
   },
+  rateLimit: {
+    enabled: true,
+    window: 60,
+    max: 30,
+    customRules: {
+      "/sign-in/email": { window: 60, max: 10 },
+      "/sign-up/email": { window: 60, max: 5 },
+      "/forget-password": { window: 60, max: 3 },
+      "/reset-password": { window: 60, max: 5 },
+    },
+  },
   user: {
     additionalFields: {
       role: {

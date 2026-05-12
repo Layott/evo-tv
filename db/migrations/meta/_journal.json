@@ -22,6 +22,20 @@
       "when": 1778588915146,
       "tag": "0002_multi_tenant",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1778593344265,
+      "tag": "0003_idempotency_keys",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1778593420822,
+      "tag": "0004_user_deleted_at",
+      "breakpoints": true
     }
   ]
 }

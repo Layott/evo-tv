@@ -73,6 +73,29 @@ export const reminders = pgTable(
   (t) => [index("reminders_user_idx").on(t.userId)],
 );
 
+/**
+ * Idempotency keys for money-touching routes. Required header
+ * `Idempotency-Key` on /api/orders, /api/tips, /api/rewards/redeem,
+ * /api/payments/*. Replay of the same key returns the cached response.
+ * 24h retention.
+ */
+export const idempotencyKeys = pgTable(
+  "idempotency_keys",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    key: text("key").notNull(),
+    method: text("method").notNull(),
+    path: text("path").notNull(),
+    responseStatus: integer("response_status").notNull(),
+    responseBody: jsonb("response_body").$type<unknown>(),
+    createdAt: text("created_at").notNull(),
+  },
+  (t) => [index("idempotency_user_key_idx").on(t.userId, t.key)],
+);
+
 export const auditLog = pgTable(
   "audit_log",
   {
