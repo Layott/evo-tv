@@ -128,6 +128,7 @@ async function transcodeStreamToVod(streamId: string): Promise<string | null> {
   await db.insert(schema.vods).values({
     id: vodId,
     streamId,
+    channelId: stream.channelId,
     title: `${stream.title} — VOD`,
     description: stream.description,
     gameId: stream.gameId,

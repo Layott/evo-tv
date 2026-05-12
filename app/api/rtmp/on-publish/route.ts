@@ -1,9 +1,16 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { db, schema } from "@/lib/db";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { hashStreamKey } from "@/lib/video/stream-key";
 import { emit } from "@/lib/sse/bus";
 import "@/workers/transcode";
+
+/**
+ * Concurrent-stream cap per publisher. Hardcoded MVP tiers — replace with
+ * a publishers.concurrent_stream_cap column once partner tier table lands.
+ */
+const CONCURRENT_CAP_EVOTV = 999;
+const CONCURRENT_CAP_PARTNER = 3;
 
 /**
  * Invoked by nginx-rtmp on RTMP publish start.
@@ -68,6 +75,7 @@ export async function POST(req: NextRequest) {
           name: schema.channels.name,
           logoUrl: schema.channels.logoUrl,
           category: schema.channels.category,
+          publisherId: schema.channels.publisherId,
         })
         .from(schema.channels)
         .where(eq(schema.channels.id, channelKeyRow.channelId))
@@ -76,6 +84,42 @@ export async function POST(req: NextRequest) {
 
     if (!channel) {
       return new NextResponse("Channel missing for stream key", { status: 500 });
+    }
+
+    // Concurrent stream cap per publisher. Count existing live streams
+    // tied to any channel owned by this publisher.
+    const pub = (
+      await db
+        .select({ isEvotvOwned: schema.publishers.isEvotvOwned })
+        .from(schema.publishers)
+        .where(eq(schema.publishers.id, channel.publisherId))
+        .limit(1)
+    )[0];
+    const cap = pub?.isEvotvOwned
+      ? CONCURRENT_CAP_EVOTV
+      : CONCURRENT_CAP_PARTNER;
+
+    const liveCountRow = (
+      await db
+        .select({ n: sql<number>`count(*)::int` })
+        .from(schema.streams)
+        .innerJoin(
+          schema.channels,
+          eq(schema.channels.id, schema.streams.channelId),
+        )
+        .where(
+          and(
+            eq(schema.channels.publisherId, channel.publisherId),
+            eq(schema.streams.isLive, true),
+          ),
+        )
+    )[0];
+    const live = liveCountRow?.n ?? 0;
+    if (live >= cap) {
+      return new NextResponse(
+        `Concurrent stream cap reached (${live}/${cap}) for publisher`,
+        { status: 429 },
+      );
     }
 
     const streamId = generateStreamId();
