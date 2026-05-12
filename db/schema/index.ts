@@ -8,3 +8,4 @@ export * from "./rewards";
 export * from "./multi_tenant";
 export * from "./predictions";
 export * from "./pickem";
+export * from "./parties";

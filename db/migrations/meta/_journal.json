@@ -50,6 +50,13 @@
       "when": 1778594048387,
       "tag": "0006_pickem_entries",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1778611376568,
+      "tag": "0007_parties",
+      "breakpoints": true
     }
   ]
 }
