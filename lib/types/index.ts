@@ -120,6 +120,7 @@ export interface Stream {
   description: string;
   eventId: UUID | null;
   gameId: UUID;
+  channelId?: UUID | null;
   streamerType: StreamerType;
   streamerName: string;
   streamerAvatarUrl: string;

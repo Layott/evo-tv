@@ -10,6 +10,7 @@ function toStream(r: typeof schema.streams.$inferSelect): Stream {
     description: r.description,
     eventId: r.eventId,
     gameId: r.gameId,
+    channelId: r.channelId,
     streamerType: r.streamerType as Stream["streamerType"],
     streamerName: r.streamerName,
     streamerAvatarUrl: r.streamerAvatarUrl,
