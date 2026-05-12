@@ -36,6 +36,20 @@
       "when": 1778593420822,
       "tag": "0004_user_deleted_at",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1778593970841,
+      "tag": "0005_prediction_picks",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1778594048387,
+      "tag": "0006_pickem_entries",
+      "breakpoints": true
     }
   ]
 }
