@@ -8,6 +8,13 @@
       "when": 1778459648079,
       "tag": "0000_heavy_rawhide_kid",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1778574901240,
+      "tag": "0001_lovely_sentry",
+      "breakpoints": true
     }
   ]
 }
