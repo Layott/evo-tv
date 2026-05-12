@@ -124,6 +124,7 @@ export const tips = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     streamId: text("stream_id"),
+    channelId: text("channel_id"),
     coins: integer("coins").notNull(),
     message: text("message").notNull().default(""),
     at: timestamp("at", { mode: "string" }).notNull().defaultNow(),

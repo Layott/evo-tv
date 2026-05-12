@@ -5,3 +5,4 @@ export * from "./streaming";
 export * from "./commerce";
 export * from "./ops";
 export * from "./rewards";
+export * from "./multi_tenant";

@@ -13,6 +13,10 @@ export const streams = pgTable(
     gameId: text("game_id")
       .notNull()
       .references(() => games.id, { onDelete: "cascade" }),
+    // Phase 3 multi-tenant: nullable during backfill; will be required once
+    // Phase 3.2 populates every row. Not adding FK constraint via Drizzle since
+    // `channels` is in a separate schema file — let the migration capture it.
+    channelId: text("channel_id"),
     streamerType: text("streamer_type", { enum: ["official", "creator"] })
       .notNull()
       .default("official"),
@@ -39,6 +43,7 @@ export const vods = pgTable(
   {
     id: text("id").primaryKey(),
     streamId: text("stream_id").references(() => streams.id, { onDelete: "set null" }),
+    channelId: text("channel_id"),
     title: text("title").notNull(),
     description: text("description").notNull().default(""),
     gameId: text("game_id")
@@ -66,6 +71,7 @@ export const clips = pgTable(
     id: text("id").primaryKey(),
     vodId: text("vod_id").references(() => vods.id, { onDelete: "set null" }),
     streamId: text("stream_id").references(() => streams.id, { onDelete: "set null" }),
+    channelId: text("channel_id"),
     title: text("title").notNull(),
     creatorHandle: text("creator_handle").notNull(),
     creatorAvatarUrl: text("creator_avatar_url").notNull().default(""),
