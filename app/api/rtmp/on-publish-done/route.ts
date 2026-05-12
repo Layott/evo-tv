@@ -1,11 +1,17 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { db, schema } from "@/lib/db";
-import { eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { hashStreamKey } from "@/lib/video/stream-key";
 import { emit } from "@/lib/sse/bus";
 import "@/workers/transcode"; // auto-registers transcode worker
 
-/** nginx-rtmp fires this when publisher disconnects. */
+/**
+ * nginx-rtmp fires this when publisher disconnects.
+ *
+ * Multi-tenant note: Phase 3.4 inserts a new streams row per go-live, so
+ * we must match on (key_hash, is_live=true) to find the active row instead
+ * of just the most-recent. Tie-break: most-recent `created_at`.
+ */
 export async function POST(req: NextRequest) {
   const body = await req.text();
   const params = new URLSearchParams(body);
@@ -17,10 +23,16 @@ export async function POST(req: NextRequest) {
     await db
       .select()
       .from(schema.streams)
-      .where(eq(schema.streams.streamKeyHash, keyHash))
+      .where(
+        and(
+          eq(schema.streams.streamKeyHash, keyHash),
+          eq(schema.streams.isLive, true),
+        ),
+      )
+      .orderBy(desc(schema.streams.createdAt))
       .limit(1)
   )[0];
-  if (!row) return new NextResponse("Unknown stream key", { status: 404 });
+  if (!row) return new NextResponse("No active stream for key", { status: 404 });
 
   const nowIso = new Date().toISOString();
   await db
@@ -29,6 +41,9 @@ export async function POST(req: NextRequest) {
     .where(eq(schema.streams.id, row.id));
 
   emit(`stream:${row.id}:status`, { isLive: false, endedAt: nowIso });
+  if (row.channelId) {
+    emit(`channel:${row.channelId}:offline`, { streamId: row.id });
+  }
   emit("stream:enqueue-transcode", { streamId: row.id });
 
   return new NextResponse("OK", { status: 200 });

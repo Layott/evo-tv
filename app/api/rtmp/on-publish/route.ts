@@ -1,14 +1,39 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { db, schema } from "@/lib/db";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { hashStreamKey } from "@/lib/video/stream-key";
 import { emit } from "@/lib/sse/bus";
+import "@/workers/transcode";
 
 /**
  * Invoked by nginx-rtmp on RTMP publish start.
  * nginx posts form-urlencoded: `name=<stream_key>&app=live&addr=<ip>`.
  * Must respond 2xx to allow publish; any non-2xx rejects the connection.
+ *
+ * Multi-tenant lookup (Phase 3.4):
+ *   1. Hash incoming `name` and look up `channel_stream_keys` WHERE
+ *      key_hash matches AND active=true.
+ *   2. INSERT a new `streams` row tied to channel_id (replaces the old
+ *      "must pre-exist a streams row" rule).
+ *   3. Emit channel:<id>:live for partner dashboards + global
+ *      stream:live-now feed.
+ *
+ * Legacy fallback: if no channel_stream_keys match, fall back to the
+ * pre-3.4 lookup against `streams.stream_key_hash` so the EVO TV-owned
+ * channels seeded before key rotation still work during the transition.
+ * Remove the fallback once every channel has a key in
+ * channel_stream_keys.
  */
+
+function generateStreamId(): string {
+  return (
+    "stream_" +
+    Array.from(crypto.getRandomValues(new Uint8Array(8)))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("")
+  );
+}
+
 export async function POST(req: NextRequest) {
   const body = await req.text();
   const params = new URLSearchParams(body);
@@ -16,7 +41,76 @@ export async function POST(req: NextRequest) {
   if (!streamKey) return new NextResponse("Missing stream key", { status: 400 });
 
   const keyHash = hashStreamKey(streamKey);
-  const row = (
+  const nowIso = new Date().toISOString();
+
+  // 1. Multi-tenant path: channel_stream_keys
+  const channelKeyRow = (
+    await db
+      .select({
+        channelId: schema.channelStreamKeys.channelId,
+        active: schema.channelStreamKeys.active,
+      })
+      .from(schema.channelStreamKeys)
+      .where(
+        and(
+          eq(schema.channelStreamKeys.keyHash, keyHash),
+          eq(schema.channelStreamKeys.active, true),
+        ),
+      )
+      .limit(1)
+  )[0];
+
+  if (channelKeyRow) {
+    const channel = (
+      await db
+        .select({
+          id: schema.channels.id,
+          name: schema.channels.name,
+          logoUrl: schema.channels.logoUrl,
+          category: schema.channels.category,
+        })
+        .from(schema.channels)
+        .where(eq(schema.channels.id, channelKeyRow.channelId))
+        .limit(1)
+    )[0];
+
+    if (!channel) {
+      return new NextResponse("Channel missing for stream key", { status: 500 });
+    }
+
+    const streamId = generateStreamId();
+    await db.insert(schema.streams).values({
+      id: streamId,
+      title: `${channel.name} live`,
+      description: "",
+      gameId: "game_freefire",
+      channelId: channel.id,
+      streamerType: "creator",
+      streamerName: channel.name,
+      streamerAvatarUrl: channel.logoUrl,
+      streamKeyHash: keyHash,
+      isLive: true,
+      startedAt: nowIso,
+      endedAt: null,
+      hlsPath: `/hls/${streamKey}.m3u8`,
+      viewerCount: 0,
+      peakViewerCount: 0,
+      language: "en",
+      tags: [],
+      isPremium: false,
+      createdAt: nowIso,
+    });
+
+    emit(`stream:${streamId}:status`, { isLive: true, startedAt: nowIso });
+    emit(`channel:${channel.id}:live`, { streamId, channelId: channel.id });
+    emit("stream:live-now", { streamId, channelId: channel.id });
+
+    return new NextResponse("OK", { status: 200 });
+  }
+
+  // 2. Legacy path: pre-existing streams row keyed by stream_key_hash.
+  // Phase 3 transition only. Remove once every active channel has a key row.
+  const legacy = (
     await db
       .select()
       .from(schema.streams)
@@ -24,12 +118,8 @@ export async function POST(req: NextRequest) {
       .limit(1)
   )[0];
 
-  if (!row) return new NextResponse("Unknown stream key", { status: 403 });
-  if (row.streamerType !== "official") {
-    return new NextResponse("Creator streams not permitted in MVP", { status: 403 });
-  }
+  if (!legacy) return new NextResponse("Unknown stream key", { status: 403 });
 
-  const nowIso = new Date().toISOString();
   await db
     .update(schema.streams)
     .set({
@@ -39,10 +129,16 @@ export async function POST(req: NextRequest) {
       hlsPath: `/hls/${streamKey}.m3u8`,
       viewerCount: 0,
     })
-    .where(eq(schema.streams.id, row.id));
+    .where(eq(schema.streams.id, legacy.id));
 
-  emit(`stream:${row.id}:status`, { isLive: true, startedAt: nowIso });
-  emit("stream:live-now", { streamId: row.id });
+  emit(`stream:${legacy.id}:status`, { isLive: true, startedAt: nowIso });
+  if (legacy.channelId) {
+    emit(`channel:${legacy.channelId}:live`, {
+      streamId: legacy.id,
+      channelId: legacy.channelId,
+    });
+  }
+  emit("stream:live-now", { streamId: legacy.id, channelId: legacy.channelId ?? null });
 
   return new NextResponse("OK", { status: 200 });
 }
