@@ -1,5 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+/* ── Page-level auth routing ────────────────────────────────────────── */
+
 const AUTHED_PREFIXES = [
   "/profile",
   "/library",
@@ -13,8 +15,75 @@ const ADMIN_PREFIX = "/admin";
 
 const AUTH_PAGES = ["/login", "/signup", "/onboarding", "/verify-email", "/forgot-password", "/reset-password"];
 
+/* ── CORS for /api/* ────────────────────────────────────────────────── */
+
+const ALLOWED = (process.env.ALLOWED_ORIGINS ?? "*").trim();
+const ORIGIN_LIST =
+  ALLOWED === "*"
+    ? null
+    : new Set(
+        ALLOWED.split(",")
+          .map((s) => s.trim())
+          .filter(Boolean),
+      );
+
+function pickOrigin(reqOrigin: string | null): string | null {
+  if (!reqOrigin) return null;
+  if (ORIGIN_LIST === null) return reqOrigin;
+  return ORIGIN_LIST.has(reqOrigin) ? reqOrigin : null;
+}
+
+const ALLOW_HEADERS =
+  "Authorization, Content-Type, X-Requested-With, Accept, X-Better-Auth-Bearer";
+const ALLOW_METHODS = "GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD";
+const EXPOSE_HEADERS = "Set-Auth-Token, X-Better-Auth-Bearer";
+
+function corsHeaders(allow: string | null, includeMethodsAndHeaders: boolean): Record<string, string> {
+  const h: Record<string, string> = {};
+  if (allow) {
+    h["Access-Control-Allow-Origin"] = allow;
+    h["Access-Control-Allow-Credentials"] = "true";
+    h["Vary"] = "Origin";
+    h["Access-Control-Expose-Headers"] = EXPOSE_HEADERS;
+  }
+  if (includeMethodsAndHeaders) {
+    h["Access-Control-Allow-Methods"] = ALLOW_METHODS;
+    h["Access-Control-Allow-Headers"] = ALLOW_HEADERS;
+    h["Access-Control-Max-Age"] = "86400";
+  }
+  return h;
+}
+
+function handleApi(req: NextRequest): NextResponse {
+  const origin = req.headers.get("origin");
+  const allow = pickOrigin(origin);
+
+  if (req.method === "OPTIONS") {
+    const res = new NextResponse(null, { status: 204 });
+    for (const [k, v] of Object.entries(corsHeaders(allow, true))) {
+      res.headers.set(k, v);
+    }
+    return res;
+  }
+
+  const res = NextResponse.next();
+  for (const [k, v] of Object.entries(corsHeaders(allow, false))) {
+    res.headers.set(k, v);
+  }
+  return res;
+}
+
+/* ── Entrypoint ─────────────────────────────────────────────────────── */
+
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
+
+  // /api/* → CORS only, never redirect.
+  if (pathname.startsWith("/api/")) {
+    return handleApi(req);
+  }
+
+  // Page-level auth routing for everything else.
   const role = req.cookies.get("evotv_role")?.value ?? "guest";
 
   if (pathname.startsWith(ADMIN_PREFIX)) {
@@ -46,6 +115,7 @@ export function proxy(req: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|icon.svg|.*\\.(?:png|jpg|jpeg|svg|webp|gif|ico|mp4|m3u8)).*)",
+    "/api/:path*",
+    "/((?!_next/static|_next/image|favicon.ico|icon.svg|.*\\.(?:png|jpg|jpeg|svg|webp|gif|ico|mp4|m3u8)).*)",
   ],
 };
