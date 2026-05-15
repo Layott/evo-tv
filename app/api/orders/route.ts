@@ -1,9 +1,28 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
+import { desc, eq } from "drizzle-orm";
+import { db, schema } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/guards";
 import { createOrder, OrderValidationError } from "@/lib/api/orders";
 import { getProvider } from "@/lib/payments/provider";
 import { checkIdempotency, recordIdempotency } from "@/lib/http/idempotency";
+
+/**
+ * GET /api/orders — current user's orders, newest first.
+ */
+export async function GET() {
+  const user = await getCurrentUser();
+  if (!user) return new NextResponse("Auth required", { status: 401 });
+
+  const rows = await db
+    .select()
+    .from(schema.orders)
+    .where(eq(schema.orders.userId, user.id))
+    .orderBy(desc(schema.orders.createdAt))
+    .limit(100);
+
+  return NextResponse.json({ orders: rows });
+}
 
 const bodySchema = z.object({
   items: z
