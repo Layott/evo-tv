@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/guards";
 import { sendTip, TipError } from "@/lib/api/tips";
+import { checkIdempotency, recordIdempotency } from "@/lib/http/idempotency";
 
 const bodySchema = z.object({
   toUserId: z.string().min(1).max(128),
@@ -13,6 +14,9 @@ const bodySchema = z.object({
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
   if (!user) return new NextResponse("Auth required", { status: 401 });
+
+  const replay = await checkIdempotency(req, user.id);
+  if (replay) return replay;
 
   const parsed = bodySchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
@@ -30,6 +34,7 @@ export async function POST(req: NextRequest) {
       message: parsed.data.message,
       streamId: parsed.data.streamId ?? null,
     });
+    await recordIdempotency(req, user.id, 200, tip);
     return NextResponse.json(tip);
   } catch (err) {
     if (err instanceof TipError) {
@@ -39,7 +44,9 @@ export async function POST(req: NextRequest) {
           : err.code === "insufficient_coins"
             ? 402
             : 422;
-      return NextResponse.json({ error: err.message, code: err.code }, { status });
+      const body = { error: err.message, code: err.code };
+      await recordIdempotency(req, user.id, status, body);
+      return NextResponse.json(body, { status });
     }
     return NextResponse.json({ error: "Tip failed" }, { status: 500 });
   }

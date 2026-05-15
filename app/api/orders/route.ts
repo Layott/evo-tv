@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/guards";
 import { createOrder, OrderValidationError } from "@/lib/api/orders";
 import { getProvider } from "@/lib/payments/provider";
+import { checkIdempotency, recordIdempotency } from "@/lib/http/idempotency";
 
 const bodySchema = z.object({
   items: z
@@ -29,6 +30,9 @@ const bodySchema = z.object({
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
   if (!user) return new NextResponse("Auth required", { status: 401 });
+
+  const replay = await checkIdempotency(req, user.id);
+  if (replay) return replay;
 
   let body: unknown;
   try {
@@ -82,9 +86,11 @@ export async function POST(req: NextRequest) {
     callbackUrl: `${origin}/api/orders/${encodeURIComponent(order.id)}/confirm-payment`,
   });
 
-  return NextResponse.json({
+  const responseBody = {
     order,
     redirectUrl: init.redirectUrl,
     reference: init.reference,
-  });
+  };
+  await recordIdempotency(req, user.id, 200, responseBody);
+  return NextResponse.json(responseBody);
 }

@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/guards";
 import { redeemDrop, RedeemError } from "@/lib/api/rewards";
+import { checkIdempotency, recordIdempotency } from "@/lib/http/idempotency";
 
 const bodySchema = z.object({
   dropId: z.string().min(1),
@@ -10,6 +11,9 @@ const bodySchema = z.object({
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
   if (!user) return new NextResponse("Auth required", { status: 401 });
+
+  const replay = await checkIdempotency(req, user.id);
+  if (replay) return replay;
 
   const parsed = bodySchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
@@ -21,6 +25,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const redemption = await redeemDrop(user.id, parsed.data.dropId);
+    await recordIdempotency(req, user.id, 200, redemption);
     return NextResponse.json(redemption);
   } catch (err) {
     if (err instanceof RedeemError) {
@@ -32,7 +37,9 @@ export async function POST(req: NextRequest) {
             : err.code === "out_of_stock"
               ? 409
               : 410;
-      return NextResponse.json({ error: err.message, code: err.code }, { status });
+      const body = { error: err.message, code: err.code };
+      await recordIdempotency(req, user.id, status, body);
+      return NextResponse.json(body, { status });
     }
     return NextResponse.json({ error: "Redemption failed" }, { status: 500 });
   }
