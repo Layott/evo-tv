@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
-import { and, count, desc, eq } from "drizzle-orm";
+import { and, count, desc, eq, isNotNull, isNull } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { generateStreamKey, hashStreamKey } from "@/lib/video/stream-key";
 import { getCurrentUser } from "@/lib/auth/guards";
@@ -12,6 +12,8 @@ const listQuerySchema = z.object({
     .enum(["true", "false"])
     .transform((v) => v === "true")
     .optional(),
+  /** Filter by deleted state: 'only' = deleted only, 'include' = both, undefined = active only (default). */
+  deleted: z.enum(["only", "include"]).optional(),
   limit: z.coerce.number().int().min(1).max(200).default(100),
   offset: z.coerce.number().int().min(0).default(0),
 });
@@ -29,11 +31,16 @@ export async function GET(req: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 });
   }
-  const { gameId, isLive, limit, offset } = parsed.data;
+  const { gameId, isLive, deleted, limit, offset } = parsed.data;
 
   const filters = [
     gameId ? eq(schema.streams.gameId, gameId) : undefined,
     typeof isLive === "boolean" ? eq(schema.streams.isLive, isLive) : undefined,
+    deleted === "only"
+      ? isNotNull(schema.streams.deletedAt)
+      : deleted === "include"
+        ? undefined
+        : isNull(schema.streams.deletedAt),
   ].filter(Boolean) as Parameters<typeof and>;
 
   const whereClause = filters.length ? and(...filters) : undefined;
@@ -61,6 +68,7 @@ export async function GET(req: NextRequest) {
         createdAt: schema.streams.createdAt,
         startedAt: schema.streams.startedAt,
         endedAt: schema.streams.endedAt,
+        deletedAt: schema.streams.deletedAt,
       })
       .from(schema.streams)
       .where(whereClause as ReturnType<typeof and>)
