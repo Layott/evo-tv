@@ -40,7 +40,28 @@ export async function GET(req: NextRequest) {
 
   const [rows, totalRow] = await Promise.all([
     db
-      .select()
+      .select({
+        id: schema.streams.id,
+        title: schema.streams.title,
+        description: schema.streams.description,
+        eventId: schema.streams.eventId,
+        gameId: schema.streams.gameId,
+        channelId: schema.streams.channelId,
+        streamerType: schema.streams.streamerType,
+        streamerName: schema.streams.streamerName,
+        streamerAvatarUrl: schema.streams.streamerAvatarUrl,
+        isLive: schema.streams.isLive,
+        hlsPath: schema.streams.hlsPath,
+        thumbnailUrl: schema.streams.thumbnailUrl,
+        viewerCount: schema.streams.viewerCount,
+        peakViewerCount: schema.streams.peakViewerCount,
+        language: schema.streams.language,
+        tags: schema.streams.tags,
+        isPremium: schema.streams.isPremium,
+        createdAt: schema.streams.createdAt,
+        startedAt: schema.streams.startedAt,
+        endedAt: schema.streams.endedAt,
+      })
       .from(schema.streams)
       .where(whereClause as ReturnType<typeof and>)
       .orderBy(desc(schema.streams.createdAt))
@@ -52,8 +73,14 @@ export async function GET(req: NextRequest) {
       .where(whereClause as ReturnType<typeof and>),
   ]);
 
+  // Rename hlsPath → hlsUrl to match RN's Stream type contract.
+  const streams = rows.map(({ hlsPath, ...rest }) => ({
+    ...rest,
+    hlsUrl: hlsPath,
+  }));
+
   return NextResponse.json({
-    streams: rows,
+    streams,
     total: totalRow[0]?.value ?? 0,
     limit,
     offset,
