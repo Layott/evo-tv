@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
-import { and, count, desc, eq, type SQL } from "drizzle-orm";
+import { and, count, desc, eq, inArray, type SQL } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { requireMinRole } from "@/lib/auth/guards";
 
@@ -63,8 +63,39 @@ export async function GET(req: NextRequest) {
       .where(whereClause),
   ]);
 
+  // Enrichment: for every chat_message report in this page, fetch the
+  // referenced chat row so the moderation UI can quote the body inline.
+  const chatTargetIds = rows
+    .filter((r) => r.targetType === "chat_message")
+    .map((r) => r.targetId);
+
+  let chatBodies: Record<string, { body: string; streamId: string; userId: string }> = {};
+  if (chatTargetIds.length > 0) {
+    const chatRows = await db
+      .select({
+        id: schema.chatMessages.id,
+        body: schema.chatMessages.body,
+        streamId: schema.chatMessages.streamId,
+        userId: schema.chatMessages.userId,
+      })
+      .from(schema.chatMessages)
+      .where(inArray(schema.chatMessages.id, chatTargetIds));
+    chatBodies = Object.fromEntries(
+      chatRows.map((c) => [
+        c.id,
+        { body: c.body, streamId: c.streamId, userId: c.userId },
+      ]),
+    );
+  }
+
+  const reports = rows.map((r) => ({
+    ...r,
+    targetPreview:
+      r.targetType === "chat_message" ? (chatBodies[r.targetId] ?? null) : null,
+  }));
+
   return NextResponse.json({
-    reports: rows,
+    reports,
     total: totalRow[0]?.value ?? 0,
     limit,
     offset,
