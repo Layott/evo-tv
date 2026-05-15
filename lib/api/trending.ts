@@ -1,5 +1,5 @@
 import "server-only";
-import { and, desc, eq, gte, sql } from "drizzle-orm";
+import { and, desc, eq, gte, isNull, sql } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import type { Clip, Vod } from "@/lib/types";
 
@@ -74,6 +74,7 @@ export async function listTrendingClips(limit = 10): Promise<Clip[]> {
     })
     .from(schema.clips)
     .leftJoin(likeAgg, eq(likeAgg.targetId, schema.clips.id))
+    .where(isNull(schema.clips.deletedAt))
     .orderBy(
       desc(sql`COALESCE(${likeAgg.n}, 0) * 2 + ${schema.clips.viewCount}`)
     )
@@ -110,6 +111,7 @@ export async function listTrendingVodsNow(limit = 10): Promise<Vod[]> {
     })
     .from(schema.vods)
     .leftJoin(likeAgg, eq(likeAgg.targetId, schema.vods.id))
+    .where(isNull(schema.vods.deletedAt))
     .orderBy(
       desc(sql`COALESCE(${likeAgg.n}, 0)`),
       desc(schema.vods.viewCount)

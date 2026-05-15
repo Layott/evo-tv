@@ -34,6 +34,7 @@ export const streams = pgTable(
     tags: jsonb("tags").$type<string[]>().notNull().default([]),
     isPremium: boolean("is_premium").notNull().default(false),
     createdAt: text("created_at").notNull(),
+    deletedAt: text("deleted_at"),
   },
   (t) => [index("streams_live_idx").on(t.isLive), index("streams_game_idx").on(t.gameId)],
 );
@@ -61,6 +62,7 @@ export const vods = pgTable(
     viewCount: integer("view_count").notNull().default(0),
     likeCount: integer("like_count").notNull().default(0),
     isPremium: boolean("is_premium").notNull().default(false),
+    deletedAt: text("deleted_at"),
   },
   (t) => [index("vods_game_idx").on(t.gameId), index("vods_published_idx").on(t.publishedAt)],
 );
@@ -84,6 +86,7 @@ export const clips = pgTable(
     gameId: text("game_id")
       .notNull()
       .references(() => games.id, { onDelete: "cascade" }),
+    deletedAt: text("deleted_at"),
   },
   (t) => [index("clips_game_idx").on(t.gameId)],
 );

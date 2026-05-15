@@ -1,5 +1,5 @@
 import "server-only";
-import { like, or } from "drizzle-orm";
+import { and, isNull, like, or } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import type { Game, Team, Player, EsportsEvent, Stream, Vod } from "@/lib/types";
 import { listGames } from "./games";
@@ -66,7 +66,7 @@ export async function globalSearch(query: string): Promise<SearchResults> {
   const streamRows = await db
     .select()
     .from(schema.streams)
-    .where(like(schema.streams.title, pat));
+    .where(and(like(schema.streams.title, pat), isNull(schema.streams.deletedAt)));
   const streams: Stream[] = streamRows.map((r) => ({
     id: r.id,
     title: r.title,
@@ -91,7 +91,7 @@ export async function globalSearch(query: string): Promise<SearchResults> {
   const vodRows = await db
     .select()
     .from(schema.vods)
-    .where(like(schema.vods.title, pat));
+    .where(and(like(schema.vods.title, pat), isNull(schema.vods.deletedAt)));
   const vods: Vod[] = vodRows.map((r) => ({
     id: r.id,
     streamId: r.streamId,

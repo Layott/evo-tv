@@ -1,5 +1,5 @@
 import "server-only";
-import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNull, sql } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import type { Stream } from "@/lib/types";
 
@@ -67,7 +67,10 @@ export async function listLiveStreams(filter?: {
   gameId?: string;
   isPremium?: boolean;
 }): Promise<Stream[]> {
-  const conds = [eq(schema.streams.isLive, true)];
+  const conds = [
+    eq(schema.streams.isLive, true),
+    isNull(schema.streams.deletedAt),
+  ];
   if (filter?.gameId) conds.push(eq(schema.streams.gameId, filter.gameId));
   if (typeof filter?.isPremium === "boolean")
     conds.push(eq(schema.streams.isPremium, filter.isPremium));
@@ -85,7 +88,7 @@ export async function getStreamById(id: string): Promise<Stream | null> {
     await db
       .select()
       .from(schema.streams)
-      .where(eq(schema.streams.id, id))
+      .where(and(eq(schema.streams.id, id), isNull(schema.streams.deletedAt)))
       .limit(1)
   )[0];
   if (!r) return null;
@@ -100,7 +103,9 @@ export async function listFeaturedStreams(): Promise<Stream[]> {
   const rows = await db
     .select()
     .from(schema.streams)
-    .where(eq(schema.streams.isLive, true))
+    .where(
+      and(eq(schema.streams.isLive, true), isNull(schema.streams.deletedAt)),
+    )
     .orderBy(desc(schema.streams.viewerCount))
     .limit(3);
   const counts = await liveViewerCounts(rows.map((r) => r.id));
