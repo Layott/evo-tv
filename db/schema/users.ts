@@ -18,7 +18,18 @@ export const user = pgTable(
       .notNull()
       .$defaultFn(() => new Date()),
     // EVO TV additions
-    role: text("role", { enum: ["user", "premium", "admin"] })
+    role: text("role", {
+      enum: [
+        "guest",
+        "user",
+        "premium",
+        "support_admin",
+        "moderator",
+        "finance_admin",
+        "admin",
+        "head_admin",
+      ],
+    })
       .notNull()
       .default("user"),
     handle: text("handle").unique(),

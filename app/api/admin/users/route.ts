@@ -1,11 +1,25 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
-import { and, count, desc, eq, ilike, or, sql } from "drizzle-orm";
+import { and, count, desc, eq, ilike, or } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { requireAdminFromRequest } from "@/lib/api/admin";
+import { requireMinRole } from "@/lib/auth/guards";
+import { canGrantRole, type PlatformRole } from "@/lib/auth/roles";
+import { writeAudit } from "@/lib/api/audit";
+
+const PLATFORM_ROLES: [PlatformRole, ...PlatformRole[]] = [
+  "guest",
+  "user",
+  "premium",
+  "support_admin",
+  "moderator",
+  "finance_admin",
+  "admin",
+  "head_admin",
+];
 
 const querySchema = z.object({
-  role: z.enum(["user", "premium", "admin"]).optional(),
+  role: z.enum(PLATFORM_ROLES).optional(),
   search: z.string().min(1).optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
@@ -74,16 +88,24 @@ export async function GET(req: NextRequest) {
 
 const patchSchema = z.object({
   userId: z.string().min(1),
-  role: z.enum(["user", "premium", "admin"]),
+  role: z.enum(PLATFORM_ROLES),
 });
 
 /**
  * PATCH /api/admin/users
  *
- * Body: { userId, role } — promote/demote a user. Self-edit blocked.
+ * Body: { userId, role } — promote/demote a user.
+ *
+ * Auth: requires `admin` or higher. `canGrantRole(actor, target)` further
+ * restricts: head_admin can grant any role; admin can grant
+ * moderator/finance_admin/support_admin/user/premium (NOT admin/head_admin).
+ * Cannot demote a higher- or equal-ranked role (no admin removing another
+ * admin's privileges except head_admin).
+ *
+ * Self-edit blocked. Every successful change writes an audit row.
  */
 export async function PATCH(req: NextRequest) {
-  const guard = await requireAdminFromRequest();
+  const guard = await requireMinRole("admin");
   if (!guard.ok) return guard.response;
 
   let body: unknown;
@@ -96,19 +118,65 @@ export async function PATCH(req: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 });
   }
-  if (parsed.data.userId === guard.user.id) {
+  const { userId, role: targetRole } = parsed.data;
+
+  if (userId === guard.user.id) {
     return new NextResponse("Cannot change own role", { status: 400 });
+  }
+
+  // Actor must be allowed to grant this role.
+  if (!canGrantRole(guard.role, targetRole)) {
+    return NextResponse.json(
+      { error: `Role ${guard.role} cannot grant ${targetRole}` },
+      { status: 403 },
+    );
+  }
+
+  // Look up current role on target user. Block lower-ranked actor from
+  // demoting an equal-or-higher-ranked role (e.g. an admin cannot strip
+  // head_admin from someone else; only another head_admin can).
+  const target = (
+    await db
+      .select({ role: schema.user.role })
+      .from(schema.user)
+      .where(eq(schema.user.id, userId))
+      .limit(1)
+  )[0];
+  if (!target) {
+    return new NextResponse("User not found", { status: 404 });
+  }
+  const currentRole = (target.role ?? "user") as PlatformRole;
+  if (!canGrantRole(guard.role, currentRole)) {
+    return NextResponse.json(
+      { error: `Cannot modify a ${currentRole} (you are ${guard.role})` },
+      { status: 403 },
+    );
+  }
+  if (currentRole === targetRole) {
+    return NextResponse.json({ ok: true, id: userId, role: targetRole });
   }
 
   const result = await db
     .update(schema.user)
-    .set({ role: parsed.data.role })
-    .where(eq(schema.user.id, parsed.data.userId))
+    .set({ role: targetRole })
+    .where(eq(schema.user.id, userId))
     .returning({ id: schema.user.id, role: schema.user.role });
 
   if (result.length === 0) {
     return new NextResponse("User not found", { status: 404 });
   }
+
+  await writeAudit({
+    actorId: guard.user.id,
+    action: "role.grant",
+    targetType: "user",
+    targetId: userId,
+    meta: {
+      actorRole: guard.role,
+      previousRole: currentRole,
+      newRole: targetRole,
+    },
+  });
 
   return NextResponse.json({ ok: true, ...result[0] });
 }
