@@ -13,7 +13,11 @@ export async function getSession() {
 
 export async function getCurrentUser(): Promise<SessionUser | null> {
   const session = await getSession();
-  return session?.user ?? null;
+  if (session?.user) return session.user;
+
+  // No session — check for X-API-Key (server-to-server / external integration).
+  const { authenticateApiKey } = await import("./api-key");
+  return authenticateApiKey();
 }
 
 export async function requireUser(): Promise<SessionUser> {
