@@ -42,6 +42,15 @@ export async function GET(
             /* closed */
           }
         }),
+        subscribe(`party:${id}:chat`, (p) => {
+          try {
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify(p)}\n\n`),
+            );
+          } catch {
+            /* closed */
+          }
+        }),
       ];
 
       const heartbeat = setInterval(() => {

@@ -59,3 +59,28 @@ export const partyMembers = pgTable(
     index("party_members_user_idx").on(t.userId),
   ],
 );
+
+/**
+ * Persistent party chat (Phase 7.1 follow-up).
+ * Append-only; broadcast via SSE topic `party:<id>:chat` on insert.
+ */
+export const partyMessages = pgTable(
+  "party_messages",
+  {
+    id: text("id").primaryKey(),
+    partyId: text("party_id")
+      .notNull()
+      .references(() => parties.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    body: text("body").notNull(),
+    isSystem: boolean("is_system").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("party_messages_party_created_idx").on(t.partyId, t.createdAt),
+  ],
+);
