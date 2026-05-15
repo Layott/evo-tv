@@ -108,6 +108,15 @@ export const auth = betterAuth({
           }
           return { data: session };
         },
+        after: async (session) => {
+          // Forensic login event — best-effort, never blocks sign-in.
+          try {
+            const { recordLoginEvent } = await import("./login-events");
+            await recordLoginEvent(session as { userId: string });
+          } catch (err) {
+            console.warn("[auth] login-event write failed", err);
+          }
+        },
       },
     },
   },

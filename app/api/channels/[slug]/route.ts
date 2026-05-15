@@ -23,6 +23,12 @@ export async function GET(
   )[0];
   if (!channel) return new NextResponse("Channel not found", { status: 404 });
 
+  // Suspended channels are hidden from the public — admins can still reach
+  // them via /api/admin/channels.
+  if (channel.suspendedAt) {
+    return new NextResponse("Channel not found", { status: 404 });
+  }
+
   const liveStreams = await db
     .select()
     .from(schema.streams)

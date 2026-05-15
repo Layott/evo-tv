@@ -108,6 +108,8 @@ export const channels = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
       .notNull()
       .defaultNow(),
+    suspendedAt: timestamp("suspended_at", { withTimezone: true, mode: "string" }),
+    suspendedReason: text("suspended_reason"),
   },
   (t) => [
     index("channels_publisher_idx").on(t.publisherId),

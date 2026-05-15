@@ -76,6 +76,7 @@ export async function POST(req: NextRequest) {
           logoUrl: schema.channels.logoUrl,
           category: schema.channels.category,
           publisherId: schema.channels.publisherId,
+          suspendedAt: schema.channels.suspendedAt,
         })
         .from(schema.channels)
         .where(eq(schema.channels.id, channelKeyRow.channelId))
@@ -84,6 +85,9 @@ export async function POST(req: NextRequest) {
 
     if (!channel) {
       return new NextResponse("Channel missing for stream key", { status: 500 });
+    }
+    if (channel.suspendedAt) {
+      return new NextResponse("Channel suspended", { status: 403 });
     }
 
     // Concurrent stream cap per publisher. Count existing live streams
