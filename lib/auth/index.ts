@@ -4,6 +4,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { bearer } from "better-auth/plugins";
 import { db } from "@/lib/db";
 import * as schema from "@/db/schema";
+import { isAccountBlocked } from "@/lib/sanctions";
 
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3060",
@@ -86,6 +87,30 @@ export const auth = betterAuth({
   // Sign-in returns the token in the response; the RN client stores it via
   // expo-secure-store and attaches it to every subsequent request.
   plugins: [bearer()],
+
+  /**
+   * Block sign-in for users with an active `suspended` or `banned` sanction.
+   * Better-Auth fires `session.create.before` right before a row is written
+   * to `session`; throwing here aborts the sign-in flow.
+   *
+   * Existing sessions are revoked by the sanction-issue route itself.
+   */
+  databaseHooks: {
+    session: {
+      create: {
+        before: async (session) => {
+          const userId = (session as { userId: string }).userId;
+          if (userId) {
+            const blocked = await isAccountBlocked(userId);
+            if (blocked) {
+              throw new Error("ACCOUNT_SUSPENDED");
+            }
+          }
+          return { data: session };
+        },
+      },
+    },
+  },
 });
 
 export type Session = typeof auth.$Infer.Session;
