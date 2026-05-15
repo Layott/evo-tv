@@ -71,6 +71,13 @@
       "when": 1778835447415,
       "tag": "0009_lush_lady_ursula",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1778859374073,
+      "tag": "0010_mature_caretaker",
+      "breakpoints": true
     }
   ]
 }

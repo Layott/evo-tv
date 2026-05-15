@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { and, eq } from "drizzle-orm";
 import { auth, type SessionUser } from "./index";
 import { db, schema } from "@/lib/db";
+import { hasMinRole, type PlatformRole } from "./roles";
 
 export async function getSession() {
   return auth.api.getSession({ headers: await headers() });
@@ -21,16 +22,61 @@ export async function requireUser(): Promise<SessionUser> {
   return user;
 }
 
-export async function requireRole(
-  role: "user" | "premium" | "admin"
-): Promise<SessionUser> {
+/**
+ * Server Component guard. Redirects on failure.
+ *
+ * Uses the platform role ladder in `roles.ts`. Higher-ranked roles
+ * automatically satisfy lower-ranked requirements (admin satisfies
+ * moderator, head_admin satisfies admin, etc.).
+ */
+export async function requireRole(role: PlatformRole): Promise<SessionUser> {
   const user = await requireUser();
   const userRole = (user as SessionUser & { role?: string }).role ?? "user";
-  if (role === "admin" && userRole !== "admin") redirect("/home");
-  if (role === "premium" && !["premium", "admin"].includes(userRole)) {
-    redirect("/upgrade");
+  if (hasMinRole(userRole, role)) return user;
+  if (role === "premium") redirect("/upgrade");
+  redirect("/home");
+}
+
+/**
+ * API Route guard — non-redirecting variant.
+ *
+ * Returns either `{ ok: true, user, role }` for success or `{ ok: false, response }`
+ * with a 401/403 NextResponse ready to be returned from the route handler.
+ */
+export type PlatformGuardOk = {
+  ok: true;
+  user: SessionUser;
+  role: PlatformRole;
+};
+
+export type PlatformGuardFail = {
+  ok: false;
+  response: NextResponse;
+};
+
+export type PlatformGuardResult = PlatformGuardOk | PlatformGuardFail;
+
+export async function requireMinRole(
+  minRole: PlatformRole,
+): Promise<PlatformGuardResult> {
+  const user = await getCurrentUser();
+  if (!user) {
+    return {
+      ok: false,
+      response: new NextResponse("Auth required", { status: 401 }),
+    };
   }
-  return user;
+  const role = ((user as SessionUser & { role?: string }).role ?? "user") as PlatformRole;
+  if (!hasMinRole(role, minRole)) {
+    return {
+      ok: false,
+      response: new NextResponse(
+        `Requires ${minRole} role (you are ${role})`,
+        { status: 403 },
+      ),
+    };
+  }
+  return { ok: true, user, role };
 }
 
 /**
@@ -95,7 +141,7 @@ export async function requirePublisherRoleByChannel(
   }
 
   const appRole = (user as SessionUser & { role?: string }).role ?? "user";
-  if (appRole === "admin") {
+  if (hasMinRole(appRole, "admin")) {
     return {
       ok: true,
       user,
@@ -162,7 +208,7 @@ export async function requirePublisherRole(
   }
 
   const appRole = (user as SessionUser & { role?: string }).role ?? "user";
-  if (appRole === "admin") {
+  if (hasMinRole(appRole, "admin")) {
     return {
       ok: true,
       user,
