@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/guards";
 import { getStreamById } from "@/lib/api/streams";
 import { listInitialMessages, postMessage } from "@/lib/api/chat";
+import { isChatBlocked } from "@/lib/sanctions";
 
 // TODO(config): move banned words to a feature flag / admin-tunable list.
 const BANNED_WORDS = ["spam", "slur1", "slur2"];
@@ -38,6 +39,13 @@ export async function POST(
 ) {
   const user = await getCurrentUser();
   if (!user) return new NextResponse("Auth required", { status: 401 });
+
+  if (await isChatBlocked(user.id)) {
+    return NextResponse.json(
+      { error: "You are banned from chat" },
+      { status: 403 },
+    );
+  }
 
   const { id } = await params;
   const stream = await getStreamById(id);

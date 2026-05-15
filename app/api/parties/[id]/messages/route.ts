@@ -3,6 +3,7 @@ import { z } from "zod";
 import { and, desc, eq, isNull } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/guards";
+import { isChatBlocked } from "@/lib/sanctions";
 import { emit } from "@/lib/sse/bus";
 
 const bodySchema = z.object({
@@ -81,6 +82,14 @@ export async function POST(
 ) {
   const user = await getCurrentUser();
   if (!user) return new NextResponse("Auth required", { status: 401 });
+
+  if (await isChatBlocked(user.id)) {
+    return NextResponse.json(
+      { error: "You are banned from chat" },
+      { status: 403 },
+    );
+  }
+
   const { id } = await params;
 
   const parsed = bodySchema.safeParse(await req.json().catch(() => null));
