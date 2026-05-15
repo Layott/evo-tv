@@ -1,7 +1,43 @@
 import "server-only";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import type { Stream } from "@/lib/types";
+
+/**
+ * Read-time viewer-count refresh.
+ *
+ * We dropped the per-minute viewer-count cron (Vercel Hobby plan blocks
+ * `* * * * *` schedules). Instead, derive counts on demand from the
+ * watch_events table (Phase 3.7 heartbeats). For each stream, count the
+ * distinct viewer-keys whose latest heartbeat is in the last 90s.
+ *
+ * 90s gives a 1.5x buffer over the 60s heartbeat cadence — if a viewer
+ * misses one heartbeat but sends the next, they stay "live."
+ */
+async function liveViewerCounts(
+  streamIds: string[],
+): Promise<Map<string, number>> {
+  if (streamIds.length === 0) return new Map();
+  const cutoff = new Date(Date.now() - 90_000).toISOString();
+  const rows = await db
+    .select({
+      streamId: schema.watchEvents.streamId,
+      n: sql<number>`count(distinct coalesce(${schema.watchEvents.userId}, ${schema.watchEvents.ipHash}))::int`,
+    })
+    .from(schema.watchEvents)
+    .where(
+      and(
+        inArray(schema.watchEvents.streamId, streamIds),
+        gte(schema.watchEvents.createdAt, cutoff),
+      ),
+    )
+    .groupBy(schema.watchEvents.streamId);
+  const map = new Map<string, number>();
+  for (const r of rows) {
+    if (r.streamId) map.set(r.streamId, Number(r.n));
+  }
+  return map;
+}
 
 function toStream(r: typeof schema.streams.$inferSelect): Stream {
   return {
@@ -35,13 +71,13 @@ export async function listLiveStreams(filter?: {
   if (filter?.gameId) conds.push(eq(schema.streams.gameId, filter.gameId));
   if (typeof filter?.isPremium === "boolean")
     conds.push(eq(schema.streams.isPremium, filter.isPremium));
-  return (
-    await db
-      .select()
-      .from(schema.streams)
-      .where(and(...conds))
-      .orderBy(desc(schema.streams.viewerCount))
-  ).map(toStream);
+  const rows = await db
+    .select()
+    .from(schema.streams)
+    .where(and(...conds))
+    .orderBy(desc(schema.streams.viewerCount));
+  const counts = await liveViewerCounts(rows.map((r) => r.id));
+  return rows.map((r) => ({ ...toStream(r), viewerCount: counts.get(r.id) ?? 0 }));
 }
 
 export async function getStreamById(id: string): Promise<Stream | null> {
@@ -52,16 +88,21 @@ export async function getStreamById(id: string): Promise<Stream | null> {
       .where(eq(schema.streams.id, id))
       .limit(1)
   )[0];
-  return r ? toStream(r) : null;
+  if (!r) return null;
+  const counts = r.isLive ? await liveViewerCounts([r.id]) : new Map();
+  return {
+    ...toStream(r),
+    viewerCount: r.isLive ? counts.get(r.id) ?? 0 : r.viewerCount,
+  };
 }
 
 export async function listFeaturedStreams(): Promise<Stream[]> {
-  return (
-    await db
-      .select()
-      .from(schema.streams)
-      .where(eq(schema.streams.isLive, true))
-      .orderBy(desc(schema.streams.viewerCount))
-      .limit(3)
-  ).map(toStream);
+  const rows = await db
+    .select()
+    .from(schema.streams)
+    .where(eq(schema.streams.isLive, true))
+    .orderBy(desc(schema.streams.viewerCount))
+    .limit(3);
+  const counts = await liveViewerCounts(rows.map((r) => r.id));
+  return rows.map((r) => ({ ...toStream(r), viewerCount: counts.get(r.id) ?? 0 }));
 }
