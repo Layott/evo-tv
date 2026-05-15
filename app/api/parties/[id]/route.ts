@@ -30,9 +30,60 @@ export async function GET(
       )
   )[0];
 
+  const host = (
+    await db
+      .select({
+        id: schema.user.id,
+        name: schema.user.name,
+        handle: schema.user.handle,
+        image: schema.user.image,
+      })
+      .from(schema.user)
+      .where(eq(schema.user.id, party.hostUserId))
+      .limit(1)
+  )[0];
+
+  const stream = party.streamId
+    ? (
+        await db
+          .select({
+            id: schema.streams.id,
+            title: schema.streams.title,
+            thumbnailUrl: schema.streams.thumbnailUrl,
+            streamerName: schema.streams.streamerName,
+          })
+          .from(schema.streams)
+          .where(eq(schema.streams.id, party.streamId))
+          .limit(1)
+      )[0]
+    : null;
+
+  const memberRows = await db
+    .select({
+      userId: schema.partyMembers.userId,
+      joinedAt: schema.partyMembers.joinedAt,
+      name: schema.user.name,
+      handle: schema.user.handle,
+      avatarUrl: schema.user.image,
+    })
+    .from(schema.partyMembers)
+    .leftJoin(schema.user, eq(schema.user.id, schema.partyMembers.userId))
+    .where(
+      and(
+        eq(schema.partyMembers.partyId, id),
+        isNull(schema.partyMembers.leftAt),
+      ),
+    );
+
   return NextResponse.json({
     ...party,
     activeMembers: activeMembersRow?.n ?? 0,
+    host: host ?? null,
+    stream,
+    members: memberRows.map((m) => ({
+      ...m,
+      isHost: m.userId === party.hostUserId,
+    })),
   });
 }
 

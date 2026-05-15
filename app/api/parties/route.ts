@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
-import { eq, isNull } from "drizzle-orm";
+import { and, eq, isNull, sql, inArray } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/guards";
 
@@ -55,13 +55,59 @@ export async function POST(req: NextRequest) {
 export async function GET() {
   const user = await getCurrentUser();
   if (!user) return new NextResponse("Auth required", { status: 401 });
-  // List public + active parties + ones I'm a member of (host or member).
+
+  // Active parties, joined with host + stream for display fields.
   const rows = await db
-    .select()
+    .select({
+      id: schema.parties.id,
+      name: schema.parties.name,
+      hostUserId: schema.parties.hostUserId,
+      hostName: schema.user.name,
+      hostHandle: schema.user.handle,
+      hostAvatarUrl: schema.user.image,
+      streamId: schema.parties.streamId,
+      streamTitle: schema.streams.title,
+      streamThumbnailUrl: schema.streams.thumbnailUrl,
+      maxMembers: schema.parties.maxMembers,
+      isPrivate: schema.parties.isPrivate,
+      inviteCode: schema.parties.inviteCode,
+      startedAt: schema.parties.startedAt,
+    })
     .from(schema.parties)
+    .leftJoin(schema.user, eq(schema.user.id, schema.parties.hostUserId))
+    .leftJoin(schema.streams, eq(schema.streams.id, schema.parties.streamId))
     .where(isNull(schema.parties.endedAt))
     .limit(50);
-  return NextResponse.json(
-    rows.filter((p) => !p.isPrivate || p.hostUserId === user.id),
-  );
+
+  // Active member counts (one extra query for the listed IDs).
+  const ids = rows.map((r) => r.id);
+  const counts = new Map<string, number>();
+  if (ids.length > 0) {
+    const countRows = await db
+      .select({
+        partyId: schema.partyMembers.partyId,
+        n: sql<number>`count(*)::int`,
+      })
+      .from(schema.partyMembers)
+      .where(
+        and(
+          isNull(schema.partyMembers.leftAt),
+          inArray(schema.partyMembers.partyId, ids),
+        ),
+      )
+      .groupBy(schema.partyMembers.partyId);
+    for (const r of countRows) counts.set(r.partyId, Number(r.n));
+  }
+
+  // Hide invite codes from non-hosts. Filter out private parties not owned
+  // by the caller.
+  const enriched = rows
+    .filter((p) => !p.isPrivate || p.hostUserId === user.id)
+    .map((p) => ({
+      ...p,
+      activeMembers: counts.get(p.id) ?? 0,
+      inviteCode: p.hostUserId === user.id ? p.inviteCode : null,
+    }));
+
+  return NextResponse.json(enriched);
 }
