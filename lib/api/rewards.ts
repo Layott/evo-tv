@@ -491,16 +491,25 @@ async function computeProgressFor(
 
 export async function listDailyQuests(userId: string): Promise<DailyQuest[]> {
   const dayKey = utcDayKey();
-  const claims = await db
-    .select({ questId: schema.dailyQuestClaims.questId })
-    .from(schema.dailyQuestClaims)
-    .where(
-      and(
-        eq(schema.dailyQuestClaims.userId, userId),
-        eq(schema.dailyQuestClaims.dayKey, dayKey),
-      ),
-    );
-  const claimedSet = new Set(claims.map((c) => c.questId));
+  // Guard against the daily_quest_claims migration (0017) not yet applied —
+  // if the table is missing, treat every quest as unclaimed instead of 500.
+  let claimedSet = new Set<string>();
+  try {
+    const claims = await db
+      .select({ questId: schema.dailyQuestClaims.questId })
+      .from(schema.dailyQuestClaims)
+      .where(
+        and(
+          eq(schema.dailyQuestClaims.userId, userId),
+          eq(schema.dailyQuestClaims.dayKey, dayKey),
+        ),
+      );
+    claimedSet = new Set(claims.map((c) => c.questId));
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (!/daily_quest_claims/.test(msg)) throw err;
+    // Migration drift — list quests without claim state.
+  }
 
   const out: DailyQuest[] = [];
   for (const tmpl of DAILY_QUEST_TEMPLATES) {
