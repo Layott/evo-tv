@@ -109,6 +109,32 @@ export const xpEvents = pgTable(
 );
 
 /**
+ * Daily quest claims — append-only marker. One row per (user, quest, dayKey)
+ * pair where `dayKey` is `YYYY-MM-DD` in UTC. Used to ensure each daily quest
+ * can only be claimed once per UTC day per user. Templates themselves live
+ * in code (see `lib/api/rewards.ts::DAILY_QUEST_TEMPLATES`).
+ */
+export const dailyQuestClaims = pgTable(
+  "daily_quest_claims",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    questId: text("quest_id").notNull(),
+    dayKey: text("day_key").notNull(),
+    rewardCoins: integer("reward_coins").notNull(),
+    rewardXp: integer("reward_xp").notNull(),
+    claimedAt: timestamp("claimed_at", { mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("daily_quest_claims_user_idx").on(t.userId),
+    index("daily_quest_claims_day_idx").on(t.dayKey),
+  ],
+);
+
+/**
  * Tips — coin transfers from viewer to streamer / creator. Bounded by the
  * sender's `coin_balances.coins`. Streamer/creator is identified by user id
  * (channels are users in this schema).
