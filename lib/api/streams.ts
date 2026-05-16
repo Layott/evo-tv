@@ -60,6 +60,7 @@ function toStream(r: typeof schema.streams.$inferSelect): Stream {
     language: r.language,
     tags: r.tags,
     isPremium: r.isPremium,
+    pillar: r.pillar as Stream["pillar"],
   };
 }
 

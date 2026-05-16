@@ -114,6 +114,9 @@ export interface Match {
 
 export type StreamerType = "official" | "creator";
 
+/** Phase 9a — top-level content pillar. */
+export type ContentPillar = "esports" | "anime" | "lifestyle";
+
 export interface Stream {
   id: UUID;
   title: string;
@@ -134,6 +137,7 @@ export interface Stream {
   language: string;
   tags: string[];
   isPremium: boolean;
+  pillar?: ContentPillar;
 }
 
 export interface VodChapter {
@@ -156,6 +160,7 @@ export interface Vod {
   viewCount: number;
   likeCount: number;
   isPremium: boolean;
+  pillar?: ContentPillar;
 }
 
 export interface Clip {
@@ -172,6 +177,7 @@ export interface Clip {
   likeCount: number;
   createdAt: ISODate;
   gameId: UUID;
+  pillar?: ContentPillar;
 }
 
 export interface ChatMessage {

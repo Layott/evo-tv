@@ -33,6 +33,12 @@ export const streams = pgTable(
     language: text("language").notNull().default("en"),
     tags: jsonb("tags").$type<string[]>().notNull().default([]),
     isPremium: boolean("is_premium").notNull().default(false),
+    // Phase 9a — top-level content pillar. Defaults to esports for legacy rows.
+    pillar: text("pillar", {
+      enum: ["esports", "anime", "lifestyle"],
+    })
+      .notNull()
+      .default("esports"),
     createdAt: text("created_at").notNull(),
     deletedAt: text("deleted_at"),
   },
@@ -62,6 +68,12 @@ export const vods = pgTable(
     viewCount: integer("view_count").notNull().default(0),
     likeCount: integer("like_count").notNull().default(0),
     isPremium: boolean("is_premium").notNull().default(false),
+    // Phase 9a — top-level content pillar. Defaults to esports for legacy rows.
+    pillar: text("pillar", {
+      enum: ["esports", "anime", "lifestyle"],
+    })
+      .notNull()
+      .default("esports"),
     deletedAt: text("deleted_at"),
   },
   (t) => [index("vods_game_idx").on(t.gameId), index("vods_published_idx").on(t.publishedAt)],
@@ -86,6 +98,12 @@ export const clips = pgTable(
     gameId: text("game_id")
       .notNull()
       .references(() => games.id, { onDelete: "cascade" }),
+    // Phase 9a — top-level content pillar. Defaults to esports for legacy rows.
+    pillar: text("pillar", {
+      enum: ["esports", "anime", "lifestyle"],
+    })
+      .notNull()
+      .default("esports"),
     deletedAt: text("deleted_at"),
   },
   (t) => [index("clips_game_idx").on(t.gameId)],

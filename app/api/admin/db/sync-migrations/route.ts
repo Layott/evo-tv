@@ -76,6 +76,18 @@ export async function POST() {
     `);
     actions.push("ensured daily_quest_claims_unique_per_day");
 
+    // ── Phase 9a — pillar columns ─────────────────────────────────────
+    // Add `pillar` to channels, streams, vods, clips. NOT NULL with default
+    // 'esports' so existing rows backfill safely.
+    for (const table of ["channels", "streams", "vods", "clips"]) {
+      await db.execute(
+        sql.raw(
+          `ALTER TABLE "${table}" ADD COLUMN IF NOT EXISTS "pillar" text NOT NULL DEFAULT 'esports'`,
+        ),
+      );
+      actions.push(`ensured ${table}.pillar`);
+    }
+
     log.info("admin.db.sync-migrations.ok", { actorId: user.id, actions });
     return NextResponse.json({ ok: true, actions });
   } catch (err) {
