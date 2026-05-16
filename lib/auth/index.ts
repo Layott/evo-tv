@@ -2,9 +2,12 @@ import "server-only";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { bearer } from "better-auth/plugins";
+import { emailOTP } from "better-auth/plugins/email-otp";
 import { db } from "@/lib/db";
 import * as schema from "@/db/schema";
 import { isAccountBlocked } from "@/lib/sanctions";
+import { sendEmail } from "@/lib/email/send";
+import { renderOtpEmail } from "@/lib/email/templates";
 
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3060",
@@ -86,7 +89,24 @@ export const auth = betterAuth({
   // instead of cookies. The token is the same value as `session.token`.
   // Sign-in returns the token in the response; the RN client stores it via
   // expo-secure-store and attaches it to every subsequent request.
-  plugins: [bearer()],
+  //
+  // emailOTP plugin: powers /api/auth/email-otp/{send-verification-otp,
+  // verify-email, sign-in-with-otp, forget-password}. Backend issues 6-digit
+  // codes (Better-Auth manages generation + lookup + expiry); we just send
+  // the email. In dev, when RESEND_API_KEY is unset, `sendEmail` falls back
+  // to console.log so the OTP is visible in server logs.
+  plugins: [
+    bearer(),
+    emailOTP({
+      otpLength: 6,
+      expiresIn: 600, // 10 minutes
+      sendVerificationOnSignUp: true,
+      async sendVerificationOTP({ email, otp, type }) {
+        const { subject, text, html } = renderOtpEmail({ otp, type });
+        await sendEmail({ to: email, subject, text, html });
+      },
+    }),
+  ],
 
   /**
    * Block sign-in for users with an active `suspended` or `banned` sanction.
