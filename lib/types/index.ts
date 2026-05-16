@@ -180,6 +180,61 @@ export interface Clip {
   pillar?: ContentPillar;
 }
 
+/* ── Phase 9b — Shows / Seasons / Episodes ───────────────────────────── */
+
+export type ShowOriginType = "evo_original" | "licensed" | "syndicated";
+export type ShowStatus = "airing" | "completed" | "upcoming" | "hiatus";
+export type WatchlistStatus =
+  | "watching"
+  | "completed"
+  | "on_hold"
+  | "dropped"
+  | "plan_to_watch";
+
+export interface Show {
+  id: UUID;
+  slug: string;
+  title: string;
+  synopsis: string;
+  heroUrl: string;
+  posterUrl: string;
+  pillar: ContentPillar;
+  originType: ShowOriginType;
+  status: ShowStatus;
+  primaryCreatorHandle: string;
+  totalSeasons: number;
+  totalEpisodes: number;
+  rating: number;
+  releasedAt: ISODate;
+  tags: string[];
+}
+
+export interface Season {
+  id: UUID;
+  showId: UUID;
+  seasonNumber: number;
+  title: string;
+  episodeCount: number;
+  releasedAt: ISODate;
+}
+
+export interface Episode {
+  id: UUID;
+  showId: UUID;
+  seasonId: UUID;
+  seasonNumber: number;
+  episodeNumber: number;
+  title: string;
+  synopsis: string;
+  thumbnailUrl: string;
+  runtimeSec: number;
+  hlsUrl: string;
+  introStartSec?: number;
+  introEndSec?: number;
+  premiereAt: ISODate;
+  releasedAt: ISODate;
+}
+
 export interface ChatMessage {
   id: UUID;
   streamId: UUID;
