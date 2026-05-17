@@ -2,7 +2,11 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 
 import { getCurrentUser } from "@/lib/auth/guards";
-import { getEpisodeById, upsertEpisodeProgress } from "@/lib/api/shows";
+import {
+  getEpisodeById,
+  getEpisodeProgress,
+  upsertEpisodeProgress,
+} from "@/lib/api/shows";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +14,18 @@ const bodySchema = z.object({
   positionSec: z.number().min(0).max(86_400),
   completed: z.boolean().optional(),
 });
+
+/** GET /api/episodes/[id]/progress — current user's saved position on this
+ *  episode, or `null` if they've never watched it. */
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const user = await getCurrentUser();
+  if (!user) return new NextResponse("Auth required", { status: 401 });
+  const { id } = await params;
+  return NextResponse.json(await getEpisodeProgress(user.id, id));
+}
 
 /** POST /api/episodes/[id]/progress — upsert watch progress. Auth required. */
 export async function POST(

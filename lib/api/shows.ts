@@ -159,6 +159,30 @@ export async function getEpisodeByLookup(
   return row ? toEpisode(row) : null;
 }
 
+export async function getEpisodeProgress(
+  userId: string,
+  episodeId: string,
+): Promise<{ positionSec: number; updatedAt: string; completed: boolean } | null> {
+  const r = (
+    await db
+      .select()
+      .from(schema.episodeProgress)
+      .where(
+        and(
+          eq(schema.episodeProgress.userId, userId),
+          eq(schema.episodeProgress.episodeId, episodeId),
+        ),
+      )
+      .limit(1)
+  )[0];
+  if (!r) return null;
+  return {
+    positionSec: r.positionSec ?? 0,
+    updatedAt: r.updatedAt,
+    completed: !!r.completedAt,
+  };
+}
+
 export async function upsertEpisodeProgress(
   userId: string,
   episodeId: string,
