@@ -61,6 +61,29 @@ export const pushSubscriptions = pgTable(
   (t) => [index("push_user_idx").on(t.userId)],
 );
 
+/**
+ * Expo push tokens for native (iOS / Android) clients. Distinct from
+ * `push_subscriptions` which holds Web Push (browser PushManager) payloads
+ * — Expo gives a single opaque string per device, no key pair.
+ *
+ * Token is unique globally (one device → one row, latest wins). A user can
+ * have multiple tokens (phone + tablet). `lastSeenAt` lets the cron prune
+ * stale tokens (Expo treats >6 months of no delivery as invalid).
+ */
+export const expoPushTokens = pgTable(
+  "expo_push_tokens",
+  {
+    token: text("token").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    platform: text("platform", { enum: ["ios", "android", "web"] }).notNull(),
+    createdAt: text("created_at").notNull(),
+    lastSeenAt: text("last_seen_at").notNull(),
+  },
+  (t) => [index("expo_push_user_idx").on(t.userId)],
+);
+
 export const reminders = pgTable(
   "reminders",
   {
