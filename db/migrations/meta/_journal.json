@@ -78,6 +78,55 @@
       "when": 1778859374073,
       "tag": "0010_mature_caretaker",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1778859682580,
+      "tag": "0011_soft_delete_streams",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1778861049149,
+      "tag": "0012_user_sanctions",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1778866599787,
+      "tag": "0013_content_reports",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1778871341238,
+      "tag": "0014_channel_suspend",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1778871761120,
+      "tag": "0015_login_events",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1778871897766,
+      "tag": "0016_email_templates",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1778919432785,
+      "tag": "0017_daily_quest_claims",
+      "breakpoints": true
     }
   ]
 }
