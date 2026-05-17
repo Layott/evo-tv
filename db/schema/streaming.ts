@@ -124,6 +124,28 @@ export const vodProgress = pgTable(
   (t) => [primaryKey({ columns: [t.userId, t.vodId] })],
 );
 
+/**
+ * User-bookmarked VODs ("Watch later"). Composite PK ensures one row per
+ * user-vod pair (toggle = INSERT ... ON CONFLICT DO NOTHING / DELETE).
+ * Indexed by createdAt for the recent-first list endpoint.
+ */
+export const vodBookmarks = pgTable(
+  "vod_bookmarks",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    vodId: text("vod_id")
+      .notNull()
+      .references(() => vods.id, { onDelete: "cascade" }),
+    createdAt: text("created_at").notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.vodId] }),
+    index("vod_bookmarks_user_idx").on(t.userId, t.createdAt),
+  ],
+);
+
 export const chatMessages = pgTable(
   "chat_messages",
   {
