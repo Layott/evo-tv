@@ -15,3 +15,4 @@ export * from "./reports";
 export * from "./login_events";
 export * from "./email_templates";
 export * from "./shows";
+export * from "./fantasy";
