@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import crypto from "node:crypto";
-import { and, eq } from "drizzle-orm";
+import { and, eq, gte } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/guards";
 import { getStreamById } from "@/lib/api/streams";
@@ -90,4 +90,37 @@ export async function POST(
   });
 
   return NextResponse.json({ ok: true, accounted: true });
+}
+
+/**
+ * DELETE /api/streams/[id]/heartbeat — viewer is leaving.
+ *
+ * Drops the caller's watch_events rows for this stream within the active
+ * read-window (last 90s) so the read-time count tick drops to N-1 right
+ * away instead of waiting for the row to age out.
+ *
+ * Fire from the RN cleanup of useStreamHeartbeat.
+ */
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const { id: streamId } = await params;
+  const user = await getCurrentUser();
+  const ipHash = hashIp(req);
+
+  const cutoff = new Date(Date.now() - 90_000).toISOString();
+  await db.delete(schema.watchEvents).where(
+    and(
+      eq(schema.watchEvents.streamId, streamId),
+      user
+        ? eq(schema.watchEvents.userId, user.id)
+        : eq(schema.watchEvents.ipHash, ipHash),
+      // Only drop recent rows — never historical analytics.
+      // (drizzle gte on text-stored timestamps compares lexically; ISO 8601
+      // is lex-sortable so this is fine.)
+      gte(schema.watchEvents.createdAt, cutoff),
+    ),
+  );
+  return NextResponse.json({ ok: true });
 }
