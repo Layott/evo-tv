@@ -20,8 +20,8 @@ const TEST_MP4 =
 
 const r1 = await sql`
   UPDATE streams
-  SET hls_url = ${TEST_HLS}
-  WHERE hls_url IN ('/demo/sample.m3u8', '', 'demo/sample.m3u8')
+  SET hls_path = ${TEST_HLS}
+  WHERE hls_path IN ('/demo/sample.m3u8', '', 'demo/sample.m3u8')
   RETURNING id`;
 console.log("streams updated:", r1.length);
 
@@ -35,9 +35,8 @@ console.log("vods updated:", r2.length);
 
 const r3 = await sql`
   UPDATE clips
-  SET hls_path = ${TEST_HLS}, mp4_path = ${TEST_MP4}
-  WHERE hls_path IN ('/demo/sample.m3u8', '', 'demo/sample.m3u8')
-     OR mp4_path IN ('/demo/sample.mp4', '', 'demo/sample.mp4')
+  SET mp4_path = ${TEST_MP4}
+  WHERE mp4_path IN ('/demo/sample.mp4', '', 'demo/sample.mp4')
   RETURNING id`;
 console.log("clips updated:", r3.length);
 
