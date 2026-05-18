@@ -148,6 +148,13 @@
       "when": 1779057000000,
       "tag": "0020_fantasy",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1779062000000,
+      "tag": "0021_creator_applications",
+      "breakpoints": true
     }
   ]
 }
