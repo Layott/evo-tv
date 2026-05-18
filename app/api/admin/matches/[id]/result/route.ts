@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { requireAdminFromRequest, writeAudit } from "@/lib/api/admin";
 import { scorePickemForEvent } from "@/lib/pickem/score";
+import { scoreAllActiveLeagues } from "@/lib/fantasy/score";
 
 const bodySchema = z.object({
   scoreA: z.number().int().min(0),
@@ -59,8 +60,14 @@ export async function POST(
     .where(eq(schema.matches.id, id));
 
   let scoreResult: Awaited<ReturnType<typeof scorePickemForEvent>> | null = null;
+  let fantasyResult: Awaited<ReturnType<typeof scoreAllActiveLeagues>> | null = null;
   if (parsed.data.state === "completed") {
     scoreResult = await scorePickemForEvent(existing.eventId);
+    try {
+      fantasyResult = await scoreAllActiveLeagues();
+    } catch (err) {
+      console.error("fantasy re-score on match-result failed", err);
+    }
   }
 
   void writeAudit({
@@ -75,6 +82,7 @@ export async function POST(
       scoreB: parsed.data.scoreB,
       state: parsed.data.state,
       pickemScoreRecomputed: scoreResult !== null,
+      fantasyScoreRecomputed: fantasyResult !== null,
     },
   });
 
@@ -83,5 +91,6 @@ export async function POST(
     matchId: id,
     eventId: existing.eventId,
     pickemScore: scoreResult,
+    fantasyScore: fantasyResult,
   });
 }
