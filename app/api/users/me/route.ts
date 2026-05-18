@@ -1,10 +1,186 @@
-import { NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
+import { NextResponse, type NextRequest } from "next/server";
+import { z } from "zod";
+import { and, eq, ne } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { getCurrentUser } from "@/lib/auth/guards";
 import { log } from "@/lib/log";
 import { writeAudit } from "@/lib/api/audit";
+
+/**
+ * GET /api/users/me — joined view of user + profile (bio, country).
+ *
+ * Used by the RN auth provider after sign-in to hydrate the editable
+ * profile fields that Better-Auth's session payload doesn't include.
+ */
+export async function GET() {
+  const user = await getCurrentUser();
+  if (!user) return new NextResponse("Auth required", { status: 401 });
+
+  const profile = (
+    await db
+      .select({
+        bio: schema.profiles.bio,
+        country: schema.profiles.country,
+      })
+      .from(schema.profiles)
+      .where(eq(schema.profiles.userId, user.id))
+      .limit(1)
+  )[0];
+
+  return NextResponse.json({
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      handle: (user as { handle?: string | null }).handle ?? null,
+      image: (user as { image?: string | null }).image ?? null,
+      role: (user as { role?: string }).role ?? "user",
+      bio: profile?.bio ?? "",
+      country: profile?.country ?? "NG",
+    },
+  });
+}
+
+const patchSchema = z.object({
+  name: z.string().min(1).max(80).optional(),
+  handle: z
+    .string()
+    .min(3)
+    .max(20)
+    .regex(/^[a-zA-Z0-9_]+$/, "letters, numbers, underscores")
+    .optional(),
+  bio: z.string().max(280).optional(),
+  country: z.string().min(2).max(64).optional(),
+});
+
+/**
+ * PATCH /api/users/me — update editable profile fields.
+ *
+ * Body: { name?, handle?, bio?, country? }. Updates Better-Auth `user`
+ * (name + handle) and upserts the `profiles` row (bio + country). Returns
+ * the same joined shape GET does so the RN client can re-hydrate.
+ */
+export async function PATCH(req: NextRequest) {
+  const user = await getCurrentUser();
+  if (!user) return new NextResponse("Auth required", { status: 401 });
+
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+  const parsed = patchSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 });
+  }
+
+  const { name, handle, bio, country } = parsed.data;
+
+  // Handle uniqueness — reject early with a 409 so the form can highlight.
+  if (typeof handle === "string") {
+    const clash = (
+      await db
+        .select({ id: schema.user.id })
+        .from(schema.user)
+        .where(
+          and(eq(schema.user.handle, handle), ne(schema.user.id, user.id)),
+        )
+        .limit(1)
+    )[0];
+    if (clash) {
+      return NextResponse.json(
+        { error: "handle_taken", field: "handle" },
+        { status: 409 },
+      );
+    }
+  }
+
+  const userPatch: Record<string, unknown> = {};
+  if (typeof name === "string") userPatch.name = name;
+  if (typeof handle === "string") userPatch.handle = handle;
+  if (Object.keys(userPatch).length > 0) {
+    userPatch.updatedAt = new Date();
+    await db.update(schema.user).set(userPatch).where(eq(schema.user.id, user.id));
+  }
+
+  const profilePatch: Record<string, unknown> = {};
+  if (typeof bio === "string") profilePatch.bio = bio;
+  if (typeof country === "string") profilePatch.country = country;
+  if (Object.keys(profilePatch).length > 0) {
+    const exists = (
+      await db
+        .select({ userId: schema.profiles.userId })
+        .from(schema.profiles)
+        .where(eq(schema.profiles.userId, user.id))
+        .limit(1)
+    )[0];
+    if (exists) {
+      await db
+        .update(schema.profiles)
+        .set(profilePatch)
+        .where(eq(schema.profiles.userId, user.id));
+    } else {
+      await db.insert(schema.profiles).values({
+        userId: user.id,
+        displayName: name ?? user.name ?? "",
+        avatarUrl: (user as { image?: string | null }).image ?? "",
+        bio: typeof bio === "string" ? bio : "",
+        country: typeof country === "string" ? country : "NG",
+        onboardedAt: null,
+        createdAt: new Date().toISOString(),
+      });
+    }
+  }
+
+  void writeAudit({
+    actorId: user.id,
+    action: "user.profile.update",
+    targetType: "user",
+    targetId: user.id,
+    meta: { fields: Object.keys(parsed.data) },
+  });
+
+  // Re-read joined view.
+  const profile = (
+    await db
+      .select({
+        bio: schema.profiles.bio,
+        country: schema.profiles.country,
+      })
+      .from(schema.profiles)
+      .where(eq(schema.profiles.userId, user.id))
+      .limit(1)
+  )[0];
+  const fresh = (
+    await db
+      .select({
+        id: schema.user.id,
+        name: schema.user.name,
+        email: schema.user.email,
+        handle: schema.user.handle,
+        image: schema.user.image,
+        role: schema.user.role,
+      })
+      .from(schema.user)
+      .where(eq(schema.user.id, user.id))
+      .limit(1)
+  )[0];
+
+  return NextResponse.json({
+    user: {
+      id: fresh?.id ?? user.id,
+      email: fresh?.email ?? user.email,
+      name: fresh?.name ?? user.name,
+      handle: fresh?.handle ?? null,
+      image: fresh?.image ?? null,
+      role: fresh?.role ?? "user",
+      bio: profile?.bio ?? "",
+      country: profile?.country ?? "NG",
+    },
+  });
+}
 
 /**
  * DELETE /api/users/me — initiate GDPR self-delete.

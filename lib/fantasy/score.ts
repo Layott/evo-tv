@@ -3,19 +3,22 @@ import { and, eq, gte, lte, inArray } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 
 /**
- * Fantasy scoring engine — team-proxy v1.
+ * Fantasy scoring engine — v2 (per-player stats with team-proxy fallback).
  *
- * No per-player stats table exists yet. Until match_player_stats lands,
- * each player's pointsScored = (wins by their team in the league window) * 10.
- * Substitute fields like scoringSystem ("kills"/"kda"/"objectives") still
- * map to the same metric — they're informational labels for v1.
- *
- * Window: matches with state="completed" AND scheduledAt BETWEEN league.createdAt
- * AND league.endsAt, where event.gameId === league.gameId. Players without a
- * teamId or with a team in a different game score 0.
+ * For each pick:
+ *   1. Look up every `match_player_stats` row for that playerId, scoped to
+ *      completed matches in the league's game inside the league window.
+ *   2. If any rows exist, apply the league.scoringSystem formula to the sum:
+ *        - kills      → kills*10 - deaths*5
+ *        - kda        → kills*10 + assists*5 - deaths*5
+ *        - objectives → objectives*25 + kills*5
+ *      Pin to >= 0.
+ *   3. If no stat rows exist, fall back to the v1 team-proxy:
+ *        pointsScored = (team_wins_in_window) * 10
+ *      where team is the player's current team_id from the players catalog.
  *
  * Idempotent — overwrites lineup_picks.pointsScored and lineups.totalPoints
- * on every run. Re-running mid-season just reflects the new partial.
+ * on every run. Safe to re-run after each match completes.
  */
 
 export interface FantasyScoreResult {
@@ -23,6 +26,28 @@ export interface FantasyScoreResult {
   matchesScanned: number;
   picksUpdated: number;
   lineupsUpdated: number;
+  /** How many picks were scored via per-player stats vs team-proxy. */
+  picksByStats: number;
+  picksByProxy: number;
+}
+
+type ScoringSystem = "kills" | "kda" | "objectives";
+
+function applyFormula(
+  system: ScoringSystem,
+  k: number,
+  d: number,
+  a: number,
+  o: number,
+): number {
+  switch (system) {
+    case "kills":
+      return Math.max(0, k * 10 - d * 5);
+    case "kda":
+      return Math.max(0, k * 10 + a * 5 - d * 5);
+    case "objectives":
+      return Math.max(0, o * 25 + k * 5);
+  }
 }
 
 export async function scoreFantasyForLeague(
@@ -35,6 +60,7 @@ export async function scoreFantasyForLeague(
         gameId: schema.fantasyLeagues.gameId,
         endsAt: schema.fantasyLeagues.endsAt,
         createdAt: schema.fantasyLeagues.createdAt,
+        scoringSystem: schema.fantasyLeagues.scoringSystem,
       })
       .from(schema.fantasyLeagues)
       .where(eq(schema.fantasyLeagues.id, leagueId))
@@ -42,18 +68,26 @@ export async function scoreFantasyForLeague(
   )[0];
 
   if (!league) {
-    return { leagueId, matchesScanned: 0, picksUpdated: 0, lineupsUpdated: 0 };
+    return {
+      leagueId,
+      matchesScanned: 0,
+      picksUpdated: 0,
+      lineupsUpdated: 0,
+      picksByStats: 0,
+      picksByProxy: 0,
+    };
   }
 
-  // 1) Find every event in the league's game with the right window.
+  const system = (league.scoringSystem ?? "kda") as ScoringSystem;
+
+  // 1) Eligible event IDs for this game.
   const eligibleEvents = await db
     .select({ id: schema.events.id })
     .from(schema.events)
     .where(eq(schema.events.gameId, league.gameId));
-
   const eventIds = eligibleEvents.map((e) => e.id);
 
-  // 2) Pull completed matches in those events inside the league window.
+  // 2) Completed matches in those events inside the league window.
   let completedMatches: Array<{
     id: string;
     teamAId: string | null;
@@ -61,7 +95,6 @@ export async function scoreFantasyForLeague(
     scoreA: number;
     scoreB: number;
   }> = [];
-
   if (eventIds.length > 0) {
     completedMatches = await db
       .select({
@@ -82,7 +115,7 @@ export async function scoreFantasyForLeague(
       );
   }
 
-  // 3) Build winner-team-id → wins-count map.
+  // 3) Build team-wins map for the proxy fallback.
   const teamWins = new Map<string, number>();
   for (const m of completedMatches) {
     let winner: string | null = null;
@@ -91,7 +124,9 @@ export async function scoreFantasyForLeague(
     if (winner) teamWins.set(winner, (teamWins.get(winner) ?? 0) + 1);
   }
 
-  // 4) Load every lineup in the league + each lineup's picks.
+  const matchIds = completedMatches.map((m) => m.id);
+
+  // 4) Lineups + picks.
   const lineups = await db
     .select({
       id: schema.fantasyLineups.id,
@@ -102,11 +137,17 @@ export async function scoreFantasyForLeague(
     .where(eq(schema.fantasyLineups.leagueId, leagueId));
 
   if (lineups.length === 0) {
-    return { leagueId, matchesScanned: completedMatches.length, picksUpdated: 0, lineupsUpdated: 0 };
+    return {
+      leagueId,
+      matchesScanned: completedMatches.length,
+      picksUpdated: 0,
+      lineupsUpdated: 0,
+      picksByStats: 0,
+      picksByProxy: 0,
+    };
   }
 
   const lineupIds = lineups.map((l) => l.id);
-
   const picks = await db
     .select({
       lineupId: schema.fantasyLineupPicks.lineupId,
@@ -115,7 +156,7 @@ export async function scoreFantasyForLeague(
     .from(schema.fantasyLineupPicks)
     .where(inArray(schema.fantasyLineupPicks.lineupId, lineupIds));
 
-  // 5) Resolve player→team map.
+  // 5) Resolve player → teamId (for fallback) + load all relevant stats.
   const playerIds = Array.from(new Set(picks.map((p) => p.playerId)));
   const playerRows = playerIds.length
     ? await db
@@ -123,18 +164,69 @@ export async function scoreFantasyForLeague(
         .from(schema.players)
         .where(inArray(schema.players.id, playerIds))
     : [];
-
   const playerTeam = new Map<string, string | null>();
   for (const p of playerRows) playerTeam.set(p.id, p.teamId);
 
-  // 6) Compute pointsScored per pick + roll up totalPoints per lineup.
+  // Per-player stats keyed by playerId, summed across matches in the window.
+  const playerStatsAgg = new Map<
+    string,
+    { kills: number; deaths: number; assists: number; objectives: number }
+  >();
+  if (matchIds.length > 0 && playerIds.length > 0) {
+    const statRows = await db
+      .select({
+        playerId: schema.matchPlayerStats.playerId,
+        kills: schema.matchPlayerStats.kills,
+        deaths: schema.matchPlayerStats.deaths,
+        assists: schema.matchPlayerStats.assists,
+        objectives: schema.matchPlayerStats.objectives,
+      })
+      .from(schema.matchPlayerStats)
+      .where(
+        and(
+          inArray(schema.matchPlayerStats.matchId, matchIds),
+          inArray(schema.matchPlayerStats.playerId, playerIds),
+        ),
+      );
+    for (const r of statRows) {
+      const cur = playerStatsAgg.get(r.playerId) ?? {
+        kills: 0,
+        deaths: 0,
+        assists: 0,
+        objectives: 0,
+      };
+      cur.kills += r.kills;
+      cur.deaths += r.deaths;
+      cur.assists += r.assists;
+      cur.objectives += r.objectives;
+      playerStatsAgg.set(r.playerId, cur);
+    }
+  }
+
+  // 6) Score each pick.
   const lineupTotals = new Map<string, number>();
   let picksUpdated = 0;
+  let picksByStats = 0;
+  let picksByProxy = 0;
 
   for (const pick of picks) {
-    const teamId = playerTeam.get(pick.playerId) ?? null;
-    const wins = teamId ? (teamWins.get(teamId) ?? 0) : 0;
-    const points = wins * 10;
+    let points = 0;
+    const stats = playerStatsAgg.get(pick.playerId);
+    if (stats) {
+      points = applyFormula(
+        system,
+        stats.kills,
+        stats.deaths,
+        stats.assists,
+        stats.objectives,
+      );
+      picksByStats += 1;
+    } else {
+      const teamId = playerTeam.get(pick.playerId) ?? null;
+      const wins = teamId ? (teamWins.get(teamId) ?? 0) : 0;
+      points = wins * 10;
+      picksByProxy += 1;
+    }
 
     await db
       .update(schema.fantasyLineupPicks)
@@ -146,11 +238,14 @@ export async function scoreFantasyForLeague(
         ),
       );
 
-    lineupTotals.set(pick.lineupId, (lineupTotals.get(pick.lineupId) ?? 0) + points);
+    lineupTotals.set(
+      pick.lineupId,
+      (lineupTotals.get(pick.lineupId) ?? 0) + points,
+    );
     picksUpdated += 1;
   }
 
-  // 7) Persist lineups.totalPoints.
+  // 7) Persist lineup totals.
   let lineupsUpdated = 0;
   for (const lineup of lineups) {
     const total = lineupTotals.get(lineup.id) ?? 0;
@@ -166,6 +261,8 @@ export async function scoreFantasyForLeague(
     matchesScanned: completedMatches.length,
     picksUpdated,
     lineupsUpdated,
+    picksByStats,
+    picksByProxy,
   };
 }
 
@@ -187,6 +284,8 @@ export async function scoreAllActiveLeagues(): Promise<FantasyScoreResult[]> {
         matchesScanned: 0,
         picksUpdated: 0,
         lineupsUpdated: 0,
+        picksByStats: 0,
+        picksByProxy: 0,
       });
     }
   }

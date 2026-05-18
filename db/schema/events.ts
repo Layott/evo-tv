@@ -58,3 +58,26 @@ export const matches = pgTable(
   },
   (t) => [index("matches_event_idx").on(t.eventId)],
 );
+
+/**
+ * Per-player stats per match. Optional — present only for matches an admin
+ * manually scored. Fantasy scoring v2 prefers these; falls back to team-proxy
+ * (team wins * 10) for matches without rows.
+ */
+export const matchPlayerStats = pgTable(
+  "match_player_stats",
+  {
+    matchId: text("match_id")
+      .notNull()
+      .references(() => matches.id, { onDelete: "cascade" }),
+    playerId: text("player_id").notNull(),
+    kills: integer("kills").notNull().default(0),
+    deaths: integer("deaths").notNull().default(0),
+    assists: integer("assists").notNull().default(0),
+    objectives: integer("objectives").notNull().default(0),
+  },
+  (t) => [
+    primaryKey({ columns: [t.matchId, t.playerId] }),
+    index("match_player_stats_player_idx").on(t.playerId),
+  ],
+);
