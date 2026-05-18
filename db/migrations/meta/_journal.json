@@ -155,6 +155,13 @@
       "when": 1779062000000,
       "tag": "0021_creator_applications",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1779177200000,
+      "tag": "0022_match_player_stats",
+      "breakpoints": true
     }
   ]
 }
