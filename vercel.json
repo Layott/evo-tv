@@ -4,8 +4,7 @@
     { "path": "/api/cron/analytics", "schedule": "0 2 * * *" },
     { "path": "/api/cron/payouts", "schedule": "0 3 * * 0" },
     { "path": "/api/cron/gdpr-purge", "schedule": "0 4 * * 0" },
-    { "path": "/api/cron/fantasy-score", "schedule": "0 5 * * *" },
-    { "path": "/api/cron/reminders", "schedule": "0 * * * *" }
+    { "path": "/api/cron/fantasy-score", "schedule": "0 5 * * *" }
   ]
 }
 
