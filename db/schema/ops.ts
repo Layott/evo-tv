@@ -1,4 +1,4 @@
-import { pgTable, text, integer, boolean, jsonb, index } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, boolean, jsonb, index, primaryKey } from "drizzle-orm/pg-core";
 import { user } from "./users";
 
 export const ads = pgTable(
@@ -94,6 +94,36 @@ export const reminders = pgTable(
     createdAt: text("created_at").notNull(),
   },
   (t) => [index("reminders_user_idx").on(t.userId)],
+);
+
+/**
+ * EPG reminders. User taps a bell on a schedule row; cron fans out an Expo
+ * Push leadMin minutes before airsAt and stamps notifiedAt so we don't
+ * double-fire. Composite PK on (userId, targetId) makes toggle a simple
+ * INSERT ... ON CONFLICT DO NOTHING / DELETE pair.
+ *
+ * targetId mirrors the EpgRow.id shape: "ep_<id>" | "stream_<id>" | "match_<id>".
+ * The cron does not need to dereference the target — airsAt is the source of
+ * truth for when to fire. If the target moves or is cancelled, a future
+ * housekeeping cron can prune.
+ */
+export const epgReminders = pgTable(
+  "epg_reminders",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    targetId: text("target_id").notNull(),
+    airsAt: text("airs_at").notNull(),
+    leadMin: integer("lead_min").notNull().default(15),
+    notifiedAt: text("notified_at"),
+    createdAt: text("created_at").notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.targetId] }),
+    index("epg_reminders_due_idx").on(t.airsAt),
+    index("epg_reminders_user_idx").on(t.userId),
+  ],
 );
 
 /**

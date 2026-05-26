@@ -61,6 +61,8 @@ function toStream(r: typeof schema.streams.$inferSelect): Stream {
     tags: r.tags,
     isPremium: r.isPremium,
     pillar: r.pillar as Stream["pillar"],
+    scheduledStartAt: r.scheduledStartAt,
+    scheduledDurationMin: r.scheduledDurationMin,
   };
 }
 

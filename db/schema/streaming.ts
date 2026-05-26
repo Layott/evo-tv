@@ -26,6 +26,10 @@ export const streams = pgTable(
     isLive: boolean("is_live").notNull().default(false),
     startedAt: text("started_at"),
     endedAt: text("ended_at"),
+    // Phase MVP — EPG/schedule. Pre-announced airtime for upcoming streams.
+    // NULL for live-only or unscheduled streams.
+    scheduledStartAt: text("scheduled_start_at"),
+    scheduledDurationMin: integer("scheduled_duration_min"),
     hlsPath: text("hls_path").notNull().default(""),
     thumbnailUrl: text("thumbnail_url").notNull().default(""),
     viewerCount: integer("viewer_count").notNull().default(0),
@@ -42,7 +46,11 @@ export const streams = pgTable(
     createdAt: text("created_at").notNull(),
     deletedAt: text("deleted_at"),
   },
-  (t) => [index("streams_live_idx").on(t.isLive), index("streams_game_idx").on(t.gameId)],
+  (t) => [
+    index("streams_live_idx").on(t.isLive),
+    index("streams_game_idx").on(t.gameId),
+    index("streams_scheduled_idx").on(t.scheduledStartAt),
+  ],
 );
 
 export const vods = pgTable(

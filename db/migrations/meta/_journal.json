@@ -162,6 +162,20 @@
       "when": 1779177200000,
       "tag": "0022_match_player_stats",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1779820800000,
+      "tag": "0023_streams_scheduled",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1779821400000,
+      "tag": "0024_epg_reminders",
+      "breakpoints": true
     }
   ]
 }

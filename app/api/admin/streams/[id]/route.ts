@@ -65,3 +65,100 @@ export async function DELETE(
 
   return NextResponse.json({ ok: true, streamId: id, deletedAt: nowIso });
 }
+
+/**
+ * PATCH /api/admin/streams/[id]
+ *
+ * Updates the scheduled airtime fields used by the EPG endpoint. Both fields
+ * are nullable — passing `null` clears a schedule. Other stream fields are not
+ * editable here yet; this route exists for the EPG MVP.
+ *
+ * Body: { scheduledStartAt?: string | null; scheduledDurationMin?: number | null }
+ *
+ * Requires `support_admin` or higher — programming the schedule is a routine
+ * operation that doesn't need full admin.
+ */
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const guard = await requireMinRole("support_admin");
+  if (!guard.ok) return guard.response;
+  const { id } = await params;
+
+  const body = (await req.json().catch(() => null)) as {
+    scheduledStartAt?: string | null;
+    scheduledDurationMin?: number | null;
+  } | null;
+  if (!body) {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  const update: {
+    scheduledStartAt?: string | null;
+    scheduledDurationMin?: number | null;
+  } = {};
+
+  if ("scheduledStartAt" in body) {
+    const v = body.scheduledStartAt;
+    if (v === null) {
+      update.scheduledStartAt = null;
+    } else if (typeof v === "string") {
+      const t = new Date(v);
+      if (Number.isNaN(t.getTime())) {
+        return NextResponse.json(
+          { error: "scheduledStartAt must be ISO 8601" },
+          { status: 400 },
+        );
+      }
+      update.scheduledStartAt = t.toISOString();
+    } else {
+      return NextResponse.json(
+        { error: "scheduledStartAt must be string or null" },
+        { status: 400 },
+      );
+    }
+  }
+
+  if ("scheduledDurationMin" in body) {
+    const v = body.scheduledDurationMin;
+    if (v === null) {
+      update.scheduledDurationMin = null;
+    } else if (typeof v === "number" && Number.isFinite(v) && v > 0 && v <= 1440) {
+      update.scheduledDurationMin = Math.round(v);
+    } else {
+      return NextResponse.json(
+        { error: "scheduledDurationMin must be 1-1440 or null" },
+        { status: 400 },
+      );
+    }
+  }
+
+  if (Object.keys(update).length === 0) {
+    return NextResponse.json({ error: "No fields to update" }, { status: 400 });
+  }
+
+  const existing = (
+    await db.select().from(schema.streams).where(eq(schema.streams.id, id)).limit(1)
+  )[0];
+  if (!existing) return new NextResponse("Stream not found", { status: 404 });
+
+  await db.update(schema.streams).set(update).where(eq(schema.streams.id, id));
+
+  await writeAudit({
+    actorId: guard.user.id,
+    action: "stream.schedule_update",
+    targetType: "stream",
+    targetId: id,
+    meta: {
+      role: guard.role,
+      prev: {
+        scheduledStartAt: existing.scheduledStartAt,
+        scheduledDurationMin: existing.scheduledDurationMin,
+      },
+      next: update,
+    },
+  });
+
+  return NextResponse.json({ ok: true, streamId: id, ...update });
+}
