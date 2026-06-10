@@ -13,7 +13,7 @@ import { log } from "@/lib/log";
  */
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const TO = process.env.CONTACT_TO ?? "naijagameevo@gmail.com";
+const TO = process.env.CONTACT_TO ?? "evotvng@gmail.com";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
