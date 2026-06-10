@@ -82,7 +82,24 @@ export async function OPTIONS() {
 }
 
 export async function GET(req: NextRequest) {
-  const username = normUsername(new URL(req.url).searchParams.get("username"));
+  const params = new URL(req.url).searchParams;
+
+  // Email availability: ?email=foo@bar.com -> { available }
+  const emailParam = params.get("email");
+  if (emailParam !== null) {
+    const email = normEmail(emailParam);
+    if (!email) {
+      return json({ available: false, error: "Enter a valid email." }, 400);
+    }
+    const rows = await db
+      .select()
+      .from(schema.waitlist)
+      .where(eq(schema.waitlist.email, email));
+    return json({ available: !rows.some(isHeld), email });
+  }
+
+  // Username availability: ?username=foo -> { available }
+  const username = normUsername(params.get("username"));
   if (!username) {
     return json(
       { available: false, error: "Username must be 3-20 chars (a-z, 0-9, _)." },
@@ -93,8 +110,7 @@ export async function GET(req: NextRequest) {
     .select()
     .from(schema.waitlist)
     .where(eq(schema.waitlist.username, username));
-  const held = rows.some(isHeld);
-  return json({ available: !held, username });
+  return json({ available: !rows.some(isHeld), username });
 }
 
 export async function POST(req: NextRequest) {
