@@ -23,6 +23,7 @@ export const user = pgTable(
         "guest",
         "user",
         "premium",
+        "creator",
         "support_admin",
         "moderator",
         "finance_admin",

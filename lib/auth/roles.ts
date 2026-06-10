@@ -15,6 +15,7 @@ export type PlatformRole =
   | "guest"
   | "user"
   | "premium"
+  | "creator"
   | "support_admin"
   | "moderator"
   | "finance_admin"
@@ -25,6 +26,8 @@ export const RANK: Record<PlatformRole, number> = {
   guest: 0,
   user: 1,
   premium: 2,
+  // Creator is a content-producer role, above premium but not an admin tier.
+  creator: 5,
   support_admin: 10,
   moderator: 20,
   finance_admin: 30,
@@ -67,6 +70,7 @@ export function canGrantRole(
       target === "moderator" ||
       target === "finance_admin" ||
       target === "support_admin" ||
+      target === "creator" ||
       target === "user" ||
       target === "premium"
     );

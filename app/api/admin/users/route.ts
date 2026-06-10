@@ -11,6 +11,7 @@ const PLATFORM_ROLES: [PlatformRole, ...PlatformRole[]] = [
   "guest",
   "user",
   "premium",
+  "creator",
   "support_admin",
   "moderator",
   "finance_admin",

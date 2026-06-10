@@ -1,7 +1,7 @@
 export type UUID = string;
 export type ISODate = string;
 
-export type Role = "guest" | "user" | "premium" | "admin";
+export type Role = "guest" | "user" | "premium" | "creator" | "admin";
 
 export interface Profile {
   id: UUID;
