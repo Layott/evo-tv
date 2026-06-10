@@ -6,6 +6,7 @@ export interface SendMailInput {
   subject: string;
   html: string;
   text?: string;
+  replyTo?: string;
 }
 
 let cachedTransporter: Transporter | null = null;
@@ -15,14 +16,23 @@ function getTransporter(): Transporter | null {
   const host = process.env.SMTP_HOST;
   if (!host) return null;
   const port = Number.parseInt(process.env.SMTP_PORT ?? "1025", 10);
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASS;
   cachedTransporter = nodemailer.createTransport({
     host,
     port,
     // Mailhog has no auth and no TLS by default. Only flip to secure for :465.
+    // Real providers (Gmail SMTP on smtp.gmail.com:465) need auth.
     secure: port === 465,
     ignoreTLS: port === 1025,
+    ...(user && pass ? { auth: { user, pass } } : {}),
   });
   return cachedTransporter;
+}
+
+/** True when a real SMTP transport is configured (not the console stub). */
+export function isMailConfigured(): boolean {
+  return Boolean(process.env.SMTP_HOST);
 }
 
 /**
@@ -48,5 +58,6 @@ export async function sendMail(input: SendMailInput): Promise<void> {
     subject: input.subject,
     html: input.html,
     text: input.text,
+    replyTo: input.replyTo,
   });
 }

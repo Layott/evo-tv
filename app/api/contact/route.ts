@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { sendEmail } from "@/lib/email/send";
+import { sendMail, isMailConfigured } from "@/lib/email";
 import { log } from "@/lib/log";
 
 /**
@@ -62,8 +62,16 @@ export async function POST(req: NextRequest) {
   const text = `From: ${name} <${email}>\n\n${message}`;
   const html = `<p style="margin:0 0 12px"><strong>From:</strong> ${esc(name)} (${esc(email)})</p><p style="white-space:pre-wrap;margin:0">${esc(message)}</p>`;
 
+  if (!isMailConfigured()) {
+    log.warn("contact.not_configured");
+    return NextResponse.json(
+      { error: "Email is not set up yet. Please try again later." },
+      { status: 503, headers: CORS },
+    );
+  }
+
   try {
-    await sendEmail({ to: TO, subject, text, html });
+    await sendMail({ to: TO, subject, text, html, replyTo: email });
   } catch (e) {
     log.warn("contact.send.failed", { error: e instanceof Error ? e.message : String(e) });
     return NextResponse.json(
