@@ -657,6 +657,9 @@ function GameForm({
       category: "fps",
       platform: "mobile",
       activePlayers: 0,
+      enabled: true,
+      featured: false,
+      displayOrder: 0,
     },
   );
   const disabled = !form.name.trim() || !form.slug.trim();

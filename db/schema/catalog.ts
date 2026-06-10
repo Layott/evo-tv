@@ -1,4 +1,4 @@
-import { pgTable, text, integer, index } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, boolean, index } from "drizzle-orm/pg-core";
 
 export const games = pgTable("games", {
   id: text("id").primaryKey(),
@@ -10,6 +10,9 @@ export const games = pgTable("games", {
   category: text("category", { enum: ["br", "fps", "moba", "sports", "fighting"] }).notNull(),
   platform: text("platform", { enum: ["mobile", "pc", "console"] }).notNull(),
   activePlayers: integer("active_players").notNull().default(0),
+  enabled: boolean("enabled").notNull().default(true),
+  featured: boolean("featured").notNull().default(false),
+  displayOrder: integer("display_order").notNull().default(0),
 });
 
 export const teams = pgTable(

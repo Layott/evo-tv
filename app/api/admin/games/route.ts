@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
+import { asc } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import {
   generateId,
@@ -17,7 +18,22 @@ const createSchema = z.object({
   category: z.enum(["br", "fps", "moba", "sports", "fighting"]),
   platform: z.enum(["mobile", "pc", "console"]),
   activePlayers: z.number().int().nonnegative(),
+  enabled: z.boolean().optional().default(true),
+  featured: z.boolean().optional().default(false),
+  displayOrder: z.number().int().nonnegative().optional().default(0),
 });
+
+export async function GET(_req: NextRequest) {
+  const guard = await requireAdminFromRequest();
+  if (!guard.ok) return guard.response;
+
+  const games = await db
+    .select()
+    .from(schema.games)
+    .orderBy(asc(schema.games.displayOrder), asc(schema.games.name));
+
+  return NextResponse.json(games);
+}
 
 export async function POST(req: NextRequest) {
   const guard = await requireAdminFromRequest();
@@ -48,6 +64,9 @@ export async function POST(req: NextRequest) {
         category: parsed.data.category,
         platform: parsed.data.platform,
         activePlayers: parsed.data.activePlayers,
+        enabled: parsed.data.enabled,
+        featured: parsed.data.featured,
+        displayOrder: parsed.data.displayOrder,
       });
   } catch (err) {
     const conflict = mapSqliteUniqueError(err);

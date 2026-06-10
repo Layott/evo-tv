@@ -13,6 +13,9 @@ export const games: Game[] = [
     category: "br",
     platform: "mobile",
     activePlayers: 3_400_000,
+    enabled: true,
+    featured: true,
+    displayOrder: 0,
   },
   {
     id: "game_codm",
@@ -24,6 +27,9 @@ export const games: Game[] = [
     category: "fps",
     platform: "mobile",
     activePlayers: 1_800_000,
+    enabled: true,
+    featured: false,
+    displayOrder: 1,
   },
   {
     id: "game_pubgm",
@@ -35,6 +41,9 @@ export const games: Game[] = [
     category: "br",
     platform: "mobile",
     activePlayers: 2_200_000,
+    enabled: true,
+    featured: false,
+    displayOrder: 2,
   },
   {
     id: "game_eafc",
@@ -46,6 +55,9 @@ export const games: Game[] = [
     category: "sports",
     platform: "mobile",
     activePlayers: 950_000,
+    enabled: true,
+    featured: false,
+    displayOrder: 3,
   },
 ];
 

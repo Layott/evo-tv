@@ -45,6 +45,9 @@ export interface Game {
   category: "br" | "fps" | "moba" | "sports" | "fighting";
   platform: "mobile" | "pc" | "console";
   activePlayers: number;
+  enabled: boolean;
+  featured: boolean;
+  displayOrder: number;
 }
 
 export interface Team {

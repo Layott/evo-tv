@@ -14,6 +14,9 @@ function toGame(r: typeof schema.games.$inferSelect): Game {
     category: r.category as Game["category"],
     platform: r.platform as Game["platform"],
     activePlayers: r.activePlayers,
+    enabled: r.enabled,
+    featured: r.featured,
+    displayOrder: r.displayOrder,
   };
 }
 

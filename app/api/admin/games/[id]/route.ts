@@ -18,6 +18,9 @@ const updateSchema = z
     category: z.enum(["br", "fps", "moba", "sports", "fighting"]),
     platform: z.enum(["mobile", "pc", "console"]),
     activePlayers: z.number().int().nonnegative(),
+    enabled: z.boolean(),
+    featured: z.boolean(),
+    displayOrder: z.number().int().nonnegative(),
   })
   .partial();
 
