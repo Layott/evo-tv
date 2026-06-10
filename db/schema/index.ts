@@ -17,3 +17,4 @@ export * from "./email_templates";
 export * from "./shows";
 export * from "./fantasy";
 export * from "./creator_program";
+export * from "./marketing";
