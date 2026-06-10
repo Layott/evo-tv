@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { listShows } from "@/lib/api/shows";
+import { parseMaxRating, filterByMaxRating } from "@/lib/api/maturity";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +27,7 @@ export async function GET(req: NextRequest) {
     filter.status = status as (typeof VALID_STATUS)[number];
   }
 
-  const shows = await listShows(filter);
+  const maxRating = parseMaxRating(params.get("maxRating"));
+  const shows = filterByMaxRating(await listShows(filter), maxRating);
   return NextResponse.json({ shows });
 }

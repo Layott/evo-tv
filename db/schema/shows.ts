@@ -49,6 +49,10 @@ export const shows = pgTable(
     rating: doublePrecision("rating").notNull().default(0),
     releasedAt: timestamp("released_at", { withTimezone: true, mode: "string" }),
     tags: jsonb("tags").$type<string[]>().notNull().default([]),
+    // Content maturity rating (kids<pg<teen<mature). Defaults to teen for legacy rows.
+    maturityRating: text("maturity_rating").notNull().default("teen"),
+    // Free-form content descriptors.
+    contentTags: text("content_tags").array().notNull().default([]),
     deletedAt: timestamp("deleted_at", { withTimezone: true, mode: "string" }),
   },
   (t) => [
@@ -97,6 +101,10 @@ export const episodes = pgTable(
     introEndSec: integer("intro_end_sec"),
     premiereAt: timestamp("premiere_at", { withTimezone: true, mode: "string" }),
     releasedAt: timestamp("released_at", { withTimezone: true, mode: "string" }),
+    // Content maturity rating (kids<pg<teen<mature). Defaults to teen for legacy rows.
+    maturityRating: text("maturity_rating").notNull().default("teen"),
+    // Free-form content descriptors.
+    contentTags: text("content_tags").array().notNull().default([]),
     deletedAt: timestamp("deleted_at", { withTimezone: true, mode: "string" }),
   },
   (t) => [

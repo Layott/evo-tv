@@ -57,6 +57,10 @@ export const streams = pgTable(
     })
       .notNull()
       .default("esports"),
+    // Content maturity rating (kids<pg<teen<mature). Defaults to teen for legacy rows.
+    maturityRating: text("maturity_rating").notNull().default("teen"),
+    // Free-form content descriptors (e.g. "violence", "esports", "fps").
+    contentTags: text("content_tags").array().notNull().default([]),
     createdAt: text("created_at").notNull(),
     deletedAt: text("deleted_at"),
   },
@@ -118,6 +122,10 @@ export const vods = pgTable(
     })
       .notNull()
       .default("esports"),
+    // Content maturity rating (kids<pg<teen<mature). Defaults to teen for legacy rows.
+    maturityRating: text("maturity_rating").notNull().default("teen"),
+    // Free-form content descriptors.
+    contentTags: text("content_tags").array().notNull().default([]),
     deletedAt: text("deleted_at"),
   },
   (t) => [index("vods_game_idx").on(t.gameId), index("vods_published_idx").on(t.publishedAt)],
@@ -148,6 +156,10 @@ export const clips = pgTable(
     })
       .notNull()
       .default("esports"),
+    // Content maturity rating (kids<pg<teen<mature). Defaults to teen for legacy rows.
+    maturityRating: text("maturity_rating").notNull().default("teen"),
+    // Free-form content descriptors.
+    contentTags: text("content_tags").array().notNull().default([]),
     deletedAt: text("deleted_at"),
   },
   (t) => [index("clips_game_idx").on(t.gameId)],

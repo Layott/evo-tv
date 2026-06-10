@@ -3,6 +3,12 @@ export type ISODate = string;
 
 export type Role = "guest" | "user" | "premium" | "creator" | "admin";
 
+/**
+ * Content maturity rating. Ordered kids<pg<teen<mature
+ * (ranks kids=0, pg=1, teen=2, mature=3).
+ */
+export type MaturityRating = "kids" | "pg" | "teen" | "mature";
+
 export interface Profile {
   id: UUID;
   handle: string;
@@ -33,6 +39,7 @@ export interface UserPrefs {
   };
   language: "en" | "fr" | "pt" | "ha" | "yo" | "ig" | "sw";
   theme: "system" | "light" | "dark";
+  maturityPreference?: MaturityRating;
 }
 
 export interface Game {
@@ -141,6 +148,8 @@ export interface Stream {
   tags: string[];
   isPremium: boolean;
   pillar?: ContentPillar;
+  maturityRating?: MaturityRating;
+  contentTags?: string[];
   /** Pre-announced airtime for EPG. NULL for unscheduled or live-only streams. */
   scheduledStartAt?: ISODate | null;
   /** Pre-announced duration in minutes. Pairs with scheduledStartAt. */
@@ -168,6 +177,8 @@ export interface Vod {
   likeCount: number;
   isPremium: boolean;
   pillar?: ContentPillar;
+  maturityRating?: MaturityRating;
+  contentTags?: string[];
 }
 
 export interface Clip {
@@ -185,6 +196,8 @@ export interface Clip {
   createdAt: ISODate;
   gameId: UUID;
   pillar?: ContentPillar;
+  maturityRating?: MaturityRating;
+  contentTags?: string[];
 }
 
 /* ── Phase 9b — Shows / Seasons / Episodes ───────────────────────────── */
@@ -214,6 +227,8 @@ export interface Show {
   rating: number;
   releasedAt: ISODate;
   tags: string[];
+  maturityRating?: MaturityRating;
+  contentTags?: string[];
 }
 
 export interface Season {
@@ -240,6 +255,8 @@ export interface Episode {
   introEndSec?: number;
   premiereAt: ISODate;
   releasedAt: ISODate;
+  maturityRating?: MaturityRating;
+  contentTags?: string[];
 }
 
 export interface ChatMessage {

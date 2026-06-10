@@ -1,8 +1,56 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { requireMinRole } from "@/lib/auth/guards";
 import { writeAudit } from "@/lib/api/audit";
+import { requireAdminFromRequest } from "@/lib/api/admin";
+import { getClipById } from "@/lib/api/vods";
+
+const patchSchema = z
+  .object({
+    maturityRating: z.enum(["kids", "pg", "teen", "mature"]),
+    contentTags: z.array(z.string()),
+  })
+  .partial();
+
+/**
+ * PATCH /api/admin/clips/[id]
+ *
+ * Admin update of a clip's content classification. Accepts an optional
+ * maturityRating and/or contentTags; omitted fields are left unchanged.
+ * Returns the updated clip in the public Clip shape.
+ */
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const guard = await requireAdminFromRequest();
+  if (!guard.ok) return guard.response;
+  const { id } = await params;
+
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+  const parsed = patchSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 });
+  }
+
+  const existing = (
+    await db.select().from(schema.clips).where(eq(schema.clips.id, id)).limit(1)
+  )[0];
+  if (!existing) return new NextResponse("Clip not found", { status: 404 });
+
+  if (Object.keys(parsed.data).length > 0) {
+    await db.update(schema.clips).set(parsed.data).where(eq(schema.clips.id, id));
+  }
+
+  return NextResponse.json(await getClipById(id));
+}
 
 /**
  * DELETE /api/admin/clips/[id]

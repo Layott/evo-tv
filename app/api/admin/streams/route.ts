@@ -106,6 +106,8 @@ const createSchema = z.object({
   language: z.string().default("en"),
   tags: z.array(z.string()).default([]),
   isPremium: z.boolean().default(false),
+  maturityRating: z.enum(["kids", "pg", "teen", "mature"]).default("teen"),
+  contentTags: z.array(z.string()).default([]),
 });
 
 export async function POST(req: NextRequest) {
@@ -148,6 +150,8 @@ export async function POST(req: NextRequest) {
       language: parsed.data.language,
       tags: parsed.data.tags,
       isPremium: parsed.data.isPremium,
+      maturityRating: parsed.data.maturityRating,
+      contentTags: parsed.data.contentTags,
       createdAt: nowIso,
     });
 

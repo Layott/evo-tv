@@ -20,6 +20,8 @@ function toVod(r: typeof schema.vods.$inferSelect): Vod {
     likeCount: r.likeCount,
     isPremium: r.isPremium,
     pillar: r.pillar as Vod["pillar"],
+    maturityRating: (r.maturityRating ?? "teen") as Vod["maturityRating"],
+    contentTags: r.contentTags ?? [],
   };
 }
 
@@ -39,6 +41,8 @@ function toClip(r: typeof schema.clips.$inferSelect): Clip {
     createdAt: r.createdAt,
     gameId: r.gameId,
     pillar: r.pillar as Clip["pillar"],
+    maturityRating: (r.maturityRating ?? "teen") as Clip["maturityRating"],
+    contentTags: r.contentTags ?? [],
   };
 }
 

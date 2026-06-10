@@ -143,6 +143,9 @@ export const userPrefs = pgTable("user_prefs", {
   theme: text("theme", { enum: ["system", "light", "dark"] })
     .notNull()
     .default("system"),
+  // Highest content maturity rating the user wants surfaced. Defaults to mature
+  // (no filtering) for legacy rows. kids<pg<teen<mature.
+  maturityPreference: text("maturity_preference").notNull().default("mature"),
 });
 
 export const usersRelations = relations(user, ({ one }) => ({

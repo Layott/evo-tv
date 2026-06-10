@@ -97,6 +97,8 @@ export async function PATCH(
     scheduledDurationMin?: number | null;
     hlsUrl?: string | null;
     playoutFilePath?: string | null;
+    maturityRating?: string;
+    contentTags?: string[];
   } | null;
   if (!body) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
@@ -107,6 +109,8 @@ export async function PATCH(
     scheduledDurationMin?: number | null;
     hlsPath?: string;
     playoutFilePath?: string | null;
+    maturityRating?: string;
+    contentTags?: string[];
   } = {};
 
   if ("scheduledStartAt" in body) {
@@ -193,6 +197,30 @@ export async function PATCH(
     } else {
       return NextResponse.json(
         { error: "playoutFilePath must be string or null" },
+        { status: 400 },
+      );
+    }
+  }
+
+  if ("maturityRating" in body) {
+    const v = body.maturityRating;
+    if (v === "kids" || v === "pg" || v === "teen" || v === "mature") {
+      update.maturityRating = v;
+    } else {
+      return NextResponse.json(
+        { error: "maturityRating must be one of kids|pg|teen|mature" },
+        { status: 400 },
+      );
+    }
+  }
+
+  if ("contentTags" in body) {
+    const v = body.contentTags;
+    if (Array.isArray(v) && v.every((t) => typeof t === "string")) {
+      update.contentTags = v;
+    } else {
+      return NextResponse.json(
+        { error: "contentTags must be an array of strings" },
         { status: 400 },
       );
     }

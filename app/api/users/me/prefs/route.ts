@@ -21,6 +21,7 @@ const DEFAULTS = {
   },
   language: "en",
   theme: "dark" as "system" | "light" | "dark",
+  maturityPreference: "mature" as "kids" | "pg" | "teen" | "mature",
 };
 
 const patchSchema = z.object({
@@ -44,6 +45,7 @@ const patchSchema = z.object({
     .optional(),
   language: z.string().min(2).max(10).optional(),
   theme: z.enum(["system", "light", "dark"]).optional(),
+  maturityPreference: z.enum(["kids", "pg", "teen", "mature"]).optional(),
 });
 
 async function loadOrCreate(userId: string) {
