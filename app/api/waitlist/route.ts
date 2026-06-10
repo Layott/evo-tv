@@ -9,12 +9,23 @@ import { db, schema } from "@/lib/db";
  *   GET  /api/waitlist?username=foo  -> { available: boolean }
  *   POST /api/waitlist { email, username }  -> reserve (409 if email/username taken)
  *
- * No auth — this is the marketing-site signup. Email + username are unique;
- * username is normalized lowercase, 3-20 chars of [a-z0-9_].
+ * No auth — this is the marketing-site signup. Called cross-origin from the
+ * standalone marketing site, so CORS is allowed (public, credential-free).
+ * Email + username are unique; username is normalized lowercase, 3-20 chars.
  */
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const USERNAME_RE = /^[a-z0-9_]{3,20}$/;
+
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
+function json(body: unknown, status = 200) {
+  return NextResponse.json(body, { status, headers: CORS });
+}
 
 function normUsername(v: unknown): string | null {
   if (typeof v !== "string") return null;
@@ -35,12 +46,16 @@ function genId(): string {
   );
 }
 
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: CORS });
+}
+
 export async function GET(req: NextRequest) {
   const username = normUsername(new URL(req.url).searchParams.get("username"));
   if (!username) {
-    return NextResponse.json(
+    return json(
       { available: false, error: "Username must be 3-20 chars (a-z, 0-9, _)." },
-      { status: 400 },
+      400,
     );
   }
   const taken = (
@@ -50,7 +65,7 @@ export async function GET(req: NextRequest) {
       .where(eq(schema.waitlist.username, username))
       .limit(1)
   ).length;
-  return NextResponse.json({ available: taken === 0, username });
+  return json({ available: taken === 0, username });
 }
 
 export async function POST(req: NextRequest) {
@@ -59,19 +74,16 @@ export async function POST(req: NextRequest) {
     username?: unknown;
   } | null;
   if (!body) {
-    return NextResponse.json({ error: "Invalid body" }, { status: 400 });
+    return json({ error: "Invalid body" }, 400);
   }
 
   const email = normEmail(body.email);
   const username = normUsername(body.username);
   if (!email) {
-    return NextResponse.json({ error: "Enter a valid email." }, { status: 400 });
+    return json({ error: "Enter a valid email." }, 400);
   }
   if (!username) {
-    return NextResponse.json(
-      { error: "Username must be 3-20 chars (a-z, 0-9, _)." },
-      { status: 400 },
-    );
+    return json({ error: "Username must be 3-20 chars (a-z, 0-9, _)." }, 400);
   }
 
   const emailTaken = (
@@ -82,10 +94,7 @@ export async function POST(req: NextRequest) {
       .limit(1)
   ).length;
   if (emailTaken) {
-    return NextResponse.json(
-      { error: "You're already on the list." },
-      { status: 409 },
-    );
+    return json({ error: "You're already on the list." }, 409);
   }
   const userTaken = (
     await db
@@ -95,10 +104,7 @@ export async function POST(req: NextRequest) {
       .limit(1)
   ).length;
   if (userTaken) {
-    return NextResponse.json(
-      { error: "That username is already reserved.", field: "username" },
-      { status: 409 },
-    );
+    return json({ error: "That username is already reserved.", field: "username" }, 409);
   }
 
   const id = genId();
@@ -112,11 +118,11 @@ export async function POST(req: NextRequest) {
     });
   } catch {
     // Unique race — someone grabbed it between the check and insert.
-    return NextResponse.json(
+    return json(
       { error: "That email or username was just taken. Try again." },
-      { status: 409 },
+      409,
     );
   }
 
-  return NextResponse.json({ ok: true, id, username });
+  return json({ ok: true, id, username });
 }
