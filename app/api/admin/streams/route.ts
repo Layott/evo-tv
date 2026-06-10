@@ -59,6 +59,7 @@ export async function GET(req: NextRequest) {
         streamerAvatarUrl: schema.streams.streamerAvatarUrl,
         isLive: schema.streams.isLive,
         hlsPath: schema.streams.hlsPath,
+        playoutFilePath: schema.streams.playoutFilePath,
         thumbnailUrl: schema.streams.thumbnailUrl,
         viewerCount: schema.streams.viewerCount,
         peakViewerCount: schema.streams.peakViewerCount,

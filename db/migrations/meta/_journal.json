@@ -176,6 +176,20 @@
       "when": 1779821400000,
       "tag": "0024_epg_reminders",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1780000000000,
+      "tag": "0025_streams_now_airing",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1780000600000,
+      "tag": "0026_playout_media",
+      "breakpoints": true
     }
   ]
 }

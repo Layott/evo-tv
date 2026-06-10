@@ -1,0 +1,11 @@
+{
+  "_comment": "Maps an EpgRow id (or its watchUrl) to a playout source on the OFFICE server. Copy to media-map.json and fill in. Source = absolute file path for pre-recorded content, or a live-input URL (rtmp://127.0.0.1/relay/<name>, srt://...) for an OBS-driven live event. Any program with no entry here is left to ffplayout's filler so a wrong file never airs. EpgRow ids look like ep_<id>, stream_<id>, match_<id>; watchUrls look like /show/<slug>/1/1, /stream/<id>, /events/<id>.",
+
+  "ep_onepiece_s1e1": "/media/anime/one-piece/S01E01.mp4",
+  "ep_onepiece_s1e2": "/media/anime/one-piece/S01E02.mp4",
+  "/show/one-piece/1/1": "/media/anime/one-piece/S01E01.mp4",
+
+  "stream_eveningnews": "/media/lifestyle/evo-evening-news-prerecorded.mp4",
+
+  "match_grandfinal_2026": "rtmp://127.0.0.1/relay/esports-live"
+}

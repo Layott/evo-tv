@@ -69,14 +69,20 @@ export async function DELETE(
 /**
  * PATCH /api/admin/streams/[id]
  *
- * Updates the scheduled airtime fields used by the EPG endpoint. Both fields
- * are nullable — passing `null` clears a schedule. Other stream fields are not
- * editable here yet; this route exists for the EPG MVP.
+ * Updates the scheduled airtime fields used by the EPG endpoint, plus the HLS
+ * playback URL (`hlsUrl`, stored as `hlsPath`). For a linear channel served by
+ * an external origin (e.g. Cloudflare Stream), an admin pastes the Cloudflare
+ * `.m3u8` manifest here and the app plays it directly. Schedule fields are
+ * nullable — passing `null` clears them; `hlsUrl: null | ""` clears the URL.
  *
- * Body: { scheduledStartAt?: string | null; scheduledDurationMin?: number | null }
+ * Body: {
+ *   scheduledStartAt?: string | null;
+ *   scheduledDurationMin?: number | null;
+ *   hlsUrl?: string | null;
+ * }
  *
- * Requires `support_admin` or higher — programming the schedule is a routine
- * operation that doesn't need full admin.
+ * Requires `support_admin` or higher — programming the schedule + playback URL
+ * is a routine operation that doesn't need full admin.
  */
 export async function PATCH(
   req: NextRequest,
@@ -89,6 +95,8 @@ export async function PATCH(
   const body = (await req.json().catch(() => null)) as {
     scheduledStartAt?: string | null;
     scheduledDurationMin?: number | null;
+    hlsUrl?: string | null;
+    playoutFilePath?: string | null;
   } | null;
   if (!body) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
@@ -97,6 +105,8 @@ export async function PATCH(
   const update: {
     scheduledStartAt?: string | null;
     scheduledDurationMin?: number | null;
+    hlsPath?: string;
+    playoutFilePath?: string | null;
   } = {};
 
   if ("scheduledStartAt" in body) {
@@ -134,6 +144,60 @@ export async function PATCH(
     }
   }
 
+  if ("hlsUrl" in body) {
+    const v = body.hlsUrl;
+    if (v === null) {
+      update.hlsPath = "";
+    } else if (typeof v === "string") {
+      const trimmed = v.trim();
+      if (trimmed.length > 2048) {
+        return NextResponse.json(
+          { error: "hlsUrl too long (max 2048 chars)" },
+          { status: 400 },
+        );
+      }
+      // Allow an absolute http(s) URL (e.g. Cloudflare manifest) or a relative
+      // origin path (e.g. /hls/<key>.m3u8). Empty string clears it.
+      if (
+        trimmed !== "" &&
+        !/^https?:\/\//i.test(trimmed) &&
+        !trimmed.startsWith("/")
+      ) {
+        return NextResponse.json(
+          { error: "hlsUrl must be an http(s) URL or an absolute /path" },
+          { status: 400 },
+        );
+      }
+      update.hlsPath = trimmed;
+    } else {
+      return NextResponse.json(
+        { error: "hlsUrl must be string or null" },
+        { status: 400 },
+      );
+    }
+  }
+
+  if ("playoutFilePath" in body) {
+    const v = body.playoutFilePath;
+    if (v === null || v === "") {
+      update.playoutFilePath = null;
+    } else if (typeof v === "string") {
+      const trimmed = v.trim();
+      if (trimmed.length > 2048) {
+        return NextResponse.json(
+          { error: "playoutFilePath too long (max 2048 chars)" },
+          { status: 400 },
+        );
+      }
+      update.playoutFilePath = trimmed;
+    } else {
+      return NextResponse.json(
+        { error: "playoutFilePath must be string or null" },
+        { status: 400 },
+      );
+    }
+  }
+
   if (Object.keys(update).length === 0) {
     return NextResponse.json({ error: "No fields to update" }, { status: 400 });
   }
@@ -155,6 +219,8 @@ export async function PATCH(
       prev: {
         scheduledStartAt: existing.scheduledStartAt,
         scheduledDurationMin: existing.scheduledDurationMin,
+        hlsPath: existing.hlsPath,
+        playoutFilePath: existing.playoutFilePath,
       },
       next: update,
     },

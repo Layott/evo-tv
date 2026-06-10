@@ -30,6 +30,20 @@ export const streams = pgTable(
     // NULL for live-only or unscheduled streams.
     scheduledStartAt: text("scheduled_start_at"),
     scheduledDurationMin: integer("scheduled_duration_min"),
+    // Linear playout — "now airing" pointer. Set by the playout engine
+    // (ffplayout) via POST /api/internal/now-airing on every program change so
+    // a continuous linear-channel stream can advertise what is REALLY on air,
+    // not just what was scheduled. NULL on non-linear / idle streams.
+    nowAiringTitle: text("now_airing_title"),
+    nowAiringSubtitle: text("now_airing_subtitle"),
+    nowAiringTargetId: text("now_airing_target_id"),
+    nowAiringThumbnailUrl: text("now_airing_thumbnail_url"),
+    nowAiringStartedAt: text("now_airing_started_at"),
+    // Linear playout — which media file the office playout engine should air for
+    // this scheduled program. References playout_media.file_path. NULL = no file
+    // chosen yet (the playout adapter falls back to filler). Set by admins via
+    // the stream schedule editor's file picker.
+    playoutFilePath: text("playout_file_path"),
     hlsPath: text("hls_path").notNull().default(""),
     thumbnailUrl: text("thumbnail_url").notNull().default(""),
     viewerCount: integer("viewer_count").notNull().default(0),
@@ -51,6 +65,28 @@ export const streams = pgTable(
     index("streams_game_idx").on(t.gameId),
     index("streams_scheduled_idx").on(t.scheduledStartAt),
   ],
+);
+
+/**
+ * Office playout media library. The office "media agent"
+ * (scripts/report-media-library.mjs) scans the playout box's media folder and
+ * upserts one row per video file here, so admins can pick a real file for a
+ * scheduled program from the admin UI instead of hand-editing a JSON map.
+ * Files that vanish from the folder are soft-deleted (deletedAt set).
+ */
+export const playoutMedia = pgTable(
+  "playout_media",
+  {
+    id: text("id").primaryKey(),
+    filePath: text("file_path").notNull().unique(),
+    fileName: text("file_name").notNull(),
+    durationSec: integer("duration_sec"),
+    sizeMb: integer("size_mb"),
+    lastSeenAt: text("last_seen_at").notNull(),
+    createdAt: text("created_at").notNull(),
+    deletedAt: text("deleted_at"),
+  },
+  (t) => [index("playout_media_active_idx").on(t.deletedAt)],
 );
 
 export const vods = pgTable(
