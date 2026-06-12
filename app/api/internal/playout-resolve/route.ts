@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { and, between, isNotNull, isNull } from "drizzle-orm";
 
 import { db, schema } from "@/lib/db";
+import { readPlayoutConfig } from "@/lib/playout-config";
 
 /**
  * GET /api/internal/playout-resolve?date=YYYY-MM-DD — Bearer ${PLAYOUT_SECRET}.
@@ -10,8 +11,14 @@ import { db, schema } from "@/lib/db";
  * admin-chosen media file for each scheduled stream airing on the given UTC day
  * (those with a playout_file_path set). The office adapter merges this over its
  * local media-map.json so admin picks in the app win over the static map.
+ * Also carries the channel-wide filler + ad-break file lists the admin picked
+ * in the app (/api/admin/playout-config).
  *
- *   { "map": { "stream_<id>": "/media/anime/ep01.mp4", ... } }
+ *   {
+ *     "map": { "stream_<id>": "/media/anime/ep01.mp4", ... },
+ *     "fillerFiles": ["/media/filler/loop.mp4", ...],
+ *     "adFiles": ["/media/ads/spot1.mp4", ...]
+ *   }
  */
 export async function GET(req: NextRequest) {
   const secret = process.env.PLAYOUT_SECRET;
@@ -54,5 +61,11 @@ export async function GET(req: NextRequest) {
     if (r.playoutFilePath) map[`stream_${r.id}`] = r.playoutFilePath;
   }
 
-  return NextResponse.json({ map });
+  const config = await readPlayoutConfig();
+
+  return NextResponse.json({
+    map,
+    fillerFiles: config.fillerFiles,
+    adFiles: config.adFiles,
+  });
 }
