@@ -79,6 +79,7 @@ export async function DELETE(
  *   scheduledStartAt?: string | null;
  *   scheduledDurationMin?: number | null;
  *   hlsUrl?: string | null;
+ *   thumbnailUrl?: string;   // http(s) URL or /path, max 1000 chars, "" clears
  * }
  *
  * Requires `support_admin` or higher — programming the schedule + playback URL
@@ -97,6 +98,7 @@ export async function PATCH(
     scheduledDurationMin?: number | null;
     hlsUrl?: string | null;
     playoutFilePath?: string | null;
+    thumbnailUrl?: string;
     maturityRating?: string;
     contentTags?: string[];
   } | null;
@@ -109,6 +111,7 @@ export async function PATCH(
     scheduledDurationMin?: number | null;
     hlsPath?: string;
     playoutFilePath?: string | null;
+    thumbnailUrl?: string;
     maturityRating?: string;
     contentTags?: string[];
   } = {};
@@ -202,6 +205,37 @@ export async function PATCH(
     }
   }
 
+  if ("thumbnailUrl" in body) {
+    const v = body.thumbnailUrl;
+    if (typeof v === "string") {
+      const trimmed = v.trim();
+      if (trimmed.length > 1000) {
+        return NextResponse.json(
+          { error: "thumbnailUrl too long (max 1000 chars)" },
+          { status: 400 },
+        );
+      }
+      // Allow an absolute http(s) URL (e.g. a Vercel Blob URL from the admin
+      // upload flow) or a relative origin /path. Empty string clears it.
+      if (
+        trimmed !== "" &&
+        !/^https?:\/\//i.test(trimmed) &&
+        !trimmed.startsWith("/")
+      ) {
+        return NextResponse.json(
+          { error: "thumbnailUrl must be an http(s) URL or an absolute /path" },
+          { status: 400 },
+        );
+      }
+      update.thumbnailUrl = trimmed;
+    } else {
+      return NextResponse.json(
+        { error: "thumbnailUrl must be a string" },
+        { status: 400 },
+      );
+    }
+  }
+
   if ("maturityRating" in body) {
     const v = body.maturityRating;
     if (v === "kids" || v === "pg" || v === "teen" || v === "mature") {
@@ -249,6 +283,7 @@ export async function PATCH(
         scheduledDurationMin: existing.scheduledDurationMin,
         hlsPath: existing.hlsPath,
         playoutFilePath: existing.playoutFilePath,
+        thumbnailUrl: existing.thumbnailUrl,
       },
       next: update,
     },

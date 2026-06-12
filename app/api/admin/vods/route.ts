@@ -3,6 +3,8 @@ import { z } from "zod";
 import { and, count, desc, eq, isNotNull, isNull } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { requireMinRole } from "@/lib/auth/guards";
+import { generateId, requireAdminFromRequest } from "@/lib/api/admin";
+import { getVodById } from "@/lib/api/vods";
 
 const listQuerySchema = z.object({
   gameId: z.string().optional(),
@@ -72,4 +74,79 @@ export async function GET(req: NextRequest) {
     limit,
     offset,
   });
+}
+
+/** http(s) URL or an absolute /path (e.g. a Blob URL or an origin-relative file). */
+const urlOrPath = z
+  .string()
+  .trim()
+  .min(1)
+  .max(2048)
+  .refine((v) => /^https?:\/\//i.test(v) || v.startsWith("/"), {
+    message: "must be an http(s) URL or an absolute /path",
+  });
+
+const createSchema = z.object({
+  title: z.string().min(3).max(200),
+  gameId: z.string().min(1),
+  /** Stored into mp4Path. Typically a Vercel Blob URL from the client-upload flow. */
+  mp4Url: urlOrPath,
+  /** Stored into hlsPath. Optional; defaults to "" (player falls back to mp4). */
+  hlsUrl: urlOrPath.or(z.literal("")).default(""),
+  thumbnailUrl: z.string().min(1),
+  durationSec: z.number().int().positive(),
+  description: z.string().max(2000).default(""),
+  pillar: z.enum(["esports", "anime", "lifestyle"]).default("esports"),
+  maturityRating: z.enum(["kids", "pg", "teen", "mature"]).default("teen"),
+  isPremium: z.boolean().default(false),
+  contentTags: z.array(z.string()).default([]),
+});
+
+/**
+ * POST /api/admin/vods — create a VOD row (uploaded media, not a stream
+ * recording: streamId/channelId are null, counters start at zero).
+ *
+ * Admin only. Returns 201 with the created VOD in the public Vod shape
+ * (hlsUrl/mp4Url naming, same as getVodById).
+ */
+export async function POST(req: NextRequest) {
+  const guard = await requireAdminFromRequest();
+  if (!guard.ok) return guard.response;
+
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+  const parsed = createSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 });
+  }
+
+  const id = generateId("vod");
+  const nowIso = new Date().toISOString();
+
+  await db.insert(schema.vods).values({
+    id,
+    streamId: null,
+    channelId: null,
+    title: parsed.data.title,
+    description: parsed.data.description,
+    gameId: parsed.data.gameId,
+    durationSec: parsed.data.durationSec,
+    hlsPath: parsed.data.hlsUrl,
+    mp4Path: parsed.data.mp4Url,
+    thumbnailUrl: parsed.data.thumbnailUrl,
+    publishedAt: nowIso,
+    chapters: [],
+    viewCount: 0,
+    likeCount: 0,
+    isPremium: parsed.data.isPremium,
+    pillar: parsed.data.pillar,
+    maturityRating: parsed.data.maturityRating,
+    contentTags: parsed.data.contentTags,
+  });
+
+  return NextResponse.json(await getVodById(id), { status: 201 });
 }

@@ -11,15 +11,24 @@ const patchSchema = z
   .object({
     maturityRating: z.enum(["kids", "pg", "teen", "mature"]),
     contentTags: z.array(z.string()),
+    // http(s) URL or absolute /path, max 1000 chars; "" clears the thumbnail.
+    thumbnailUrl: z
+      .string()
+      .trim()
+      .max(1000)
+      .refine(
+        (v) => v === "" || /^https?:\/\//i.test(v) || v.startsWith("/"),
+        { message: "thumbnailUrl must be an http(s) URL or an absolute /path" },
+      ),
   })
   .partial();
 
 /**
  * PATCH /api/admin/vods/[id]
  *
- * Admin update of a VOD's content classification. Accepts an optional
- * maturityRating and/or contentTags; omitted fields are left unchanged.
- * Returns the updated VOD in the public Vod shape.
+ * Admin update of a VOD's content classification and presentation. Accepts an
+ * optional maturityRating, contentTags and/or thumbnailUrl; omitted fields are
+ * left unchanged. Returns the updated VOD in the public Vod shape.
  */
 export async function PATCH(
   req: NextRequest,
