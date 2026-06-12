@@ -66,6 +66,8 @@ export async function GET(req: NextRequest) {
         language: schema.streams.language,
         tags: schema.streams.tags,
         isPremium: schema.streams.isPremium,
+        scheduledStartAt: schema.streams.scheduledStartAt,
+        scheduledDurationMin: schema.streams.scheduledDurationMin,
         createdAt: schema.streams.createdAt,
         startedAt: schema.streams.startedAt,
         endedAt: schema.streams.endedAt,
