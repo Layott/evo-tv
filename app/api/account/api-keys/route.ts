@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { and, desc, eq, isNull } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
-import { getCurrentUser } from "@/lib/auth/guards";
+import { requireAdminFromRequest } from "@/lib/api/admin";
 
 function genId(): string {
   return (
@@ -37,14 +37,15 @@ const createSchema = z.object({
 });
 
 /**
- * GET /api/account/api-keys — list caller's keys.
+ * GET /api/account/api-keys: list caller's keys. Admin only.
  *
  * Never returns the plaintext value or the full hash. Only id, name,
  * prefix, lastUsedAt, createdAt, revokedAt.
  */
 export async function GET() {
-  const user = await getCurrentUser();
-  if (!user) return new NextResponse("Auth required", { status: 401 });
+  const guard = await requireAdminFromRequest();
+  if (!guard.ok) return guard.response;
+  const user = guard.user;
 
   const rows = await db
     .select({
@@ -63,16 +64,17 @@ export async function GET() {
 }
 
 /**
- * POST /api/account/api-keys — create + return plaintext ONCE.
+ * POST /api/account/api-keys: create + return plaintext ONCE. Admin only.
  *
- * Body: { name }. Plaintext key is returned in `key` field — caller must
- * save it immediately; the server only stores sha256 hash + prefix.
+ * Body: { name }. Plaintext key is returned in the `key` field; caller must
+ * save it immediately, the server only stores sha256 hash + prefix.
  *
  * Limit: 10 active (non-revoked) keys per user.
  */
 export async function POST(req: NextRequest) {
-  const user = await getCurrentUser();
-  if (!user) return new NextResponse("Auth required", { status: 401 });
+  const guard = await requireAdminFromRequest();
+  if (!guard.ok) return guard.response;
+  const user = guard.user;
 
   const parsed = createSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {

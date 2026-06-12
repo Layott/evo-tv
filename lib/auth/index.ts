@@ -48,7 +48,10 @@ export const auth = betterAuth({
       : {}),
   },
   session: {
-    expiresIn: 60 * 60 * 24 * 30,
+    // 7-day inactivity window: each authenticated request older than
+    // `updateAge` slides the expiry forward, so active users stay signed in
+    // but anyone idle for 7 days is logged out on next open.
+    expiresIn: 60 * 60 * 24 * 7,
     updateAge: 60 * 60 * 24,
     cookieCache: { enabled: true, maxAge: 60 * 5 },
   },

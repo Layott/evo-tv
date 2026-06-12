@@ -36,6 +36,27 @@ if (!DATABASE_URL) {
 const sql = neon(DATABASE_URL);
 const db = drizzle(sql, { schema });
 
+/**
+ * Production guard for the demo streams.
+ *
+ * The mock streams ship fake telemetry (isLive: true, viewerCount 24300,
+ * etc). Those numbers must never land in a production database unless the
+ * operator explicitly opts in with SEED_DEMO=1.
+ *
+ * Guard is active when (NODE_ENV is production OR the DB URL points at a
+ * production-looking host) AND SEED_DEMO !== "1". While active, the stream
+ * rows are still inserted (vods/clips/polls reference their ids) but
+ * neutralized: isLive false, viewerCount 0, peakViewerCount 0.
+ *
+ * Dev behavior is unchanged on non-prod targets, or anywhere when
+ * SEED_DEMO=1.
+ */
+const PROD_HOST_MARKERS = [".neon.tech", "vercel-storage.com", "prod"];
+const isProdTarget =
+  process.env.NODE_ENV === "production" ||
+  PROD_HOST_MARKERS.some((m) => DATABASE_URL.includes(m));
+const skipFakeStreamData = isProdTarget && process.env.SEED_DEMO !== "1";
+
 const SECRET = process.env.AUTH_SECRET ?? "dev_stream_key_secret";
 const hashKey = (key: string) =>
   crypto.createHmac("sha256", SECRET).update(key).digest("hex");
@@ -149,13 +170,13 @@ async function run() {
         streamerName: s.streamerName,
         streamerAvatarUrl: s.streamerAvatarUrl,
         streamKeyHash: hashKey(streamKey),
-        isLive: s.isLive,
+        isLive: skipFakeStreamData ? false : s.isLive,
         startedAt: s.startedAt,
         endedAt: s.endedAt,
         hlsPath: s.hlsUrl,
         thumbnailUrl: s.thumbnailUrl,
-        viewerCount: s.viewerCount,
-        peakViewerCount: s.peakViewerCount,
+        viewerCount: skipFakeStreamData ? 0 : s.viewerCount,
+        peakViewerCount: skipFakeStreamData ? 0 : s.peakViewerCount,
         language: s.language,
         tags: s.tags,
         isPremium: s.isPremium,
@@ -163,7 +184,11 @@ async function run() {
       })
       .onConflictDoNothing();
   }
-  console.log(`[seed] streams: ${streams.length} (stream keys derived from id; dev only)`);
+  console.log(
+    skipFakeStreamData
+      ? `[seed] streams: ${streams.length} NEUTRALIZED (production guard: isLive=false, viewer counts 0; set SEED_DEMO=1 to seed demo live data)`
+      : `[seed] streams: ${streams.length} (stream keys derived from id; dev only)`,
+  );
 
   const streamIds = new Set(streams.map((s) => s.id));
   for (const v of vods)

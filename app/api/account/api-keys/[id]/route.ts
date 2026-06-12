@@ -1,19 +1,20 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { and, eq, isNull } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
-import { getCurrentUser } from "@/lib/auth/guards";
+import { requireAdminFromRequest } from "@/lib/api/admin";
 
 /**
- * DELETE /api/account/api-keys/[id] — revoke (soft delete).
+ * DELETE /api/account/api-keys/[id]: revoke (soft delete). Admin only.
  *
- * Sets revokedAt=now. Only the owning user can revoke their own keys.
+ * Sets revokedAt=now. Only the owning admin can revoke their own keys.
  */
 export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const user = await getCurrentUser();
-  if (!user) return new NextResponse("Auth required", { status: 401 });
+  const guard = await requireAdminFromRequest();
+  if (!guard.ok) return guard.response;
+  const user = guard.user;
   const { id } = await params;
 
   const existing = (

@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { and, desc, eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/guards";
+import { liveViewerCounts } from "@/lib/api/streams";
 
 /**
  * GET /api/channels/[slug] — public channel page payload.
@@ -74,9 +75,21 @@ export async function GET(
     followedByMe = !!row;
   }
 
+  // Same read-time viewer-count refresh as /api/streams: never return the
+  // seeded viewer_count column raw. Derive the live count from watch_events
+  // heartbeats (last 90s) instead.
+  let liveStream = liveStreams[0] ?? null;
+  if (liveStream) {
+    const counts = await liveViewerCounts([liveStream.id]);
+    liveStream = {
+      ...liveStream,
+      viewerCount: counts.get(liveStream.id) ?? 0,
+    };
+  }
+
   return NextResponse.json({
     channel,
-    liveStream: liveStreams[0] ?? null,
+    liveStream,
     recentVods,
     followedByMe,
   });

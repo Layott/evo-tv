@@ -14,7 +14,7 @@ import type { Stream } from "@/lib/types";
  * 90s gives a 1.5x buffer over the 60s heartbeat cadence — if a viewer
  * misses one heartbeat but sends the next, they stay "live."
  */
-async function liveViewerCounts(
+export async function liveViewerCounts(
   streamIds: string[],
 ): Promise<Map<string, number>> {
   if (streamIds.length === 0) return new Map();
