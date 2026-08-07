@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { put } from "@vercel/blob";
+import { storage } from "@/lib/storage";
 import { requireAdminFromRequest } from "@/lib/api/admin";
 
 // Vercel's hard request-body cap is 4.5 MB on Hobby. Stay safely under so
@@ -69,10 +69,8 @@ export async function POST(req: NextRequest) {
   }
 
   const key = `admin-uploads/${Date.now()}-${randomSuffix()}.${extFromMime(file.type)}`;
-  const blob = await put(key, file, {
-    access: "public",
-    contentType: file.type,
-  });
+  // storage.write returns the public URL, which is what callers persist.
+  const url = await storage.write(key, Buffer.from(await file.arrayBuffer()));
 
-  return NextResponse.json({ url: blob.url });
+  return NextResponse.json({ url });
 }

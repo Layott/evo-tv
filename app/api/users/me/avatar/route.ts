@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { eq } from "drizzle-orm";
-import { put, del } from "@vercel/blob";
+import { storage, ownedKeyFromUrl } from "@/lib/storage";
 import { db, schema } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/guards";
 
@@ -74,22 +74,20 @@ export async function POST(req: NextRequest) {
   }
 
   const key = `avatars/${user.id}-${Date.now()}.${extFromMime(file.type)}`;
-  const blob = await put(key, file, {
-    access: "public",
-    contentType: file.type,
-  });
+  const url = await storage.write(key, Buffer.from(await file.arrayBuffer()));
 
   const prev = (user as { image?: string | null }).image;
 
-  await db.update(schema.user).set({ image: blob.url }).where(eq(schema.user.id, user.id));
+  await db.update(schema.user).set({ image: url }).where(eq(schema.user.id, user.id));
 
-  if (prev && prev.includes("public.blob.vercel-storage.com")) {
-    void del(prev).catch(() => {
+  const prevKey = ownedKeyFromUrl(prev);
+  if (prevKey) {
+    void storage.delete(prevKey).catch(() => {
       // Best-effort cleanup; safe to leak orphans.
     });
   }
 
-  return NextResponse.json({ ok: true, url: blob.url });
+  return NextResponse.json({ ok: true, url });
 }
 
 /**
@@ -102,8 +100,9 @@ export async function DELETE() {
   const prev = (user as { image?: string | null }).image;
   await db.update(schema.user).set({ image: null }).where(eq(schema.user.id, user.id));
 
-  if (prev && prev.includes("public.blob.vercel-storage.com")) {
-    void del(prev).catch(() => {});
+  const prevKey = ownedKeyFromUrl(prev);
+  if (prevKey) {
+    void storage.delete(prevKey).catch(() => {});
   }
 
   return NextResponse.json({ ok: true });
