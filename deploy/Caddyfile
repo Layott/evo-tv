@@ -1,0 +1,77 @@
+# EVO TV edge. Lives at /srv/evotv/Caddyfile on the droplet.
+# Caddy handles Let's Encrypt issuance and renewal with no configuration.
+{
+	email naijagameevo@gmail.com
+	servers {
+		timeouts {
+			# 0 = no write timeout. Required: /api/sse/* holds connections open
+			# indefinitely and any finite value would cut them mid-stream.
+			write 0
+			idle 10m
+		}
+	}
+}
+
+(common) {
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+}
+
+# ---------------------------------------------------------------- backend API
+api.evotv.tv {
+	import common
+
+	# flush_interval -1 disables response buffering. Without it Caddy holds the
+	# event stream and live chat appears frozen to the client.
+	@sse path /api/sse/*
+	handle @sse {
+		reverse_proxy api:3060 {
+			flush_interval -1
+			transport http {
+				read_timeout 0
+				write_timeout 0
+			}
+		}
+	}
+
+	handle {
+		reverse_proxy api:3060 {
+			header_up X-Real-IP {remote_host}
+		}
+	}
+
+	request_body {
+		max_size 100MB
+	}
+}
+
+# ----------------------------------------------------------- marketing site
+evotv.tv, www.evotv.tv {
+	import common
+	root * /srv/web
+
+	@static path *.js *.css *.woff2 *.png *.jpg *.jpeg *.svg *.webp *.mp4 *.mov
+	header @static Cache-Control "public, max-age=31536000, immutable"
+	header /index.html Cache-Control "no-cache"
+
+	try_files {path} /index.html
+	file_server
+}
+
+# --------------------------------------------------------------- app web SPA
+app.evotv.tv {
+	import common
+	root * /srv/app
+
+	@static path *.js *.css *.woff2 *.png *.jpg *.jpeg *.svg *.webp
+	header @static Cache-Control "public, max-age=31536000, immutable"
+	header /index.html Cache-Control "no-cache"
+
+	try_files {path} /index.html
+	file_server
+}

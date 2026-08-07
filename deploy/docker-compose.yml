@@ -1,0 +1,62 @@
+# EVO TV production stack. Lives at /srv/evotv/docker-compose.yml on the droplet.
+#
+# Expected layout on the box:
+#   /srv/evotv/docker-compose.yml   (this file)
+#   /srv/evotv/Caddyfile
+#   /srv/evotv/.env                 (chmod 600, never committed)
+#   /srv/evotv/api/                 EVOTV repo clone
+#   /srv/evotv/web/                 EVOTV-WEBSITE dist, uploaded
+#   /srv/evotv/app/                 EVOTV-app web export dist, uploaded
+
+services:
+  api:
+    build: ./api
+    env_file: .env
+    restart: always
+    # Bound to loopback only. Public traffic arrives via caddy; this mapping
+    # exists so cron.sh can reach the app without going through TLS.
+    ports:
+      - "127.0.0.1:3060:3060"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3060/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+    # SIGTERM lets open SSE streams close cleanly instead of being cut.
+    stop_grace_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+
+    # DO NOT add `deploy.replicas` or run a second copy of this service.
+    # lib/sse/bus.ts is an in-process EventEmitter feeding /api/sse/*. A second
+    # container cannot see events published in the first, which silently breaks
+    # live chat, notifications, and watch parties. Swap the bus for Redis
+    # pub/sub before scaling horizontally.
+
+  caddy:
+    image: caddy:2-alpine
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./web:/srv/web:ro
+      - ./app:/srv/app:ro
+      - caddy_data:/data      # certificates. Losing this re-issues from scratch.
+      - caddy_config:/config
+    depends_on:
+      - api
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+
+volumes:
+  caddy_data:
+  caddy_config:
