@@ -42,10 +42,12 @@ export async function GET(req: NextRequest) {
     FROM live_counts lc
     WHERE s.id = lc.stream_id
     RETURNING s.id, lc.viewers;
-  `)) as { rows: Array<{ id: string; viewers: number }> };
+  // postgres-js resolves db.execute to the row array itself; the old
+  // neon-http driver wrapped it in { rows }.
+  `)) as unknown as Array<{ id: string; viewers: number }>;
 
   return NextResponse.json({
-    streamsRefreshed: result.rows.length,
-    counts: result.rows,
+    streamsRefreshed: result.length,
+    counts: result,
   });
 }

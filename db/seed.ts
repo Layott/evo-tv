@@ -3,8 +3,8 @@
  * Run with `pnpm db:seed`. Idempotent.
  */
 import "dotenv/config";
-import { neon } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-http";
+import postgres from "postgres";
+import { drizzle } from "drizzle-orm/postgres-js";
 import crypto from "node:crypto";
 
 import * as schema from "./schema";
@@ -33,7 +33,7 @@ if (!DATABASE_URL) {
   console.error("[seed] No DB URL found (POSTGRES_URL_NON_POOLING / POSTGRES_URL / DATABASE_URL)");
   process.exit(1);
 }
-const sql = neon(DATABASE_URL);
+const sql = postgres(DATABASE_URL, { max: 1 });
 const db = drizzle(sql, { schema });
 
 /**
@@ -51,7 +51,16 @@ const db = drizzle(sql, { schema });
  * Dev behavior is unchanged on non-prod targets, or anywhere when
  * SEED_DEMO=1.
  */
-const PROD_HOST_MARKERS = [".neon.tech", "vercel-storage.com", "prod"];
+// Keep every host that has ever served production here. Dropping the Neon and
+// Vercel markers after the DigitalOcean move would quietly disarm this guard
+// for anyone still pointed at the old database.
+const PROD_HOST_MARKERS = [
+  ".neon.tech",
+  "vercel-storage.com",
+  "ondigitalocean.com",
+  "db.ondigitalocean",
+  "prod",
+];
 const isProdTarget =
   process.env.NODE_ENV === "production" ||
   PROD_HOST_MARKERS.some((m) => DATABASE_URL.includes(m));
@@ -281,7 +290,10 @@ async function run() {
   console.log("[seed] done.");
 }
 
-run().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+run()
+  .catch((err) => {
+    console.error(err);
+    process.exitCode = 1;
+  })
+  // postgres-js holds an open socket, so without this the process never exits.
+  .finally(() => sql.end({ timeout: 5 }));

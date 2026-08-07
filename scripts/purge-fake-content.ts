@@ -90,14 +90,14 @@
  *   17. UPDATE streams.channel_main: title em-dash variant -> colon variant
  *   18. UPDATE games: active_players=0
  *
- * TRANSACTION NOTE: the Neon HTTP driver does NOT support interactive
- * multi-statement transactions, but @neondatabase/serverless v1.x DOES
- * support sql.transaction([...]) - a non-interactive batch where every query
- * is precomputed client-side and the server runs the whole batch in ONE
- * atomic transaction. All ids here are known up front, so apply mode uses
- * that: any FK surprise rolls back EVERYTHING and the DB is untouched.
- * Caveat: the paranoia-guard SELECTs run before the batch (the batch cannot
- * branch on its own results), so there is a tiny check-then-act window.
+ * TRANSACTION NOTE: apply mode runs every statement inside one interactive
+ * transaction via postgres-js `sql.begin`. Any FK surprise rolls back
+ * EVERYTHING and the DB is untouched.
+ * Caveat: the paranoia-guard SELECTs still run before BEGIN, so a tiny
+ * check-then-act window remains. Unlike the old Neon HTTP batch, that is now
+ * fixable: move runParanoiaGuard inside the begin callback so the guard reads
+ * and the deletes share one snapshot. Left alone here because this script has
+ * already done its job and restructuring it earns nothing today.
  *
  * PARANOIA GUARD (rail 2): a mock user id is EXCLUDED from deletion when
  *   - it owns a subscriptions row whose id is NOT in the mock sub id list, or
@@ -107,7 +107,7 @@
  * Exclusions are printed loudly in both modes.
  */
 import { config } from "dotenv";
-import { neon } from "@neondatabase/serverless";
+import postgres from "postgres";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 
@@ -133,7 +133,8 @@ if (!URL) {
   console.error("[purge-fake-content] no DB URL in env");
   process.exit(1);
 }
-const sql = neon(URL);
+const sql = postgres(URL, { max: 1 });
+type PendingQuery = ReturnType<typeof sql>;
 
 // --apply is required for writes; anything else (including an explicit
 // --dry-run) stays read-only. If both flags are passed, dry-run wins.
@@ -505,8 +506,14 @@ async function apply(guard: GuardResult): Promise<void> {
   const u = guard.deletable;
 
   const labels: string[] = [];
-  const queries: ReturnType<typeof sql>[] = [];
-  const step = (label: string, q: ReturnType<typeof sql>) => {
+
+  // Interactive transaction: every statement below is built from the
+  // transaction-scoped `tx`, so it runs on the one connection that BEGIN
+  // opened. Building them from the outer client would silently execute them
+  // outside the transaction on other pooled connections.
+  const results = (await sql.begin((tx) => {
+  const queries: PendingQuery[] = [];
+  const step = (label: string, q: PendingQuery) => {
     labels.push(label);
     queries.push(q);
   };
@@ -514,74 +521,75 @@ async function apply(guard: GuardResult): Promise<void> {
   // 1-3: unblock the NO ACTION FKs pointing at mock users.
   step(
     "user_sanctions.reverted_by -> NULL",
-    sql`UPDATE user_sanctions SET reverted_by = NULL WHERE reverted_by = ANY(${u}) RETURNING id`,
+    tx`UPDATE user_sanctions SET reverted_by = NULL WHERE reverted_by = ANY(${u}) RETURNING id`,
   );
   step(
     "user_sanctions issued_by mock users DELETED",
-    sql`DELETE FROM user_sanctions WHERE issued_by = ANY(${u}) RETURNING id`,
+    tx`DELETE FROM user_sanctions WHERE issued_by = ANY(${u}) RETURNING id`,
   );
   step(
     "content_reports.resolved_by -> NULL",
-    sql`UPDATE content_reports SET resolved_by = NULL WHERE resolved_by = ANY(${u}) RETURNING id`,
+    tx`UPDATE content_reports SET resolved_by = NULL WHERE resolved_by = ANY(${u}) RETURNING id`,
   );
   // 4-5: polymorphic no-FK cleanups.
   step(
     "likes -> mock vods/clips DELETED",
-    sql`DELETE FROM likes
+    tx`DELETE FROM likes
         WHERE (target_type = 'vod' AND target_id = ANY(${VOD_IDS}))
            OR (target_type = 'clip' AND target_id = ANY(${CLIP_IDS}))
         RETURNING target_id`,
   );
   step(
     "epg_reminders -> deleted streams DELETED",
-    sql`DELETE FROM epg_reminders WHERE target_id = ANY(${EPG_STREAM_TARGETS}) RETURNING target_id`,
+    tx`DELETE FROM epg_reminders WHERE target_id = ANY(${EPG_STREAM_TARGETS}) RETURNING target_id`,
   );
   // 6-15: content + accounts, children before parents.
-  step("clips DELETED", sql`DELETE FROM clips WHERE id = ANY(${CLIP_IDS}) RETURNING id`);
-  step("vods DELETED", sql`DELETE FROM vods WHERE id = ANY(${VOD_IDS}) RETURNING id`);
-  step("polls DELETED", sql`DELETE FROM polls WHERE id = ANY(${POLL_IDS}) RETURNING id`);
+  step("clips DELETED", tx`DELETE FROM clips WHERE id = ANY(${CLIP_IDS}) RETURNING id`);
+  step("vods DELETED", tx`DELETE FROM vods WHERE id = ANY(${VOD_IDS}) RETURNING id`);
+  step("polls DELETED", tx`DELETE FROM polls WHERE id = ANY(${POLL_IDS}) RETURNING id`);
   step(
     "streams (6 fake) DELETED",
-    sql`DELETE FROM streams WHERE id = ANY(${STREAM_DELETE_IDS}) RETURNING id`,
+    tx`DELETE FROM streams WHERE id = ANY(${STREAM_DELETE_IDS}) RETURNING id`,
   );
-  step("ads DELETED", sql`DELETE FROM ads WHERE id = ANY(${AD_IDS}) RETURNING id`);
+  step("ads DELETED", tx`DELETE FROM ads WHERE id = ANY(${AD_IDS}) RETURNING id`);
   step(
     "notifications DELETED",
-    sql`DELETE FROM notifications WHERE id = ANY(${NOTIF_IDS}) RETURNING id`,
+    tx`DELETE FROM notifications WHERE id = ANY(${NOTIF_IDS}) RETURNING id`,
   );
-  step("orders DELETED", sql`DELETE FROM orders WHERE id = ANY(${ORDER_IDS}) RETURNING id`);
-  step("products DELETED", sql`DELETE FROM products WHERE id = ANY(${PRODUCT_IDS}) RETURNING id`);
+  step("orders DELETED", tx`DELETE FROM orders WHERE id = ANY(${ORDER_IDS}) RETURNING id`);
+  step("products DELETED", tx`DELETE FROM products WHERE id = ANY(${PRODUCT_IDS}) RETURNING id`);
   step(
     "subscriptions DELETED",
-    sql`DELETE FROM subscriptions WHERE id = ANY(${SUB_IDS}) RETURNING id`,
+    tx`DELETE FROM subscriptions WHERE id = ANY(${SUB_IDS}) RETURNING id`,
   );
   step(
     "mock users DELETED (cascade fans out)",
-    sql`DELETE FROM "user" WHERE id = ANY(${u}) RETURNING id`,
+    tx`DELETE FROM "user" WHERE id = ANY(${u}) RETURNING id`,
   );
   // 16-18: neutralize the keepers.
   step(
     "streams.channel_main telemetry zeroed",
-    sql`UPDATE streams SET is_live = false, viewer_count = 0, peak_viewer_count = 0
+    tx`UPDATE streams SET is_live = false, viewer_count = 0, peak_viewer_count = 0
         WHERE id = ${KEEP_STREAM_ID}
           AND (is_live = true OR viewer_count <> 0 OR peak_viewer_count <> 0)
         RETURNING id`,
   );
   step(
     "streams.channel_main title rewritten",
-    sql`UPDATE streams SET title = ${CHANNEL_MAIN_NEW_TITLE}
+    tx`UPDATE streams SET title = ${CHANNEL_MAIN_NEW_TITLE}
         WHERE id = ${KEEP_STREAM_ID} AND title = ${CHANNEL_MAIN_OLD_TITLE}
         RETURNING id`,
   );
   step(
     "games.active_players zeroed",
-    sql`UPDATE games SET active_players = 0
+    tx`UPDATE games SET active_players = 0
         WHERE id = ANY(${GAME_IDS}) AND active_players <> 0
         RETURNING id`,
   );
 
   console.log(`\n[purge-fake-content] APPLY: executing ${queries.length} statements atomically`);
-  const results = (await sql.transaction(queries)) as Array<Array<Record<string, unknown>>>;
+  return queries;
+  })) as unknown as Array<Array<Record<string, unknown>>>;
 
   console.log("\n-- affected counts (via RETURNING) --");
   results.forEach((rows, i) => {
@@ -620,10 +628,13 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error("[purge-fake-content] FAILED:", err instanceof Error ? err.message : err);
-  console.error(
-    "[purge-fake-content] apply mode is atomic: on failure the transaction rolled back and nothing changed.",
-  );
-  process.exit(1);
-});
+main()
+  .catch((err) => {
+    console.error("[purge-fake-content] FAILED:", err instanceof Error ? err.message : err);
+    console.error(
+      "[purge-fake-content] apply mode is atomic: on failure the transaction rolled back and nothing changed.",
+    );
+    process.exitCode = 1;
+  })
+  // postgres-js holds an open socket, so without this the process never exits.
+  .finally(() => sql.end({ timeout: 5 }));

@@ -89,22 +89,23 @@ export async function rollupDay(dateYmd: string): Promise<RollupResult> {
       updated_at = now();
   `);
 
-  // Tally for return.
+  // Tally for return. postgres-js resolves db.execute to the row array
+  // itself; the old neon-http driver wrapped it in { rows }.
   const channels = (await db.execute(
     sql`SELECT COUNT(DISTINCT channel_id)::int AS n FROM analytics_daily WHERE date = ${dateYmd}::text`,
-  )) as { rows: Array<{ n: number }> };
+  )) as unknown as Array<{ n: number }>;
   const we = (await db.execute(
     sql`SELECT COUNT(*)::int AS n FROM watch_events WHERE minute_bucket >= ${start} AND minute_bucket < ${end}`,
-  )) as { rows: Array<{ n: number }> };
+  )) as unknown as Array<{ n: number }>;
   const tips = (await db.execute(
     sql`SELECT COUNT(*)::int AS n FROM tips WHERE channel_id IS NOT NULL AND at >= ${start} AND at < ${end}`,
-  )) as { rows: Array<{ n: number }> };
+  )) as unknown as Array<{ n: number }>;
 
   return {
     date: dateYmd,
-    channelsTouched: channels.rows[0]?.n ?? 0,
-    watchEventsScanned: we.rows[0]?.n ?? 0,
-    tipsScanned: tips.rows[0]?.n ?? 0,
+    channelsTouched: channels[0]?.n ?? 0,
+    watchEventsScanned: we[0]?.n ?? 0,
+    tipsScanned: tips[0]?.n ?? 0,
   };
 }
 

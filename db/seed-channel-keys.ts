@@ -11,8 +11,8 @@
  */
 
 import "dotenv/config";
-import { neon } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-http";
+import postgres from "postgres";
+import { drizzle } from "drizzle-orm/postgres-js";
 import { and, eq } from "drizzle-orm";
 import crypto from "node:crypto";
 
@@ -47,7 +47,8 @@ function genId(prefix: string): string {
   );
 }
 
-const db = drizzle(neon(DATABASE_URL), { schema });
+const sql = postgres(DATABASE_URL, { max: 1 });
+const db = drizzle(sql, { schema });
 
 async function main(): Promise<void> {
   console.log("=== Phase 3.5 seed channel stream keys ===");
@@ -91,7 +92,10 @@ async function main(): Promise<void> {
   );
 }
 
-main().catch((err) => {
-  console.error("[seed-keys] FAILED", err);
-  process.exit(1);
-});
+main()
+  .catch((err) => {
+    console.error("[seed-keys] FAILED", err);
+    process.exitCode = 1;
+  })
+  // postgres-js holds an open socket, so without this the process never exits.
+  .finally(() => sql.end({ timeout: 5 }));

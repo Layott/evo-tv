@@ -7,7 +7,7 @@
  *   pnpm tsx scripts/inventory-fake-seeds.ts
  */
 import { config } from "dotenv";
-import { neon } from "@neondatabase/serverless";
+import postgres from "postgres";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 
@@ -36,7 +36,7 @@ if (!URL) {
   console.error("[inventory] no DB URL in env");
   process.exit(1);
 }
-const sql = neon(URL);
+const sql = postgres(URL, { max: 1 });
 
 interface Check {
   table: string;
@@ -81,10 +81,10 @@ async function main() {
   let totalFound = 0;
   for (const check of CHECKS) {
     try {
-      const rows = (await sql.query(
+      const rows = (await sql.unsafe(
         `SELECT "${check.idColumn}" AS id FROM "${check.table}" WHERE "${check.idColumn}" = ANY($1) ORDER BY 1`,
         [check.ids],
-      )) as Array<{ id: string }>;
+      )) as unknown as Array<{ id: string }>;
       totalFound += rows.length;
       const flag = rows.length > 0 ? "FAKE ROWS PRESENT" : "clean";
       console.log(
@@ -102,4 +102,5 @@ async function main() {
   console.log(`\n[inventory] total seeded mock rows still in DB: ${totalFound}`);
 }
 
-void main();
+// postgres-js holds an open socket, so without the end() the process never exits.
+void main().finally(() => sql.end({ timeout: 5 }));

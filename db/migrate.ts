@@ -1,9 +1,10 @@
 import "dotenv/config";
-import { neon } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-http";
-import { migrate } from "drizzle-orm/neon-http/migrator";
+import postgres from "postgres";
+import { drizzle } from "drizzle-orm/postgres-js";
+import { migrate } from "drizzle-orm/postgres-js/migrator";
 
-// Migrations need direct (non-pooled) connection.
+// Migrations need a direct (non-pooled) connection. DDL under a transaction
+// pooler can land on a different backend mid-migration.
 const DATABASE_URL =
   process.env.POSTGRES_URL_NON_POOLING ??
   process.env.POSTGRES_URL ??
@@ -13,13 +14,17 @@ if (!DATABASE_URL) {
   process.exit(1);
 }
 
-const sql = neon(DATABASE_URL);
+// max: 1 so migrations run strictly in order on one backend.
+const sql = postgres(DATABASE_URL, { max: 1 });
 const db = drizzle(sql);
 
 (async () => {
   await migrate(db, { migrationsFolder: "./db/migrations" });
   console.log(`[migrate] applied migrations to ${DATABASE_URL.replace(/:[^:@/]+@/, ":***@")}`);
-})().catch((err) => {
-  console.error("[migrate] failed", err);
-  process.exit(1);
-});
+})()
+  .catch((err) => {
+    console.error("[migrate] failed", err);
+    process.exitCode = 1;
+  })
+  // postgres-js holds an open socket, so without this the process never exits.
+  .finally(() => sql.end({ timeout: 5 }));

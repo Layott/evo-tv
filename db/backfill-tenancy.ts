@@ -17,8 +17,8 @@
  */
 
 import "dotenv/config";
-import { neon } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-http";
+import postgres from "postgres";
+import { drizzle } from "drizzle-orm/postgres-js";
 import { eq, isNull, sql } from "drizzle-orm";
 
 import * as schema from "./schema";
@@ -33,7 +33,9 @@ if (!DATABASE_URL) {
   process.exit(1);
 }
 
-const db = drizzle(neon(DATABASE_URL), { schema });
+// Named `client` because `sql` is already the drizzle-orm raw-SQL tag above.
+const client = postgres(DATABASE_URL, { max: 1 });
+const db = drizzle(client, { schema });
 
 const EVOTV_PUBLISHER_ID = "pub_evotv";
 const EVOTV_PUBLISHER_SLUG = "evotv";
@@ -233,7 +235,10 @@ async function main() {
   console.log("=== Backfill complete ===");
 }
 
-main().catch((err) => {
-  console.error("[backfill] FAILED:", err);
-  process.exit(1);
-});
+main()
+  .catch((err) => {
+    console.error("[backfill] FAILED:", err);
+    process.exitCode = 1;
+  })
+  // postgres-js holds an open socket, so without this the process never exits.
+  .finally(() => client.end({ timeout: 5 }));
