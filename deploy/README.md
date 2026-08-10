@@ -49,7 +49,7 @@ Then a **DO Cloud Firewall**: inbound TCP 22, 80, 443 only. That is the firewall
 
 Copy `env.production.example` to the box as `/srv/evotv/.env`, fill it in, `chmod 600`.
 
-Values worth pulling out of the old Vercel project once (`vercel env pull`, then archive the file somewhere off the droplet): `PLAYOUT_SECRET`, `CRON_SECRET`, `BETTER_AUTH_SECRET`, SMTP credentials, OAuth client secrets. Everything else is new.
+Values worth pulling out of the old Vercel project once (`vercel env pull`, then archive the file somewhere off the droplet): `PLAYOUT_SECRET`, `CRON_SECRET`, `AUTH_SECRET`, `LOGIN_HASH_SALT`, SMTP credentials, OAuth client secrets. Everything else is new. It is `AUTH_SECRET`: nothing in this codebase reads `BETTER_AUTH_SECRET`.
 
 **Changing `PLAYOUT_SECRET` breaks the office media agent and the `/admin/schedule` file browser.** It carries over unchanged.
 

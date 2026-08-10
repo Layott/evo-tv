@@ -3,9 +3,16 @@ import postgres from "postgres";
 import { drizzle } from "drizzle-orm/postgres-js";
 import * as schema from "@/db/schema";
 
-// Vercel Marketplace's Neon integration injects POSTGRES_URL (pooled).
-// Fall back to DATABASE_URL for non-Vercel dev / migrations.
-const DATABASE_URL = process.env.POSTGRES_URL ?? process.env.DATABASE_URL;
+// DATABASE_URL is the one the deployment sets, so it wins. POSTGRES_URL is
+// the Vercel Marketplace Neon injection and stays only as a fallback for a
+// local .env.local that still carries it.
+//
+// The order matters more than it looks. It used to be POSTGRES_URL first,
+// which meant a droplet .env copied wholesale from `vercel env pull` would
+// keep talking to Neon no matter what DATABASE_URL said: the site would work,
+// nothing would log, and the migration would look done while every write went
+// to the old database.
+const DATABASE_URL = process.env.DATABASE_URL ?? process.env.POSTGRES_URL;
 if (!DATABASE_URL) {
   throw new Error(
     "No DB connection string. Expected DATABASE_URL (self-hosted / manual) " +

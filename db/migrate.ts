@@ -6,9 +6,14 @@ import { migrate } from "drizzle-orm/postgres-js/migrator";
 // Migrations need a direct (non-pooled) connection. DDL under a transaction
 // pooler can land on a different backend mid-migration.
 const DATABASE_URL =
+  // Direct connection first, pooled second, and the DO names ahead of the
+  // Vercel ones in each pair. Migrations and seeds must not run through a
+  // transaction pooler: DDL and named prepared statements do not survive a
+  // connection being handed to another client mid-session.
+  process.env.DATABASE_URL_UNPOOLED ??
   process.env.POSTGRES_URL_NON_POOLING ??
-  process.env.POSTGRES_URL ??
-  process.env.DATABASE_URL;
+  process.env.DATABASE_URL ??
+  process.env.POSTGRES_URL;
 if (!DATABASE_URL) {
   console.error("[migrate] No DB URL found (POSTGRES_URL_NON_POOLING / POSTGRES_URL / DATABASE_URL)");
   process.exit(1);

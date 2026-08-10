@@ -9,8 +9,29 @@ import { isAccountBlocked } from "@/lib/sanctions";
 import { sendEmail } from "@/lib/email/send";
 import { renderOtpEmail } from "@/lib/email/templates";
 
+/**
+ * Origins allowed to drive auth from a browser.
+ *
+ * Better-Auth defaults trustedOrigins to [baseURL] and rejects state-changing
+ * requests whose Origin header does not match. On Vercel the app and the API
+ * shared one origin so that was invisible; splitting them into app.evotv.co
+ * and api.evotv.co makes every browser sign-in cross-origin, and the default
+ * would reject all of them.
+ *
+ * Same variable proxy.ts uses for CORS, deliberately: the browser's preflight
+ * and Better-Auth's origin check have to agree, and two lists would drift.
+ *
+ * Left unset the array is empty and Better-Auth keeps its own [baseURL]
+ * default, which is correct for local development.
+ */
+const TRUSTED_ORIGINS = (process.env.ALLOWED_ORIGINS ?? "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter((s) => s.length > 0 && s !== "*");
+
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3060",
+  ...(TRUSTED_ORIGINS.length > 0 ? { trustedOrigins: TRUSTED_ORIGINS } : {}),
   database: drizzleAdapter(db, {
     provider: "pg",
     schema: {
