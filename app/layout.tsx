@@ -1,10 +1,19 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Bricolage_Grotesque, Geist, Geist_Mono } from "next/font/google";
 import { Providers } from "@/components/providers";
 import "./globals.css";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" });
+
+// Display face for every heading in the product. Geist alone — a neutral tech
+// grotesque — is a large part of why the app read as a generic dashboard.
+const bricolage = Bricolage_Grotesque({
+  subsets: ["latin"],
+  weight: ["600", "700", "800"],
+  variable: "--font-bricolage",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   // Required for Open Graph and canonical URLs to resolve to absolute
@@ -44,7 +53,9 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geist.variable} ${geistMono.variable} font-sans antialiased`}>
+      <body
+        className={`${geist.variable} ${geistMono.variable} ${bricolage.variable} font-sans antialiased`}
+      >
         <Providers>{children}</Providers>
       </body>
     </html>

@@ -218,3 +218,96 @@
   background-image: linear-gradient(96deg, var(--brand-blue) 0%, var(--brand) 62%, #5cf0d6 100%);
   color: var(--ink);
 }
+
+/* ── EVO TV brand theme ───────────────────────────────────────────────────
+   Applied site-wide, not just to the landing page.
+
+   The app shipped as stock shadcn neutral plus Tailwind's `sky-*` used raw in
+   153 files. Rather than edit 153 files, `sky-*` and `cyan-*` are redefined
+   here to the EVO ramp, so every existing utility class becomes brand-coloured
+   at once and the change is one revert away.
+
+   The ramp is built around the wordmark: blue #42ace8 through mint #46e3ce,
+   on the dark teal sampled from evo-tv-hero.png. */
+
+@theme {
+  --color-sky-50: #eafaf8;
+  --color-sky-100: #c9f3ee;
+  --color-sky-200: #9ae9df;
+  --color-sky-300: #6ce0d2;
+  --color-sky-400: #46e3ce;
+  --color-sky-500: #2fc9be;
+  --color-sky-600: #22a3a4;
+  --color-sky-700: #1b7f88;
+  --color-sky-800: #175f68;
+  --color-sky-900: #134a52;
+  --color-sky-950: #05191b;
+
+  --color-cyan-50: #eaf6fd;
+  --color-cyan-100: #cbe8fa;
+  --color-cyan-200: #a1d6f5;
+  --color-cyan-300: #74c2ef;
+  --color-cyan-400: #42ace8;
+  --color-cyan-500: #2b90cd;
+  --color-cyan-600: #2273a7;
+  --color-cyan-700: #1d5c85;
+  --color-cyan-800: #1a4a6b;
+  --color-cyan-900: #163c57;
+  --color-cyan-950: #0b2434;
+
+  --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* The app is dark-first (ThemeProvider defaultTheme="dark"), so the dark
+   palette is the one that matters. Warm neutral greys are replaced with the
+   teal family so surfaces sit in the same world as the wordmark. */
+.dark {
+  --background: #05191b;
+  --foreground: #eaf6f5;
+  --card: #0a2426;
+  --card-foreground: #eaf6f5;
+  --popover: #0a2426;
+  --popover-foreground: #eaf6f5;
+  --primary: #46e3ce;
+  --primary-foreground: #05191b;
+  --secondary: #103133;
+  --secondary-foreground: #eaf6f5;
+  --muted: #103133;
+  --muted-foreground: #9fbdbd;
+  --accent: #103133;
+  --accent-foreground: #eaf6f5;
+  --destructive: #ff4a38;
+  --destructive-foreground: #ffe6e2;
+
+  /* Barely there. The old value was a mid grey that outlined every card on the
+     page, which is the "hairline box round everything" the owner called out.
+     Cards now separate by surface weight instead. */
+  --border: #12383a;
+  --input: #17454a;
+  --ring: #46e3ce;
+
+  --sidebar: #0a2426;
+  --sidebar-foreground: #eaf6f5;
+  --sidebar-primary: #46e3ce;
+  --sidebar-primary-foreground: #05191b;
+  --sidebar-accent: #103133;
+  --sidebar-accent-foreground: #eaf6f5;
+  --sidebar-border: #12383a;
+  --sidebar-ring: #46e3ce;
+}
+
+:root {
+  /* Tighter than the stock 0.625rem. Big soft radii on every element is part of
+     the generic look; this keeps corners crisp without going brutalist. */
+  --radius: 0.3rem;
+}
+
+/* Headings carry the display face everywhere, not only on the landing page.
+   This is the single largest reason the app read as a generic dashboard: every
+   heading was set in the same neutral UI grotesque as the body. */
+@layer base {
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+}

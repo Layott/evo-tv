@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import { getNowAndNext, getSchedule } from "@/lib/api/epg";
 import { unscheduledShows } from "@/lib/epg/artwork";
 import type { EpgPillar } from "@/lib/epg/grid";
-import { display } from "@/components/landing/fonts";
 import Hero from "@/components/landing/hero";
 import Originals from "@/components/landing/originals";
 import PillarsSection from "@/components/landing/pillars-section";
@@ -59,7 +58,7 @@ export default async function LandingPage() {
 
   return (
     <div
-      className={`landing-root landing-grain relative min-h-screen ${display.variable} selection:bg-[var(--flame)] selection:text-[var(--ink)]`}
+      className="landing-root landing-grain relative min-h-screen selection:bg-[var(--brand)] selection:text-[var(--ink)]"
     >
       <SiteHeader />
       <main className="relative z-10">
