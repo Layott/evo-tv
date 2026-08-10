@@ -34,6 +34,11 @@ export interface ShowArt {
   polarity: ArtPolarity;
   /** Sampled from the artwork, not chosen. */
   accent: string;
+  /**
+   * The same hue lifted to stay legible as text on the near-black landing page.
+   * HYP's sampled red is `#b70000`, which is close to invisible on `--ink`.
+   */
+  accentOnDark: string;
   pillar: EpgPillar;
   /** Titles as they appear in the EPG grid, if this show is scheduled. */
   gridTitles?: string[];
@@ -50,6 +55,8 @@ export const SHOW_ART: ShowArt[] = [
       "data:image/webp;base64,UklGRqIAAABXRUJQVlA4IJYAAACQBACdASoQABQAPu1iqU2ppaOiMAgBMB2JZQCsAdwA+bqVaV08iLF4WE4QVAAA/vSeAR63A2/Upe/fdWCzBWCh3y6iIS/exoq1N/nU6v+OO9qjfMpibphUhCjBYyHAzLj8MQtYqYflpqmJVBkLWmEHuF002xHTc0xkOHHl5rERYfez73mf1nvlIlydq3iCqMkFu5UAAAA=",
     polarity: "dark",
     accent: "#f29013",
+    // 8.1:1 on --ink, already legible unchanged.
+    accentOnDark: "#f29013",
     pillar: "lifestyle",
   },
   {
@@ -63,6 +70,9 @@ export const SHOW_ART: ShowArt[] = [
       "data:image/webp;base64,UklGRqgAAABXRUJQVlA4IJwAAADwAwCdASoQABQAPu1iqU2ppaOiMAgBMB2JYwAD48G3fZEWqWKXrXgcAP4HniE5SIV4PJiZ8rcRCKDHD2qtOIgxA6M/Z9keF/1NEgq/dNufjumfPEUiM/Z1WkbOhn/VTzSl5ly8kGjV2/BEpJxIg5ebFGwEkO8+X9toqVDy9KmUF+GN+iK4vis7buDRiQ3Ohx2rw/94D+oj+fjXgAA=",
     polarity: "light",
     accent: "#b70000",
+    // The sampled red is 2.8:1 on --ink and effectively invisible. Lifted to
+    // 5.8:1, and kept red rather than orange so it stays distinct from --flame.
+    accentOnDark: "#ff4a38",
     pillar: "lifestyle",
   },
 ];

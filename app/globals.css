@@ -133,3 +133,88 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* ── EVO TV landing page ─────────────────────────────────────────────────
+   Scoped to .landing-root so none of it leaks into the 93 app pages, which
+   still run the stock shadcn neutral theme.
+
+   Direction is printed broadcast listings, not a dashboard: warm near-black
+   stock, one hot accent instead of a colour per category, oversized editorial
+   type, and paper grain. The first pass used a colour-coded dot per pillar and
+   a hairline ring on every card, which is what made it read as generic. */
+
+.landing-root {
+  /* Straight off the wordmark: it is a blue-to-mint gradient (#42ace8 to
+     #46e3ce) sitting on a very dark teal, sampled from evo-tv-hero.png. */
+  --ink: #05191b;
+  --ink-raised: #0a2426;
+  --ink-high: #103133;
+  --paper: #eaf6f5;
+  --paper-dim: #9fbdbd;
+  --paper-faint: #6d8a8a;
+  --brand: #46e3ce;
+  --brand-blue: #42ace8;
+  --brand-deep: #1f7f8c;
+
+  background-color: var(--ink);
+  color: var(--paper);
+  font-feature-settings: "ss01", "cv01";
+}
+
+/* Paper grain. A single inline SVG turbulence, no network request. Sits above
+   the background and below content, and is the main reason the page does not
+   read as flat digital slop. */
+.landing-grain::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.055;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.landing-display {
+  font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 0.92;
+}
+
+/* Broadcast listings rule. A dotted leader rather than a 1px box, so rows read
+   as a printed schedule instead of table cells. */
+.listing-leader {
+  background-image: radial-gradient(circle, var(--paper-faint) 0.5px, transparent 0.5px);
+  background-size: 6px 1px;
+  background-repeat: repeat-x;
+  background-position: 0 center;
+  opacity: 0.5;
+}
+
+/* Posters read as physically pinned up rather than as UI cards. */
+.poster-pin {
+  transition: transform 420ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  will-change: transform;
+}
+.poster-pin:hover {
+  transform: rotate(0deg) translateY(-6px) scale(1.012);
+}
+
+.marquee-track {
+  animation: landing-marquee 38s linear infinite;
+}
+@keyframes landing-marquee {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track { animation: none; }
+  .poster-pin { transition: none; }
+  .poster-pin:hover { transform: none; }
+}
+
+.brand-bar {
+  background-image: linear-gradient(96deg, var(--brand-blue) 0%, var(--brand) 62%, #5cf0d6 100%);
+  color: var(--ink);
+}

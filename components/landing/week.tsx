@@ -20,6 +20,14 @@ interface Props {
 
 const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
+/**
+ * The week, set as printed TV listings rather than as a table.
+ *
+ * Rows have no boxes and no per-category colour chip. Separation comes from a
+ * dotted leader and from type scale, which is how a schedule is set on paper —
+ * and the previous version's bordered two-column grid with a coloured dot per
+ * row was the most dashboard-looking block on the page.
+ */
 export default function Week({ days, nowIso }: Props) {
   const [dayIndex, setDayIndex] = React.useState(0);
   const [pillar, setPillar] = React.useState<EpgPillar | "all">("all");
@@ -43,19 +51,25 @@ export default function Week({ days, nowIso }: Props) {
   if (!day) return null;
 
   return (
-    <section id="week" className="mx-auto max-w-6xl px-5 py-14 sm:px-8 sm:py-20">
-      <h2 className="text-2xl font-black tracking-tight text-white sm:text-3xl">
-        The week
-      </h2>
-      <p className="mt-2 text-sm text-neutral-500">
-        All times West Africa Time. The grid repeats weekly; scheduled streams
-        replace it.
+    <section
+      id="week"
+      className="relative mx-auto max-w-[92rem] px-5 py-20 sm:px-10 sm:py-28"
+    >
+      <div className="flex flex-wrap items-baseline gap-x-5 gap-y-2">
+        <h2 className="landing-display text-[clamp(2.4rem,7vw,5rem)]">The week</h2>
+        <span className="font-mono text-[0.68rem] uppercase tracking-[0.24em] text-[var(--paper-faint)]">
+          West Africa Time
+        </span>
+      </div>
+
+      <p className="mt-4 max-w-[52ch] text-[0.98rem] text-[var(--paper-dim)]">
+        The grid repeats weekly. A scheduled stream replaces the slots it covers.
       </p>
 
-      {/* Day selector. Scrolls rather than wraps on a phone, so the row height
-          never changes as the week is stepped through. */}
-      <div className="-mx-5 mt-7 overflow-x-auto px-5 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <div className="flex w-max gap-2 sm:w-full">
+      {/* Day selector. Type, not pills — scrolls rather than wraps on a phone so
+          the row height never changes as the week is stepped through. */}
+      <div className="-mx-5 mt-10 overflow-x-auto px-5 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex w-max items-end gap-7 sm:gap-10">
           {days.map((d, i) => {
             const active = i === dayIndex;
             return (
@@ -64,37 +78,45 @@ export default function Week({ days, nowIso }: Props) {
                 type="button"
                 onClick={() => setDayIndex(i)}
                 aria-pressed={active}
-                className={[
-                  "flex min-w-[4.5rem] flex-1 flex-col items-center rounded-xl border px-3 py-2.5 transition-colors",
-                  active
-                    ? "border-white/25 bg-white/10 text-white"
-                    : "border-white/10 bg-white/[0.02] text-neutral-400 hover:border-white/20 hover:text-neutral-200",
-                ].join(" ")}
+                className="group shrink-0 text-left"
               >
-                <span className="text-xs font-semibold uppercase tracking-wide">
+                <span
+                  className={[
+                    "landing-display block text-[1.55rem] transition-colors sm:text-[1.9rem]",
+                    active
+                      ? "text-[var(--brand)]"
+                      : "text-[var(--paper-faint)] group-hover:text-[var(--paper)]",
+                  ].join(" ")}
+                >
                   {i === 0 ? "Today" : DAY_NAMES[d.dayOfWeek - 1]}
                 </span>
-                <span className="mt-0.5 font-mono text-[11px] tabular-nums text-neutral-500">
-                  {d.dateKey.slice(8)}/{d.dateKey.slice(5, 7)}
+                <span className="mt-1 block font-mono text-[0.68rem] tabular-nums text-[var(--paper-faint)]">
+                  {d.dateKey.slice(8)}.{d.dateKey.slice(5, 7)}
                 </span>
+                <span
+                  aria-hidden
+                  className={[
+                    "mt-2 block h-[3px] transition-colors",
+                    active ? "bg-[var(--brand)]" : "bg-transparent",
+                  ].join(" ")}
+                />
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* Pillar filter. */}
-      <div className="mt-4 flex flex-wrap gap-2">
-        <FilterChip
+      {/* Pillar filter, as text. No chips, no dots. */}
+      <div className="mt-9 flex flex-wrap items-center gap-x-7 gap-y-3">
+        <FilterLink
           label="Everything"
           active={pillar === "all"}
           onClick={() => setPillar("all")}
         />
         {PILLAR_ORDER.map((p) => (
-          <FilterChip
+          <FilterLink
             key={p}
             label={PILLARS[p].label}
-            accent={PILLARS[p].accent}
             active={pillar === p}
             onClick={() => setPillar(p)}
           />
@@ -102,21 +124,21 @@ export default function Week({ days, nowIso }: Props) {
       </div>
 
       {entries.length === 0 ? (
-        <p className="mt-8 rounded-xl border border-white/10 bg-white/[0.02] px-5 py-8 text-center text-sm text-neutral-500">
-          Nothing on this day in that pillar.
+        <p className="mt-14 font-mono text-[0.9rem] uppercase tracking-[0.2em] text-[var(--paper-faint)]">
+          Nothing on this day in that pillar
         </p>
       ) : (
-        // Split in half rather than using a two-column grid: a grid fills row by
-        // row, so a day would read 00:00, 01:00 across and then jump back left.
-        // Two lists keep each column chronological top to bottom, and they stack
-        // into one continuous running order on a phone.
-        <div className="mt-6 grid gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10 sm:grid-cols-2">
+        // Two columns on desktop, split in half rather than using a grid: a grid
+        // fills row by row, so a day would read 00:00, 01:00 across and then
+        // jump back left. Two lists keep each column chronological, and they
+        // stack into one continuous running order on a phone.
+        <div className="mt-10 grid gap-x-16 sm:grid-cols-2">
           {[
             entries.slice(0, Math.ceil(entries.length / 2)),
             entries.slice(Math.ceil(entries.length / 2)),
           ].map((column, i) =>
             column.length === 0 ? null : (
-              <ul key={i} className="grid gap-px bg-white/10">
+              <ul key={i}>
                 {column.map((entry) => (
                   <SlotRow
                     key={`${entry.source}_${entry.id}`}
@@ -133,14 +155,12 @@ export default function Week({ days, nowIso }: Props) {
   );
 }
 
-function FilterChip({
+function FilterLink({
   label,
-  accent,
   active,
   onClick,
 }: {
   label: string;
-  accent?: string;
   active: boolean;
   onClick: () => void;
 }) {
@@ -150,26 +170,18 @@ function FilterChip({
       onClick={onClick}
       aria-pressed={active}
       className={[
-        "flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors",
+        "text-[0.8rem] uppercase tracking-[0.18em] underline-offset-[7px] transition-colors",
         active
-          ? "border-white/30 bg-white/10 text-white"
-          : "border-white/10 text-neutral-400 hover:border-white/20 hover:text-neutral-200",
+          ? "text-[var(--paper)] underline decoration-[var(--brand)] decoration-2"
+          : "text-[var(--paper-faint)] hover:text-[var(--paper-dim)]",
       ].join(" ")}
     >
-      {accent ? (
-        <span
-          aria-hidden
-          className="h-1.5 w-1.5 rounded-full"
-          style={{ backgroundColor: accent }}
-        />
-      ) : null}
       {label}
     </button>
   );
 }
 
 function SlotRow({ entry, now }: { entry: ScheduleEntry; now: string }) {
-  const pillar = PILLARS[entry.pillar];
   const live = entry.startsAt <= now && now < entry.endsAt;
   const past = entry.endsAt <= now;
   const art = artForTitle(entry.title);
@@ -177,58 +189,64 @@ function SlotRow({ entry, now }: { entry: ScheduleEntry; now: string }) {
   return (
     <li
       className={[
-        "flex items-center gap-3.5 bg-[#05091a] px-4 py-3.5 transition-colors sm:px-5",
-        past ? "opacity-55" : "",
-        live ? "bg-white/[0.06]" : "",
+        "flex items-baseline gap-4 py-3.5 transition-opacity sm:gap-5",
+        past ? "opacity-40" : "",
       ].join(" ")}
     >
-      <span className="w-11 shrink-0 font-mono text-xs tabular-nums text-neutral-500">
+      <span
+        className={[
+          "w-[3.2rem] shrink-0 font-mono text-[0.78rem] tabular-nums",
+          live ? "text-[var(--brand)]" : "text-[var(--paper-faint)]",
+        ].join(" ")}
+      >
         {entry.startLabel}
       </span>
 
-      {/* Artwork when the design team has delivered it; a pillar-coloured rule
-          when they have not. Most of the 25 grid titles have no poster yet, and
-          a generic placeholder image would read as a broken asset. */}
+      {/* Artwork only where the design team has delivered it. Most of the 25
+          grid titles have no poster, and a generic placeholder would read as a
+          broken asset — so the type simply carries the row instead. */}
       {art ? (
         <Image
           src={art.posterSmall}
           alt=""
-          width={32}
-          height={40}
+          width={26}
+          height={33}
           placeholder="blur"
           blurDataURL={art.blurDataURL}
-          className="h-10 w-8 shrink-0 rounded object-cover ring-1 ring-white/10"
+          className="h-[33px] w-[26px] shrink-0 self-center object-cover"
         />
-      ) : (
-        <span
-          aria-hidden
-          className="h-10 w-1 shrink-0 rounded-full"
-          style={{ backgroundColor: pillar.accent, opacity: live ? 1 : 0.45 }}
-        />
-      )}
+      ) : null}
 
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold text-white">{entry.title}</p>
-        <p className="truncate text-xs text-neutral-500">
-          {entry.subtitle ? `${entry.subtitle} · ` : ""}
-          {pillar.label}
-          {entry.parentalRating ? ` · ${entry.parentalRating}+` : ""}
-        </p>
-      </div>
-
-      {live ? (
+      {/* Titles wrap rather than truncate. Several grid titles are long
+          ("MPRO LEAGUE FREEFIRE PLAYINS GROUP B") and clipping them mid-word in
+          a two-column layout loses the programme name entirely. */}
+      <span className="min-w-0 flex-1">
         <span
-          className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
-          style={{ backgroundColor: pillar.tint, color: pillar.accent }}
+          className={[
+            "landing-display block text-balance text-[1.12rem] sm:text-[1.28rem]",
+            live ? "text-[var(--brand)]" : "text-[var(--paper)]",
+          ].join(" ")}
         >
-          Live
+          {entry.title}
         </span>
-      ) : null}
-      {entry.source === "override" && !live ? (
-        <span className="shrink-0 rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-neutral-300">
-          Special
-        </span>
-      ) : null}
+        {entry.subtitle ? (
+          <span className="mt-0.5 block text-[0.82rem] text-[var(--paper-faint)]">
+            {entry.subtitle}
+          </span>
+        ) : null}
+      </span>
+
+      <span aria-hidden className="listing-leader hidden h-px w-10 shrink-0 lg:block" />
+
+      <span className="shrink-0 text-[0.68rem] uppercase tracking-[0.18em] text-[var(--paper-faint)]">
+        {live ? (
+          <span className="text-[var(--brand)]">On air</span>
+        ) : entry.source === "override" ? (
+          <span className="text-[var(--paper-dim)]">Special</span>
+        ) : (
+          PILLARS[entry.pillar].label
+        )}
+      </span>
     </li>
   );
 }

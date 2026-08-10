@@ -170,6 +170,64 @@ describe("materializeDay", () => {
   });
 });
 
+describe("merging consecutive slots", () => {
+  const now = lagos("2024-01-01T12:00:00.000Z");
+
+  it("collapses an hour-ruled block into one entry", () => {
+    const block = [
+      slot(1, 0, 60, "NoBoneZ"),
+      slot(1, 60, 60, "NoBoneZ"),
+      slot(1, 120, 60, "NoBoneZ"),
+      slot(1, 180, 60, "EAFC"),
+    ];
+    const entries = materializeDay(block, "2024-01-01", now);
+
+    expect(entries).toHaveLength(2);
+    expect(entries[0]!.title).toBe("NoBoneZ");
+    expect(entries[0]!.startLabel).toBe("00:00");
+    expect(entries[0]!.endLabel).toBe("03:00");
+    expect(entries[0]!.durationMin).toBe(180);
+    expect(entries[1]!.title).toBe("EAFC");
+  });
+
+  it("does not merge across a different programme", () => {
+    const block = [
+      slot(1, 0, 60, "NoBoneZ"),
+      slot(1, 60, 60, "EAFC"),
+      slot(1, 120, 60, "NoBoneZ"),
+    ];
+    expect(materializeDay(block, "2024-01-01", now).map((e) => e.title)).toEqual([
+      "NoBoneZ",
+      "EAFC",
+      "NoBoneZ",
+    ]);
+  });
+
+  it("does not merge across a gap even when the title repeats", () => {
+    const block = [slot(1, 0, 60, "NoBoneZ"), slot(1, 180, 60, "NoBoneZ")];
+    expect(materializeDay(block, "2024-01-01", now)).toHaveLength(2);
+  });
+
+  it("keeps the block live when any part of it is on air", () => {
+    const at = lagos("2024-01-01T01:30:00.000Z"); // Mon 02:30 Lagos
+    const block = [
+      slot(1, 0, 60, "NoBoneZ"),
+      slot(1, 60, 60, "NoBoneZ"),
+      slot(1, 120, 60, "NoBoneZ"),
+    ];
+    const entries = materializeDay(block, "2024-01-01", at);
+    expect(entries).toHaveLength(1);
+    expect(entries[0]!.isLive).toBe(true);
+  });
+
+  it("carries the strictest rating of the merged parts", () => {
+    const a = { ...slot(1, 0, 60, "NoBoneZ"), parentalRating: 16 };
+    const b = { ...slot(1, 60, 60, "NoBoneZ"), parentalRating: 18 };
+    const entries = materializeDay([a, b], "2024-01-01", now);
+    expect(entries[0]!.parentalRating).toBe(18);
+  });
+});
+
 describe("dated overrides", () => {
   const now = lagos("2024-01-01T18:30:00.000Z");
 

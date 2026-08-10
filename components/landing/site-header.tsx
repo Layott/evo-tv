@@ -3,37 +3,38 @@ import Link from "next/link";
 
 export default function SiteHeader() {
   return (
-    <header className="sticky top-0 z-40 border-b border-white/5 bg-[#05091a]/80 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 sm:px-8">
-        <Link href="/" className="flex items-center gap-2.5" aria-label="EVO TV home">
+    <header className="relative z-30">
+      <div className="mx-auto flex max-w-[92rem] items-center justify-between px-5 py-6 sm:px-10">
+        <Link href="/" className="flex items-center gap-3" aria-label="EVO TV home">
           <Image
             src="/evo-logo/evo-tv-152.png"
             alt=""
-            width={32}
-            height={32}
+            width={34}
+            height={34}
             priority
-            className="h-8 w-8 object-contain"
+            className="h-[34px] w-[34px] object-contain"
           />
-          <span className="text-lg font-black tracking-tight text-white">EVO TV</span>
+          <span className="landing-display text-[1.45rem] tracking-[-0.04em]">
+            EVO TV
+          </span>
         </Link>
 
-        <nav className="flex items-center gap-1.5 sm:gap-3">
-          {/* `/schedule` is not a route in this app, only `/api/schedule`. */}
+        <nav className="flex items-center gap-6 sm:gap-8">
           <a
             href="#week"
-            className="hidden rounded-full px-3.5 py-2 text-sm font-medium text-neutral-300 transition-colors hover:text-white sm:block"
+            className="hidden text-[0.8rem] font-medium uppercase tracking-[0.16em] text-[var(--paper-dim)] transition-colors hover:text-[var(--paper)] sm:block"
           >
             Schedule
           </a>
           <Link
             href="/login"
-            className="rounded-full px-3.5 py-2 text-sm font-medium text-neutral-300 transition-colors hover:text-white"
+            className="text-[0.8rem] font-medium uppercase tracking-[0.16em] text-[var(--paper-dim)] transition-colors hover:text-[var(--paper)]"
           >
             Sign in
           </Link>
           <Link
             href="/signup"
-            className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#05091a] transition-colors hover:bg-neutral-200"
+            className="landing-display bg-[var(--paper)] px-4 py-2 text-[0.95rem] text-[var(--ink)] transition-colors hover:bg-[var(--brand)]"
           >
             Join free
           </Link>

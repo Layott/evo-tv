@@ -242,8 +242,50 @@ export function splitTitle(raw: string): [string, string] {
 }
 
 /**
+ * Collapse consecutive slots carrying the same programme into one block.
+ *
+ * The source grid is hour-ruled, so a two-hour show is two rows with identical
+ * titles. Rendered literally that looks like a duplication bug — "NoBoneZ,
+ * NoBoneZ, MPRO, MPRO" down the listings — and the on-air bug ends up saying a
+ * show is up next when it is simply still on. Broadcast EPGs merge these.
+ */
+export function mergeAdjacent(entries: ScheduleEntry[]): ScheduleEntry[] {
+  const out: ScheduleEntry[] = [];
+  for (const entry of entries) {
+    const prev = out[out.length - 1];
+    const continues =
+      prev &&
+      prev.source === entry.source &&
+      prev.title === entry.title &&
+      prev.subtitle === entry.subtitle &&
+      prev.pillar === entry.pillar &&
+      prev.endsAt === entry.startsAt;
+
+    if (!continues) {
+      out.push({ ...entry });
+      continue;
+    }
+
+    prev.endsAt = entry.endsAt;
+    prev.endLabel = entry.endLabel;
+    prev.durationMin += entry.durationMin;
+    prev.isLive = prev.isLive || entry.isLive;
+    // The merged block keeps the stricter rating of its parts.
+    if (entry.parentalRating !== null) {
+      prev.parentalRating =
+        prev.parentalRating === null
+          ? entry.parentalRating
+          : Math.max(prev.parentalRating, entry.parentalRating);
+    }
+  }
+  return out;
+}
+
+/**
  * Turn the weekday grid into dated entries for one calendar day in the channel
  * timezone. `dateKey` is `YYYY-MM-DD` as the *channel* reads it, not UTC.
+ *
+ * Consecutive slots carrying the same programme are merged into one block.
  */
 export function materializeDay(
   slots: GridSlot[],
@@ -253,7 +295,7 @@ export function materializeDay(
   const [y, m, d] = dateKey.split("-").map(Number) as [number, number, number];
   const dow = zonedDayOfWeek(zonedToUtc(y, m, d, 12 * 60));
 
-  return sortGrid(slots.filter((s) => s.dayOfWeek === dow)).map((slot) => {
+  const entries = sortGrid(slots.filter((s) => s.dayOfWeek === dow)).map((slot) => {
     const startsAt = zonedToUtc(y, m, d, slot.startMinute);
     const endsAt = new Date(startsAt.getTime() + slot.durationMin * 60_000);
     const [title, subtitle] = splitTitle(slot.title);
@@ -274,6 +316,8 @@ export function materializeDay(
       isLive: startsAt <= now && now < endsAt,
     };
   });
+
+  return mergeAdjacent(entries);
 }
 
 /**

@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { getNowAndNext, getSchedule } from "@/lib/api/epg";
 import { unscheduledShows } from "@/lib/epg/artwork";
 import type { EpgPillar } from "@/lib/epg/grid";
+import { display } from "@/components/landing/fonts";
 import Hero from "@/components/landing/hero";
 import Originals from "@/components/landing/originals";
 import PillarsSection from "@/components/landing/pillars-section";
@@ -27,12 +28,15 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };
 
-// The on-air band has to stay true. Slots are hourly, so a minute of staleness
-// is invisible, and this is far cheaper than rendering the page per request.
+// The on-air bug has to stay true. Slots are hourly, so a minute of staleness is
+// invisible, and this is far cheaper than rendering the page per request.
 export const revalidate = 60;
 
 export default async function LandingPage() {
-  const [week, nowNext] = await Promise.all([getSchedule(new Date(), 7), getNowAndNext()]);
+  const [week, nowNext] = await Promise.all([
+    getSchedule(new Date(), 7),
+    getNowAndNext(),
+  ]);
 
   const gridTitles = week.flatMap((d) => d.entries.map((e) => e.title));
 
@@ -45,13 +49,23 @@ export default async function LandingPage() {
     }
   }
 
+  // Running order for the ticker: what is still to come today, then tomorrow.
+  const nowIso = new Date().toISOString();
+  const upcoming = week
+    .slice(0, 2)
+    .flatMap((d) => d.entries)
+    .filter((e) => e.endsAt > nowIso)
+    .slice(0, 14);
+
   return (
-    <div className="min-h-screen bg-[#05091a] text-neutral-100 selection:bg-sky-400/30">
+    <div
+      className={`landing-root landing-grain relative min-h-screen ${display.variable} selection:bg-[var(--flame)] selection:text-[var(--ink)]`}
+    >
       <SiteHeader />
-      <main>
-        <Hero onAir={nowNext.now} next={nowNext.next} />
+      <main className="relative z-10">
+        <Hero onAir={nowNext.now} next={nowNext.next} upcoming={upcoming} />
         <Originals shows={unscheduledShows(gridTitles)} />
-        <Week days={week} nowIso={new Date().toISOString()} />
+        <Week days={week} nowIso={nowIso} />
         <PillarsSection
           hoursByPillar={{
             esports: Math.round(weekHours.esports),
