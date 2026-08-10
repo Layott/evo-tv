@@ -24,6 +24,12 @@ export async function GET(req: NextRequest) {
 
   // Update each live stream's viewer_count from watch_events in the last 60s.
   // Also bump peak_viewer_count.
+  //
+  // postgres-js resolves db.execute to the row array itself; the old neon-http
+  // driver wrapped it in { rows }. This note lives out here on purpose: a `//`
+  // comment inside the template literal is sent to Postgres as part of the
+  // query, and Postgres comments are `--`, so it fails with
+  // `syntax error at or near "//"` on every single run.
   const result = (await db.execute(sql`
     WITH live_counts AS (
       SELECT
@@ -42,8 +48,6 @@ export async function GET(req: NextRequest) {
     FROM live_counts lc
     WHERE s.id = lc.stream_id
     RETURNING s.id, lc.viewers;
-  // postgres-js resolves db.execute to the row array itself; the old
-  // neon-http driver wrapped it in { rows }.
   `)) as unknown as Array<{ id: string; viewers: number }>;
 
   return NextResponse.json({
