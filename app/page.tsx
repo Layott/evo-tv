@@ -1,99 +1,66 @@
-"use client";
+import type { Metadata } from "next";
 
-import * as React from "react";
-import { useRouter } from "next/navigation";
-import Image from "next/image";
-import { useMockAuth } from "@/components/providers";
+import { getNowAndNext, getSchedule } from "@/lib/api/epg";
+import { unscheduledShows } from "@/lib/epg/artwork";
+import type { EpgPillar } from "@/lib/epg/grid";
+import Hero from "@/components/landing/hero";
+import Originals from "@/components/landing/originals";
+import PillarsSection from "@/components/landing/pillars-section";
+import SiteFooter from "@/components/landing/site-footer";
+import SiteHeader from "@/components/landing/site-header";
+import Week from "@/components/landing/week";
 
-const SPLASH_MS = 2500;
+/**
+ * The guest root of evotv.co.
+ *
+ * A server component on purpose. This used to be a client splash that animated
+ * for 2.5 seconds and then pushed to /home or /login — app behaviour, not
+ * website behaviour, and a visitor arriving from search should not watch a
+ * loading bar. Signed-in users never reach it: `proxy.ts` redirects `/` to
+ * `/home` before render.
+ */
 
-export default function SplashPage() {
-  const router = useRouter();
-  const { role } = useMockAuth();
-  const [progress, setProgress] = React.useState(0);
+export const metadata: Metadata = {
+  title: "EVO TV. Africa's home for esports, anime and lifestyle.",
+  description:
+    "One channel, always on. League nights, watch-alongs and the creators around them, streaming 24/7 from Lagos.",
+  alternates: { canonical: "/" },
+};
 
-  React.useEffect(() => {
-    const start = performance.now();
-    let rafId = 0;
-    const tick = (now: number) => {
-      const p = Math.min(1, (now - start) / SPLASH_MS);
-      setProgress(p);
-      if (p < 1) {
-        rafId = requestAnimationFrame(tick);
-      }
-    };
-    rafId = requestAnimationFrame(tick);
+// The on-air band has to stay true. Slots are hourly, so a minute of staleness
+// is invisible, and this is far cheaper than rendering the page per request.
+export const revalidate = 60;
 
-    const redirectId = window.setTimeout(() => {
-      const next = role !== "guest" ? "/home" : "/login";
-      router.replace(next);
-    }, SPLASH_MS);
+export default async function LandingPage() {
+  const [week, nowNext] = await Promise.all([getSchedule(new Date(), 7), getNowAndNext()]);
 
-    return () => {
-      cancelAnimationFrame(rafId);
-      window.clearTimeout(redirectId);
-    };
-  }, [role, router]);
+  const gridTitles = week.flatMap((d) => d.entries.map((e) => e.title));
+
+  // Hours per pillar are counted off the grid rather than typed into the copy,
+  // so the page cannot claim programming the channel does not have.
+  const weekHours: Record<EpgPillar, number> = { esports: 0, anime: 0, lifestyle: 0 };
+  for (const day of week) {
+    for (const entry of day.entries) {
+      weekHours[entry.pillar] += entry.durationMin / 60;
+    }
+  }
 
   return (
-    <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-[#05091a] text-neutral-100">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.22),transparent_55%)]"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,transparent_0%,rgba(0,0,0,0.7)_100%)]"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -top-32 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-sky-500/25 blur-3xl"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -bottom-40 right-1/4 h-96 w-96 rounded-full bg-cyan-400/15 blur-3xl"
-      />
-
-      <div className="relative z-10 flex w-full max-w-md flex-col items-center px-6">
-        <div className="flex items-center gap-4">
-          <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-sky-400/15 to-cyan-400/10 p-3 shadow-lg shadow-sky-500/30 ring-1 ring-sky-400/30">
-            <Image
-              src="/evo-logo/evo-tv-152.png"
-              alt="EVO TV"
-              width={72}
-              height={72}
-              priority
-              className="object-contain"
-            />
-          </div>
-          <div className="flex flex-col">
-            <span className="text-3xl font-black tracking-tight">EVO TV</span>
-            <span className="text-[11px] font-medium uppercase tracking-[0.2em] text-sky-400">
-              esports live
-            </span>
-          </div>
-        </div>
-
-        <p className="mt-8 text-center text-base font-medium text-neutral-400">
-          African esports, live.
-        </p>
-
-        <div className="mt-12 w-full">
-          <div className="h-1 w-full overflow-hidden rounded-full bg-neutral-900">
-            <div
-              className="h-full bg-gradient-to-r from-sky-400 via-sky-500 to-cyan-400 transition-[width] duration-100 ease-linear"
-              style={{ width: `${Math.round(progress * 100)}%` }}
-            />
-          </div>
-          <p className="mt-3 text-center text-[11px] uppercase tracking-[0.25em] text-neutral-500">
-            loading arena…
-          </p>
-        </div>
-      </div>
-
-      <footer className="absolute bottom-6 left-0 right-0 text-center text-[11px] text-neutral-600">
-        © {new Date().getFullYear()} EVO TV — Africa&apos;s home of mobile esports
-      </footer>
+    <div className="min-h-screen bg-[#05091a] text-neutral-100 selection:bg-sky-400/30">
+      <SiteHeader />
+      <main>
+        <Hero onAir={nowNext.now} next={nowNext.next} />
+        <Originals shows={unscheduledShows(gridTitles)} />
+        <Week days={week} nowIso={new Date().toISOString()} />
+        <PillarsSection
+          hoursByPillar={{
+            esports: Math.round(weekHours.esports),
+            anime: Math.round(weekHours.anime),
+            lifestyle: Math.round(weekHours.lifestyle),
+          }}
+        />
+      </main>
+      <SiteFooter />
     </div>
   );
 }

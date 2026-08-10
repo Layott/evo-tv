@@ -18,3 +18,4 @@ export * from "./shows";
 export * from "./fantasy";
 export * from "./creator_program";
 export * from "./marketing";
+export * from "./epg";

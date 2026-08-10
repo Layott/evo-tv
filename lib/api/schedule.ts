@@ -2,9 +2,18 @@ import "server-only";
 import { and, between, eq, gte, isNull, lte, or } from "drizzle-orm";
 
 import { db, schema } from "@/lib/db";
+import { materializeDay, zonedDateKey } from "@/lib/epg/grid";
+import { getGridSlots } from "@/lib/epg/slots";
 
 export type EpgPillar = "esports" | "anime" | "lifestyle";
-export type EpgKind = "live_stream" | "episode" | "match";
+/**
+ * `grid` is the repeating weekly rotation from `epg_slots`. It is additive:
+ * clients that switch on `kind` for an icon should fall through to a default,
+ * and everything else on the row (title, subtitle, airsAt, durationMin) has the
+ * same shape as the other kinds. A grid row carries no `watchUrl`, because the
+ * rotation is the channel rather than an individual page.
+ */
+export type EpgKind = "live_stream" | "episode" | "match" | "grid";
 
 export interface EpgRow {
   id: string;
@@ -40,9 +49,27 @@ export async function listScheduleForDay(q: ScheduleQuery): Promise<EpgRow[]> {
     throw new Error(`Invalid date: ${q.date}`);
   }
   const dayEnd = new Date(dayStart.getTime() + 86_400_000);
-  const startIso = dayStart.toISOString();
-  const endIso = dayEnd.toISOString();
-  const pillarFilter = q.pillar && q.pillar !== "all" ? q.pillar : undefined;
+  return listScheduleBetween(
+    dayStart.toISOString(),
+    dayEnd.toISOString(),
+    q.pillar,
+  );
+}
+
+/**
+ * The same join over an arbitrary window.
+ *
+ * Extracted so a caller needing several days (the landing page week grid) pays
+ * four queries once instead of four per day. `listScheduleForDay` is a thin
+ * wrapper and its contract is unchanged, so `/api/schedule`, the web schedule
+ * page and the native app all keep working untouched.
+ */
+export async function listScheduleBetween(
+  startIso: string,
+  endIso: string,
+  pillar?: EpgPillar | "all",
+): Promise<EpgRow[]> {
+  const pillarFilter = pillar && pillar !== "all" ? pillar : undefined;
 
   const [episodeRows, scheduledStreams, liveStreams, matchRows] =
     await Promise.all([
@@ -169,10 +196,10 @@ export async function listScheduleForDay(q: ScheduleQuery): Promise<EpgRow[]> {
     });
   }
 
-  // Live streams without scheduled start — surface as "live now" on today's grid only.
-  const todayIsToday =
-    q.date === new Date().toISOString().slice(0, 10);
-  if (todayIsToday) {
+  // Live streams without a scheduled start — surface as "live now", but only
+  // when the requested window actually contains now.
+  const nowIso = new Date().toISOString();
+  if (nowIso >= startIso && nowIso < endIso) {
     for (const s of liveStreams) {
       if (epg.some((r) => r.id === `stream_${s.id}`)) continue; // already surfaced as scheduled
       epg.push({
@@ -209,8 +236,76 @@ export async function listScheduleForDay(q: ScheduleQuery): Promise<EpgRow[]> {
     });
   }
 
+  // Fourth source: the repeating weekly grid, filling every hour the dated rows
+  // above do not. Added last so a dated row always wins the slots it overlaps —
+  // without it this endpoint returns [] until someone schedules something, which
+  // is exactly what it did before `epg_slots` existed.
+  const gridRows = await gridRowsBetween(startIso, endIso, pillarFilter, epg);
+  epg.push(...gridRows);
+
   epg.sort((a, b) => a.airsAt.localeCompare(b.airsAt));
   return epg;
+}
+
+/**
+ * Materialise the weekly grid across a window and drop anything a dated row
+ * already covers. An unseeded environment costs one query and returns nothing,
+ * leaving this endpoint's previous behaviour exactly as it was.
+ */
+async function gridRowsBetween(
+  startIso: string,
+  endIso: string,
+  pillarFilter: EpgPillar | undefined,
+  dated: EpgRow[],
+): Promise<EpgRow[]> {
+  const slots = await getGridSlots();
+  if (slots.length === 0) return [];
+
+  const now = new Date();
+  const start = new Date(startIso);
+  const end = new Date(endIso);
+
+  // Walk channel-local calendar days across the window. Stepping through UTC
+  // noon keeps the date unambiguous whatever the zone offset is.
+  const dateKeys = new Set<string>();
+  for (let t = start.getTime(); t <= end.getTime(); t += 86_400_000) {
+    dateKeys.add(zonedDateKey(new Date(t)));
+  }
+  dateKeys.add(zonedDateKey(end));
+
+  const rows: EpgRow[] = [];
+  for (const dateKey of dateKeys) {
+    for (const entry of materializeDay(slots, dateKey, now)) {
+      if (entry.startsAt < startIso || entry.startsAt >= endIso) continue;
+      if (pillarFilter && entry.pillar !== pillarFilter) continue;
+      // A dated row that overlaps this slot replaces it.
+      const covered = dated.some((d) => {
+        const dEnd = new Date(
+          new Date(d.airsAt).getTime() + d.durationMin * 60_000,
+        ).toISOString();
+        return d.airsAt < entry.endsAt && entry.startsAt < dEnd;
+      });
+      if (covered) continue;
+
+      rows.push({
+        id: `grid_${entry.id}_${dateKey}`,
+        kind: "grid",
+        pillar: entry.pillar,
+        title: entry.title,
+        subtitle: entry.subtitle,
+        thumbnailUrl: "",
+        airsAt: entry.startsAt,
+        durationMin: entry.durationMin,
+        watchUrl: "",
+        state: entry.isLive
+          ? "live"
+          : entry.endsAt <= now.toISOString()
+            ? "completed"
+            : "scheduled",
+      });
+    }
+  }
+  return rows;
 }
 
 async function buildTeamMap(

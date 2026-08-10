@@ -86,6 +86,15 @@ export function proxy(req: NextRequest) {
   // Page-level auth routing for everything else.
   const role = req.cookies.get("evotv_role")?.value ?? "guest";
 
+  // `/` is the public landing page. Signed-in users are sent to the app before
+  // it renders, so the landing stays a pure guest surface and never has to
+  // branch on a session it would then have to fetch.
+  if (pathname === "/" && role !== "guest") {
+    const url = req.nextUrl.clone();
+    url.pathname = "/home";
+    return NextResponse.redirect(url);
+  }
+
   if (pathname.startsWith(ADMIN_PREFIX)) {
     if (role !== "admin") {
       const url = req.nextUrl.clone();
