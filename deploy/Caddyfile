@@ -36,14 +36,34 @@
 	}
 }
 
-# Both api containers. health_uri takes a restarting container out of rotation
-# instead of letting it serve 502s, which is what makes deploy.sh's rolling
-# restart invisible to clients.
+# Both api containers.
+#
+# Three mechanisms, and all three are needed. Measured with one container
+# stopped: active checks alone let 8 of 20 requests through to the dead
+# upstream as 502s, because at a 10s interval and 2 failures the removal
+# window is up to 20 seconds and least_conn keeps dealing it traffic the
+# whole time.
+#
+#   fail_duration    passive. One failed request takes the upstream out
+#                    immediately, rather than waiting for the next poll.
+#   lb_try_duration  retry. A request that hits a dying upstream is retried
+#                    against the healthy one, so the client never sees the
+#                    502 at all.
+#   health_uri       active. Brings an upstream back automatically once it
+#                    answers again, which passive checking alone cannot do.
+#
+# Deliberately NOT setting unhealthy_status: that would retry on any 5xx,
+# including genuine application errors, and a retried POST can duplicate a
+# side effect that already happened.
 (api_upstreams) {
 	lb_policy least_conn
+	lb_try_duration 5s
+	lb_try_interval 250ms
+	fail_duration 30s
+	max_fails 1
 	health_uri /api/health
-	health_interval 10s
-	health_timeout 5s
+	health_interval 5s
+	health_timeout 3s
 	health_passes 1
 	health_fails 2
 }

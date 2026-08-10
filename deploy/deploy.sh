@@ -23,6 +23,7 @@ ROOT="/srv/evotv"
 BRANCH="${1:-main}"
 API_SERVICES=(api-1 api-2)
 HEALTH_TIMEOUT=120
+CADDY_CHANGED=0
 
 cd "$ROOT/api"
 echo "==> pulling $BRANCH"
@@ -31,6 +32,19 @@ git reset --hard "origin/$BRANCH"
 SHA="$(git rev-parse --short HEAD)"
 
 cd "$ROOT"
+
+# The three files that live at $ROOT are copies of what is in the repo. Without
+# this sync a Caddyfile or compose change would be committed, pulled, and then
+# silently ignored, because deploy.sh only ever rebuilt the api image.
+echo "==> syncing deploy files from the repo"
+for f in Caddyfile docker-compose.yml cron.sh; do
+	if ! cmp -s "$ROOT/api/deploy/$f" "$ROOT/$f"; then
+		cp "$ROOT/api/deploy/$f" "$ROOT/$f"
+		echo "    updated $f"
+		[ "$f" = "Caddyfile" ] && CADDY_CHANGED=1
+	fi
+done
+chmod +x "$ROOT/cron.sh"
 
 echo "==> building image ($SHA)"
 docker compose build api-1
@@ -72,6 +86,13 @@ for svc in "${API_SERVICES[@]}"; do
 	docker compose up -d --no-deps --force-recreate "$svc"
 	wait_healthy "$svc"
 done
+
+if [ "$CADDY_CHANGED" = "1" ]; then
+	# Reload rather than restart: Caddy swaps config with no dropped
+	# connections, which matters because /api/sse/* holds streams open.
+	echo "==> reloading caddy"
+	docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile
+fi
 
 # Belt and braces: prove the published loopback port actually answers, which is
 # the same path cron.sh uses.
