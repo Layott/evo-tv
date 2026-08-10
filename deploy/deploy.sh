@@ -1,22 +1,28 @@
 #!/usr/bin/env bash
 # Deploy the backend. Lives at /srv/evotv/deploy.sh.
 #
-#   ssh evotv /srv/evotv/deploy.sh
+#   ssh evotv /srv/evotv/deploy.sh                  # deploys main
+#   ssh evotv /srv/evotv/deploy.sh feat/digitalocean
 #
-# Pulls, rebuilds the api image, migrates, restarts, waits for /api/health.
+# Pulls, rebuilds the api image, migrates, then restarts the two api containers
+# one at a time, waiting for each to report healthy before touching the next.
+# Caddy's own health check pulls a restarting container out of rotation, so the
+# whole thing is invisible to clients.
 #
 # Migrations run INSIDE the api container (`docker compose run`) because the
 # droplet has only Docker installed. There is deliberately no node or pnpm on
 # the host.
 #
-# No automatic rollback: on a failed health check the old container is already
-# replaced, so read the logs and fix forward. That is the tradeoff of the
-# single-container setup (see docker-compose.yml for why it is single).
+# No automatic rollback. If the first container fails to come back the second
+# is still serving the old build, which is the entire point of doing it in this
+# order: read the logs and fix forward with one container still up.
 
 set -euo pipefail
 
 ROOT="/srv/evotv"
 BRANCH="${1:-main}"
+API_SERVICES=(api-1 api-2)
+HEALTH_TIMEOUT=120
 
 cd "$ROOT/api"
 echo "==> pulling $BRANCH"
@@ -27,25 +33,50 @@ SHA="$(git rev-parse --short HEAD)"
 cd "$ROOT"
 
 echo "==> building image ($SHA)"
-docker compose build api
+docker compose build api-1
 
 echo "==> running migrations"
-docker compose run --rm --no-deps api pnpm db:migrate
+docker compose run --rm --no-deps api-1 pnpm db:migrate
 
-echo "==> restarting"
-docker compose up -d api
-
-echo "==> waiting for health"
-for i in $(seq 1 90); do
-	if curl -fsS -o /dev/null http://127.0.0.1:3060/api/health; then
-		echo "healthy after ${i}s"
-		docker image prune -f >/dev/null
-		echo "==> deployed $SHA"
-		exit 0
+# Docker's own health status, not a loopback curl: only api-1 publishes a host
+# port, so curl could not see api-2 at all.
+wait_healthy() {
+	local svc="$1" cid status
+	cid="$(docker compose ps -q "$svc")"
+	if [ -z "$cid" ]; then
+		echo "FAILED: $svc has no container"
+		return 1
 	fi
-	sleep 1
+	for _ in $(seq 1 "$HEALTH_TIMEOUT"); do
+		status="$(docker inspect -f '{{.State.Health.Status}}' "$cid" 2>/dev/null || echo missing)"
+		case "$status" in
+		healthy)
+			echo "    $svc healthy"
+			return 0
+			;;
+		unhealthy)
+			echo "FAILED: $svc reported unhealthy"
+			docker compose logs --tail 80 "$svc"
+			return 1
+			;;
+		esac
+		sleep 1
+	done
+	echo "FAILED: $svc did not report healthy within ${HEALTH_TIMEOUT}s (last status: ${status:-unknown})"
+	docker compose logs --tail 80 "$svc"
+	return 1
+}
+
+for svc in "${API_SERVICES[@]}"; do
+	echo "==> restarting $svc"
+	docker compose up -d --no-deps --force-recreate "$svc"
+	wait_healthy "$svc"
 done
 
-echo "FAILED: /api/health did not answer 200 within 90s"
-docker compose logs --tail 80 api
-exit 1
+# Belt and braces: prove the published loopback port actually answers, which is
+# the same path cron.sh uses.
+echo "==> checking loopback"
+curl -fsS -o /dev/null http://127.0.0.1:3060/api/health
+
+docker image prune -f >/dev/null
+echo "==> deployed $SHA"

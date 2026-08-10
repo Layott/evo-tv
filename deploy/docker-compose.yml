@@ -7,35 +7,83 @@
 #   /srv/evotv/api/                 EVOTV repo clone
 #   /srv/evotv/web/                 EVOTV-WEBSITE dist, uploaded
 #   /srv/evotv/app/                 EVOTV-app web export dist, uploaded
+#
+# Compose reads /srv/evotv/.env automatically, both as env_file for the api
+# containers and for ${VAR} substitution in this file. That is how caddy gets
+# its hostnames without also getting every secret.
+
+x-api: &api
+  build: ./api
+  # Both api services name the same image, so the second build is a full cache
+  # hit rather than a second compile.
+  image: evotv-api:latest
+  env_file: .env
+  restart: always
+  depends_on:
+    valkey:
+      condition: service_healthy
+  healthcheck:
+    test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3060/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+    # Tight on purpose: deploy.sh blocks on this between the two containers, so
+    # a slow interval is dead time on every deploy. Next boots in well under a
+    # second once the image is built.
+    interval: 10s
+    timeout: 5s
+    start_period: 30s
+    retries: 3
+  # SIGTERM lets open SSE streams close cleanly instead of being cut.
+  stop_grace_period: 30s
+  logging:
+    driver: json-file
+    options:
+      max-size: "20m"
+      max-file: "5"
 
 services:
-  api:
-    build: ./api
-    env_file: .env
-    restart: always
-    # Bound to loopback only. Public traffic arrives via caddy; this mapping
-    # exists so cron.sh can reach the app without going through TLS.
+  # Two api containers is what makes deploy.sh a rolling restart with no
+  # downtime. It is only safe because lib/sse/bus.ts publishes through Valkey:
+  # with REDIS_URL unset the bus falls back to an in-process EventEmitter and a
+  # subscriber on one container cannot see an emit on the other. That failure
+  # is silent, not an error. Never run two of these without REDIS_URL set.
+  api-1:
+    <<: *api
+    # Only this one publishes a host port. cron.sh reaches the app on loopback,
+    # skipping Caddy and TLS entirely, so cron keeps working even if a
+    # certificate has a problem. Cron jobs are single-target by design.
     ports:
       - "127.0.0.1:3060:3060"
+
+  api-2:
+    <<: *api
+
+  # SSE fan-out only. No persistence: every message is a live pub/sub payload
+  # that is worthless a second later, so an fsync would be pure cost. Never
+  # published to a host port; the api containers reach it over the internal
+  # compose network at redis://valkey:6379.
+  valkey:
+    image: valkey/valkey:8-alpine
+    restart: always
+    command:
+      - valkey-server
+      - --save
+      - ""
+      - --appendonly
+      - "no"
+      - --maxmemory
+      - 256mb
+      - --maxmemory-policy
+      - noeviction
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3060/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
-      interval: 30s
-      timeout: 10s
-      start_period: 60s
-      retries: 3
-    # SIGTERM lets open SSE streams close cleanly instead of being cut.
-    stop_grace_period: 30s
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
     logging:
       driver: json-file
       options:
-        max-size: "20m"
-        max-file: "5"
-
-    # DO NOT add `deploy.replicas` or run a second copy of this service.
-    # lib/sse/bus.ts is an in-process EventEmitter feeding /api/sse/*. A second
-    # container cannot see events published in the first, which silently breaks
-    # live chat, notifications, and watch parties. Swap the bus for Redis
-    # pub/sub before scaling horizontally.
+        max-size: "10m"
+        max-file: "3"
 
   caddy:
     image: caddy:2-alpine
@@ -43,6 +91,15 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    # Explicit passthrough rather than env_file: Caddy needs four hostnames and
+    # has no business holding SMTP or auth secrets.
+    environment:
+      ACME_EMAIL: ${ACME_EMAIL:-naijagameevo@gmail.com}
+      API_HOST: ${API_HOST:?set API_HOST in .env}
+      WEB_HOSTS: ${WEB_HOSTS:?set WEB_HOSTS in .env}
+      APP_HOST: ${APP_HOST:?set APP_HOST in .env}
+      REDIRECT_HOSTS: ${REDIRECT_HOSTS:-http://redirect.invalid}
+      REDIRECT_TARGET: ${REDIRECT_TARGET:-evotv.co}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - ./web:/srv/web:ro
@@ -50,7 +107,8 @@ services:
       - caddy_data:/data      # certificates. Losing this re-issues from scratch.
       - caddy_config:/config
     depends_on:
-      - api
+      - api-1
+      - api-2
     logging:
       driver: json-file
       options:

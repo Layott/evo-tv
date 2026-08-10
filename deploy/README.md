@@ -6,15 +6,16 @@ Full context and reasoning: `../../EVOTV-app/docs/DIGITALOCEAN_MIGRATION.md`.
 
 | File | Goes to | Purpose |
 |---|---|---|
-| `docker-compose.yml` | `/srv/evotv/docker-compose.yml` | two services: `api` + `caddy` |
+| `docker-compose.yml` | `/srv/evotv/docker-compose.yml` | four services: `api-1`, `api-2`, `valkey`, `caddy` |
 | `Caddyfile` | `/srv/evotv/Caddyfile` | TLS, static sites, reverse proxy, SSE handling |
+| `env.production.example` | `/srv/evotv/.env` (filled in, `chmod 600`) | every value the stack reads |
 | `cron.sh` | `/srv/evotv/cron.sh` | replaces Vercel Cron, 6 jobs |
-| `deploy.sh` | `/srv/evotv/deploy.sh` | pull, build, migrate, restart, health check |
+| `deploy.sh` | `/srv/evotv/deploy.sh` | pull, build, migrate, rolling restart |
 | `../Dockerfile` | stays in repo | built by compose |
 
 ## First-time server setup
 
-Droplet: `s-2vcpu-4gb-amd`, Ubuntu 24.04, FRA1 or LON1, SSH key at create time, Monitoring + IPv6 + weekly backups on. Attach a Reserved IP and point DNS at that.
+Droplet: `s-2vcpu-4gb-amd`, Ubuntu 24.04, FRA1, SSH key at create time, Monitoring + IPv6 + weekly backups on, in a VPC. Attach a Reserved IP and point DNS at that, never at the droplet's own address.
 
 ```bash
 # --- base ---
@@ -36,7 +37,7 @@ sshd -t && systemctl restart ssh
 
 # --- layout ---
 mkdir -p /srv/evotv && cd /srv/evotv
-git clone https://github.com/<you>/EVOTV.git api
+git clone https://github.com/Layott/evo-tv.git api
 mkdir -p web app
 cp api/deploy/docker-compose.yml api/deploy/Caddyfile api/deploy/cron.sh api/deploy/deploy.sh .
 chmod +x cron.sh deploy.sh
@@ -46,33 +47,54 @@ Then a **DO Cloud Firewall**: inbound TCP 22, 80, 443 only. That is the firewall
 
 ## Environment
 
-On your laptop, in the backend repo:
+Copy `env.production.example` to the box as `/srv/evotv/.env`, fill it in, `chmod 600`.
 
-```bash
-vercel env pull .env.production
-scp .env.production evotv:/srv/evotv/.env
-ssh evotv 'chmod 600 /srv/evotv/.env'
-```
+Values worth pulling out of the old Vercel project once (`vercel env pull`, then archive the file somewhere off the droplet): `PLAYOUT_SECRET`, `CRON_SECRET`, `BETTER_AUTH_SECRET`, SMTP credentials, OAuth client secrets. Everything else is new.
 
-Then edit two values on the box:
+**Changing `PLAYOUT_SECRET` breaks the office media agent and the `/admin/schedule` file browser.** It carries over unchanged.
+
+Three env vars are feature switches, and each one is also the rollback:
+
+| Variable | Set | Unset |
+|---|---|---|
+| `SPACES_KEY` | uploads go to DO Spaces | falls back to Vercel Blob, no deploy needed |
+| `REDIS_URL` | Valkey pub/sub bus, two api containers safe | in-process EventEmitter, **one container only** |
+| `DATABASE_URL` | whatever it points at | required, the app throws without it |
+
+## Hostnames
+
+`Caddyfile` takes its four hostnames from `.env`, so moving from a staging hostname to the real domain is an env edit and a restart rather than a file edit on the box.
+
+Before DNS exists, use `sslip.io`. It resolves any `*.1-2-3-4.sslip.io` to `1.2.3.4`, so one Reserved IP yields three real hostnames that Let's Encrypt will happily certify:
 
 ```ini
-BETTER_AUTH_URL=https://api.evotv.tv
-ALLOWED_ORIGINS=https://app.evotv.tv,https://evotv.tv,https://www.evotv.tv
+API_HOST=api.203-0-113-7.sslip.io
+WEB_HOSTS=203-0-113-7.sslip.io
+APP_HOST=app.203-0-113-7.sslip.io
 ```
 
-Leave `DATABASE_URL`, `BLOB_READ_WRITE_TOKEN`, `AUTH_SECRET`, and especially `PLAYOUT_SECRET` exactly as they are. Changing `PLAYOUT_SECRET` breaks the office media agent and the schedule page file browser.
+Once `evotv.co` resolves to the Reserved IP:
 
-Do not shell-source `.env`. Values like `SMTP_FROM=EVO TV <noreply@evotv.tv>` are unquoted, which Docker reads literally but bash parses as a redirect. `cron.sh` extracts the one value it needs with `sed` for this reason.
+```ini
+API_HOST=api.evotv.co
+WEB_HOSTS=evotv.co, www.evotv.co
+APP_HOST=app.evotv.co
+REDIRECT_HOSTS=evotv.africa, www.evotv.africa
+REDIRECT_TARGET=evotv.co
+```
+
+`BETTER_AUTH_URL` and `ALLOWED_ORIGINS` have to move in the same edit or login breaks. Then `docker compose up -d caddy` and watch the certificates issue.
+
+`REDIRECT_HOSTS` defaults to a placeholder on a reserved `.invalid` TLD with an explicit `http://` scheme, so Caddy neither resolves it nor asks for a certificate while `evotv.africa` has no DNS.
 
 ## Start
 
-DNS must resolve to the droplet **before** this, or Caddy's certificate issuance fails and backs off.
+DNS (or the sslip.io hostname) must resolve to the droplet **before** this, or certificate issuance fails and backs off.
 
 ```bash
 cd /srv/evotv
 docker compose up -d --build
-docker compose logs -f
+docker compose logs -f caddy      # watch the certificates issue
 ```
 
 ## Static sites
@@ -104,18 +126,24 @@ crontab -e
 
 Box time is Africa/Lagos. Vercel Cron ran UTC, so these fire an hour earlier in absolute terms.
 
+`viewer-count` and `reminders` were never scheduled on Vercel. They are now.
+
 ## Day to day
 
 ```bash
-ssh evotv /srv/evotv/deploy.sh        # deploy main
-docker compose logs -f api            # tail app
-docker compose ps                     # status
-docker compose restart api            # bounce
+ssh evotv /srv/evotv/deploy.sh                    # deploy main
+ssh evotv /srv/evotv/deploy.sh feat/digitalocean  # deploy a branch
+docker compose logs -f api-1                      # tail one container
+docker compose ps                                 # status, with health
 ```
+
+`deploy.sh` restarts `api-1`, waits for Docker to report it healthy, then does `api-2`. Caddy's own active health check (`health_uri /api/health`, every 10s) pulls the restarting one out of rotation, so clients see no 502.
 
 ## Rules
 
-- **One `api` container. Ever.** `lib/sse/bus.ts` is an in-process EventEmitter feeding `/api/sse/*`. A second container cannot see the first's events, which silently breaks live chat, notifications, and watch parties. Fix the bus (Redis pub/sub) before scaling.
-- **`api` stays DNS-only on Cloudflare** (grey cloud). The free tier drops idle proxied connections at ~100s, which would kill every SSE stream on a loop.
+- **Two api containers are only safe while `REDIS_URL` is set.** `lib/sse/bus.ts` falls back to an in-process EventEmitter without it, and then a subscriber on `api-1` cannot see an emit on `api-2`. Live chat, notifications and watch parties break silently, with no error anywhere.
+- **`flush_interval -1` stays on the SSE route.** Without it Caddy buffers the stream and chat looks frozen.
+- **`api` stays DNS-only on Cloudflare** (grey cloud). The free tier drops idle proxied connections at around 100s, which would kill every SSE stream on a loop.
 - **Never delete the `caddy_data` volume.** It holds the certificates.
-- Database and uploads live off-box (Neon, Vercel Blob). The droplet holds no data, so `.env` is the only thing on it worth backing up.
+- **`valkey` is never published to a host port.** It has no auth and holds a live message bus.
+- The droplet holds no data. `.env` is the only thing on it worth backing up.

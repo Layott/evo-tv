@@ -24,7 +24,7 @@ ENV_FILE="/srv/evotv/.env"
 
 # Read the one value we need rather than sourcing the file. Sourcing would
 # break on unquoted values containing spaces or angle brackets, e.g.
-#   SMTP_FROM=EVO TV <noreply@evotv.tv>
+#   SMTP_FROM=EVO TV <noreply@evotv.co>
 # which bash parses as a redirect.
 #
 # Surrounding double quotes are stripped: `vercel env pull` writes values

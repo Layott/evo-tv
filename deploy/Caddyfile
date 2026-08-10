@@ -1,7 +1,21 @@
 # EVO TV edge. Lives at /srv/evotv/Caddyfile on the droplet.
 # Caddy handles Let's Encrypt issuance and renewal with no configuration.
+#
+# Hostnames come from /srv/evotv/.env so the staging-to-production flip is an
+# env edit plus `docker compose up -d caddy`, not a file edit on the box:
+#
+#   staging (no DNS yet, sslip.io resolves any *.1-2-3-4.sslip.io to 1.2.3.4)
+#     API_HOST=api.203-0-113-7.sslip.io
+#     WEB_HOSTS=203-0-113-7.sslip.io
+#     APP_HOST=app.203-0-113-7.sslip.io
+#
+#   production
+#     API_HOST=api.evotv.co
+#     WEB_HOSTS=evotv.co, www.evotv.co
+#     APP_HOST=app.evotv.co
+#     REDIRECT_HOSTS=evotv.africa, www.evotv.africa
 {
-	email naijagameevo@gmail.com
+	email {$ACME_EMAIL}
 	servers {
 		timeouts {
 			# 0 = no write timeout. Required: /api/sse/* holds connections open
@@ -22,15 +36,33 @@
 	}
 }
 
+# Both api containers. health_uri takes a restarting container out of rotation
+# instead of letting it serve 502s, which is what makes deploy.sh's rolling
+# restart invisible to clients.
+(api_upstreams) {
+	lb_policy least_conn
+	health_uri /api/health
+	health_interval 10s
+	health_timeout 5s
+	health_passes 1
+	health_fails 2
+}
+
 # ---------------------------------------------------------------- backend API
-api.evotv.tv {
+{$API_HOST} {
 	import common
 
 	# flush_interval -1 disables response buffering. Without it Caddy holds the
 	# event stream and live chat appears frozen to the client.
+	#
+	# Fanning SSE across two containers is only correct because lib/sse/bus.ts
+	# publishes through Valkey. A client can subscribe on api-1 while the emit
+	# happens on api-2. With REDIS_URL unset that message is silently lost, so
+	# never scale this block without it.
 	@sse path /api/sse/*
 	handle @sse {
-		reverse_proxy api:3060 {
+		reverse_proxy api-1:3060 api-2:3060 {
+			import api_upstreams
 			flush_interval -1
 			transport http {
 				read_timeout 0
@@ -40,7 +72,8 @@ api.evotv.tv {
 	}
 
 	handle {
-		reverse_proxy api:3060 {
+		reverse_proxy api-1:3060 api-2:3060 {
+			import api_upstreams
 			header_up X-Real-IP {remote_host}
 		}
 	}
@@ -51,7 +84,7 @@ api.evotv.tv {
 }
 
 # ----------------------------------------------------------- marketing site
-evotv.tv, www.evotv.tv {
+{$WEB_HOSTS} {
 	import common
 	root * /srv/web
 
@@ -64,7 +97,7 @@ evotv.tv, www.evotv.tv {
 }
 
 # --------------------------------------------------------------- app web SPA
-app.evotv.tv {
+{$APP_HOST} {
 	import common
 	root * /srv/app
 
@@ -74,4 +107,17 @@ app.evotv.tv {
 
 	try_files {path} /index.html
 	file_server
+}
+
+# ------------------------------------------------- evotv.africa, redirect only
+#
+# Default is a placeholder on purpose. `.invalid` is a reserved TLD that can
+# never resolve, and the explicit http:// scheme stops Caddy asking Let's
+# Encrypt for a certificate it could never validate. Set REDIRECT_HOSTS in .env
+# once the evotv.africa DNS records exist, and the block becomes real.
+#
+# A redirect still completes a TLS handshake before it can redirect, so these
+# hostnames do need their own certificates.
+{$REDIRECT_HOSTS:http://redirect.invalid} {
+	redir https://{$REDIRECT_TARGET:evotv.co}{uri} permanent
 }
