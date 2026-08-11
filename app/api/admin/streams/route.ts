@@ -5,6 +5,11 @@ import { db, schema } from "@/lib/db";
 import { generateStreamKey, hashStreamKey } from "@/lib/video/stream-key";
 import { getCurrentUser } from "@/lib/auth/guards";
 import { requireAdminFromRequest } from "@/lib/api/admin";
+import {
+  defaultChannelId,
+  defaultIngestKind,
+  provisionIngest,
+} from "@/lib/video/ingest";
 
 const listQuerySchema = z.object({
   gameId: z.string().optional(),
@@ -119,6 +124,12 @@ const createSchema = z.object({
   isPremium: z.boolean().default(false),
   maturityRating: z.enum(["kids", "pg", "teen", "mature"]).default("teen"),
   contentTags: z.array(z.string()).default([]),
+  /**
+   * Where the broadcast will arrive from. Omitted means "whatever this
+   * deployment is set up for": Cloudflare when it is configured, otherwise the
+   * self-hosted RTMP server, otherwise a manual paste.
+   */
+  ingestKind: z.enum(["manual", "cloudflare", "rtmp"]).optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -141,10 +152,26 @@ export async function POST(req: NextRequest) {
       .join("");
   const nowIso = new Date().toISOString();
 
+  // Provisioning happens before the insert so the row carries its playback URL
+  // from the moment it exists. It never throws: a Cloudflare outage degrades to
+  // a manual paste rather than losing the stream the operator just created.
+  const kind = parsed.data.ingestKind ?? defaultIngestKind();
+  const { details, cfLiveInputUid, error: ingestError } = await provisionIngest(
+    kind,
+    { name: parsed.data.title, ownStreamKey: streamKey },
+  );
+
+  // Without a channel the viewer heartbeat endpoint drops every beat, so an
+  // admin-created stream reported zero viewers however many were watching.
+  const channelId = await defaultChannelId();
+
   await db
     .insert(schema.streams)
     .values({
       id,
+      channelId,
+      ingestKind: details.kind,
+      cfLiveInputUid,
       title: parsed.data.title,
       description: parsed.data.description,
       eventId: parsed.data.eventId ?? null,
@@ -155,7 +182,7 @@ export async function POST(req: NextRequest) {
       streamerAvatarUrl: parsed.data.streamerAvatarUrl,
       streamKeyHash: hashStreamKey(streamKey),
       isLive: false,
-      hlsPath: "",
+      hlsPath: details.hlsUrl,
       thumbnailUrl: "",
       viewerCount: 0,
       peakViewerCount: 0,
@@ -169,8 +196,17 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({
     id,
+    ingest: details,
+    /**
+     * Our own key. Only meaningful for the self-hosted RTMP path; Cloudflare
+     * issues its own, which is in `ingest.streamKey`. It was previously
+     * returned as the headline value for every stream, which meant an operator
+     * pasted a key into OBS that nothing on the internet would ever check.
+     */
     streamKey,
-    ingestUrl: process.env.RTMP_INGEST_URL ?? "rtmp://localhost:1935/live",
-    warning: "This is the only time we show the full stream key. Store it securely.",
+    ingestError: ingestError ?? null,
+    warning: details.keyRetrievable
+      ? null
+      : "This is the only time we show the full stream key. Store it securely.",
   });
 }

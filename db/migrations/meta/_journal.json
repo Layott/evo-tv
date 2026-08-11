@@ -232,6 +232,13 @@
       "when": 1780600000000,
       "tag": "0032_streams_game_optional",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1780700000000,
+      "tag": "0033_cf_live_input",
+      "breakpoints": true
     }
   ]
 }

@@ -4,9 +4,10 @@ import { and, eq, sql } from "drizzle-orm";
 import { hashStreamKey } from "@/lib/video/stream-key";
 import { emit } from "@/lib/sse/bus";
 import "@/workers/transcode";
+import { rtmpHlsUrlFor } from "@/lib/video/ingest";
 
 /**
- * Concurrent-stream cap per publisher. Hardcoded MVP tiers — replace with
+ * Concurrent-stream cap per publisher. Hardcoded MVP tiers - replace with
  * a publishers.concurrent_stream_cap column once partner tier table lands.
  */
 const CONCURRENT_CAP_EVOTV = 999;
@@ -140,7 +141,7 @@ export async function POST(req: NextRequest) {
       isLive: true,
       startedAt: nowIso,
       endedAt: null,
-      hlsPath: `/hls/${streamKey}.m3u8`,
+      hlsPath: rtmpHlsUrlFor(streamKey),
       viewerCount: 0,
       peakViewerCount: 0,
       language: "en",
@@ -174,7 +175,7 @@ export async function POST(req: NextRequest) {
       isLive: true,
       startedAt: nowIso,
       endedAt: null,
-      hlsPath: `/hls/${streamKey}.m3u8`,
+      hlsPath: rtmpHlsUrlFor(streamKey),
       viewerCount: 0,
     })
     .where(eq(schema.streams.id, legacy.id));

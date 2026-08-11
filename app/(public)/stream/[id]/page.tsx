@@ -12,6 +12,7 @@ import {
 } from "@/lib/client";
 import { useAuth } from "@/components/providers";
 import { VideoPlayer } from "@/components/stream/video-player";
+import { useStreamHeartbeat } from "@/hooks/use-stream-heartbeat";
 import { LiveChat } from "@/components/stream/live-chat";
 import { LivePolls } from "@/components/stream/live-polls";
 import { InStreamShop } from "@/components/stream/in-stream-shop";
@@ -42,6 +43,9 @@ export default function StreamPage() {
   const [adDone, setAdDone] = React.useState(false);
 
   // Fetch stream + game
+  // Counts this viewer while the stream is live and the tab is visible.
+  useStreamHeartbeat(streamId, Boolean(stream?.isLive));
+
   React.useEffect(() => {
     let cancelled = false;
     getStreamById(streamId).then((s) => {

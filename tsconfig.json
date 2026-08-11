@@ -38,6 +38,8 @@
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [
+    "uploads",
+    "data",
     "node_modules"
   ]
 }

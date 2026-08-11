@@ -24,6 +24,18 @@ export const streams = pgTable(
     streamerName: text("streamer_name").notNull(),
     streamerAvatarUrl: text("streamer_avatar_url").notNull().default(""),
     streamKeyHash: text("stream_key_hash").notNull().unique(),
+    /**
+     * Which ingest this stream expects: `cloudflare`, `rtmp` or `manual`.
+     * Drives the instructions the admin UI shows and what the reconcile sweep
+     * asks about. Defaults to `manual`, the pre-existing behaviour.
+     */
+    ingestKind: text("ingest_kind", {
+      enum: ["manual", "cloudflare", "rtmp"],
+    })
+      .notNull()
+      .default("manual"),
+    /** Cloudflare Stream live input id. Null for the other two ingests. */
+    cfLiveInputUid: text("cf_live_input_uid"),
     isLive: boolean("is_live").notNull().default(false),
     startedAt: text("started_at"),
     endedAt: text("ended_at"),

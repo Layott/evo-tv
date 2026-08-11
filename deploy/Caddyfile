@@ -114,6 +114,26 @@
 # ---------------------------------------------------------------- backend API
 {$API_HOST} {
 	import common
+
+	# Self-hosted live (Path A). Only reachable when the `rtmp` profile is up;
+	# without it this block simply 502s and the Cloudflare path is unaffected.
+	#
+	# Two things matter here and both are easy to get wrong:
+	#   - the playlist must never be cached, or viewers sit on a stale segment
+	#     list and playback stalls a few seconds in;
+	#   - segments are immutable, so they should be cached hard.
+	handle /hls/* {
+		header {
+			Access-Control-Allow-Origin "*"
+			Access-Control-Allow-Methods "GET, HEAD, OPTIONS"
+		}
+		@playlist path *.m3u8
+		header @playlist Cache-Control "no-cache, no-store, must-revalidate"
+		@segment path *.ts
+		header @segment Cache-Control "public, max-age=31536000, immutable"
+		reverse_proxy nginx-rtmp:8080
+	}
+
 	import evotv_next
 }
 

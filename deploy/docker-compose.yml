@@ -115,6 +115,33 @@ services:
         max-size: "20m"
         max-file: "5"
 
+  # Self-hosted RTMP ingest (Path A). Opt-in:
+  #   docker compose --profile rtmp up -d
+  #
+  # Use it for testing and for a small audience. It is single-bitrate with no
+  # adaptive ladder and every viewer pulls segments off this droplet's 2 vCPUs,
+  # so it will not survive a real crowd. Cloudflare Stream (Path B) is the
+  # production answer; this is the fallback that owes nobody an account.
+  nginx-rtmp:
+    image: tiangolo/nginx-rtmp
+    profiles: ["rtmp"]
+    restart: always
+    ports:
+      - "1935:1935"     # RTMP ingest. Open this port in the DO firewall.
+    # 8080 is deliberately NOT published: Caddy reaches it over the compose
+    # network and terminates TLS, so the origin is never exposed directly.
+    volumes:
+      - ./nginx-rtmp.conf:/etc/nginx/nginx.conf:ro
+      - hls_data:/var/hls
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
 volumes:
   caddy_data:
   caddy_config:
+  # HLS segments written by nginx and read by Caddy. Named rather than bind
+  # mounted so a redeploy never wipes a broadcast in progress.
+  hls_data:

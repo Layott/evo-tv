@@ -11,7 +11,7 @@ import type { Stream } from "@/lib/types";
  * watch_events table (Phase 3.7 heartbeats). For each stream, count the
  * distinct viewer-keys whose latest heartbeat is in the last 90s.
  *
- * 90s gives a 1.5x buffer over the 60s heartbeat cadence — if a viewer
+ * 90s gives a 1.5x buffer over the 60s heartbeat cadence - if a viewer
  * misses one heartbeat but sends the next, they stay "live."
  */
 export async function liveViewerCounts(
@@ -54,6 +54,7 @@ function toStream(r: typeof schema.streams.$inferSelect): Stream {
     startedAt: r.startedAt,
     endedAt: r.endedAt,
     hlsUrl: r.hlsPath,
+    ingestKind: r.ingestKind ?? "manual",
     thumbnailUrl: r.thumbnailUrl,
     viewerCount: r.viewerCount,
     peakViewerCount: r.peakViewerCount,

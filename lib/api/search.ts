@@ -69,6 +69,7 @@ export async function globalSearch(query: string): Promise<SearchResults> {
     .where(and(like(schema.streams.title, pat), isNull(schema.streams.deletedAt)));
   const streams: Stream[] = streamRows.map((r) => ({
     id: r.id,
+    ingestKind: r.ingestKind ?? "manual",
     title: r.title,
     description: r.description,
     eventId: r.eventId,

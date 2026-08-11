@@ -132,6 +132,11 @@ export interface Stream {
   title: string;
   description: string;
   eventId: UUID | null;
+  /**
+   * Where this stream's broadcast arrives from: a Cloudflare Stream live
+   * input, our own nginx-rtmp, or a manifest URL pasted by hand.
+   */
+  ingestKind: "manual" | "cloudflare" | "rtmp";
   /** Null for anime, lifestyle and podcast programmes. */
   gameId: UUID | null;
   channelId?: UUID | null;
