@@ -123,6 +123,24 @@ export function StreamsManagerPage() {
   const [ingestReveal, setIngestReveal] = React.useState<IngestDetails | null>(
     null,
   );
+  /** Ingest details for the stream in the detail panel. */
+  const [selectedIngest, setSelectedIngest] =
+    React.useState<IngestDetails | null>(null);
+
+  React.useEffect(() => {
+    if (!selected) {
+      setSelectedIngest(null);
+      return;
+    }
+    let cancelled = false;
+    setSelectedIngest(null);
+    void adminGetStreamIngest(selected.id).then((ing) => {
+      if (!cancelled) setSelectedIngest(ing);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [selected]);
   const [confirmDelete, setConfirmDelete] = React.useState<Stream | null>(null);
 
   const columns: DataColumn<Stream>[] = [
@@ -218,6 +236,7 @@ export function StreamsManagerPage() {
         title: payload.title,
         description: payload.description,
         gameId: payload.gameId,
+        pillar: payload.pillar,
         eventId: payload.eventId || null,
         streamerName: payload.streamerName,
         isPremium: payload.isPremium,
@@ -437,10 +456,22 @@ export function StreamsManagerPage() {
                     <h4 className="text-sm font-semibold text-neutral-100">OBS / RTMP settings</h4>
                   </div>
                   <div className="space-y-2 text-xs">
+                    {/* Read from the server, not written here.
+                        This was a hardcoded "rtmp://localhost:1935/live", so
+                        production showed every operator their own machine as
+                        the ingest. Pasted into OBS it fails with "could not
+                        access the specified channel or stream key", which reads
+                        like a bad key and is not. */}
                     <Row label="Server">
-                      <code className="rounded bg-neutral-950 px-2 py-1 font-mono text-neutral-300">
-                        rtmp://localhost:1935/live
-                      </code>
+                      {selectedIngest?.server ? (
+                        <code className="rounded bg-neutral-950 px-2 py-1 font-mono text-neutral-300">
+                          {selectedIngest.server}
+                        </code>
+                      ) : (
+                        <span className="text-neutral-500">
+                          {selectedIngest ? "No ingest configured" : "Loading…"}
+                        </span>
+                      )}
                     </Row>
                     {/* The server stores only a hash, so a key can never be
                         shown again. This used to render one derived from the
@@ -624,10 +655,12 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 interface NewStreamPayload {
   title: string;
   description: string;
-  gameId: string;
+  /** Null for anime, lifestyle and podcast programmes, which have no game. */
+  gameId: string | null;
   eventId: string;
   streamerName: string;
   isPremium: boolean;
+  pillar: "esports" | "anime" | "lifestyle";
 }
 
 function CreateStreamDrawer({
@@ -645,23 +678,30 @@ function CreateStreamDrawer({
 }) {
   const [title, setTitle] = React.useState("");
   const [description, setDescription] = React.useState("");
-  const [gameId, setGameId] = React.useState(games[0]?.id ?? "");
+  // "none" rather than the first game. Defaulting to CoD Mobile silently filed
+  // every programme as an esports broadcast, including anime and podcasts.
+  const [gameId, setGameId] = React.useState<string>("none");
   const [eventId, setEventId] = React.useState<string>("none");
   const [streamerName, setStreamerName] = React.useState("EVO TV Official");
   const [isPremium, setIsPremium] = React.useState(false);
+  const [pillar, setPillar] =
+    React.useState<NewStreamPayload["pillar"]>("esports");
 
   React.useEffect(() => {
     if (open) {
       setTitle("");
       setDescription("");
-      setGameId(games[0]?.id ?? "");
+      setGameId("none");
       setEventId("none");
       setStreamerName("EVO TV Official");
       setIsPremium(false);
+      setPillar("esports");
     }
   }, [open]);
 
-  const disabled = !title.trim() || !gameId;
+  // Only the title is genuinely required. A game is meaningless for two of the
+  // three pillars, so requiring it blocked entering them at all.
+  const disabled = !title.trim();
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -693,12 +733,13 @@ function CreateStreamDrawer({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>Game</Label>
+              <Label>Game (optional)</Label>
               <Select value={gameId} onValueChange={setGameId}>
                 <SelectTrigger className="w-full border-neutral-800 bg-neutral-900">
-                  <SelectValue placeholder="Select game" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="none">No game</SelectItem>
                   {games.map((g) => (
                     <SelectItem key={g.id} value={g.id}>
                       {g.shortName}
@@ -723,6 +764,26 @@ function CreateStreamDrawer({
                 </SelectContent>
               </Select>
             </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Pillar</Label>
+            <Select
+              value={pillar}
+              onValueChange={(v) => setPillar(v as NewStreamPayload["pillar"])}
+            >
+              <SelectTrigger className="w-full border-neutral-800 bg-neutral-900">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="esports">Esports</SelectItem>
+                <SelectItem value="anime">Anime</SelectItem>
+                <SelectItem value="lifestyle">Lifestyle</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-neutral-500">
+              What the programme is. Drives the filters on the schedule and the
+              week grid.
+            </p>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="streamer">Streamer</Label>
@@ -756,10 +817,11 @@ function CreateStreamDrawer({
               onSubmit({
                 title: title.trim(),
                 description: description.trim(),
-                gameId,
+                gameId: gameId === "none" ? null : gameId,
                 eventId: eventId === "none" ? "" : eventId,
                 streamerName: streamerName.trim() || "EVO TV Official",
                 isPremium,
+                pillar,
               })
             }
           >

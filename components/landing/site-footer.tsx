@@ -32,13 +32,20 @@ const COLUMNS: Array<{ heading: string; links: Array<{ label: string; href: stri
       { label: "Go premium", href: "/upgrade" },
     ],
   },
+  {
+    heading: "Legal",
+    links: [
+      { label: "Privacy", href: "/privacy" },
+      { label: "Terms", href: "/terms" },
+    ],
+  },
 ];
 
 export default function SiteFooter() {
   return (
     <footer className="relative">
       <div className="mx-auto max-w-[92rem] px-5 py-16 sm:px-10 sm:py-20">
-        <div className="grid gap-12 sm:grid-cols-[1.5fr_repeat(3,1fr)]">
+        <div className="grid gap-12 sm:grid-cols-[1.5fr_repeat(4,1fr)]">
           <div>
             <div className="flex items-center gap-3">
               <Image

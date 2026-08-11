@@ -217,7 +217,15 @@ export async function upsertEpisodeProgress(
 export async function listContinueWatching(
   userId: string,
   limit = 6,
-): Promise<Array<{ episode: Episode; show: Show; positionSec: number }>> {
+): Promise<
+  Array<{
+    episode: Episode;
+    show: Show;
+    positionSec: number;
+    /** When it was last watched. The profile activity feed sorts on this. */
+    updatedAt: string;
+  }>
+> {
   const rows = await db
     .select({
       progress: schema.episodeProgress,
@@ -239,6 +247,7 @@ export async function listContinueWatching(
     episode: toEpisode(r.episode),
     show: toShow(r.show),
     positionSec: r.progress.positionSec,
+    updatedAt: r.progress.updatedAt,
   }));
 }
 

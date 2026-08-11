@@ -166,7 +166,7 @@ function BrandingSection() {
   const [siteName, setSiteName] = React.useState("EVO TV");
   const [tagline, setTagline] = React.useState("African esports, live everywhere.");
   const [primary, setPrimary] = React.useState("#10b981");
-  const [logoUrl, setLogoUrl] = React.useState("/icon.svg");
+  const [logoUrl, setLogoUrl] = React.useState("/evo-logo/evo-tv-152.png");
   const logoInput = React.useRef<HTMLInputElement>(null);
 
   function onSave() {

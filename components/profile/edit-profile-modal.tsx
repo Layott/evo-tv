@@ -4,7 +4,7 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2 } from "lucide-react";
+import { Loader2, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import type { Profile } from "@/lib/types";
@@ -29,7 +29,6 @@ const schema = z.object({
     .max(24)
     .regex(/^[a-z0-9_]+$/i, "Letters, numbers, underscore only"),
   bio: z.string().max(200, "200 characters max").optional(),
-  avatarUrl: z.string().url("Must be a valid URL").or(z.literal("")).optional(),
 });
 
 type Values = z.infer<typeof schema>;
@@ -53,18 +52,80 @@ export function EditProfileModal({ open, onOpenChange, profile, onSave }: Props)
       displayName: profile.displayName,
       handle: profile.handle,
       bio: profile.bio ?? "",
-      avatarUrl: profile.avatarUrl ?? "",
     },
   });
 
+  const fileRef = React.useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = React.useState(false);
+  const [uploadError, setUploadError] = React.useState<string | null>(null);
+  const [avatarPreview, setAvatarPreview] = React.useState<string | null>(
+    profile.avatarUrl || null,
+  );
+  /** Set once an upload succeeds, so save sends the stored URL, not a blob. */
+  const [uploadedUrl, setUploadedUrl] = React.useState<string | null>(null);
+
+  /**
+   * Upload immediately on pick, rather than on save.
+   *
+   * The picture is the one field where the user wants to see the result before
+   * committing, and the endpoint persists it anyway, so deferring the upload to
+   * the save button would mean holding a File in memory to gain nothing.
+   */
+  async function onPickFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    // Allow re-picking the same file after a failure: without this, choosing
+    // the identical file fires no change event.
+    e.target.value = "";
+    if (!file) return;
+
+    setUploadError(null);
+    setUploading(true);
+
+    // Show the local file straight away. Waiting on the round trip makes the
+    // control feel broken on a slow connection.
+    const localPreview = URL.createObjectURL(file);
+    setAvatarPreview(localPreview);
+
+    try {
+      const body = new FormData();
+      body.append("file", file);
+      const res = await fetch("/api/users/me/avatar", {
+        method: "POST",
+        credentials: "include",
+        body,
+      });
+      const data = (await res.json().catch(() => null)) as
+        | { url?: string; error?: string }
+        | null;
+
+      if (!res.ok || !data?.url) {
+        throw new Error(data?.error ?? "Upload failed. Try again.");
+      }
+
+      setAvatarPreview(data.url);
+      setUploadedUrl(data.url);
+      toast.success("Picture updated");
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Upload failed.");
+      // Put the previous picture back so the preview never claims a change
+      // that did not happen.
+      setAvatarPreview(profile.avatarUrl || null);
+    } finally {
+      URL.revokeObjectURL(localPreview);
+      setUploading(false);
+    }
+  }
+
   React.useEffect(() => {
     if (open) {
+      setAvatarPreview(profile.avatarUrl || null);
+      setUploadedUrl(null);
+      setUploadError(null);
       reset({
         displayName: profile.displayName,
         handle: profile.handle,
         bio: profile.bio ?? "",
-        avatarUrl: profile.avatarUrl ?? "",
-      });
+        });
     }
   }, [open, profile, reset]);
 
@@ -76,7 +137,8 @@ export function EditProfileModal({ open, onOpenChange, profile, onSave }: Props)
       displayName: values.displayName,
       handle: values.handle,
       bio: values.bio ?? "",
-      avatarUrl: values.avatarUrl || profile.avatarUrl,
+      // Whatever the upload stored, falling back to what was there.
+      avatarUrl: uploadedUrl ?? profile.avatarUrl,
     });
     toast.success("Profile updated");
     onOpenChange(false);
@@ -107,15 +169,55 @@ export function EditProfileModal({ open, onOpenChange, profile, onSave }: Props)
               <p className="text-xs text-red-400">{errors.handle.message}</p>
             ) : null}
           </div>
+          {/* Pick a file, not paste a URL.
+              "Avatar URL" assumed the user had already hosted the image
+              somewhere and could produce a direct link. Nobody has one, and on
+              a phone the picture is in the camera roll with no URL at all. */}
           <div className="space-y-1.5">
-            <Label htmlFor="avatarUrl">Avatar URL</Label>
-            <Input
-              id="avatarUrl"
-              placeholder="https://..."
-              {...register("avatarUrl")}
-            />
-            {errors.avatarUrl ? (
-              <p className="text-xs text-red-400">{errors.avatarUrl.message}</p>
+            <Label>Profile picture</Label>
+            <div className="flex items-center gap-3">
+              <span className="relative flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-neutral-800">
+                {avatarPreview ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={avatarPreview}
+                    alt=""
+                    className="size-full object-cover"
+                  />
+                ) : (
+                  <ImageIcon className="size-5 text-neutral-500" />
+                )}
+                {uploading ? (
+                  <span className="absolute inset-0 flex items-center justify-center bg-black/60">
+                    <Loader2 className="size-4 animate-spin text-neutral-200" />
+                  </span>
+                ) : null}
+              </span>
+
+              <div className="min-w-0 flex-1">
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={onPickFile}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={uploading}
+                  onClick={() => fileRef.current?.click()}
+                >
+                  {avatarPreview ? "Change picture" : "Choose a picture"}
+                </Button>
+                <p className="mt-1.5 text-xs text-neutral-500">
+                  JPG, PNG or WebP, up to 3.5 MB.
+                </p>
+              </div>
+            </div>
+            {uploadError ? (
+              <p className="text-xs text-red-400">{uploadError}</p>
             ) : null}
           </div>
           <div className="space-y-1.5">

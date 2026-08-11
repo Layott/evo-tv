@@ -161,7 +161,12 @@ export function ModerationPage() {
                         {r.state}
                       </StatusBadge>
                     ) : (
-                      <span className="ml-auto text-xs text-neutral-500">stream_lagos_final</span>
+                      <span className="ml-auto text-xs text-neutral-500">
+                        {/* Was a hardcoded "stream_lagos_final", a stream that
+                            has not existed for months, printed next to every
+                            report that had no state. */}
+                        {r.message?.streamId ?? "-"}
+                      </span>
                     )}
                   </div>
                   <div className="mt-3 flex items-start gap-3">

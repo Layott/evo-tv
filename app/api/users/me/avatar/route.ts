@@ -1,20 +1,27 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { eq } from "drizzle-orm";
-import { storage, ownedKeyFromUrl } from "@/lib/storage";
+
 import { db, schema } from "@/lib/db";
+import { storage } from "@/lib/storage";
 import { getCurrentUser } from "@/lib/auth/guards";
 
-// Vercel's hard request-body cap is 4.5 MB on Hobby — stay safely under so
-// our 413 fires inside the route (with a clean message) before the platform
-// terminates the request.
-const MAX_BYTES = 4 * 1024 * 1024; // 4 MB
-const ALLOWED_TYPES = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/heic",
-  "image/heif",
-]);
+/**
+ * POST /api/users/me/avatar
+ *
+ * Upload a profile picture. The edit-profile form asked for an "Avatar URL",
+ * which is a developer's idea of how to set a picture: it assumes the user has
+ * already hosted the image somewhere and can produce a direct link to it.
+ * Nobody has. On a phone the picture is in the camera roll and there is no URL
+ * to give.
+ *
+ * Modelled on /api/admin/uploads, with two differences: it writes under a
+ * per-user prefix rather than a shared one, and it persists the resulting URL
+ * onto the profile itself, so a successful upload cannot leave the image in
+ * storage but not on the account.
+ */
+
+const MAX_BYTES = Math.floor(3.5 * 1024 * 1024); // 3.5 MB
+const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 function extFromMime(mime: string): string {
   switch (mime) {
@@ -24,23 +31,17 @@ function extFromMime(mime: string): string {
       return "png";
     case "image/webp":
       return "webp";
-    case "image/heic":
-      return "heic";
-    case "image/heif":
-      return "heif";
     default:
       return "bin";
   }
 }
 
-/**
- * POST /api/users/me/avatar
- *
- * Accepts multipart/form-data with a single `file` field. Validates type +
- * size, uploads to Vercel Blob under `avatars/<userId>-<ts>.<ext>` (public
- * access — these URLs are pulled by RN's <Image> on every device), updates
- * user.image, and best-effort deletes the previous avatar blob.
- */
+function randomSuffix(): string {
+  return Array.from(crypto.getRandomValues(new Uint8Array(8)))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
   if (!user) return new NextResponse("Auth required", { status: 401 });
@@ -59,51 +60,37 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing `file` field" }, { status: 422 });
   }
 
+  // Trusting the browser's content-type is not a security boundary, but it is
+  // the right check for the honest case, and storage serves these as static
+  // assets rather than executing them.
   if (!ALLOWED_TYPES.has(file.type)) {
     return NextResponse.json(
-      { error: `Unsupported type: ${file.type}` },
+      { error: "Use a JPG, PNG or WebP image." },
       { status: 415 },
     );
   }
 
   if (file.size > MAX_BYTES) {
     return NextResponse.json(
-      { error: `File too large (max ${MAX_BYTES / 1024 / 1024} MB)` },
+      { error: "That image is over 3.5 MB. Try a smaller one." },
       { status: 413 },
     );
   }
 
-  const key = `avatars/${user.id}-${Date.now()}.${extFromMime(file.type)}`;
+  // Namespaced by user id so one account's uploads can be found, and later
+  // removed wholesale, without scanning a shared prefix.
+  const key = `avatars/${user.id}/${Date.now()}-${randomSuffix()}.${extFromMime(file.type)}`;
   const url = await storage.write(key, Buffer.from(await file.arrayBuffer()));
 
-  const prev = (user as { image?: string | null }).image;
+  // Persist immediately. Returning the URL and leaving the caller to PATCH it
+  // separately means a closed tab between the two leaves an orphaned file and
+  // an unchanged profile.
+  // `image` is Better-Auth's column. The rest of the app reads it as
+  // `avatarUrl`; the mapping happens in /api/users/me.
+  await db
+    .update(schema.user)
+    .set({ image: url })
+    .where(eq(schema.user.id, user.id));
 
-  await db.update(schema.user).set({ image: url }).where(eq(schema.user.id, user.id));
-
-  const prevKey = ownedKeyFromUrl(prev);
-  if (prevKey) {
-    void storage.delete(prevKey).catch(() => {
-      // Best-effort cleanup; safe to leak orphans.
-    });
-  }
-
-  return NextResponse.json({ ok: true, url });
-}
-
-/**
- * DELETE /api/users/me/avatar — revert to the default (empty) avatar.
- */
-export async function DELETE() {
-  const user = await getCurrentUser();
-  if (!user) return new NextResponse("Auth required", { status: 401 });
-
-  const prev = (user as { image?: string | null }).image;
-  await db.update(schema.user).set({ image: null }).where(eq(schema.user.id, user.id));
-
-  const prevKey = ownedKeyFromUrl(prev);
-  if (prevKey) {
-    void storage.delete(prevKey).catch(() => {});
-  }
-
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ url });
 }

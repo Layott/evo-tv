@@ -52,7 +52,10 @@ export async function adminListStreams(
 
 export interface CreateStreamInput {
   title: string;
-  gameId: string;
+  /** Null for anime, lifestyle and podcast programmes, which have no game. */
+  gameId?: string | null;
+  /** What the programme is. Drives the schedule and week-grid filters. */
+  pillar?: "esports" | "anime" | "lifestyle";
   streamerName: string;
   description?: string;
   eventId?: string | null;

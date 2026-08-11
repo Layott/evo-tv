@@ -13,8 +13,17 @@ interface Props {
   canEdit?: boolean;
 }
 
+/** Formatted join date, or null when there is nothing valid to show. */
+function formatJoined(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+}
+
 export function ProfileHeader({ profile, onEdit, canEdit = false }: Props) {
   const isPremium = profile.role === "premium";
+  const joinedLabel = formatJoined(profile.createdAt);
   const isAdmin = profile.role === "admin";
   return (
     <div className="flex flex-col gap-5 rounded-2xl border border-neutral-800 bg-neutral-900/60 p-6 sm:flex-row sm:items-center">
@@ -59,7 +68,9 @@ export function ProfileHeader({ profile, onEdit, canEdit = false }: Props) {
           <span className="inline-flex items-center gap-1">
             <MapPin className="size-3" /> {profile.country}
           </span>
-          <span>Joined {new Date(profile.createdAt).toLocaleDateString()}</span>
+          {/* Omit the line rather than print "Joined Invalid Date", which is
+              what an absent or unparseable createdAt used to render. */}
+          {joinedLabel ? <span>Joined {joinedLabel}</span> : null}
         </div>
         {profile.bio ? (
           <p className="mt-3 max-w-prose text-sm text-neutral-300">{profile.bio}</p>

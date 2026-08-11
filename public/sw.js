@@ -1,4 +1,4 @@
-/* EVO TV service worker — web push handler. */
+/* EVO TV service worker - web push handler. */
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
@@ -19,8 +19,8 @@ self.addEventListener("push", (event) => {
   const title = payload.title || "EVO TV";
   const options = {
     body: payload.body || "",
-    icon: payload.imageUrl || "/icon.svg",
-    badge: "/icon.svg",
+    icon: payload.imageUrl || "/evo-logo/evo-tv-152.png",
+    badge: "/evo-logo/evo-tv-152.png",
     data: { url: payload.url || "/" },
   };
   event.waitUntil(self.registration.showNotification(title, options));

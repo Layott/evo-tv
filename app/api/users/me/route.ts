@@ -8,7 +8,7 @@ import { log } from "@/lib/log";
 import { writeAudit } from "@/lib/api/audit";
 
 /**
- * GET /api/users/me — joined view of user + profile (bio, country).
+ * GET /api/users/me - joined view of user + profile (bio, country).
  *
  * Used by the RN auth provider after sign-in to hydrate the editable
  * profile fields that Better-Auth's session payload doesn't include.
@@ -38,6 +38,17 @@ export async function GET() {
       role: (user as { role?: string }).role ?? "user",
       bio: profile?.bio ?? "",
       country: profile?.country ?? "NG",
+      /**
+       * When the account was created. This was not returned at all, so the
+       * profile header rendered `new Date(undefined)` and printed
+       * "Joined Invalid Date" to every user.
+       *
+       * Better-Auth's own `createdAt` on the user row is the real answer; the
+       * profiles row is written later and only when someone edits something.
+       */
+      createdAt: user.createdAt
+        ? new Date(user.createdAt).toISOString()
+        : null,
     },
   });
 }
@@ -55,7 +66,7 @@ const patchSchema = z.object({
 });
 
 /**
- * PATCH /api/users/me — update editable profile fields.
+ * PATCH /api/users/me - update editable profile fields.
  *
  * Body: { name?, handle?, bio?, country? }. Updates Better-Auth `user`
  * (name + handle) and upserts the `profiles` row (bio + country). Returns
@@ -78,7 +89,7 @@ export async function PATCH(req: NextRequest) {
 
   const { name, handle, bio, country } = parsed.data;
 
-  // Handle uniqueness — reject early with a 409 so the form can highlight.
+  // Handle uniqueness - reject early with a 409 so the form can highlight.
   if (typeof handle === "string") {
     const clash = (
       await db
@@ -183,7 +194,7 @@ export async function PATCH(req: NextRequest) {
 }
 
 /**
- * DELETE /api/users/me — initiate GDPR self-delete.
+ * DELETE /api/users/me - initiate GDPR self-delete.
  *
  * Soft-deletes via user.deleted_at; the actual cascade purge runs after a
  * 30-day grace window by a Vercel Cron worker (Phase 5 follow-up).
@@ -199,7 +210,7 @@ export async function DELETE() {
     .set({ deletedAt: now })
     .where(eq(schema.user.id, user.id));
 
-  // Revoke all sessions for this user — bearer token immediately invalid.
+  // Revoke all sessions for this user - bearer token immediately invalid.
   try {
     await db
       .delete(schema.session)
@@ -233,6 +244,6 @@ export async function DELETE() {
     scheduledPurgeAt: new Date(Date.now() + 30 * 86400_000).toISOString(),
     notice:
       "Account marked for deletion. Active sessions revoked. " +
-      "30-day grace window — sign in again before the deadline to cancel.",
+      "30-day grace window - sign in again before the deadline to cancel.",
   });
 }

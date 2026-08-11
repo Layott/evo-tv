@@ -38,14 +38,28 @@ export const metadata: Metadata = {
     url: "https://evotv.co",
   },
   twitter: { card: "summary_large_image" },
-  icons: {
-    icon: [
-      { url: "/icon-light-32x32.png", media: "(prefers-color-scheme: light)" },
-      { url: "/icon-dark-32x32.png", media: "(prefers-color-scheme: dark)" },
-      { url: "/icon.svg", type: "image/svg+xml" },
-    ],
-    apple: "/apple-icon.png",
-  },
+  /*
+   * No `images` here either. app/opengraph-image.png and app/twitter-image.png
+   * are file conventions: Next hashes them, emits og:image and twitter:image
+   * with absolute URLs off `metadataBase`, and adds the width, height and type
+   * that scrapers need to render a card without fetching the file first.
+   *
+   * Any route can override the picture by dropping its own opengraph-image in
+   * its folder, which is how a shared stream link can carry that stream's
+   * thumbnail rather than the house image.
+   */
+  /*
+   * No `icons` block on purpose.
+   *
+   * It pointed at four files in public/ that came from the Next starter
+   * template, including an icon.svg still carrying its Figma export id. That
+   * is the mark people were seeing in the tab: the template's, not ours.
+   *
+   * app/icon.png, app/apple-icon.png and app/favicon.ico are Next file
+   * conventions. Next hashes them, emits the right <link> tags, and answers
+   * the browser's implicit /favicon.ico request, which used to 404. Declaring
+   * them here as well would produce duplicate tags pointing at unhashed paths.
+   */
 };
 
 export default function RootLayout({
