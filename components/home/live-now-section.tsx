@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { MediaImage } from "@/components/ui/media-image";
 import { Eye } from "lucide-react";
 import type { Stream, Game } from "@/lib/types";
 
@@ -70,9 +71,10 @@ export function LiveNow({ streams, games, loading }: LiveNowProps) {
                 className="group overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900/60 transition-colors hover:border-neutral-700"
               >
                 <div className="relative aspect-video overflow-hidden">
-                  <img
+                  <MediaImage
                     src={s.thumbnailUrl}
                     alt={s.title}
+                    seed={s.id}
                     className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
                   <div className="absolute left-2 top-2">

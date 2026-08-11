@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { MediaImage } from "@/components/ui/media-image";
 import { Sparkles, Clock } from "lucide-react";
 import type { Vod, Game } from "@/lib/types";
 
@@ -64,9 +65,10 @@ export function Recommendations({ vods, games, loading }: RecommendationsProps) 
                 className="group overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900/60 transition-colors hover:border-neutral-700"
               >
                 <div className="relative aspect-video overflow-hidden">
-                  <img
+                  <MediaImage
                     src={v.thumbnailUrl}
                     alt={v.title}
+                    seed={v.id}
                     className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
                   <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] text-neutral-200">

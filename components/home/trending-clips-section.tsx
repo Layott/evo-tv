@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { MediaImage } from "@/components/ui/media-image";
 import { Play, Eye } from "lucide-react";
 import type { Clip } from "@/lib/types";
 
@@ -50,11 +51,12 @@ export function TrendingClips({ clips, loading }: TrendingClipsProps) {
               className="group relative w-40 shrink-0 overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900/60 transition-colors hover:border-neutral-700"
             >
               <div className="relative aspect-[9/16] overflow-hidden">
-                <img
-                  src={c.thumbnailUrl}
-                  alt={c.title}
-                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                />
+                <MediaImage
+                    src={c.thumbnailUrl}
+                    alt={c.title}
+                    seed={c.id}
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity group-hover:opacity-100">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-sky-500/90">

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { MediaImage } from "@/components/ui/media-image";
 import Link from "next/link";
 import useEmblaCarousel from "embla-carousel-react";
 import { Play, Eye } from "lucide-react";
@@ -57,11 +58,12 @@ export function HeroCarousel({ streams }: HeroCarouselProps) {
               className="relative min-w-0 flex-[0_0_100%]"
             >
               <div className="relative aspect-[16/9] w-full overflow-hidden sm:aspect-[21/9]">
-                <img
-                  src={s.thumbnailUrl}
-                  alt={s.title}
-                  className="h-full w-full object-cover"
-                />
+                <MediaImage
+                    src={s.thumbnailUrl}
+                    alt={s.title}
+                    seed={s.id}
+                    className="h-full w-full object-cover"
+                  />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 flex flex-col gap-2 p-4 sm:p-6">
                   <div className="flex items-center gap-2">

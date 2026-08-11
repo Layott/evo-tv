@@ -80,7 +80,15 @@ export async function DELETE(
  *   scheduledDurationMin?: number | null;
  *   hlsUrl?: string | null;
  *   thumbnailUrl?: string;   // http(s) URL or /path, max 1000 chars, "" clears
+ *   isLive?: boolean;        // take the stream live or end it
  * }
+ *
+ * `isLive` exists because nothing else can set it for an externally originated
+ * stream. The flag is normally flipped by the RTMP `on-publish` callback when an
+ * encoder connects, but a channel served from Cloudflare Stream never calls back
+ * into this app, so without this an admin could paste a manifest and still have
+ * the stream never appear under "Live now". Going live stamps `startedAt`;
+ * ending stamps `endedAt` and zeroes the viewer count.
  *
  * Requires `support_admin` or higher — programming the schedule + playback URL
  * is a routine operation that doesn't need full admin.
@@ -101,6 +109,7 @@ export async function PATCH(
     thumbnailUrl?: string;
     maturityRating?: string;
     contentTags?: string[];
+    isLive?: boolean;
   } | null;
   if (!body) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
@@ -114,7 +123,28 @@ export async function PATCH(
     thumbnailUrl?: string;
     maturityRating?: string;
     contentTags?: string[];
+    isLive?: boolean;
+    startedAt?: string;
+    endedAt?: string | null;
+    viewerCount?: number;
   } = {};
+
+  if ("isLive" in body) {
+    if (typeof body.isLive !== "boolean") {
+      return NextResponse.json(
+        { error: "isLive must be a boolean" },
+        { status: 400 },
+      );
+    }
+    update.isLive = body.isLive;
+    if (body.isLive) {
+      update.startedAt = new Date().toISOString();
+      update.endedAt = null;
+    } else {
+      update.endedAt = new Date().toISOString();
+      update.viewerCount = 0;
+    }
+  }
 
   if ("scheduledStartAt" in body) {
     const v = body.scheduledStartAt;

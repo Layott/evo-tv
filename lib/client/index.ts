@@ -19,3 +19,4 @@ export * from "./catalog";
 export * from "./account";
 export * from "./ads";
 export * from "./live";
+export * from "./admin";
