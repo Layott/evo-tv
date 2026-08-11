@@ -285,6 +285,16 @@ export function VideoPlayer({
   const [volume, setVolume] = React.useState(1);
   const [currentTime, setCurrentTime] = React.useState(0);
   const [duration, setDuration] = React.useState(0);
+  /**
+   * The DVR window: what a live stream can actually be scrubbed across.
+   *
+   * `duration` is Infinity while live, so the scrub bar had nothing to bind to
+   * and was simply disabled. nginx now keeps a five minute playlist, so there
+   * is a real window to move around in, and it moves forward continuously as
+   * old segments age out.
+   */
+  const [seekStart, setSeekStart] = React.useState(0);
+  const [seekEnd, setSeekEnd] = React.useState(0);
   const [isFullscreen, setIsFullscreen] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(false);
@@ -368,6 +378,10 @@ export function VideoPlayer({
     const onTime = () => {
       setCurrentTime(v.currentTime);
       onTimeUpdate?.(v.currentTime);
+      if (v.seekable.length > 0) {
+        setSeekStart(v.seekable.start(0));
+        setSeekEnd(v.seekable.end(v.seekable.length - 1));
+      }
     };
     const onDur = () => setDuration(v.duration || 0);
     const onWaiting = () => setLoading(true);
@@ -546,11 +560,26 @@ export function VideoPlayer({
     };
   }, [scheduleHide]);
 
+  /** Seconds behind the live edge. Zero when watching live or not live. */
+  const behindLiveSec = isLive && seekEnd > 0 ? Math.max(0, seekEnd - currentTime) : 0;
+
   const handleSeek = (values: number[]) => {
     const v = videoRef.current;
     const next = values[0];
-    if (v && typeof next === "number") v.currentTime = next;
+    if (!v || typeof next !== "number") return;
+    // Never land exactly on the live edge: that position has no buffered data
+    // yet, so it re-buffers immediately and looks like a failed seek.
+    const max = isLive && seekEnd > 0 ? Math.max(seekStart, seekEnd - 0.5) : next;
+    v.currentTime = isLive ? Math.min(next, max) : next;
   };
+
+  /** Jump back to the live edge after scrubbing into the DVR window. */
+  const goLive = React.useCallback(() => {
+    const v = videoRef.current;
+    if (!v || v.seekable.length === 0) return;
+    v.currentTime = Math.max(0, v.seekable.end(v.seekable.length - 1) - 0.5);
+    void v.play().catch(() => {});
+  }, []);
 
   const handleVolume = (values: number[]) => {
     const v = videoRef.current;
@@ -721,14 +750,22 @@ export function VideoPlayer({
       >
         {/* Scrub bar */}
         <div className="relative px-1">
+          {/* Bound to the DVR window when live, to duration otherwise.
+              This was `disabled={error || isLive}`: correct when the playlist
+              held ten seconds and there was nothing to scrub, wrong now that it
+              holds five minutes. Dragging did nothing at all. */}
           <Slider
-            value={[Math.min(currentTime, duration || 0)]}
-            min={0}
-            max={duration || 1}
+            value={[
+              isLive
+                ? Math.min(Math.max(currentTime, seekStart), seekEnd || seekStart + 1)
+                : Math.min(currentTime, duration || 0),
+            ]}
+            min={isLive ? seekStart : 0}
+            max={isLive ? seekEnd || seekStart + 1 : duration || 1}
             step={0.1}
             onValueChange={handleSeek}
             className="w-full"
-            disabled={error || isLive}
+            disabled={error || (isLive && seekEnd - seekStart < 5)}
           />
           {/* Chapter ticks */}
           {chapters && chapters.length > 0 && duration > 0 && (
@@ -806,7 +843,34 @@ export function VideoPlayer({
           </div>
 
           <span className="ml-1 text-xs font-mono text-white tabular-nums">
-            {isLive ? "LIVE" : `${formatTime(currentTime)} / ${formatTime(duration)}`}
+            {isLive ? (
+              /* Behind the edge after scrubbing back, this says so and offers
+                 the way back. A static "LIVE" while watching two minutes in the
+                 past is simply untrue. */
+              behindLiveSec > 5 ? (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    goLive();
+                  }}
+                  className="flex items-center gap-1.5 text-neutral-300 transition-colors hover:text-white"
+                >
+                  <span className="size-1.5 rounded-full bg-neutral-500" />
+                  {formatTime(behindLiveSec)} behind
+                  <span className="ml-1 underline underline-offset-2">
+                    Go live
+                  </span>
+                </button>
+              ) : (
+                <span className="flex items-center gap-1.5">
+                  <span className="size-1.5 rounded-full bg-red-500" />
+                  LIVE
+                </span>
+              )
+            ) : (
+              `${formatTime(currentTime)} / ${formatTime(duration)}`
+            )}
           </span>
 
           <div className="ml-auto flex items-center gap-1">
