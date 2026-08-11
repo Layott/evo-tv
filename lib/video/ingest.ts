@@ -114,7 +114,7 @@ export async function defaultChannelId(): Promise<string | null> {
  */
 export async function provisionIngest(
   kind: IngestKind,
-  opts: { name: string; ownStreamKey: string },
+  opts: { name: string; ownStreamKey: string; streamId: string },
 ): Promise<{ details: IngestDetails; cfLiveInputUid: string | null; error?: string }> {
   if (kind === "cloudflare") {
     try {
@@ -149,13 +149,21 @@ export async function provisionIngest(
   }
 
   if (kind === "rtmp") {
+    /*
+     * OBS gets `<streamId>?key=<secret>` as its Stream Key.
+     *
+     * nginx names HLS output after the publish name, so publishing under the
+     * bare key put that key in every viewer's playback URL. Publishing under
+     * the stream id keeps the output path public and the credential private;
+     * nginx-rtmp forwards the query argument to the authorising callback.
+     */
     return {
       cfLiveInputUid: null,
       details: {
         kind: "rtmp",
         server: process.env.RTMP_INGEST_URL ?? "rtmp://localhost:1935/live",
-        streamKey: opts.ownStreamKey,
-        hlsUrl: rtmpHlsUrlFor(opts.ownStreamKey),
+        streamKey: `${opts.streamId}?key=${opts.ownStreamKey}`,
+        hlsUrl: rtmpHlsUrlFor(opts.streamId),
         keyRetrievable: false,
       },
     };
@@ -215,6 +223,8 @@ export async function ingestDetailsFor(streamId: string): Promise<IngestDetails 
     return {
       kind: "rtmp",
       server: process.env.RTMP_INGEST_URL ?? "rtmp://localhost:1935/live",
+      // Only a hash is stored, so the secret half cannot be shown again. The
+      // stream id half is public, hence the shape without it.
       streamKey: null,
       hlsUrl: row.hlsPath,
       keyRetrievable: false,

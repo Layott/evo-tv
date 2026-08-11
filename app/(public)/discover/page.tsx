@@ -13,6 +13,7 @@ import {
   listTeams,
   listPlayers,
 } from "@/lib/client";
+import { MediaImage } from "@/components/ui/media-image";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type ContentType = "all" | "streams" | "vods" | "teams" | "players";
@@ -220,7 +221,12 @@ export default function DiscoverPage() {
                       className="group overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900/60 transition-colors hover:border-neutral-700"
                     >
                       <div className="relative aspect-video overflow-hidden">
-                        <img src={s.thumbnailUrl} alt={s.title} className="h-full w-full object-cover" />
+                        <MediaImage
+                          src={s.thumbnailUrl}
+                          alt={s.title}
+                          seed={s.id}
+                          className="h-full w-full object-cover"
+                        />
                         {s.isLive && (
                           <div className="absolute left-2 top-2">
                             <LiveBadge />
@@ -255,7 +261,12 @@ export default function DiscoverPage() {
                       className="group overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900/60 transition-colors hover:border-neutral-700"
                     >
                       <div className="relative aspect-video overflow-hidden">
-                        <img src={v.thumbnailUrl} alt={v.title} className="h-full w-full object-cover" />
+                        <MediaImage
+                          src={v.thumbnailUrl}
+                          alt={v.title}
+                          seed={v.id}
+                          className="h-full w-full object-cover"
+                        />
                         <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] text-neutral-200">
                           <Clock className="h-3 w-3" /> {formatDuration(v.durationSec)}
                         </div>

@@ -256,6 +256,23 @@ origin IP stops being useful for attacking the site. Dry run by default:
 ./deploy/cloudflare-firewall.sh <FIREWALL_ID> --apply  # do it
 ```
 
+#### The Stream Key is `<streamId>?key=<secret>`
+
+Not the bare secret, and the shape matters.
+
+nginx-rtmp names its HLS output after the RTMP stream name. When the name was
+the key, the public playback URL read `/hls/<STREAM_KEY>.m3u8`, so every viewer
+was handed the credential needed to broadcast as the channel, visible in the
+network tab. Publishing under the stream id keeps the output path public and
+the credential private; nginx-rtmp forwards the query argument to the
+authorising callback, so the key still does the authenticating.
+
+Paste the whole string, query argument included, into OBS's Stream Key field.
+
+A broadcaster still configured with a bare key keeps working, because the
+callback accepts either. **That path leaks the key to every viewer.** Regenerate
+and re-paste rather than leaving it.
+
 #### Rotate the key if it ever leaks
 
 Admin, Streams, open the stream, **Regenerate key**. The old key stops

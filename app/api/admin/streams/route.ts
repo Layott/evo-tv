@@ -158,7 +158,7 @@ export async function POST(req: NextRequest) {
   const kind = parsed.data.ingestKind ?? defaultIngestKind();
   const { details, cfLiveInputUid, error: ingestError } = await provisionIngest(
     kind,
-    { name: parsed.data.title, ownStreamKey: streamKey },
+    { name: parsed.data.title, ownStreamKey: streamKey, streamId: id },
   );
 
   // Without a channel the viewer heartbeat endpoint drops every beat, so an

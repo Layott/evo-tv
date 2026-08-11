@@ -45,8 +45,28 @@ function generateStreamId(): string {
 export async function POST(req: NextRequest) {
   const body = await req.text();
   const params = new URLSearchParams(body);
-  const streamKey = params.get("name");
+  /*
+   * The publish name is public; the key is not.
+   *
+   * nginx-rtmp names its HLS output after the RTMP stream name, so when the
+   * name WAS the key, the public playback URL read `/hls/<STREAM_KEY>.m3u8`
+   * and every viewer was handed the credential needed to broadcast as us,
+   * visible in devtools.
+   *
+   * OBS now publishes to `<streamId>?key=<secret>`. nginx-rtmp forwards query
+   * arguments to this callback, so the key still authenticates the publish, it
+   * simply no longer names the output. Playback becomes
+   * `/hls/<streamId>.m3u8`, which is a public identifier.
+   *
+   * `name` is accepted as the key too, for a broadcaster still configured the
+   * old way. That path is deprecated: it works, and it leaks the key into
+   * every viewer's network tab, so rotate onto the new form.
+   */
+  const publishName = params.get("name") ?? "";
+  const queryKey = params.get("key");
+  const streamKey = queryKey || publishName;
   if (!streamKey) return new NextResponse("Missing stream key", { status: 400 });
+  const keyIsInName = !queryKey;
 
   const keyHash = hashStreamKey(streamKey);
   const nowIso = new Date().toISOString();
@@ -143,7 +163,7 @@ export async function POST(req: NextRequest) {
       isLive: true,
       startedAt: nowIso,
       endedAt: null,
-      hlsPath: rtmpHlsUrlFor(streamKey),
+      hlsPath: rtmpHlsUrlFor(publishName),
       viewerCount: 0,
       peakViewerCount: 0,
       language: "en",
@@ -191,7 +211,7 @@ export async function POST(req: NextRequest) {
       // make "on air 2h" read "on air 4s" after a blip.
       startedAt: legacy.startedAt ?? nowIso,
       endedAt: null,
-      hlsPath: rtmpHlsUrlFor(streamKey),
+      hlsPath: rtmpHlsUrlFor(publishName),
       viewerCount: 0,
     })
     .where(eq(schema.streams.id, legacy.id));
