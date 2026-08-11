@@ -18,6 +18,7 @@ import { LivePolls } from "@/components/stream/live-polls";
 import { InStreamShop } from "@/components/stream/in-stream-shop";
 import { StreamInfo } from "@/components/stream/stream-info";
 import { Button } from "@/components/ui/button";
+import { MediaImage } from "@/components/ui/media-image";
 import {
   Tabs,
   TabsContent,
@@ -43,6 +44,15 @@ export default function StreamPage() {
   const [adDone, setAdDone] = React.useState(false);
 
   // Fetch stream + game
+  /**
+   * The API withholds the manifest from a signed-out caller and says so. Read
+   * that rather than checking `role === "guest"` here: the server made the
+   * decision, and duplicating it in the client is how the two drift apart.
+   */
+  const requiresAuth = Boolean(
+    (stream as (Stream & { requiresAuth?: boolean }) | null)?.requiresAuth,
+  );
+
   // Counts this viewer while the stream is live and the tab is visible.
   useStreamHeartbeat(streamId, Boolean(stream?.isLive));
 
@@ -183,6 +193,51 @@ export default function StreamPage() {
                 mediaId={stream.id}
                 gameId={stream.gameId ?? undefined}
               />
+            ) : requiresAuth ? (
+              /*
+               * A guest with the link. The API withholds the manifest URL from
+               * a signed-out caller, so there is nothing to play and this says
+               * why rather than showing an empty box.
+               *
+               * The poster still renders behind it, and the title, streamer and
+               * schedule are all still on the page, because the point is to ask
+               * someone to sign in, not to hide that anything exists.
+               */
+              <div className="relative flex aspect-video w-full items-center justify-center bg-neutral-950">
+                {stream.thumbnailUrl ? (
+                  <MediaImage
+                    src={stream.thumbnailUrl}
+                    alt=""
+                    seed={stream.id}
+                    className="absolute inset-0 h-full w-full object-cover opacity-30"
+                  />
+                ) : null}
+                <div className="relative flex flex-col items-center gap-3 px-6 text-center">
+                  <Lock className="size-6 text-neutral-400" />
+                  <p className="text-base font-semibold text-neutral-100">
+                    Sign in to watch
+                  </p>
+                  <p className="max-w-sm text-sm text-neutral-400">
+                    {stream.isLive
+                      ? "This broadcast is live now. Free to watch with an account."
+                      : "Create a free account to watch when this goes live."}
+                  </p>
+                  <div className="mt-1 flex flex-wrap items-center justify-center gap-2">
+                    <Button asChild className="bg-sky-600 hover:bg-sky-500">
+                      <Link href={`/login?next=/stream/${streamId}`}>Sign in</Link>
+                    </Button>
+                    <Button
+                      asChild
+                      variant="outline"
+                      className="border-neutral-700 bg-neutral-900 text-neutral-200 hover:bg-neutral-800"
+                    >
+                      <Link href={`/signup?next=/stream/${streamId}`}>
+                        Create an account
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              </div>
             ) : (
               <div className="flex aspect-video w-full flex-col items-center justify-center gap-2 bg-neutral-950 text-center">
                 <p className="text-sm font-semibold text-neutral-200">

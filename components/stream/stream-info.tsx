@@ -40,6 +40,8 @@ function streamerIdFromStream(s: Stream): string {
 export function StreamInfo({ stream, game }: StreamInfoProps) {
   const streamerId = streamerIdFromStream(stream);
   const [reporting, setReporting] = React.useState(false);
+  /** Set only when both share and clipboard failed, so the URL can be copied by hand. */
+  const [shareUrl, setShareUrl] = React.useState<string | null>(null);
 
   // Multi-language commentary track state
   const [tracks, setTracks] = React.useState<CommentaryTrack[] | null>(null);
@@ -85,20 +87,44 @@ export function StreamInfo({ stream, game }: StreamInfoProps) {
     }
   }
 
-  const share = () => {
+  /**
+   * Share, with a fallback for every way it can fail.
+   *
+   * The old version treated `navigator.share` as either present and working or
+   * absent. It is neither: on desktop it exists and commonly rejects with
+   * NotAllowedError, which was caught and reported as "Share cancelled", so the
+   * button appeared to do nothing and blamed the user for it.
+   *
+   * Order is deliberate. Native share first, because on a phone it is the
+   * better experience. AbortError means they genuinely dismissed the sheet, so
+   * stop. Any other rejection is the API failing, so fall through to the
+   * clipboard, and if that fails too, show the URL so it can be copied by hand.
+   * The one outcome not allowed is nothing happening.
+   */
+  const share = async () => {
     const url = typeof window !== "undefined" ? window.location.href : "";
+    if (!url) return;
+
     if (navigator.share) {
-      navigator
-        .share({ title: stream.title, url })
-        .catch(() => toast.message("Share cancelled"));
-    } else if (url && navigator.clipboard) {
-      navigator.clipboard
-        .writeText(url)
-        .then(() => toast.success("Link copied"))
-        .catch(() => toast.error("Could not copy"));
-    } else {
-      toast.message("Share unavailable");
+      try {
+        await navigator.share({ title: stream.title, url });
+        return;
+      } catch (err) {
+        // The user closed the sheet. That is a choice, not a failure.
+        if (err instanceof DOMException && err.name === "AbortError") return;
+        // Anything else: the API is unavailable in practice. Keep going.
+      }
     }
+
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Link copied");
+      return;
+    } catch {
+      // Clipboard can be blocked by permissions or a non-secure context.
+    }
+
+    setShareUrl(url);
   };
 
   return (
@@ -195,6 +221,25 @@ export function StreamInfo({ stream, game }: StreamInfoProps) {
             nobody had started one for. Watch parties have no backend, so there
             is nothing honest to put here. */}
       </div>
+
+      {/* Last resort. Reached only when the share sheet and the clipboard both
+          refused, which is rare but leaves the button doing nothing otherwise. */}
+      <Dialog open={!!shareUrl} onOpenChange={(o) => !o && setShareUrl(null)}>
+        <DialogContent className="border-neutral-800 bg-neutral-950 text-neutral-100">
+          <DialogHeader>
+            <DialogTitle>Share this stream</DialogTitle>
+            <DialogDescription className="text-neutral-400">
+              Your browser blocked the copy. Select the link and copy it.
+            </DialogDescription>
+          </DialogHeader>
+          <input
+            readOnly
+            value={shareUrl ?? ""}
+            onFocus={(e) => e.currentTarget.select()}
+            className="w-full rounded-md border border-neutral-800 bg-neutral-900 px-3 py-2 font-mono text-sm text-neutral-200"
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
