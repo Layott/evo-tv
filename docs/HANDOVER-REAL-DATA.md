@@ -147,10 +147,39 @@ Two bugs that surfaced there, worth knowing because the same shape will recur:
 and silently did nothing against Postgres. Rewritten; it promotes and demotes.
 **To make the first admin: sign up through the app, then run it.**
 
-Still on mock, in priority order: `content-manager` (games, teams, players,
-events), `ads-manager`, `overview`, `orders`, `users-roles`, `moderation`,
-`polls-manager`, `billing`, `admin-settings`. Each has routes and a
-`lib/client/admin.ts` helper already; the work is the same swap.
+**Content manager is real** (`71e4ca1`). Games, teams, players and events come
+from the database and creating one persists. Editing and deleting deliberately
+report that they are unsupported: the admin catalogue routes are create-only,
+and deleting a game that streams and matches point at is a destructive cascade
+that should not be a button until it is designed.
+
+Still on mock, in priority order: `ads-manager`, `overview`, `orders`,
+`users-roles`, `moderation`, `polls-manager`, `billing`, `admin-settings`. Each
+has routes and a `lib/client/admin.ts` helper already; the work is the same swap.
+
+### The gating bug class, worth internalising
+
+Three bugs, one shape: an access decision made before the thing it depends on
+arrived.
+
+- `proxy.ts` gated `/admin` on `evotv_role`, which the client writes only after
+  the profile loads, so a fresh sign-in bounced back to the login page it had
+  just used. It now gates on the Better-Auth session cookie.
+- `AuthProvider` took `role` from `/api/users/me`, so `AdminGuard` sat on
+  "Checking your access" for as long as that took, and forever if it failed.
+  Better-Auth already puts `role` on the session user, so gating no longer waits
+  on the profile.
+- The premium gate on `library/downloads` would flash the paywall at a paying
+  member.
+
+**Anything new that branches on `role` must check `ready` first.**
+
+### One more trap
+
+A stale `next dev` process will happily serve a build from before your edits and
+make a correct change look broken. If a page shows empty data while its endpoint
+returns rows in the browser console, kill the dev server, delete `.next`, and
+restart before debugging further. That cost real time here.
 
 ## 7. What is still on the mock layer
 
