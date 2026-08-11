@@ -224,8 +224,20 @@ export function VideoPlayer({
         // Buffer ahead aggressively when bandwidth allows.
         maxBufferLength: 60,
         maxMaxBufferLength: 120,
-        // Keep some behind, so skip-back has something to land on.
-        backBufferLength: 90,
+        /*
+         * Keep the whole DVR window behind the playhead, not part of it.
+         *
+         * This was 90s while nginx serves a 300s window, so hls.js evicted
+         * everything older than 90 seconds and a seek further back than that
+         * landed on data it no longer held. Offering five minutes of rewind
+         * while retaining ninety seconds of it is the kind of mismatch that
+         * makes a scrub bar feel arbitrary: near seeks work, far ones do not.
+         *
+         * Memory cost is bounded by the window, and the window is bounded by
+         * hls_playlist_length. At 2.8 Mbps, 300s is roughly 105 MB, which is
+         * acceptable for a tab that is deliberately watching a broadcast.
+         */
+        backBufferLength: 300,
         // A dropped segment on a busy origin is ordinary. Retry rather than
         // raising a fatal error and tearing the stream down.
         fragLoadingMaxRetry: 6,
