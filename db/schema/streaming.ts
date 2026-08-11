@@ -36,6 +36,16 @@ export const streams = pgTable(
       .default("manual"),
     /** Cloudflare Stream live input id. Null for the other two ingests. */
     cfLiveInputUid: text("cf_live_input_uid"),
+    /**
+     * The flagship channel. At most one row may have this set, enforced by a
+     * partial unique index rather than by convention, so the home page can
+     * select it without a tiebreak and can never render two heroes.
+     */
+    isMainChannel: boolean("is_main_channel").notNull().default(false),
+    /** Full-bleed image shown behind the hero when the channel is off air. */
+    posterUrl: text("poster_url").notNull().default(""),
+    /** One line under the title on the hero. Empty renders nothing. */
+    tagline: text("tagline").notNull().default(""),
     isLive: boolean("is_live").notNull().default(false),
     startedAt: text("started_at"),
     endedAt: text("ended_at"),

@@ -270,7 +270,12 @@ export interface ChatMessage {
   id: UUID;
   streamId: UUID;
   userId: UUID;
-  userHandle: string;
+  /**
+   * Null when the account has never set a handle, which is the default state
+   * of every new account. This was typed as a plain string, so nothing warned
+   * when a null reached the renderer and threw inside React.
+   */
+  userHandle: string | null;
   userAvatarUrl: string;
   userRole: Role;
   body: string;

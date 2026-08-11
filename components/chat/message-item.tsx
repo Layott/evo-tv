@@ -24,6 +24,19 @@ function roleColor(role: ChatMessage["userRole"]) {
   return "text-neutral-200";
 }
 
+/**
+ * A display name that always exists.
+ *
+ * `userHandle` is typed as a string but is not one: a profile only gets a
+ * handle when the user sets one, and the optimistic message the chat box adds
+ * before the server replies copies that null straight through. Rendering it hit
+ * `null.slice(0, 2)` and threw inside React, which unmounts the whole tree, so
+ * typing one message took the entire page down.
+ */
+function displayHandle(handle: string | null | undefined): string {
+  return handle?.trim() || "viewer";
+}
+
 export function MessageItem({
   msg,
   isAdmin,
@@ -41,7 +54,7 @@ export function MessageItem({
     setBusy(true);
     setPinned((prev) => !prev);
     try {
-      await pinMessage(msg.id, msg.userHandle);
+      await pinMessage(msg.id, displayHandle(msg.userHandle));
       toast.success(pinned ? "Message unpinned" : "Message pinned");
     } catch {
       setPinned((prev) => !prev);
@@ -56,7 +69,7 @@ export function MessageItem({
     setBusy(true);
     setDeleted(true);
     try {
-      await deleteMessage(msg.id, msg.userHandle);
+      await deleteMessage(msg.id, displayHandle(msg.userHandle));
       toast.success("Message deleted");
     } catch {
       setDeleted(false);
@@ -73,7 +86,7 @@ export function MessageItem({
       await banUser(msg.streamId, msg.userId, 24);
       setBanned(true);
       setDeleted(true);
-      toast.error(`Banned ${msg.userHandle} for 24h`);
+      toast.error(`Banned ${displayHandle(msg.userHandle)} for 24h`);
     } catch {
       toast.error("Could not ban user");
     } finally {
@@ -84,7 +97,7 @@ export function MessageItem({
   if (deleted) {
     return (
       <div className="px-3 py-1.5 text-xs italic text-neutral-500">
-        {banned ? `[${msg.userHandle} banned · message removed]` : "[message removed]"}
+        {banned ? `[${displayHandle(msg.userHandle)} banned · message removed]` : "[message removed]"}
       </div>
     );
   }
@@ -97,14 +110,14 @@ export function MessageItem({
       title={fmtTime(msg.createdAt)}
     >
       <Avatar className="size-6 flex-shrink-0">
-        <AvatarImage src={msg.userAvatarUrl} alt={msg.userHandle} />
+        <AvatarImage src={msg.userAvatarUrl} alt={displayHandle(msg.userHandle)} />
         <AvatarFallback className="text-[10px]">
-          {msg.userHandle.slice(0, 2).toUpperCase()}
+          {displayHandle(msg.userHandle).slice(0, 2).toUpperCase()}
         </AvatarFallback>
       </Avatar>
       <div className="min-w-0 flex-1">
         <span className={cn("text-xs font-semibold mr-1.5", roleColor(msg.userRole))}>
-          {msg.userHandle}
+          {displayHandle(msg.userHandle)}
           {msg.userRole === "premium" && (
             <span className="ml-1 text-[9px] uppercase tracking-wider text-amber-400">
               prem

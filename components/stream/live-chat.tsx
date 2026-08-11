@@ -95,7 +95,10 @@ export function LiveChat({ streamId }: { streamId: string }) {
       id: optimisticId,
       streamId,
       userId: user.id,
-      userHandle: user.handle,
+      // Fall back rather than pass null through: an account without a handle
+      // is normal, and the row that comes back from the server carries a
+      // resolved name anyway.
+      userHandle: user.handle || user.displayName || "viewer",
       userAvatarUrl: user.avatarUrl,
       userRole: role,
       body,
