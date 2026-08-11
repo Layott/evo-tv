@@ -16,7 +16,15 @@ import { Clock, PercentCircle, TrendingDown, Users } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "./page-header";
 import { MetricCard } from "./metric-card";
-import { formatCompact, formatNgn, formatNumber, seededRandom } from "./utils";
+import { useQuery } from "@tanstack/react-query";
+import {
+  adminConversion,
+  adminRetention,
+  adminRevenueByMonth,
+  adminTopVods,
+  adminViewsOverTime,
+} from "@/lib/client";
+import { formatCompact, formatNgn, formatNumber } from "./utils";
 
 const DATE_RANGES = [
   { value: "7d", label: "7 days" },
@@ -28,59 +36,47 @@ const DATE_RANGES = [
 export function AnalyticsPage() {
   const [range, setRange] = React.useState("30d");
 
-  const viewsSeries = React.useMemo(() => {
-    const rng = seededRandom(51);
-    const days = range === "7d" ? 7 : range === "30d" ? 30 : range === "90d" ? 90 : 365;
-    const now = Date.now();
-    return Array.from({ length: days }, (_, i) => {
-      const d = new Date(now - (days - 1 - i) * 86_400_000);
-      const base = 100_000 + i * (days > 30 ? 1200 : 4000);
-      const views = Math.round(base + rng() * 80_000);
-      return {
-        day: d.toLocaleDateString(undefined, { month: "short", day: "numeric" }),
-        views,
-      };
-    });
-  }, [range]);
+  /**
+   * Every chart on this page was generated, not measured: views were a rising
+   * baseline plus noise, retention was a decaying formula, revenue was
+   * 3.2M NGN climbing by 480k a month, and the ten "top titles" were invented
+   * VOD names with random view counts. None of it came from the database, and
+   * an operator would have read all of it as real.
+   */
+  const days = range === "7d" ? 7 : range === "30d" ? 30 : range === "90d" ? 90 : 365;
 
-  const retention = React.useMemo(() => {
-    const rng = seededRandom(7);
-    return Array.from({ length: 8 }, (_, r) =>
-      Array.from({ length: 8 }, (_, c) => {
-        if (c > 7 - r) return null;
-        const base = Math.max(12, 100 - c * 13 - r * 2);
-        return Math.min(100, Math.round(base + rng() * 6));
-      }),
-    );
-  }, []);
+  const viewsQ = useQuery({
+    queryKey: ["admin", "views", days],
+    queryFn: () => adminViewsOverTime(days),
+  });
+  const retentionQ = useQuery({
+    queryKey: ["admin", "retention"],
+    queryFn: () => adminRetention(8),
+  });
+  const revenueQ = useQuery({
+    queryKey: ["admin", "revenue"],
+    queryFn: () => adminRevenueByMonth(6),
+  });
+  const topVodsQ = useQuery({
+    queryKey: ["admin", "top-vods"],
+    queryFn: () => adminTopVods(10),
+  });
+  const conversionQ = useQuery({
+    queryKey: ["admin", "conversion"],
+    queryFn: () => adminConversion(),
+  });
 
-  const revenueByMonth = React.useMemo(() => {
-    const rng = seededRandom(19);
-    const labels = ["Nov", "Dec", "Jan", "Feb", "Mar", "Apr"];
-    return labels.map((m, i) => ({
-      month: m,
-      revenue: Math.round(3_200_000 + i * 480_000 + rng() * 600_000),
-    }));
-  }, []);
-
-  const topTitles = React.useMemo(() => {
-    const titles = [
-      "EVO Finals — Highlights",
-      "PUBGM Casablanca Day 1",
-      "Evo Talk Ep 12",
-      "CoD Mobile Cairo",
-      "Free Fire Lagos Semis",
-      "EA FC Continental",
-      "Retrospective: Alpha",
-      "Scrim Night: Titan",
-      "Accra Showdown Recap",
-      "Bracket Reveal — EVO Cup",
-    ];
-    const rng = seededRandom(5);
-    return titles
-      .map((t) => ({ title: t, views: Math.round(12_000 + rng() * 240_000) }))
-      .sort((a, b) => b.views - a.views);
-  }, []);
+  const viewsSeries = viewsQ.data ?? [];
+  const retention = retentionQ.data?.matrix ?? [];
+  const revenueByMonth = (revenueQ.data ?? []).map((r) => ({
+    month: r.month,
+    revenue: r.ngn,
+  }));
+  const topTitles = (topVodsQ.data ?? []).map((v) => ({
+    title: v.title,
+    views: v.viewCount,
+  }));
+  const totalViews = viewsSeries.reduce((acc, p) => acc + p.views, 0);
 
   return (
     <div className="space-y-6">
@@ -101,10 +97,34 @@ export function AnalyticsPage() {
       />
 
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricCard title="Unique viewers" value={formatNumber(284_120)} delta={11.2} deltaLabel="MoM" icon={Users} />
-        <MetricCard title="Avg watch time" value="32m 14s" delta={4.5} deltaLabel="vs last month" icon={Clock} />
-        <MetricCard title="Free → Premium" value="2.4%" delta={0.3} deltaLabel="conversion" icon={PercentCircle} />
-        <MetricCard title="Premium churn" value="3.1%" delta={-0.6} deltaLabel="vs last month" icon={TrendingDown} />
+        {/* These four were hardcoded: 284,120 unique viewers, 32m 14s average
+            watch time, 2.4% conversion and 3.1% churn, each with an invented
+            month-over-month delta, on a platform with no recorded views at all.
+            Views and conversion are measured; watch time and churn are not
+            computed anywhere yet, so they say so. */}
+        <MetricCard
+          title="Views in range"
+          value={formatNumber(totalViews)}
+          icon={Users}
+        />
+        <MetricCard
+          title="Avg watch time"
+          value="-"
+          hint="Not measured yet"
+          icon={Clock}
+        />
+        <MetricCard
+          title="Free to Premium"
+          value={`${(conversionQ.data?.pct ?? 0).toFixed(1)}%`}
+          hint={`${conversionQ.data?.convertedUsers ?? 0} of ${conversionQ.data?.totalUsers ?? 0}`}
+          icon={PercentCircle}
+        />
+        <MetricCard
+          title="Premium churn"
+          value="-"
+          hint="Not measured yet"
+          icon={TrendingDown}
+        />
       </section>
 
       <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">

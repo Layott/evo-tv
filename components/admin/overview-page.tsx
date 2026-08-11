@@ -88,35 +88,20 @@ export function OverviewPage() {
         description="Operational snapshot across streams, subscriptions and revenue."
       />
 
+      {/* No `delta`: the four trend badges were hardcoded (+12.4% vs last hour,
+          +6.3% vs yesterday, +3.1% rolling 7d, +4.8% vs last month) and rendered
+          next to whatever the real figure happened to be, so a dashboard showing
+          0 live streams and 0 revenue still claimed both were climbing. Nothing
+          computes a period-over-period comparison yet, so the card omits it. */}
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricCard
-          title="Live streams"
-          value={liveCount}
-          delta={12.4}
-          deltaLabel="vs last hour"
-          icon={Radio}
-        />
-        <MetricCard
-          title="Signups today"
-          value={signupsToday}
-          delta={6.3}
-          deltaLabel="vs yesterday"
-          icon={UserPlus}
-        />
+        <MetricCard title="Live streams" value={liveCount} icon={Radio} />
+        <MetricCard title="Signups today" value={signupsToday} icon={UserPlus} />
         <MetricCard
           title="Active premium subs"
           value={formatNumber(premiumSubs)}
-          delta={3.1}
-          deltaLabel="rolling 7d"
           icon={Users}
         />
-        <MetricCard
-          title="MRR"
-          value={formatNgn(mrr)}
-          delta={4.8}
-          deltaLabel="vs last month"
-          icon={CircleDollarSign}
-        />
+        <MetricCard title="MRR" value={formatNgn(mrr)} icon={CircleDollarSign} />
       </section>
 
       <section className="rounded-xl border border-neutral-800 bg-neutral-900/40 p-5">

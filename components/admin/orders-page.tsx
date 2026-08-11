@@ -34,7 +34,7 @@ import {
 import { DataTable, type DataColumn } from "./data-table";
 import { PageHeader } from "./page-header";
 import { StatusBadge } from "./status-badge";
-import { formatDateTime, formatNgn, seededRandom } from "./utils";
+import { formatDateTime, formatNgn } from "./utils";
 
 /**
  * The orders endpoint returns a user id, not a handle. Showing the id is honest;

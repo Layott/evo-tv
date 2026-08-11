@@ -331,15 +331,21 @@ export async function adminOverviewMetrics(): Promise<AdminOverviewMetrics> {
   );
 }
 
-/** Daily view counts from `analytics_daily`, for the overview chart. */
+/**
+ * Daily view counts. The endpoint returns `{ date, views }` where date is
+ * YYYY-MM-DD; `day` is carried alongside so chart components that key on either
+ * name work without a mapping step at each call site.
+ */
 export async function adminViewsOverTime(
   days = 30,
-): Promise<Array<{ day: string; views: number }>> {
-  const data = await apiGet<Array<{ day: string; views: number }>>(
+): Promise<Array<{ date: string; day: string; views: number }>> {
+  const data = await apiGet<Array<{ date: string; views: number }>>(
     "/api/admin/analytics/views",
     { days },
   );
-  return Array.isArray(data) ? data : [];
+  return Array.isArray(data)
+    ? data.map((p) => ({ ...p, day: p.date }))
+    : [];
 }
 
 export interface AdminSanction {
@@ -356,4 +362,54 @@ export interface AdminSanction {
 export async function adminListSanctions(): Promise<AdminSanction[]> {
   const res = await apiGet<{ sanctions: AdminSanction[] }>("/api/admin/sanctions");
   return res?.sanctions ?? [];
+}
+
+/* ── Analytics ──────────────────────────────────────────────────────────── */
+
+export interface AdminRevenuePoint {
+  month: string;
+  ngn: number;
+}
+
+export async function adminRevenueByMonth(
+  months = 6,
+): Promise<AdminRevenuePoint[]> {
+  const d = await apiGet<AdminRevenuePoint[]>("/api/admin/analytics/revenue", {
+    months,
+  });
+  return Array.isArray(d) ? d : [];
+}
+
+export async function adminRetention(weeks = 8): Promise<{
+  cohorts: { weekStart: string; size: number }[];
+  matrix: number[][];
+}> {
+  return (
+    (await apiGet<{
+      cohorts: { weekStart: string; size: number }[];
+      matrix: number[][];
+    }>("/api/admin/analytics/retention", { weeks })) ?? { cohorts: [], matrix: [] }
+  );
+}
+
+export async function adminTopVods(
+  limit = 10,
+): Promise<Array<{ id: string; title: string; viewCount: number }>> {
+  const d = await apiGet<Array<{ id: string; title: string; viewCount: number }>>(
+    "/api/admin/analytics/top-vods",
+    { limit },
+  );
+  return Array.isArray(d) ? d : [];
+}
+
+export async function adminConversion(): Promise<{
+  totalUsers: number;
+  convertedUsers: number;
+  pct: number;
+}> {
+  return (
+    (await apiGet<{ totalUsers: number; convertedUsers: number; pct: number }>(
+      "/api/admin/analytics/conversion",
+    )) ?? { totalUsers: 0, convertedUsers: 0, pct: 0 }
+  );
 }

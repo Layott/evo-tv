@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "./page-header";
 import { StatusBadge } from "./status-badge";
-import { formatDate, seededRandom, timeAgo } from "./utils";
+import { formatDate, timeAgo } from "./utils";
 
 interface Report {
   id: string;

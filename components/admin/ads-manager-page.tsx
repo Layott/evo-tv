@@ -51,7 +51,7 @@ import {
 import { DataTable, type DataColumn } from "./data-table";
 import { PageHeader } from "./page-header";
 import { StatusBadge } from "./status-badge";
-import { formatDate, formatNumber, seededRandom } from "./utils";
+import { formatDate, formatNumber } from "./utils";
 
 const PLACEMENTS: { value: AdPlacement; label: string }[] = [
   { value: "home_banner", label: "Home banner" },
@@ -235,20 +235,22 @@ export function AdsManagerPage() {
     },
   ];
 
-  const series = React.useMemo(() => {
-    const rng = seededRandom(99);
-    const now = Date.now();
-    return Array.from({ length: 30 }, (_, i) => {
-      const d = new Date(now - (29 - i) * 86_400_000);
-      const impressions = Math.round(3_200 + rng() * 2_800 + i * 120);
-      const clicks = Math.round(90 + rng() * 120 + i * 3);
-      return {
-        day: d.toLocaleDateString(undefined, { month: "short", day: "numeric" }),
-        impressions,
-        clicks,
-      };
-    });
-  }, []);
+  /**
+   * Impressions and clicks are counted per ad row by /api/ads/impression and
+   * /api/ads/click, but nothing aggregates them per day, so there is no real
+   * 30-day series to draw. This used to invent one - a rising line from about
+   * 3,200 to 8,000 impressions - which rendered above a table reading
+   * "0 campaigns".
+   *
+   * The totals below are real: they are the sums the rows actually carry.
+   */
+  const totals = React.useMemo(
+    () => ({
+      impressions: all.reduce((acc, a) => acc + (a.impressions ?? 0), 0),
+      clicks: all.reduce((acc, a) => acc + (a.clicks ?? 0), 0),
+    }),
+    [all],
+  );
 
   return (
     <div className="space-y-6">
@@ -297,26 +299,32 @@ export function AdsManagerPage() {
       />
 
       <section className="rounded-xl border border-neutral-800 bg-neutral-900/40 p-5">
-        <h3 className="text-sm font-semibold text-neutral-100">Performance (30 days)</h3>
-        <p className="text-xs text-neutral-500">Aggregated impressions and clicks across all active campaigns.</p>
-        <div className="mt-3 h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={series} margin={{ top: 10, right: 12, left: 0, bottom: 0 }}>
-              <CartesianGrid stroke="#262626" vertical={false} />
-              <XAxis dataKey="day" stroke="#525252" fontSize={11} tickLine={false} axisLine={false} />
-              <YAxis stroke="#525252" fontSize={11} tickLine={false} axisLine={false} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#171717",
-                  border: "1px solid #262626",
-                  borderRadius: 8,
-                  color: "#e5e5e5",
-                }}
-              />
-              <Line type="monotone" dataKey="impressions" stroke="#10b981" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="clicks" stroke="#f59e0b" strokeWidth={2} dot={false} />
-            </LineChart>
-          </ResponsiveContainer>
+        <h3 className="text-sm font-semibold text-neutral-100">Performance</h3>
+        <p className="text-xs text-neutral-500">
+          Lifetime totals across every campaign. A daily breakdown needs
+          per-day aggregation, which does not exist yet.
+        </p>
+        <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
+          <div>
+            <div className="text-xs uppercase tracking-wider text-neutral-500">Impressions</div>
+            <div className="mt-1 text-2xl font-bold tabular-nums text-neutral-100">
+              {formatNumber(totals.impressions)}
+            </div>
+          </div>
+          <div>
+            <div className="text-xs uppercase tracking-wider text-neutral-500">Clicks</div>
+            <div className="mt-1 text-2xl font-bold tabular-nums text-neutral-100">
+              {formatNumber(totals.clicks)}
+            </div>
+          </div>
+          <div>
+            <div className="text-xs uppercase tracking-wider text-neutral-500">CTR</div>
+            <div className="mt-1 text-2xl font-bold tabular-nums text-neutral-100">
+              {totals.impressions > 0
+                ? `${((totals.clicks / totals.impressions) * 100).toFixed(2)}%`
+                : "-"}
+            </div>
+          </div>
         </div>
       </section>
 
