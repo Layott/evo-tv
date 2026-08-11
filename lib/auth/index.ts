@@ -103,6 +103,31 @@ export const auth = betterAuth({
   },
   advanced: {
     cookiePrefix: "evotv",
+    /**
+     * Share the session cookie across evotv.co, www., app. and api.
+     *
+     * Without this the cookie is host-only, and OAuth breaks in a way that
+     * looks like a provider problem but is not. The social flow redirects to
+     * `baseURL`, which is api.evotv.co, so Google returns the user there, the
+     * callback sets a cookie for api.evotv.co, and then sends them on to
+     * evotv.co, where that cookie does not exist. Sign-in appears to do
+     * nothing at all.
+     *
+     * It is also what lets app.evotv.co eventually 301 to the apex without
+     * signing everyone out on the way.
+     *
+     * Set COOKIE_DOMAIN in production, to `.evotv.co`. Left unset the cookie
+     * stays host-only, which is correct for localhost, where a domain
+     * attribute would be rejected outright.
+     */
+    ...(process.env.COOKIE_DOMAIN
+      ? {
+          crossSubDomainCookies: {
+            enabled: true,
+            domain: process.env.COOKIE_DOMAIN,
+          },
+        }
+      : {}),
     generateId: () =>
       "user_" +
       Array.from(crypto.getRandomValues(new Uint8Array(12)))
