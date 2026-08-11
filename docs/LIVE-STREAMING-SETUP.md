@@ -184,51 +184,76 @@ immutable. Only 1935 is exposed.
 
 ```
 LIVE_INGEST=rtmp
-RTMP_INGEST_URL=rtmp://ingest.evotv.co:1935/live
+RTMP_INGEST_URL=rtmp://138.68.126.199:1935/live
 RTMP_HLS_BASE_URL=https://api.evotv.co/hls
 ```
 
-#### DNS for the ingest hostname
+#### Use the IP, not a hostname
 
-Add one **A record**: `ingest` -> the droplet IP. It costs nothing; a
-subdomain is free and RTMP needs no certificate, because RTMP is not HTTPS and
-Caddy is not involved on that port.
+There is deliberately no `ingest.evotv.co`.
 
-**The record must be DNS-only, not proxied.** Cloudflare's proxy handles HTTP
-and HTTPS ports only, so an orange-clouded record cannot carry RTMP on 1935 and
-OBS will simply fail to connect. Leave the cloud grey on `ingest`, and if
-`evotv.co` is ever switched to proxied, `ingest` stays grey.
+RTMP cannot go through Cloudflare's proxy: the proxy handles HTTP and HTTPS
+ports only, so an ingest record would have to be DNS-only. And **a single
+DNS-only record under a proxied zone hands out the origin IP to anyone who
+enumerates subdomains**, which defeats the orange cloud on every other hostname
+at once. Subdomain enumeration is automated and takes seconds.
 
-That has a consequence worth stating plainly: a DNS-only record publishes the
-droplet's real IP. That is already true of the current setup, and it is the
-reason the firewall below matters.
+No record means nothing to enumerate. An operator is already pasting a 32
+character key, so pasting an IP alongside it costs nothing.
+
+If a friendly name is ever wanted, put it on a domain that is never proxied, or
+on a second droplet whose IP is not the web origin. Do not put it under a zone
+you intend to protect.
+
+`RTMP_HLS_BASE_URL` is different and **is** a normal hostname: playback is plain
+HTTPS through Caddy, so it proxies fine.
+
+#### Port 1935 is exposed whatever you do
+
+Cloudflare cannot shield it without Spectrum, which is Enterprise pricing. That
+is inherent to self-hosting RTMP, not a configuration mistake. Two mitigations,
+in order of value:
+
+1. **Restrict the source.** If the broadcast location is fixed, limit 1935 to
+   that IP in the DO firewall. A captured key is then useless from anywhere
+   else, which matters because RTMP is plaintext and the key crosses the
+   network in the clear.
+2. **Rotate on suspicion.** Regenerating is instant and costs one re-paste.
+
+Path B removes this entirely: the encoder pushes to Cloudflare, nothing reaches
+the droplet, and no port opens.
 
 #### Firewall
 
 The droplet runs a DO Cloud Firewall with inbound TCP 22, 80 and 443 only, and
 no `ufw` on top. Ingest needs **1935/tcp** added.
 
-**Restrict the source if you can.** RTMP is plaintext: the stream key crosses
-the network in the clear, and anyone who captures it can broadcast as you from
-anywhere. Limiting 1935 to the office IP means a leaked key is unusable from
-anywhere else. Open to `0.0.0.0/0` only if broadcasting from changing
-locations.
-
 Control panel: Networking, Firewalls, pick the droplet's firewall, Inbound
-Rules, New rule -> Custom, TCP, port `1935`, Sources: your office IP (or All
+Rules, New rule -> Custom, TCP, port `1935`, Sources: the broadcast IP (or All
 IPv4 / All IPv6), Save.
 
 Or with `doctl`:
 
 ```bash
 doctl compute firewall list                       # find the firewall id
-doctl compute firewall add-rules <FIREWALL_ID>   --inbound-rules "protocol:tcp,ports:1935,address:<OFFICE_IP>/32"
+doctl compute firewall add-rules <FIREWALL_ID>   --inbound-rules "protocol:tcp,ports:1935,address:<BROADCAST_IP>/32"
 ```
 
-Confirm from a machine outside the droplet:
+Confirm from a machine that is not the droplet:
 
 ```bash
-nc -vz ingest.evotv.co 1935
+nc -vz 138.68.126.199 1935
+```
+
+#### When the zone goes orange
+
+Proxying only helps if the origin refuses direct traffic. `deploy/cloudflare-firewall.sh`
+rewrites the 80/443 rules to Cloudflare's published ranges, so knowing the
+origin IP stops being useful for attacking the site. Dry run by default:
+
+```bash
+./deploy/cloudflare-firewall.sh <FIREWALL_ID>          # show the plan
+./deploy/cloudflare-firewall.sh <FIREWALL_ID> --apply  # do it
 ```
 
 #### Rotate the key if it ever leaks
