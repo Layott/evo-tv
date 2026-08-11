@@ -143,27 +143,41 @@
 	import evotv_next
 }
 
-# ----------------------------------------------------------- marketing site
+# ------------------------------------------------------------------ evotv.co
+#
+# The Next app, not the old static marketing site.
+#
+# This served /srv/web, a hand-built index.html from before the app had a
+# landing page of its own. The app has one now: a server-rendered guest page
+# with the real programme grid read from `epg_slots`, so it changes when the
+# schedule does instead of being edited by hand and redeployed.
+#
+# `proxy.ts` keeps the two audiences apart on the same hostname. A guest gets
+# the landing page at `/`; a signed-in visitor is redirected to `/home` before
+# it renders, so the landing stays a pure guest surface.
+#
+# Rolling back is a two line edit and a `caddy reload`: the old site is still
+# on disk at /srv/evotv/web, untouched.
+#
+#	root * /srv/web
+#	try_files {path} /index.html
+#	file_server
 {$WEB_HOSTS} {
 	import common
-	root * /srv/web
-
-	@static path *.js *.css *.woff2 *.png *.jpg *.jpeg *.svg *.webp *.mp4 *.mov
-	header @static Cache-Control "public, max-age=31536000, immutable"
-	header /index.html Cache-Control "no-cache"
-
-	try_files {path} /index.html
-	file_server
+	import evotv_next
 }
 
-# The Expo web export used to be served here from /srv/app as a static SPA.
-# It is gone: the Next app covers the same screens with server rendering, so
-# search engines see real HTML instead of an empty div, and there is one web
-# front-end to keep in sync instead of two. /srv/app is now unused.
+# The Expo web export used to be served from /srv/app as a static SPA. It is
+# gone: the Next app covers the same screens with server rendering, so search
+# engines see real HTML instead of an empty div, and there is one web front-end
+# to keep in sync instead of two. /srv/app is now unused.
 #
-# {$WEB_HOSTS} above still serves the static marketing site. It moves to the
-# Next app once the landing page exists, at which point {$APP_HOST} becomes a
-# 301 to {$WEB_HOSTS} so there is a single canonical home for the web product.
+# {$APP_HOST} and {$WEB_HOSTS} now serve the same application. Making app.
+# a 301 to the apex is the tidy end state and stops the two hostnames competing
+# as duplicate content, but it is deliberately NOT done here: the session cookie
+# is host-only, so anyone currently signed in on app.evotv.co would be bounced
+# to a hostname where they are signed out. Do it once nobody is relying on
+# app. sessions, or set a shared cookie domain first.
 
 # ------------------------------------------------- evotv.africa, redirect only
 #
