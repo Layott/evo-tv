@@ -27,9 +27,26 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };
 
-// The on-air bug has to stay true. Slots are hourly, so a minute of staleness is
-// invisible, and this is far cheaper than rendering the page per request.
-export const revalidate = 60;
+/**
+ * Rendered per request, not prerendered at build.
+ *
+ * This was `export const revalidate = 60`, which makes it an ISR page, and Next
+ * prerenders ISR pages during `next build`. The build runs inside Docker with
+ * no database reachable, so `pnpm build` died with ECONNREFUSED on
+ * 127.0.0.1:5432 and the image could not be produced at all. It only surfaced
+ * on the droplet because a local build has `.env.local` and a reachable
+ * Postgres.
+ *
+ * Prerendering was the wrong model regardless: the page leads with what is on
+ * air right now, and baking that into the image at build time would ship a
+ * schedule that was already stale on first request.
+ *
+ * The queries behind it are two reads over `epg_slots`, which is 168 rows, so
+ * per-request rendering is cheap. If landing traffic ever makes that matter,
+ * cache the data layer rather than the page: `unstable_cache` keyed on the
+ * channel-local date, so the grid is shared and only the on-air marker moves.
+ */
+export const dynamic = "force-dynamic";
 
 export default async function LandingPage() {
   const [week, nowNext] = await Promise.all([
