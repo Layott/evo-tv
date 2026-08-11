@@ -154,19 +154,48 @@ async function cf<T>(
 /**
  * Provision a live input.
  *
- * `recording.mode: "automatic"` means every broadcast is kept as a VOD without
- * a second call, which is what a channel with a schedule wants: the replay
- * exists the moment the broadcast ends.
+ * Recording is the expensive dimension and the one that surprises people.
+ * Cloudflare bills 5 USD per 1,000 minutes **stored per month**, and it is
+ * cumulative: a 24/7 channel on automatic recording stores 43,200 minutes in
+ * its first month (216 USD), 86,400 by the second (432 USD), and keeps
+ * climbing until somebody deletes something.
+ *
+ * So recording is opt-in per stream, and when it is on a retention window is
+ * set. `deleteRecordingAfterDays` makes Cloudflare do the housekeeping, which
+ * turns an unbounded bill into a flat one: retention days of continuous
+ * broadcast, and no more.
+ *
+ * Defaults come from env so a deployment sets its policy once:
+ *   CLOUDFLARE_STREAM_RECORD=off | automatic   (default off)
+ *   CLOUDFLARE_STREAM_RETENTION_DAYS=<n>       (default 7 when recording)
  */
 export async function createLiveInput(
   name: string,
-  opts: { lowLatency?: boolean } = {},
+  opts: {
+    lowLatency?: boolean;
+    record?: boolean;
+    retentionDays?: number | null;
+  } = {},
 ): Promise<LiveInput> {
+  const record =
+    opts.record ?? process.env.CLOUDFLARE_STREAM_RECORD === "automatic";
+
+  const retentionDays =
+    opts.retentionDays !== undefined
+      ? opts.retentionDays
+      : Number(process.env.CLOUDFLARE_STREAM_RETENTION_DAYS ?? 7) || null;
+
   const result = await cf<CfLiveInput>("/stream/live_inputs", {
     method: "POST",
     body: JSON.stringify({
       meta: { name },
-      recording: { mode: "automatic" },
+      recording: { mode: record ? "automatic" : "off" },
+      // Cloudflare ignores this when recording is off. Null means keep
+      // forever, which is exactly the runaway case, so it is never the
+      // default here.
+      ...(record && retentionDays
+        ? { deleteRecordingAfterDays: retentionDays }
+        : {}),
       preferLowLatency: opts.lowLatency ?? false,
     }),
   });
