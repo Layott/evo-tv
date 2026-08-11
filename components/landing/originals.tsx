@@ -13,7 +13,7 @@ const TILT = ["-1.6deg", "1.3deg", "-0.9deg", "1.8deg"];
  *
  * Every show with artwork appears here whether or not it is on the grid. An
  * earlier version hid anything that was scheduled, which emptied the rail the
- * moment the August originals were imported — deleting the best thing on the
+ * moment the August originals were imported - deleting the best thing on the
  * page as a side effect of scheduling it. The card carries the air day instead.
  */
 export default function Originals({ shows }: Props) {

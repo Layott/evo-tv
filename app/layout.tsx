@@ -6,8 +6,8 @@ import "./globals.css";
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
-// Display face for every heading in the product. Geist alone — a neutral tech
-// grotesque — is a large part of why the app read as a generic dashboard.
+// Display face for every heading in the product. Geist alone - a neutral tech
+// grotesque - is a large part of why the app read as a generic dashboard.
 const bricolage = Bricolage_Grotesque({
   subsets: ["latin"],
   weight: ["600", "700", "800"],

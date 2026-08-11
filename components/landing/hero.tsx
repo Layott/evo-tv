@@ -45,7 +45,7 @@ export default function Hero({ onAir, next, upcoming }: Props) {
 
           <div className="flex shrink-0 items-center gap-3">
             {/* Anchors the week grid further down this page. There is no
-                `/schedule` route — the spec assumed one, but the app only ships
+                `/schedule` route - the spec assumed one, but the app only ships
                 `/api/schedule`, and `/schedule` returns 404. */}
             <a
               href="#week"
@@ -83,7 +83,7 @@ function OnAirBug({ onAir, next, upcoming }: Props & { onAir: ScheduleEntry }) {
               On now
             </span>
             <span className="font-mono text-[0.82rem] tabular-nums text-[var(--ink)]/70">
-              {onAir.startLabel}–{onAir.endLabel}
+              {onAir.startLabel}-{onAir.endLabel}
             </span>
           </div>
 

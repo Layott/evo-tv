@@ -184,7 +184,7 @@ export function sortGrid(slots: GridSlot[]): GridSlot[] {
  *
  * Walks backwards from the last slot that starts at or before `mow`. A minute
  * before the first slot of the week belongs to the final slot, which wraps
- * across Sunday midnight — that is the case a naive `find` gets wrong.
+ * across Sunday midnight - that is the case a naive `find` gets wrong.
  */
 export function slotIndexAt(sorted: GridSlot[], mow: number): number | null {
   if (sorted.length === 0) return null;
@@ -245,8 +245,8 @@ export function splitTitle(raw: string): [string, string] {
  * Collapse consecutive slots carrying the same programme into one block.
  *
  * The source grid is hour-ruled, so a two-hour show is two rows with identical
- * titles. Rendered literally that looks like a duplication bug — "NoBoneZ,
- * NoBoneZ, MPRO, MPRO" down the listings — and the on-air bug ends up saying a
+ * titles. Rendered literally that looks like a duplication bug - "NoBoneZ,
+ * NoBoneZ, MPRO, MPRO" down the listings - and the on-air bug ends up saying a
  * show is up next when it is simply still on. Broadcast EPGs merge these.
  */
 export function mergeAdjacent(entries: ScheduleEntry[]): ScheduleEntry[] {

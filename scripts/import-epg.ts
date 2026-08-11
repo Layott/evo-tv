@@ -6,7 +6,7 @@
  * Defaults to `db/epg/week-1.csv` then `db/epg/originals-august.csv`. Later
  * files override earlier ones slot for slot on `(day, start)`, which is how the
  * EVO originals take their places in the rotation without the April
- * transcription being edited — that file stays a faithful copy of its PDF.
+ * transcription being edited - that file stays a faithful copy of its PDF.
  *
  * Idempotent: the grid is replaced wholesale inside one transaction, so a re-run
  * with a corrected file leaves no orphans and a failure part-way leaves the
@@ -14,7 +14,7 @@
  *
  * CSV columns: day,start,duration_min,title,genre_id,subgenre_id,rating,slot_code
  *
- * The file is a faithful transcription of `APRIL EPG - WEEK 1.pdf` — including
+ * The file is a faithful transcription of `APRIL EPG - WEEK 1.pdf` - including
  * the decorative emoji in some titles, which are stripped here rather than in
  * the CSV so the transcription stays lossless. `scripts/epg-pdf-to-csv.py`
  * regenerates it from a PDF.

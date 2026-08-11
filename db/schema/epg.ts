@@ -13,8 +13,8 @@ import { sql } from "drizzle-orm";
  * The repeating weekly programme grid.
  *
  * EVO TV's channel runs a rotation that repeats every week, so the grid has no
- * dates. The alternative — materialising 168 dated rows a week into `streams`
- * behind a cron — was rejected: when that cron dies the channel silently looks
+ * dates. The alternative - materialising 168 dated rows a week into `streams`
+ * behind a cron - was rejected: when that cron dies the channel silently looks
  * unprogrammed, and this codebase has already shipped a cron that 500'd on
  * every run without anyone noticing.
  *

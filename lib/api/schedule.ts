@@ -29,7 +29,7 @@ export interface EpgRow {
 }
 
 export interface ScheduleQuery {
-  /** YYYY-MM-DD — single day window in UTC. */
+  /** YYYY-MM-DD - single day window in UTC. */
   date: string;
   pillar?: EpgPillar | "all";
 }
@@ -40,7 +40,7 @@ export interface ScheduleQuery {
  *   - streams by scheduledStartAt OR currently live (any pillar)
  *   - matches by scheduledAt   (esports)
  *
- * Ordered ascending by airsAt. Pillar filter is post-query for simplicity —
+ * Ordered ascending by airsAt. Pillar filter is post-query for simplicity -
  * day windows are bounded so volume stays small.
  */
 export async function listScheduleForDay(q: ScheduleQuery): Promise<EpgRow[]> {
@@ -168,7 +168,7 @@ export async function listScheduleBetween(
       kind: "episode",
       pillar: e.pillar as EpgPillar,
       title: e.showTitle,
-      subtitle: `S${e.seasonNumber}E${e.episodeNumber} — ${e.title}`,
+      subtitle: `S${e.seasonNumber}E${e.episodeNumber} - ${e.title}`,
       thumbnailUrl: e.thumbnailUrl,
       airsAt: e.premiereAt ?? startIso,
       durationMin: Math.max(1, Math.round(e.runtimeSec / 60)),
@@ -196,7 +196,7 @@ export async function listScheduleBetween(
     });
   }
 
-  // Live streams without a scheduled start — surface as "live now", but only
+  // Live streams without a scheduled start - surface as "live now", but only
   // when the requested window actually contains now.
   const nowIso = new Date().toISOString();
   if (nowIso >= startIso && nowIso < endIso) {
@@ -237,7 +237,7 @@ export async function listScheduleBetween(
   }
 
   // Fourth source: the repeating weekly grid, filling every hour the dated rows
-  // above do not. Added last so a dated row always wins the slots it overlaps —
+  // above do not. Added last so a dated row always wins the slots it overlaps -
   // without it this endpoint returns [] until someone schedules something, which
   // is exactly what it did before `epg_slots` existed.
   const gridRows = await gridRowsBetween(startIso, endIso, pillarFilter, epg);

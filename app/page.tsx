@@ -14,7 +14,7 @@ import Week from "@/components/landing/week";
  * The guest root of evotv.co.
  *
  * A server component on purpose. This used to be a client splash that animated
- * for 2.5 seconds and then pushed to /home or /login — app behaviour, not
+ * for 2.5 seconds and then pushed to /home or /login - app behaviour, not
  * website behaviour, and a visitor arriving from search should not watch a
  * loading bar. Signed-in users never reach it: `proxy.ts` redirects `/` to
  * `/home` before render.

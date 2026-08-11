@@ -24,7 +24,7 @@ const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
  * The week, set as printed TV listings rather than as a table.
  *
  * Rows have no boxes and no per-category colour chip. Separation comes from a
- * dotted leader and from type scale, which is how a schedule is set on paper —
+ * dotted leader and from type scale, which is how a schedule is set on paper -
  * and the previous version's bordered two-column grid with a coloured dot per
  * row was the most dashboard-looking block on the page.
  */
@@ -57,15 +57,15 @@ export default function Week({ days, nowIso }: Props) {
     >
       <div className="reveal">
         <h2 className="landing-display text-[clamp(2.4rem,7vw,5rem)]">The week</h2>
-        {/* Just the timezone. How the grid is built — that it repeats weekly
-            and that dated rows override it — is implementation detail, and a
+        {/* Just the timezone. How the grid is built - that it repeats weekly
+            and that dated rows override it - is implementation detail, and a
             viewer has no use for it. */}
         <p className="mt-3 text-[0.98rem] text-[var(--paper-dim)]">
           All times West Africa Time.
         </p>
       </div>
 
-      {/* Day selector. Type, not pills — scrolls rather than wraps on a phone so
+      {/* Day selector. Type, not pills - scrolls rather than wraps on a phone so
           the row height never changes as the week is stepped through. */}
       <div className="-mx-5 mt-10 overflow-x-auto px-5 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <div className="flex w-max items-end gap-7 sm:gap-10">
@@ -223,7 +223,7 @@ function SlotRow({
 
       {/* Artwork only where the design team has delivered it. Most of the 25
           grid titles have no poster, and a generic placeholder would read as a
-          broken asset — so the type simply carries the row instead. */}
+          broken asset - so the type simply carries the row instead. */}
       {art ? (
         <Image
           src={art.posterSmall}

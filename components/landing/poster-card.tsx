@@ -15,7 +15,7 @@ interface Props {
  * A show poster that plays its trailer in place.
  *
  * Desktop plays on hover; touch has no hover, so a tap toggles it. The video is
- * `preload="none"`, so a visitor who never interacts downloads none of it —
+ * `preload="none"`, so a visitor who never interacts downloads none of it -
  * these files are ~0.8 to 1.2 MB each.
  */
 export default function PosterCard({ show, tilt, index }: Props) {

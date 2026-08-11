@@ -130,7 +130,7 @@ export function artForTitle(title: string): ShowArt | null {
  *
  * Returns every show with artwork, scheduled or not. An earlier version hid any
  * show that appeared on the grid, which meant the rail emptied out the moment
- * the August originals were imported — deleting the best thing on the page as a
+ * the August originals were imported - deleting the best thing on the page as a
  * side effect of scheduling it. The rail is the shows; the grid is when they
  * air, and the card carries the day.
  */

@@ -42,7 +42,7 @@ function toDatedEntry(row: EpgRow): DatedEntry {
  * `days` consecutive days of programming starting at `from`, in channel-local
  * time, with dated rows overlaid on the repeating grid.
  *
- * The dated rows are fetched once for the whole window rather than per day —
+ * The dated rows are fetched once for the whole window rather than per day -
  * four queries for a week instead of twenty-eight.
  */
 export async function getSchedule(
@@ -77,7 +77,7 @@ export async function getSchedule(
 
   // `listScheduleBetween` now folds the grid in as a fourth source for API
   // consumers. This function materialises the grid itself, so those rows are
-  // dropped here — keeping them would duplicate every slot.
+  // dropped here - keeping them would duplicate every slot.
   const overrides = dated.filter((r) => r.kind !== "grid").map(toDatedEntry);
 
   return dateKeys.map((dateKey) => {
@@ -102,7 +102,7 @@ export async function getSchedule(
  * What is on right now and what follows it.
  *
  * Reads two days so the last slot of the day can hand over to the first slot of
- * the next one — the 23:00 handover is the case that would otherwise return
+ * the next one - the 23:00 handover is the case that would otherwise return
  * nothing for `next`.
  */
 export async function getNowAndNext(

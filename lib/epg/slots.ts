@@ -8,7 +8,7 @@ import type { EpgPillar, GridSlot } from "./grid";
  * The repeating weekly grid, 168 rows once imported.
  *
  * Its own module so both `lib/api/schedule.ts` and `lib/api/epg.ts` can read the
- * grid without importing each other — schedule.ts needs it as a fourth source,
+ * grid without importing each other - schedule.ts needs it as a fourth source,
  * and epg.ts needs schedule.ts for the dated rows, which would otherwise be a
  * cycle.
  */
