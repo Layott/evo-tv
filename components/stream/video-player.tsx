@@ -13,6 +13,8 @@ import {
   PictureInPicture2,
   Loader2,
   RefreshCw,
+  RotateCcw,
+  RotateCw,
   AlertTriangle,
   Sparkles,
 } from "lucide-react";
@@ -58,7 +60,28 @@ interface VideoPlayerProps {
   gameId?: string;
 }
 
-const QUALITIES = ["auto", "1080p", "720p", "480p", "360p"] as const;
+/**
+ * Renditions come from the manifest, never from a list written here.
+ *
+ * This was `["auto", "1080p", "720p", "480p", "360p"]`, hardcoded. Picking one
+ * set React state and did nothing else: no call into hls.js, no level switch.
+ * A viewer on a single-bitrate stream was offered 1080p, told they were
+ * watching 360p, and got whatever the one rendition happened to be.
+ *
+ * `hls.levels` is the real ladder for the stream that is actually loaded, so
+ * the menu shows exactly what exists and switching it switches the video.
+ */
+interface Rendition {
+  /** Index into hls.levels. -1 is auto. */
+  index: number;
+  label: string;
+}
+
+function renditionLabel(level: { height?: number; bitrate?: number }): string {
+  if (level.height) return `${level.height}p`;
+  if (level.bitrate) return `${Math.round(level.bitrate / 1000)} kbps`;
+  return "Source";
+}
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2] as const;
 type CaptionSelection = "off" | "auto" | CaptionLang;
 
@@ -108,6 +131,9 @@ export function VideoPlayer({
     const video = videoRef.current;
     if (!video || !src) return;
     setHlsError(null);
+    setRenditions([]);
+    setSelectedLevel(-1);
+    setActiveLevel(-1);
 
     const isHls = src.includes(".m3u8");
 
@@ -172,7 +198,19 @@ export function VideoPlayer({
       instance.attachMedia(videoRef.current);
       instance.loadSource(src);
       instance.on(Hls.Events.MANIFEST_PARSED, () => {
+        // The real ladder for this stream. A self-hosted single-bitrate
+        // broadcast yields one entry and the menu hides itself.
+        setRenditions(
+          instance.levels.map((lvl, index) => ({
+            index,
+            label: renditionLabel(lvl),
+          })),
+        );
+        setSelectedLevel(instance.currentLevel ?? -1);
         if (autoPlay) void videoRef.current?.play().catch(() => {});
+      });
+      instance.on(Hls.Events.LEVEL_SWITCHED, (_e, data) => {
+        setActiveLevel(data.level);
       });
       instance.on(Hls.Events.ERROR, (_evt, data) => {
         if (!data.fatal) return;
@@ -206,7 +244,11 @@ export function VideoPlayer({
   const [isFullscreen, setIsFullscreen] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(false);
-  const [quality, setQuality] = React.useState<(typeof QUALITIES)[number]>("auto");
+  const [renditions, setRenditions] = React.useState<Rendition[]>([]);
+  /** -1 = auto (let hls.js pick by bandwidth). */
+  const [selectedLevel, setSelectedLevel] = React.useState(-1);
+  /** Which rendition auto actually landed on, so "Auto" can say 720p. */
+  const [activeLevel, setActiveLevel] = React.useState(-1);
   const [captionSelection, setCaptionSelection] =
     React.useState<CaptionSelection>("off");
   const [captionLineIndex, setCaptionLineIndex] = React.useState(0);
@@ -353,10 +395,34 @@ export function VideoPlayer({
     if (v.volume > 0) v.muted = false;
   }, []);
 
+  /** Pin a rendition, or -1 to hand the choice back to hls.js. */
+  const selectRendition = React.useCallback((index: number) => {
+    setSelectedLevel(index);
+    const hls = hlsRef.current;
+    if (hls) hls.currentLevel = index;
+  }, []);
+
   const seekBy = React.useCallback((delta: number) => {
     const v = videoRef.current;
     if (!v) return;
-    v.currentTime = Math.min(v.duration || 0, Math.max(0, v.currentTime + delta));
+    /*
+     * Clamp to what is actually seekable, not to [0, duration].
+     *
+     * On a live stream `duration` is Infinity and the seekable range does not
+     * start at 0: it starts wherever the DVR window begins, and that start
+     * keeps moving forward as old segments age out of the manifest. Clamping
+     * to 0 asks for a position the browser cannot reach, and playback either
+     * ignores it or stalls.
+     */
+    const target = v.currentTime + delta;
+    if (v.seekable.length > 0) {
+      const start = v.seekable.start(0);
+      const end = v.seekable.end(v.seekable.length - 1);
+      // Stay a beat off the live edge; seeking exactly to it re-buffers.
+      v.currentTime = Math.min(Math.max(target, start), Math.max(start, end - 0.5));
+      return;
+    }
+    v.currentTime = Math.max(0, target);
   }, []);
 
   const toggleFullscreen = React.useCallback(() => {
@@ -620,6 +686,31 @@ export function VideoPlayer({
             {playing ? <Pause className="size-4" /> : <Play className="size-4" />}
           </Button>
 
+          {/* Skip back and forward. `seekBy` existed but was reachable only
+              from the arrow keys, so on a phone there was no way to do it at
+              all. On a live stream these move inside the DVR window the
+              manifest retains; at the live edge, forward simply does nothing. */}
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={() => seekBy(-10)}
+            className="text-white hover:bg-white/10"
+            aria-label="Back 10 seconds"
+            title="Back 10s"
+          >
+            <RotateCcw className="size-4" />
+          </Button>
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={() => seekBy(10)}
+            className="text-white hover:bg-white/10"
+            aria-label="Forward 10 seconds"
+            title="Forward 10s"
+          >
+            <RotateCw className="size-4" />
+          </Button>
+
           <Button
             size="icon-sm"
             variant="ghost"
@@ -750,20 +841,55 @@ export function VideoPlayer({
                 align="end"
                 className="bg-neutral-900 text-neutral-100 border-neutral-800 w-52"
               >
-                <DropdownMenuLabel className="text-xs">Quality</DropdownMenuLabel>
-                {QUALITIES.map((q) => (
-                  <DropdownMenuItem
-                    key={q}
-                    onClick={() => setQuality(q)}
-                    className="text-xs"
-                  >
-                    <span className={cn("mr-2", quality === q ? "opacity-100" : "opacity-0")}>
-                      •
-                    </span>
-                    {q}
-                  </DropdownMenuItem>
-                ))}
-                <DropdownMenuSeparator className="bg-neutral-800" />
+                {/* Only shown when there is a real choice. One rendition is
+                    not a quality setting. */}
+                {renditions.length > 1 && (
+                  <>
+                    <DropdownMenuLabel className="text-xs">
+                      Quality
+                    </DropdownMenuLabel>
+                    <DropdownMenuItem
+                      onClick={() => selectRendition(-1)}
+                      className="text-xs"
+                    >
+                      <span
+                        className={cn(
+                          "mr-2",
+                          selectedLevel === -1 ? "opacity-100" : "opacity-0",
+                        )}
+                      >
+                        •
+                      </span>
+                      Auto
+                      {selectedLevel === -1 && activeLevel >= 0 ? (
+                        <span className="ml-1 text-neutral-500">
+                          ({renditions[activeLevel]?.label})
+                        </span>
+                      ) : null}
+                    </DropdownMenuItem>
+                    {/* Highest first, the order a viewer expects. */}
+                    {[...renditions].reverse().map((r) => (
+                      <DropdownMenuItem
+                        key={r.index}
+                        onClick={() => selectRendition(r.index)}
+                        className="text-xs"
+                      >
+                        <span
+                          className={cn(
+                            "mr-2",
+                            selectedLevel === r.index
+                              ? "opacity-100"
+                              : "opacity-0",
+                          )}
+                        >
+                          •
+                        </span>
+                        {r.label}
+                      </DropdownMenuItem>
+                    ))}
+                    <DropdownMenuSeparator className="bg-neutral-800" />
+                  </>
+                )}
                 <DropdownMenuLabel className="text-xs">Speed</DropdownMenuLabel>
                 {SPEEDS.map((s) => (
                   <DropdownMenuItem
