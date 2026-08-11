@@ -33,13 +33,13 @@ import {
   getCaptionPhrasesSync,
   listCaptionLanguages,
   type CaptionLang,
-} from "@/lib/mock/captions";
+} from "@/lib/client/player-features";
 import {
   getAiCommentaryConfig,
   setAiCommentaryConfig,
   getCommentaryLines,
   type AiCommentaryConfig,
-} from "@/lib/mock/ai-commentary";
+} from "@/lib/client/player-features";
 
 interface VideoPlayerProps {
   src: string;
@@ -666,7 +666,7 @@ export function VideoPlayer({
                     );
                     toast.message(
                       next
-                        ? "AI Commentary on (beta) — settings: Settings → Playback"
+                        ? "AI Commentary on (beta) - settings: Settings → Playback"
                         : "AI Commentary off",
                     );
                   }}

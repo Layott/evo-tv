@@ -13,15 +13,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useLiteMode } from "@/lib/mock/lite-mode";
+import { useLiteMode } from "@/lib/client/player-features";
 import {
   getAiCommentaryConfig,
   setAiCommentaryConfig,
   VOICE_PRESETS,
   type AiCommentaryConfig,
   type AiVoicePresetId,
-} from "@/lib/mock/ai-commentary";
-import { listCaptionLanguages } from "@/lib/mock/captions";
+} from "@/lib/client/player-features";
+import { listCaptionLanguages } from "@/lib/client/player-features";
 
 export function PlaybackForm() {
   const [quality, setQuality] = React.useState("auto");
@@ -105,7 +105,7 @@ export function PlaybackForm() {
       >
         <div className="mb-3 flex items-center gap-2 rounded-md border border-violet-500/30 bg-violet-500/5 px-3 py-1.5 text-xs text-violet-200">
           <Sparkles className="size-3.5" />
-          <span>Beta — voices and lines are illustrative for the v0 build.</span>
+          <span>Beta - voices and lines are illustrative for the v0 build.</span>
         </div>
         <div className="divide-y divide-neutral-800">
           <SettingRow

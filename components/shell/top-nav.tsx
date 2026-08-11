@@ -9,70 +9,31 @@ import {
   LogOut,
   Settings,
   User,
-  ChevronDown,
-  Trophy,
-  Users as UsersIcon,
-  Calendar,
-  Tv,
-  Coins,
-  Code,
-  Zap,
-  Smartphone,
-  Headphones,
-  Plug,
 } from "lucide-react";
 import { useAuth } from "@/components/providers";
-import { countUnread } from "@/lib/mock/notifications";
+import { countUnread } from "@/lib/client";
 import { BrandMark } from "@/components/shell/brand-mark";
 
+/**
+ * The nav only lists what exists.
+ *
+ * It advertised twenty destinations, sixteen of them behind a "More" mega menu:
+ * predictions, pick'em, fantasy, watch parties, multi-stream, rewards, tips,
+ * creator program, auto-clipper, API access, embed, apps, integrations,
+ * partners. Every one of those was a UI shell over `lib/mock` and now renders
+ * ComingSoon, so the menu was a list of dead ends. Shipping it that way makes
+ * the whole product read as broken rather than as young.
+ *
+ * These six are real: they read the database and show what an operator has
+ * actually put in. Restore an entry here when its backend lands, not before.
+ */
 const links = [
   { href: "/home", label: "Home" },
+  { href: "/schedule", label: "Schedule" },
   { href: "/channel", label: "Channel" },
   { href: "/discover", label: "Discover" },
   { href: "/events", label: "Events" },
-  { href: "/calendar", label: "Calendar" },
   { href: "/shop", label: "Shop" },
-];
-
-interface MoreLink { href: string; label: string; Icon: typeof Trophy }
-
-const moreLinks: { group: string; items: MoreLink[] }[] = [
-  {
-    group: "Play",
-    items: [
-      { href: "/predictions", label: "Predictions", Icon: Trophy },
-      { href: "/pickem", label: "Pick'em brackets", Icon: Trophy },
-      { href: "/fantasy", label: "Fantasy", Icon: UsersIcon },
-      { href: "/watch-parties", label: "Watch parties", Icon: UsersIcon },
-      { href: "/multi-stream", label: "Multi-stream", Icon: Tv },
-    ],
-  },
-  {
-    group: "Earn & save",
-    items: [
-      { href: "/rewards", label: "Rewards & drops", Icon: Coins },
-      { href: "/tips", label: "Tips & cheers", Icon: Coins },
-    ],
-  },
-  {
-    group: "Creator",
-    items: [
-      { href: "/creator-program", label: "Creator program", Icon: UsersIcon },
-      { href: "/creator-dashboard", label: "Creator dashboard", Icon: Zap },
-      { href: "/auto-clipper", label: "Auto-clipper", Icon: Zap },
-      { href: "/api-access", label: "API access", Icon: Code },
-      { href: "/embed", label: "Embed player", Icon: Code },
-    ],
-  },
-  {
-    group: "Get the app",
-    items: [
-      { href: "/apps", label: "Apps & devices", Icon: Smartphone },
-      { href: "/apps/tv", label: "Smart TV", Icon: Tv },
-      { href: "/integrations", label: "Discord & Telegram", Icon: Plug },
-      { href: "/partners", label: "Partners", Icon: Headphones },
-    ],
-  },
 ];
 
 export function TopNav() {
@@ -81,7 +42,6 @@ export function TopNav() {
   const { user, role, logout } = useAuth();
   const [menu, setMenu] = React.useState(false);
   const [unread, setUnread] = React.useState(0);
-  const [moreOpen, setMoreOpen] = React.useState(false);
 
   React.useEffect(() => {
     if (user) countUnread(user.id).then(setUnread);
@@ -114,53 +74,6 @@ export function TopNav() {
               </Link>
             );
           })}
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setMoreOpen((v) => !v)}
-              className={`flex items-center gap-1 rounded-md px-3 py-1.5 text-sm transition-colors ${
-                moreOpen
-                  ? "bg-neutral-900 text-neutral-100"
-                  : "text-neutral-400 hover:text-neutral-100"
-              }`}
-              aria-expanded={moreOpen}
-            >
-              More
-              <ChevronDown className={`h-3.5 w-3.5 transition-transform ${moreOpen ? "rotate-180" : ""}`} />
-            </button>
-            {moreOpen && (
-              <div
-                className="absolute left-0 top-full mt-2 w-[640px] grid grid-cols-2 gap-1 overflow-hidden rounded-xl border border-neutral-800 bg-neutral-950 p-3 shadow-2xl"
-                onMouseLeave={() => setMoreOpen(false)}
-              >
-                {moreLinks.map((group) => (
-                  <div key={group.group} className="space-y-1">
-                    <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-neutral-500">
-                      {group.group}
-                    </div>
-                    {group.items.map(({ href, label, Icon }) => {
-                      const active = pathname === href || pathname?.startsWith(href + "/");
-                      return (
-                        <Link
-                          key={href}
-                          href={href}
-                          onClick={() => setMoreOpen(false)}
-                          className={`flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors ${
-                            active
-                              ? "bg-neutral-900 text-sky-300"
-                              : "text-neutral-300 hover:bg-neutral-900 hover:text-neutral-100"
-                          }`}
-                        >
-                          <Icon className="h-3.5 w-3.5 text-neutral-500" />
-                          {label}
-                        </Link>
-                      );
-                    })}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
         </nav>
 
         <button
@@ -223,20 +136,6 @@ export function TopNav() {
                       {unread}
                     </span>
                   )}
-                </Link>
-                <Link
-                  href="/library"
-                  onClick={() => setMenu(false)}
-                  className="flex items-center gap-2 px-3 py-2 text-sm text-neutral-200 hover:bg-neutral-900"
-                >
-                  <Tv className="h-4 w-4" /> Library
-                </Link>
-                <Link
-                  href="/integrations"
-                  onClick={() => setMenu(false)}
-                  className="flex items-center gap-2 px-3 py-2 text-sm text-neutral-200 hover:bg-neutral-900"
-                >
-                  <Plug className="h-4 w-4" /> Integrations
                 </Link>
                 <Link
                   href="/settings"

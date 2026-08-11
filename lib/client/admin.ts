@@ -1,5 +1,6 @@
 import type {
   Ad,
+  FeatureFlag,
   EsportsEvent,
   Game,
   Order,
@@ -254,13 +255,10 @@ export async function adminListProducts(): Promise<Product[]> {
 
 /* ── Feature flags ──────────────────────────────────────────────────────── */
 
-export async function adminListFlags(): Promise<
-  Array<{ key: string; enabled: boolean; description?: string }>
-> {
-  const res = await apiGet<{
-    flags: Array<{ key: string; enabled: boolean; description?: string }>;
-  }>("/api/admin/feature-flags");
-  return res?.flags ?? [];
+/** The endpoint returns a bare array, not a wrapper. */
+export async function adminListFlags(): Promise<FeatureFlag[]> {
+  const data = await apiGet<FeatureFlag[]>("/api/admin/feature-flags");
+  return Array.isArray(data) ? data : [];
 }
 
 export async function adminSetFlag(
@@ -412,4 +410,38 @@ export async function adminConversion(): Promise<{
       "/api/admin/analytics/conversion",
     )) ?? { totalUsers: 0, convertedUsers: 0, pct: 0 }
   );
+}
+
+/**
+ * Create a poll on a stream. Polls belong to a stream, not to the platform, and
+ * the endpoint takes an absolute `closesAt` rather than a duration.
+ */
+export async function adminCreatePoll(
+  streamId: string,
+  input: { question: string; options: string[]; durationMinutes: number },
+): Promise<Poll> {
+  const closesAt = new Date(
+    Date.now() + input.durationMinutes * 60_000,
+  ).toISOString();
+  const res = await apiSend<{ poll: Poll } | Poll>(
+    "POST",
+    `/api/streams/${encodeURIComponent(streamId)}/polls`,
+    {
+      question: input.question,
+      options: input.options.map((label, i) => ({ id: `opt_${i}`, label })),
+      closesAt,
+    },
+  );
+  return (res as { poll?: Poll })?.poll ?? (res as Poll);
+}
+
+export async function adminSaveEmailTemplate(
+  key: string,
+  subject: string,
+  body: string,
+): Promise<{ savedAt: string }> {
+  return apiSend("PUT", `/api/admin/email-templates/${encodeURIComponent(key)}`, {
+    subject,
+    body,
+  });
 }

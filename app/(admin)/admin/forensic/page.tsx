@@ -1,12 +1,5 @@
-import { AdminGuard } from "@/components/admin/admin-guard";
-import { ForensicPage } from "@/components/forensic/forensic-page";
+import { ComingSoon } from "@/components/shell/coming-soon";
 
-export default function AdminForensicRoute() {
-  return (
-    <div className="p-6 lg:p-8">
-      <AdminGuard>
-        <ForensicPage />
-      </AdminGuard>
-    </div>
-  );
+export default function Page() {
+  return <ComingSoon title="Forensic watermarking" description="Trace leaked streams back to a session." />;
 }

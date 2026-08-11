@@ -18,12 +18,10 @@ import { Share2, Flag, Users, Loader2, Radio, Languages, Headphones, BadgeCheck 
 import { toast } from "sonner";
 import { FollowButton } from "./follow-button";
 import { reportStream } from "@/lib/client";
-import { CastButton } from "@/components/cast/cast-button";
-import { TipButton } from "@/components/tips/tip-button";
 import {
   listCommentaryTracks,
   type CommentaryTrack,
-} from "@/lib/mock/commentary-tracks";
+} from "@/lib/client/player-features";
 import { cn } from "@/lib/utils";
 
 function streamerHandleFromStream(s: Stream): string {
@@ -154,14 +152,6 @@ export function StreamInfo({ stream, game }: StreamInfoProps) {
           targetLabel={stream.streamerName}
         />
 
-        <TipButton
-          streamerHandle={streamerHandleFromStream(stream)}
-          streamerName={stream.streamerName}
-          streamerAvatarUrl={stream.streamerAvatarUrl}
-          streamId={stream.id}
-          streamTitle={stream.title}
-        />
-
         <div className="ml-auto flex flex-wrap items-center gap-2">
           <Dialog open={tracksOpen} onOpenChange={setTracksOpen}>
             <DialogTrigger asChild>
@@ -263,7 +253,6 @@ export function StreamInfo({ stream, game }: StreamInfoProps) {
               Co-stream
             </Link>
           </Button>
-          <CastButton contextTitle={stream.title} />
           <Button variant="outline" size="sm" onClick={share}>
             <Share2 className="size-3.5" />
             Share

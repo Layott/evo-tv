@@ -2,7 +2,7 @@ import "server-only";
 import { and, between, eq, gte, isNull, lte, or } from "drizzle-orm";
 
 import { db, schema } from "@/lib/db";
-import { materializeDay, zonedDateKey } from "@/lib/epg/grid";
+import { materializeDay, zonedDateKey, zonedToUtc } from "@/lib/epg/grid";
 import { getGridSlots } from "@/lib/epg/slots";
 
 export type EpgPillar = "esports" | "anime" | "lifestyle";
@@ -29,7 +29,7 @@ export interface EpgRow {
 }
 
 export interface ScheduleQuery {
-  /** YYYY-MM-DD - single day window in UTC. */
+  /** YYYY-MM-DD - one calendar day in the channel timezone (Africa/Lagos). */
   date: string;
   pillar?: EpgPillar | "all";
 }
@@ -44,11 +44,30 @@ export interface ScheduleQuery {
  * day windows are bounded so volume stays small.
  */
 export async function listScheduleForDay(q: ScheduleQuery): Promise<EpgRow[]> {
-  const dayStart = new Date(`${q.date}T00:00:00.000Z`);
+  // The day is the channel's own day, not a UTC one.
+  //
+  // This built the window as `${date}T00:00:00Z` to +24h. Lagos is UTC+1, so
+  // "Tuesday" actually meant Tuesday 01:00 through Wednesday 01:00 local, and
+  // every day's listing opened an hour late and ended with a stray 00:00 row
+  // belonging to the next day. A viewer reads a schedule in the channel's
+  // clock, which is what `zonedToUtc` anchors to.
+  const [y, m, d] = q.date.split("-").map(Number);
+  if (!y || !m || !d) {
+    throw new Error(`Invalid date: ${q.date}`);
+  }
+  const dayStart = zonedToUtc(y, m, d, 0);
   if (Number.isNaN(dayStart.getTime())) {
     throw new Error(`Invalid date: ${q.date}`);
   }
-  const dayEnd = new Date(dayStart.getTime() + 86_400_000);
+  // Stepping to the next calendar day rather than adding 24h keeps this correct
+  // across a DST change, where a local day is 23 or 25 hours long.
+  const next = new Date(Date.UTC(y, m - 1, d + 1));
+  const dayEnd = zonedToUtc(
+    next.getUTCFullYear(),
+    next.getUTCMonth() + 1,
+    next.getUTCDate(),
+    0,
+  );
   return listScheduleBetween(
     dayStart.toISOString(),
     dayEnd.toISOString(),

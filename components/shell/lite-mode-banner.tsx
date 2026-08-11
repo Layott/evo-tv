@@ -3,14 +3,14 @@
 import * as React from "react";
 import Link from "next/link";
 import { Gauge, X } from "lucide-react";
-import { useLiteMode } from "@/lib/mock/lite-mode";
+import { useLiteMode } from "@/lib/client/player-features";
 
 /**
  * Thin banner that renders only when Lite mode is enabled.
  * Mount inside the app shell (e.g. above <TopNav /> or just below it) so it persists across
  * authenticated routes.
  *
- * Suggested mount point: `app/(authed)/layout.tsx` or `app/(public)/layout.tsx` — top of <main>.
+ * Suggested mount point: `app/(authed)/layout.tsx` or `app/(public)/layout.tsx` - top of <main>.
  * Stays out of admin routes by default unless the admin layout opts in.
  */
 export function LiteModeBanner() {
@@ -30,7 +30,7 @@ export function LiteModeBanner() {
           <span className="font-semibold text-neutral-100">Lite mode is active</span>
           <span className="hidden sm:inline">
             {" "}
-            — quality capped at 360p, thumbnails dimmed.
+            - quality capped at 360p, thumbnails dimmed.
           </span>
         </span>
         <Link

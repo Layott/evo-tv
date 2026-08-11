@@ -12,9 +12,14 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { polls as pollsSource } from "@/lib/mock/polls";
-import { streams as streamsSource } from "@/lib/mock/streams";
-import type { Poll } from "@/lib/types";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  adminClosePoll,
+  adminCreatePoll,
+  adminListPolls,
+  adminListStreams,
+} from "@/lib/client";
+import type { Poll, Stream } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,12 +43,20 @@ import { PageHeader } from "./page-header";
 import { StatusBadge } from "./status-badge";
 import { formatNumber, timeAgo } from "./utils";
 
-function streamTitle(id: string) {
-  return streamsSource.find((s) => s.id === id)?.title ?? id;
+function streamTitle(streams: Stream[], id: string) {
+  return streams.find((s) => s.id === id)?.title ?? id;
 }
 
 export function PollsManagerPage() {
-  const [all, setAll] = React.useState<Poll[]>(() => [...pollsSource]);
+  const queryClient = useQueryClient();
+  const pollsQ = useQuery({ queryKey: ["admin", "polls"], queryFn: () => adminListPolls() });
+  const streamsQ = useQuery({
+    queryKey: ["admin", "streams-all"],
+    queryFn: () => adminListStreams({ limit: 200 }),
+  });
+  const all = pollsQ.data ?? [];
+  const streams = streamsQ.data?.streams ?? [];
+  const refresh = () => queryClient.invalidateQueries({ queryKey: ["admin", "polls"] });
   const [openCreate, setOpenCreate] = React.useState(false);
   const [selected, setSelected] = React.useState<Poll | null>(null);
 
@@ -63,7 +76,7 @@ export function PollsManagerPage() {
     {
       key: "stream",
       header: "Stream",
-      cell: (row) => <span className="text-sm text-neutral-300">{streamTitle(row.streamId)}</span>,
+      cell: (row) => <span className="text-sm text-neutral-300">{streamTitle(streams, row.streamId)}</span>,
     },
     {
       key: "status",
@@ -116,15 +129,33 @@ export function PollsManagerPage() {
       isClosed: false,
       totalVotes: 0,
     };
-    setAll((prev) => [poll, ...prev]);
-    toast.success("Poll created");
-    setOpenCreate(false);
+    void (async () => {
+      try {
+        await adminCreatePoll(payload.streamId, {
+          question: payload.question,
+          options: payload.options,
+          durationMinutes: payload.durationMinutes,
+        });
+        toast.success("Poll created");
+        setOpenCreate(false);
+        await refresh();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Could not create the poll");
+      }
+    })();
   }
 
   function handleClose(id: string) {
-    setAll((prev) => prev.map((p) => (p.id === id ? { ...p, isClosed: true } : p)));
-    setSelected((prev) => (prev && prev.id === id ? { ...prev, isClosed: true } : prev));
-    toast.success("Poll closed");
+    void (async () => {
+      try {
+        await adminClosePoll(id);
+        setSelected((prev) => (prev && prev.id === id ? { ...prev, isClosed: true } : prev));
+        toast.success("Poll closed");
+        await refresh();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Could not close the poll");
+      }
+    })();
   }
 
   return (
@@ -154,7 +185,7 @@ export function PollsManagerPage() {
               <SheetHeader>
                 <SheetTitle>{selected.question}</SheetTitle>
                 <SheetDescription>
-                  {streamTitle(selected.streamId)} · {formatNumber(selected.totalVotes)} votes ·{" "}
+                  {streamTitle(streams, selected.streamId)} · {formatNumber(selected.totalVotes)} votes ·{" "}
                   {selected.isClosed ? "closed" : `closes ${timeAgo(selected.closesAt)}`}
                 </SheetDescription>
               </SheetHeader>
@@ -223,16 +254,23 @@ export function PollsManagerPage() {
         </SheetContent>
       </Sheet>
 
-      <CreatePollDrawer open={openCreate} onOpenChange={setOpenCreate} onSubmit={handleCreate} />
+      <CreatePollDrawer
+        streams={streams}
+        open={openCreate}
+        onOpenChange={setOpenCreate}
+        onSubmit={handleCreate}
+      />
     </div>
   );
 }
 
 function CreatePollDrawer({
+  streams,
   open,
   onOpenChange,
   onSubmit,
 }: {
+  streams: Stream[];
   open: boolean;
   onOpenChange: (o: boolean) => void;
   onSubmit: (payload: {
@@ -242,14 +280,14 @@ function CreatePollDrawer({
     durationMinutes: number;
   }) => void;
 }) {
-  const [streamId, setStreamId] = React.useState(streamsSource[0]?.id ?? "");
+  const [streamId, setStreamId] = React.useState(streams[0]?.id ?? "");
   const [question, setQuestion] = React.useState("");
   const [options, setOptions] = React.useState<string[]>(["", ""]);
   const [duration, setDuration] = React.useState("5");
 
   React.useEffect(() => {
     if (open) {
-      setStreamId(streamsSource[0]?.id ?? "");
+      setStreamId(streams[0]?.id ?? "");
       setQuestion("");
       setOptions(["", ""]);
       setDuration("5");
@@ -274,7 +312,7 @@ function CreatePollDrawer({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {streamsSource.map((s) => (
+                {streams.map((s) => (
                   <SelectItem key={s.id} value={s.id}>
                     {s.title}
                   </SelectItem>

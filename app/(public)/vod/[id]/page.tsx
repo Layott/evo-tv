@@ -13,8 +13,6 @@ import { VodPlayer } from "@/components/vod/vod-player";
 import { VodChapters } from "@/components/vod/vod-chapters";
 import { VodRelated } from "@/components/vod/vod-related";
 import { VodComments } from "@/components/vod/vod-comments";
-import { CastButton } from "@/components/cast/cast-button";
-import { DownloadButton } from "@/components/downloads/download-button";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -235,8 +233,6 @@ export default function VodPage() {
               <Share2 className="size-4" />
               Share
             </Button>
-            <CastButton contextTitle={vod.title} />
-            <DownloadButton vodId={vod.id} />
             <Button
               variant={saved ? "default" : "outline"}
               size="sm"

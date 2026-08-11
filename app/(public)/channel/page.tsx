@@ -6,17 +6,51 @@ import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Radio, Clock, Eye, Heart, Share2, Info } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/components/providers";
 import { BackButton } from "@/components/shell/back-button";
-import { getMainChannel, listLiveStreams } from "@/lib/mock/streams";
-import { listTrendingClips } from "@/lib/mock/vods";
-import { listEvents } from "@/lib/mock/events";
+import {
+  getMainChannel,
+  listLiveStreams,
+  listScheduleForDay,
+  type EpgRow,
+} from "@/lib/client";
+import { listTrendingClips } from "@/lib/client";
+import { listEvents } from "@/lib/client";
 
 function fmtViewers(n: number) {
   if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
   return `${n}`;
 }
 
+const CHANNEL_TZ = "Africa/Lagos";
+
+/** Today as the channel's own clock sees it, YYYY-MM-DD. */
+function todayKey(): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: CHANNEL_TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
+function slotLabel(row: EpgRow): string {
+  const fmt = new Intl.DateTimeFormat("en-GB", {
+    timeZone: CHANNEL_TZ,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  const start = new Date(row.airsAt);
+  const end = new Date(start.getTime() + row.durationMin * 60_000);
+  return `${fmt.format(start)} - ${fmt.format(end)}`;
+}
+
 export default function ChannelPage() {
+  const router = useRouter();
+  const { role, toggleFollow, isFollowing } = useAuth();
+  const following = isFollowing("streamer", "channel_main");
   const channelQ = useQuery({ queryKey: ["channel", "main"], queryFn: getMainChannel });
   const liveQ = useQuery({
     queryKey: ["streams", "live", "ex-channel"],
@@ -27,14 +61,40 @@ export default function ChannelPage() {
 
   const channel = channelQ.data;
 
-  const now = React.useMemo(() => [
-    { slot: "00:00 – 02:00", title: "Weekly Recap: EVO Week 4", tag: "Recap" },
-    { slot: "02:00 – 04:00", title: "Film Room — Team Alpha", tag: "Analysis" },
-    { slot: "04:00 – 06:00", title: "Best Plays Mixtape", tag: "Highlights" },
-    { slot: "06:00 – 08:00", title: "Evo Talk S3 E12", tag: "Show" },
-    { slot: "08:00 – 10:00", title: "CoD Mobile Scrim Night", tag: "Live" },
-    { slot: "10:00 – 12:00", title: "Casters' Cut", tag: "Podcast" },
-  ], []);
+  /**
+   * Today's listing, from the real guide.
+   *
+   * This was six hardcoded rows in the component ("Weekly Recap: EVO Week 4",
+   * "Film Room - Team Alpha", "Casters' Cut"). None of it existed, and because
+   * it was written inline rather than imported from `lib/mock` it survived the
+   * mock purge. It is the same feed `/schedule` reads, trimmed to the next few
+   * hours because this is a summary and the full day has its own page.
+   */
+  const scheduleQ = useQuery({
+    queryKey: ["schedule", "channel-today"],
+    queryFn: () => listScheduleForDay(todayKey()),
+  });
+
+  const uptime = React.useMemo(() => {
+    if (!channel?.isLive || !channel.startedAt) return null;
+    const ms = Date.now() - new Date(channel.startedAt).getTime();
+    if (ms < 0) return null;
+    const h = Math.floor(ms / 3_600_000);
+    if (h < 1) return `On air ${Math.max(1, Math.floor(ms / 60_000))}m`;
+    return `On air ${h}h`;
+  }, [channel?.isLive, channel?.startedAt]);
+
+  // What is on now plus the next few hours. Rows that already finished are of
+  // no use on a channel page, and the whole day is a click away.
+  const upNext = React.useMemo(() => {
+    const rows = scheduleQ.data ?? [];
+    const now = Date.now();
+    return rows
+      .filter(
+        (r) => new Date(r.airsAt).getTime() + r.durationMin * 60_000 > now,
+      )
+      .slice(0, 6);
+  }, [scheduleQ.data]);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6">
@@ -60,9 +120,17 @@ export default function ChannelPage() {
         <div className="relative grid gap-6 p-6 md:grid-cols-[2fr,1fr] md:p-8">
           <div>
             <div className="mb-3 inline-flex items-center gap-2">
-              <span className="inline-flex items-center gap-1 rounded-md border border-red-500/30 bg-red-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-red-400">
-                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" /> Live
-              </span>
+              {/* Read from the stream row. This was hardcoded, so the channel
+                  announced itself as live even with nothing being broadcast. */}
+              {channel?.isLive ? (
+                <span className="inline-flex items-center gap-1 rounded-md border border-red-500/30 bg-red-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-red-400">
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" /> Live
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 rounded-md border border-neutral-700 bg-neutral-900 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-neutral-400">
+                  Off air
+                </span>
+              )}
               <span className="rounded-md border border-sky-400/30 bg-sky-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-sky-300">
                 Flagship
               </span>
@@ -90,12 +158,18 @@ export default function ChannelPage() {
               </div>
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-neutral-400">
-              <span className="inline-flex items-center gap-1">
-                <Eye className="h-3.5 w-3.5" /> {channel ? fmtViewers(channel.viewerCount) : "…"} watching
-              </span>
-              <span className="inline-flex items-center gap-1">
-                <Clock className="h-3.5 w-3.5" /> Running 72h+
-              </span>
+              {channel?.isLive ? (
+                <span className="inline-flex items-center gap-1">
+                  <Eye className="h-3.5 w-3.5" /> {fmtViewers(channel.viewerCount)} watching
+                </span>
+              ) : null}
+              {/* Uptime is measured, not asserted. It read "Running 72h+" on a
+                  channel that had never been on air. */}
+              {uptime ? (
+                <span className="inline-flex items-center gap-1">
+                  <Clock className="h-3.5 w-3.5" /> {uptime}
+                </span>
+              ) : null}
               <span className="inline-flex items-center gap-1">
                 <Radio className="h-3.5 w-3.5 text-sky-400" /> Simulcast on app + web
               </span>
@@ -107,12 +181,28 @@ export default function ChannelPage() {
               >
                 Watch now
               </Link>
+              {/* This was a toast and nothing else: it said "Following EVO TV
+                  Channel" without writing a follow, and the state was gone on
+                  reload. It now goes through the real follows table, and a
+                  guest is sent to sign in rather than being told it worked. */}
               <button
                 type="button"
-                onClick={() => toast.success("Following EVO TV Channel")}
-                className="inline-flex items-center gap-2 rounded-full border border-neutral-700 px-5 py-2.5 text-sm text-neutral-200 transition-colors hover:border-sky-400 hover:text-sky-300"
+                onClick={() => {
+                  if (role === "guest") {
+                    router.push("/login?next=/channel");
+                    return;
+                  }
+                  toggleFollow("streamer", "channel_main");
+                }}
+                aria-pressed={following}
+                className={`inline-flex items-center gap-2 rounded-full border px-5 py-2.5 text-sm transition-colors ${
+                  following
+                    ? "border-sky-400 text-sky-300"
+                    : "border-neutral-700 text-neutral-200 hover:border-sky-400 hover:text-sky-300"
+                }`}
               >
-                <Heart className="h-4 w-4" /> Follow
+                <Heart className={`h-4 w-4 ${following ? "fill-current" : ""}`} />
+                {following ? "Following" : "Follow"}
               </button>
             </div>
           </div>
@@ -133,25 +223,54 @@ export default function ChannelPage() {
       <section className="mt-8">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-lg font-semibold tracking-tight">Today&apos;s schedule</h2>
-          <span className="text-xs text-neutral-500">All times WAT</span>
+          <Link
+            href="/schedule"
+            className="text-xs font-medium text-sky-400 hover:text-sky-300"
+          >
+            Full week
+          </Link>
         </div>
-        <div className="overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900/40">
-          <table className="w-full text-sm">
-            <tbody>
-              {now.map((row, i) => (
-                <tr key={row.slot} className={i % 2 === 0 ? "bg-neutral-900/30" : ""}>
-                  <td className="whitespace-nowrap px-4 py-3 text-neutral-400">{row.slot}</td>
-                  <td className="px-4 py-3 text-neutral-100">{row.title}</td>
-                  <td className="px-4 py-3">
-                    <span className="inline-flex rounded-md border border-neutral-800 bg-neutral-900 px-2 py-0.5 text-[10px] uppercase tracking-wider text-neutral-400">
-                      {row.tag}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        {scheduleQ.isPending ? (
+          <div className="h-52 animate-pulse rounded-xl bg-neutral-900" />
+        ) : upNext.length === 0 ? (
+          <p className="rounded-xl border border-neutral-800 bg-neutral-900/40 px-4 py-6 text-sm text-neutral-500">
+            Nothing else scheduled today.
+          </p>
+        ) : (
+          <div className="overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900/40">
+            <table className="w-full text-sm">
+              <tbody>
+                {upNext.map((row, i) => (
+                  <tr key={row.id} className={i % 2 === 0 ? "bg-neutral-900/30" : ""}>
+                    <td className="whitespace-nowrap px-4 py-3 text-neutral-400">
+                      {slotLabel(row)}
+                    </td>
+                    <td className="px-4 py-3 text-neutral-100">
+                      {row.title}
+                      {row.subtitle ? (
+                        <span className="block text-xs text-neutral-500">
+                          {row.subtitle}
+                        </span>
+                      ) : null}
+                    </td>
+                    <td className="px-4 py-3">
+                      {row.state === "live" ? (
+                        <span className="inline-flex rounded-md bg-red-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+                          On now
+                        </span>
+                      ) : (
+                        <span className="inline-flex rounded-md border border-neutral-800 bg-neutral-900 px-2 py-0.5 text-[10px] uppercase tracking-wider text-neutral-400">
+                          {row.pillar}
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        <p className="mt-2 text-xs text-neutral-500">All times WAT.</p>
       </section>
 
       <section className="mt-10">
@@ -253,9 +372,8 @@ export default function ChannelPage() {
       <section className="mt-10 flex items-start gap-3 rounded-xl border border-neutral-800 bg-neutral-900/40 p-4 text-xs text-neutral-400">
         <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-sky-400" />
         <p>
-          The EVO TV Channel runs 24/7 on localhost during dev. In production, this is the flagship
-          broadcast feed — programmatic mix of simulcasts, shows, highlights, and paid placements.
-          Free viewers see pre-roll ads; Premium subscribers get an ad-free feed with a higher bitrate ladder.
+          The EVO TV Channel is the main feed: one continuous broadcast following the
+          schedule above. Everything else on the platform sits alongside it.
         </p>
       </section>
     </div>

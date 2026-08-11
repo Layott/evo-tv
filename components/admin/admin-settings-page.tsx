@@ -4,8 +4,11 @@ import * as React from "react";
 import { Mail, Palette, Save, ToggleLeft, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { listFlags, setFlag } from "@/lib/mock/flags";
-import { saveEmailTemplate } from "@/lib/mock/admin";
+import {
+  adminListFlags as listFlags,
+  adminSaveEmailTemplate,
+  adminSetFlag as setFlag,
+} from "@/lib/client";
 import type { FeatureFlag } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -64,7 +67,7 @@ If this wasn't you, let us know at support@evotv.app.`,
 
 Plan: **EVO Premium**
 Amount: **{{amountNgn}}**
-Period: {{periodStart}} — {{periodEnd}}
+Period: {{periodStart}} - {{periodEnd}}
 
 Thanks for supporting African esports.`,
   },
@@ -282,7 +285,7 @@ function EmailTemplatesSection() {
     setSaving(true);
     try {
       const tpl = EMAIL_TEMPLATES[templateKey]!;
-      const { savedAt } = await saveEmailTemplate(String(templateKey), tpl.label, body);
+      const { savedAt } = await adminSaveEmailTemplate(String(templateKey), tpl.label, body);
       const niceTime = new Date(savedAt).toLocaleTimeString();
       toast.success(`Template "${tpl.label}" saved at ${niceTime}`);
     } catch {

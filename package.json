@@ -16,8 +16,7 @@
     "check": "pnpm typecheck && pnpm test",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx db/migrate.ts",
-    "db:seed": "tsx db/seed.ts",
-    "db:reset": "node -e \"require('fs').rmSync('./data',{recursive:true,force:true})\" && pnpm db:migrate && pnpm db:seed",
+    "db:reset": "node -e \"require('fs').rmSync('./data',{recursive:true,force:true})\" && pnpm db:migrate",
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {

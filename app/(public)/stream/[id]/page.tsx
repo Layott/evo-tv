@@ -16,7 +16,6 @@ import { LiveChat } from "@/components/stream/live-chat";
 import { LivePolls } from "@/components/stream/live-polls";
 import { InStreamShop } from "@/components/stream/in-stream-shop";
 import { StreamInfo } from "@/components/stream/stream-info";
-import { OddsWidget } from "@/components/partners/odds-widget";
 import { Button } from "@/components/ui/button";
 import {
   Tabs,
@@ -28,7 +27,6 @@ import { Badge } from "@/components/ui/badge";
 import { Lock, ArrowLeft, Sparkles, SkipForward } from "lucide-react";
 import { BackButton } from "@/components/shell/back-button";
 import { PremiumPaywallModal } from "@/components/shell/premium-paywall";
-import { RICK_ROLL_EMBED_URL } from "@/lib/mock/_media";
 
 export default function StreamPage() {
   const params = useParams<{ id: string }>();
@@ -163,34 +161,34 @@ export default function StreamPage() {
                 skippable={adSkippable}
                 onSkip={() => setAdDone(true)}
               />
-            ) : stream.isLive ? (
-              <div className="relative aspect-video w-full bg-black">
-                <iframe
-                  src={RICK_ROLL_EMBED_URL}
-                  title={stream.title}
-                  className="absolute inset-0 h-full w-full"
-                  allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-                  allowFullScreen
-                  referrerPolicy="strict-origin-when-cross-origin"
-                />
-                <div className="pointer-events-none absolute left-3 top-3 flex items-center gap-1.5 rounded bg-red-600/90 px-2 py-1 text-xs font-bold uppercase tracking-wider text-white">
-                  <span className="size-1.5 animate-pulse rounded-full bg-white" />
-                  Live
-                </div>
-                <div className="pointer-events-none absolute right-3 top-3 rounded bg-black/70 px-2 py-1 text-xs font-medium text-white">
-                  {stream.viewerCount.toLocaleString()} watching
-                </div>
-              </div>
-            ) : (
+            ) : stream.hlsUrl ? (
+              /*
+               * The real manifest. A live stream used to embed a YouTube
+               * rickroll here, and an offline one played /demo/sample.mp4, so
+               * the single most important screen in the product never showed
+               * the actual broadcast. The URL is whatever an admin set on the
+               * stream: a Cloudflare .m3u8, or a path served by our own origin.
+               */
               <VideoPlayer
-                src="/demo/sample.mp4"
+                src={stream.hlsUrl}
                 poster={stream.thumbnailUrl}
-                autoPlay={false}
+                autoPlay={stream.isLive}
                 isLive={stream.isLive}
                 viewerCount={stream.viewerCount}
                 mediaId={stream.id}
                 gameId={stream.gameId}
               />
+            ) : (
+              <div className="flex aspect-video w-full flex-col items-center justify-center gap-2 bg-neutral-950 text-center">
+                <p className="text-sm font-semibold text-neutral-200">
+                  {stream.isLive ? "This stream has no video source yet" : "Not currently live"}
+                </p>
+                <p className="max-w-sm text-xs text-neutral-500">
+                  {stream.isLive
+                    ? "An admin needs to set the playback URL on this stream."
+                    : "Check the schedule for what is on next."}
+                </p>
+              </div>
             )}
           </div>
 
@@ -202,7 +200,7 @@ export default function StreamPage() {
           </div>
         </div>
 
-        {/* Right column — desktop social panel */}
+        {/* Right column - desktop social panel */}
         <aside className="hidden lg:block h-[calc(100vh-5rem)] sticky top-16 rounded-xl border border-neutral-800 bg-neutral-950 overflow-hidden">
           <SocialTabs streamId={streamId} fill />
         </aside>
@@ -253,7 +251,6 @@ function SocialTabs({
         value="odds"
         className={fill ? "flex-1 min-h-0 mt-0 overflow-hidden" : "h-[520px] mt-0 overflow-hidden"}
       >
-        <OddsWidget streamId={streamId} />
       </TabsContent>
     </Tabs>
   );

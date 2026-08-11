@@ -4,10 +4,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Compass, CalendarDays, Radio, User } from "lucide-react";
 
+/**
+ * `/calendar` was a mock match calendar and now renders ComingSoon, so the
+ * phone nav pointed a fifth of its taps at a dead end. `/schedule` is the real
+ * programme guide and is one of the three things the MVP has to do.
+ */
 const items = [
   { href: "/home", label: "Home", Icon: Home },
+  { href: "/schedule", label: "Schedule", Icon: CalendarDays },
   { href: "/discover", label: "Discover", Icon: Compass },
-  { href: "/calendar", label: "Calendar", Icon: CalendarDays },
   { href: "/events", label: "Events", Icon: Radio },
   { href: "/profile", label: "Profile", Icon: User },
 ];

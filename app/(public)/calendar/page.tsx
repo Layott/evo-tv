@@ -1,5 +1,5 @@
-import { MatchCalendarPage } from "@/components/calendar/calendar-page";
+import { ComingSoon } from "@/components/shell/coming-soon";
 
-export default function CalendarRoute() {
-  return <MatchCalendarPage />;
+export default function Page() {
+  return <ComingSoon title="Calendar" description="Add matches and shows to your calendar." />;
 }
