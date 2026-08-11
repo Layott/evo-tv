@@ -311,3 +311,68 @@
     letter-spacing: -0.02em;
   }
 }
+
+/* ── Landing motion ──────────────────────────────────────────────────────
+   All scoped to .landing-root, and all of it disabled under
+   prefers-reduced-motion at the bottom of this block. */
+
+@keyframes evo-rise {
+  from { opacity: 0; transform: translate3d(0, 16px, 0); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* One orchestrated page-load reveal, staggered by animation-delay from the
+   component. `both` holds the from-state before the delay elapses, otherwise
+   every element flashes at full opacity on the first frame. */
+.landing-root .reveal {
+  animation: evo-rise 620ms cubic-bezier(0.16, 0.84, 0.44, 1) both;
+}
+
+/* Listing rows come in from the left as the day or the pillar changes. The
+   container is re-keyed on (day, pillar), so React remounts the rows and the
+   animation replays on every click rather than only on first paint. */
+@keyframes evo-row-in {
+  from { opacity: 0; transform: translate3d(-12px, 0, 0); }
+  to   { opacity: 1; transform: none; }
+}
+.landing-root .listing-row {
+  animation: evo-row-in 420ms cubic-bezier(0.16, 0.84, 0.44, 1) both;
+}
+
+/* The active day underline slides rather than cutting. */
+.landing-root .day-underline {
+  transform-origin: left center;
+  transition:
+    transform 320ms cubic-bezier(0.16, 0.84, 0.44, 1),
+    background-color 220ms ease;
+}
+
+/* The hero headline wipes up behind its own baseline. */
+@keyframes evo-wipe {
+  from { opacity: 0; clip-path: inset(0 0 105% 0); }
+  to   { opacity: 1; clip-path: inset(0 0 -20% 0); }
+}
+.landing-root .wipe {
+  animation: evo-wipe 900ms cubic-bezier(0.16, 0.84, 0.44, 1) both;
+}
+
+/* The on-air bar slides up into place under the hero. */
+@keyframes evo-bar-in {
+  from { opacity: 0; transform: translate3d(0, 100%, 0); }
+  to   { opacity: 1; transform: none; }
+}
+.landing-root .bar-in {
+  animation: evo-bar-in 700ms cubic-bezier(0.16, 0.84, 0.44, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-root .reveal,
+  .landing-root .listing-row,
+  .landing-root .wipe,
+  .landing-root .bar-in {
+    animation: none;
+  }
+  .landing-root .day-underline {
+    transition: none;
+  }
+}

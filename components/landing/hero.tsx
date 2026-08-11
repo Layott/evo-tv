@@ -25,17 +25,23 @@ export default function Hero({ onAir, next, upcoming }: Props) {
   return (
     <section className="relative">
       <div className="mx-auto max-w-[92rem] px-5 pb-16 pt-10 sm:px-10 sm:pb-24 sm:pt-16">
-        <p className="font-mono text-[0.68rem] uppercase tracking-[0.34em] text-[var(--brand)]">
+        <p className="reveal font-mono text-[0.68rem] uppercase tracking-[0.34em] text-[var(--brand)]">
           Lagos · Streaming 24/7
         </p>
 
-        <h1 className="landing-display mt-7 max-w-[16ch] text-[clamp(3.1rem,11.5vw,9.5rem)]">
+        <h1
+          className="wipe landing-display mt-7 max-w-[16ch] text-[clamp(3.1rem,11.5vw,9.5rem)]"
+          style={{ animationDelay: "90ms" }}
+        >
           Africa&apos;s home for{" "}
           <span className="text-[var(--brand)]">esports</span>, anime and
           lifestyle.
         </h1>
 
-        <div className="mt-10 flex flex-col gap-10 sm:flex-row sm:items-end sm:justify-between">
+        <div
+          className="reveal mt-10 flex flex-col gap-10 sm:flex-row sm:items-end sm:justify-between"
+          style={{ animationDelay: "320ms" }}
+        >
           <p className="max-w-[46ch] text-[1.02rem] leading-relaxed text-[var(--paper-dim)]">
             One channel, always on. League nights, watch-alongs and the creators
             around them, running to a schedule you can plan your evening by.
@@ -72,7 +78,7 @@ function OnAirBug({ onAir, next, upcoming }: Props & { onAir: ScheduleEntry }) {
 
   return (
     <div className="relative">
-      <div className="brand-bar">
+      <div className="bar-in brand-bar" style={{ animationDelay: "460ms" }}>
         <div className="mx-auto flex max-w-[92rem] flex-col gap-6 px-5 py-7 sm:flex-row sm:items-center sm:gap-10 sm:px-10 sm:py-8">
           <div className="flex shrink-0 items-center gap-3.5">
             <span className="landing-display bg-[var(--ink)] px-2.5 py-1 text-[0.82rem] uppercase tracking-[0.12em] text-[var(--brand)]">

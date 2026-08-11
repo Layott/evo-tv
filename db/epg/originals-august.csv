@@ -1,0 +1,7 @@
+day,start,duration_min,title,genre_id,subgenre_id,rating,slot_code
+5,15:00:00,60,Otaku & Chillz,1,4,16,AUG-F15
+5,20:00:00,60,Take a Seat: Confessionals,10,5,16,AUG-F20
+6,09:00:00,60,Breakfast Show with Jeremiah,10,5,,AUG-S09
+6,17:00:00,60,Sucre's Space,10,5,16,AUG-S17
+6,20:00:00,60,Elysium Wave,10,5,16,AUG-S20
+6,21:00:00,60,Elysium Wave,10,5,16,AUG-S21

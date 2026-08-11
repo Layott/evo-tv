@@ -14,7 +14,7 @@ export default function PillarsSection({ hoursByPillar }: Props) {
   return (
     <section className="relative bg-[var(--ink-raised)]">
       <div className="mx-auto max-w-[92rem] px-5 py-20 sm:px-10 sm:py-28">
-        <h2 className="landing-display text-[clamp(2.4rem,7vw,5rem)]">
+        <h2 className="reveal landing-display text-[clamp(2.4rem,7vw,5rem)]">
           What EVO TV is
         </h2>
 

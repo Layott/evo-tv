@@ -55,7 +55,7 @@ export default function Week({ days, nowIso }: Props) {
       id="week"
       className="relative mx-auto max-w-[92rem] px-5 py-20 sm:px-10 sm:py-28"
     >
-      <div className="flex flex-wrap items-baseline gap-x-5 gap-y-2">
+      <div className="reveal flex flex-wrap items-baseline gap-x-5 gap-y-2">
         <h2 className="landing-display text-[clamp(2.4rem,7vw,5rem)]">The week</h2>
         <span className="font-mono text-[0.68rem] uppercase tracking-[0.24em] text-[var(--paper-faint)]">
           West Africa Time
@@ -93,11 +93,14 @@ export default function Week({ days, nowIso }: Props) {
                 <span className="mt-1 block font-mono text-[0.68rem] tabular-nums text-[var(--paper-faint)]">
                   {d.dateKey.slice(8)}.{d.dateKey.slice(5, 7)}
                 </span>
+                {/* Scales in from the left rather than cutting on/off. */}
                 <span
                   aria-hidden
                   className={[
-                    "mt-2 block h-[3px] transition-colors",
-                    active ? "bg-[var(--brand)]" : "bg-transparent",
+                    "day-underline mt-2 block h-[3px]",
+                    active
+                      ? "scale-x-100 bg-[var(--brand)]"
+                      : "scale-x-0 bg-[var(--paper-faint)] group-hover:scale-x-100",
                   ].join(" ")}
                 />
               </button>
@@ -132,18 +135,26 @@ export default function Week({ days, nowIso }: Props) {
         // fills row by row, so a day would read 00:00, 01:00 across and then
         // jump back left. Two lists keep each column chronological, and they
         // stack into one continuous running order on a phone.
-        <div className="mt-10 grid gap-x-16 sm:grid-cols-2">
+        // Keyed on day + pillar so React remounts the rows on every click and
+        // the row animation replays, rather than firing only on first paint.
+        <div
+          key={`${day.dateKey}_${pillar}`}
+          className="mt-10 grid gap-x-16 sm:grid-cols-2"
+        >
           {[
             entries.slice(0, Math.ceil(entries.length / 2)),
             entries.slice(Math.ceil(entries.length / 2)),
           ].map((column, i) =>
             column.length === 0 ? null : (
               <ul key={i}>
-                {column.map((entry) => (
+                {column.map((entry, j) => (
                   <SlotRow
                     key={`${entry.source}_${entry.id}`}
                     entry={entry}
                     now={now}
+                    // Both columns stagger together, so the two halves of the
+                    // day arrive as one wave rather than one after the other.
+                    delayMs={j * 26}
                   />
                 ))}
               </ul>
@@ -181,16 +192,25 @@ function FilterLink({
   );
 }
 
-function SlotRow({ entry, now }: { entry: ScheduleEntry; now: string }) {
+function SlotRow({
+  entry,
+  now,
+  delayMs,
+}: {
+  entry: ScheduleEntry;
+  now: string;
+  delayMs: number;
+}) {
   const live = entry.startsAt <= now && now < entry.endsAt;
   const past = entry.endsAt <= now;
   const art = artForTitle(entry.title);
 
   return (
     <li
+      style={{ animationDelay: `${delayMs}ms` }}
       className={[
-        "flex items-baseline gap-4 py-3.5 transition-opacity sm:gap-5",
-        past ? "opacity-40" : "",
+        "listing-row flex items-baseline gap-4 py-3.5 sm:gap-5",
+        past ? "opacity-45" : "",
       ].join(" ")}
     >
       <span

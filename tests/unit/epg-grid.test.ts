@@ -17,7 +17,7 @@ import {
   type DatedEntry,
   type GridSlot,
 } from "@/lib/epg/grid";
-import { assertCoversWeek, parseGridCsv } from "@/scripts/import-epg";
+import { assertCoversWeek, overlay, parseGridCsv } from "@/scripts/import-epg";
 
 /**
  * Africa/Lagos is UTC+1 year round, so every Lagos wall-clock time below is
@@ -308,5 +308,50 @@ describe("the committed April grid", () => {
   it("rejects a grid with a hole in it", () => {
     const holed = slots.filter((s) => !(s.dayOfWeek === 3 && s.startMinute === 600));
     expect(() => assertCoversWeek(holed)).toThrow(/gap/);
+  });
+});
+
+describe("the August originals overlay", () => {
+  const base = parseGridCsv(
+    readFileSync(path.join(process.cwd(), "db", "epg", "week-1.csv"), "utf8"),
+  );
+  const originals = parseGridCsv(
+    readFileSync(
+      path.join(process.cwd(), "db", "epg", "originals-august.csv"),
+      "utf8",
+    ),
+  );
+  const merged = overlay(base, originals);
+
+  it("replaces slots rather than adding them, so the week still adds up", () => {
+    expect(merged).toHaveLength(168);
+    expect(() => assertCoversWeek(merged)).not.toThrow();
+  });
+
+  it("puts each original where the August calendar says it airs", () => {
+    const at = (day: number, hour: number) =>
+      merged.find((s) => s.dayOfWeek === day && s.startMinute === hour * 60)?.title;
+
+    // Friday: "OTAKU & CHILLS - FRIDAY AFTERNOON", "HYP EVERY FRIDAY".
+    expect(at(5, 15)).toBe("Otaku & Chillz");
+    expect(at(5, 20)).toBe("Take a Seat: Confessionals");
+    // Saturday: breakfast show in the morning, Elysium Wave in the evening.
+    expect(at(6, 9)).toBe("Breakfast Show with Jeremiah");
+    expect(at(6, 17)).toBe("Sucre's Space");
+    expect(at(6, 20)).toBe("Elysium Wave");
+    expect(at(6, 21)).toBe("Elysium Wave");
+  });
+
+  it("gives Otaku & Chillz the anime pillar and the rest lifestyle", () => {
+    const pillarAt = (day: number, hour: number) =>
+      merged.find((s) => s.dayOfWeek === day && s.startMinute === hour * 60)?.pillar;
+    expect(pillarAt(5, 15)).toBe("anime");
+    expect(pillarAt(5, 20)).toBe("lifestyle");
+    expect(pillarAt(6, 20)).toBe("lifestyle");
+  });
+
+  it("refuses an overlay slot with no slot to replace", () => {
+    const stray = [{ ...originals[0]!, dayOfWeek: 5, startMinute: 15 * 60 + 30 }];
+    expect(() => overlay(base, stray)).toThrow(/no slot to replace/);
   });
 });

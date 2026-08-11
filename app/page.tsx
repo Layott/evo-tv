@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { getNowAndNext, getSchedule } from "@/lib/api/epg";
-import { unscheduledShows } from "@/lib/epg/artwork";
+import { originalShows } from "@/lib/epg/artwork";
 import type { EpgPillar } from "@/lib/epg/grid";
 import Hero from "@/components/landing/hero";
 import Originals from "@/components/landing/originals";
@@ -37,7 +37,6 @@ export default async function LandingPage() {
     getNowAndNext(),
   ]);
 
-  const gridTitles = week.flatMap((d) => d.entries.map((e) => e.title));
 
   // Hours per pillar are counted off the grid rather than typed into the copy,
   // so the page cannot claim programming the channel does not have.
@@ -63,7 +62,7 @@ export default async function LandingPage() {
       <SiteHeader />
       <main className="relative z-10">
         <Hero onAir={nowNext.now} next={nowNext.next} upcoming={upcoming} />
-        <Originals shows={unscheduledShows(gridTitles)} />
+        <Originals shows={originalShows()} />
         <Week days={week} nowIso={nowIso} />
         <PillarsSection
           hoursByPillar={{

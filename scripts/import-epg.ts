@@ -1,12 +1,16 @@
 /**
  * Import the repeating weekly programme grid into `epg_slots`.
  *
- *   pnpm tsx scripts/import-epg.ts [path/to/week.csv]
+ *   pnpm tsx scripts/import-epg.ts [base.csv] [overlay.csv ...]
  *
- * Defaults to `db/epg/week-1.csv`. Idempotent: the grid is replaced wholesale
- * inside one transaction, so a re-run with a corrected file leaves no orphans
- * and a failure part-way leaves the channel on the previous grid rather than on
- * half of the new one.
+ * Defaults to `db/epg/week-1.csv` then `db/epg/originals-august.csv`. Later
+ * files override earlier ones slot for slot on `(day, start)`, which is how the
+ * EVO originals take their places in the rotation without the April
+ * transcription being edited — that file stays a faithful copy of its PDF.
+ *
+ * Idempotent: the grid is replaced wholesale inside one transaction, so a re-run
+ * with a corrected file leaves no orphans and a failure part-way leaves the
+ * channel on the previous grid rather than on half of the new one.
  *
  * CSV columns: day,start,duration_min,title,genre_id,subgenre_id,rating,slot_code
  *
@@ -34,9 +38,15 @@ import { MINUTES_PER_DAY } from "../lib/epg/grid";
  * MOTHERLAND GAMING`) take the pillar of their first segment.
  */
 const PILLAR_RULES: Array<[RegExp, "esports" | "anime" | "lifestyle"]> = [
-  [/^otaku and chills/i, "anime"],
+  [/^otaku ?(and|&) ?chill/i, "anime"],
   [/^vga show/i, "anime"],
   [/^ghost of tsushima/i, "anime"],
+
+  // EVO originals, from the August calendar.
+  [/^take a seat/i, "lifestyle"],
+  [/^sucre/i, "lifestyle"],
+  [/^breakfast show/i, "lifestyle"],
+  [/^elysium wave/i, "lifestyle"],
 
   [/^lifeofdemax/i, "lifestyle"],
   [/^nobonez/i, "lifestyle"],
@@ -110,7 +120,7 @@ function splitCsvLine(line: string): string[] {
   return out.map((s) => s.trim());
 }
 
-interface ParsedSlot {
+export interface ParsedSlot {
   id: string;
   dayOfWeek: number;
   startMinute: number;
@@ -218,9 +228,42 @@ export function assertCoversWeek(slots: ParsedSlot[]): void {
 
 /* ── Entrypoint ─────────────────────────────────────────────────────────── */
 
+/**
+ * Later files win slot for slot on `(day, start)`. An overlay slot that lands
+ * where the base has nothing is an error rather than an insertion: the base grid
+ * covers all 168 hours, so a miss means the overlay's time is wrong.
+ */
+export function overlay(base: ParsedSlot[], extra: ParsedSlot[]): ParsedSlot[] {
+  const byKey = new Map(base.map((s) => [`${s.dayOfWeek}:${s.startMinute}`, s]));
+  for (const s of extra) {
+    const key = `${s.dayOfWeek}:${s.startMinute}`;
+    if (!byKey.has(key)) {
+      throw new Error(
+        `Overlay slot ${JSON.stringify(s.title)} at day ${s.dayOfWeek} ${Math.floor(
+          s.startMinute / 60,
+        )}:00 has no slot to replace`,
+      );
+    }
+    byKey.set(key, s);
+  }
+  return [...byKey.values()];
+}
+
 async function main() {
-  const file = process.argv[2] ?? path.join("db", "epg", "week-1.csv");
-  const slots = parseGridCsv(readFileSync(file, "utf8"));
+  const files =
+    process.argv.length > 2
+      ? process.argv.slice(2)
+      : [
+          path.join("db", "epg", "week-1.csv"),
+          path.join("db", "epg", "originals-august.csv"),
+        ];
+
+  let slots: ParsedSlot[] = [];
+  for (const [i, file] of files.entries()) {
+    const parsed = parseGridCsv(readFileSync(file, "utf8"));
+    slots = i === 0 ? parsed : overlay(slots, parsed);
+    console.log(`[import-epg] ${file} -> ${parsed.length} slots`);
+  }
   assertCoversWeek(slots);
 
   const DATABASE_URL =
@@ -249,7 +292,7 @@ async function main() {
       acc[s.pillar] = (acc[s.pillar] ?? 0) + s.durationMin / 60;
       return acc;
     }, {});
-    console.log(`[import-epg] ${file} → ${slots.length} slots`);
+    console.log(`[import-epg] imported ${slots.length} slots`);
     for (const [pillar, hours] of Object.entries(byPillar).sort((a, b) => b[1] - a[1])) {
       console.log(`[import-epg]   ${pillar.padEnd(10)} ${hours}h/week`);
     }
