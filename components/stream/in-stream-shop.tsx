@@ -3,7 +3,7 @@
 import * as React from "react";
 import Image from "next/image";
 import type { Product } from "@/lib/types";
-import { listProducts } from "@/lib/mock";
+import { listProducts } from "@/lib/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingBag } from "lucide-react";

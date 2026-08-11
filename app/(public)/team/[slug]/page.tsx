@@ -11,7 +11,7 @@ import {
   listPlayers,
   listMatchesForEvent,
   listEvents,
-} from "@/lib/mock";
+} from "@/lib/client";
 import { useMockAuth } from "@/components/providers";
 import type { Match } from "@/lib/types";
 

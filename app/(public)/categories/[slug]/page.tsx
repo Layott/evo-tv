@@ -12,7 +12,7 @@ import {
   listTeams,
   listPlayers,
   listVods,
-} from "@/lib/mock";
+} from "@/lib/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 function formatViewers(n: number): string {

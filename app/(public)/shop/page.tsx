@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { Loader2, ShoppingCart } from "lucide-react";
 
-import { listProducts } from "@/lib/mock";
+import { listProducts } from "@/lib/client";
 import type { Product } from "@/lib/types";
 import { ProductCard } from "@/components/shop/product-card";
 import { Button } from "@/components/ui/button";

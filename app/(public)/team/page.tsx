@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { Users, Trophy } from "lucide-react";
-import { listGames, listTeams } from "@/lib/mock";
+import { listGames, listTeams } from "@/lib/client";
 import type { Team } from "@/lib/types";
 
 function formatFollowers(n: number): string {

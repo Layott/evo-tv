@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { Calendar, MapPin, Trophy } from "lucide-react";
-import { listEvents, listGames } from "@/lib/mock";
+import { listEvents, listGames } from "@/lib/client";
 import type { EsportsEvent, EventTier } from "@/lib/types";
 
 type SortKey = "soonest" | "prize";

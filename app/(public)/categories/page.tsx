@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Users } from "lucide-react";
-import { listGames } from "@/lib/mock";
+import { listGames } from "@/lib/client";
 
 function formatPlayers(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;

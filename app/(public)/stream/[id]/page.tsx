@@ -9,7 +9,7 @@ import {
   getStreamById,
   getGameById,
   pickAd,
-} from "@/lib/mock";
+} from "@/lib/client";
 import { useMockAuth } from "@/components/providers/mock-auth-provider";
 import { VideoPlayer } from "@/components/stream/video-player";
 import { LiveChat } from "@/components/stream/live-chat";
@@ -73,7 +73,7 @@ export default function StreamPage() {
       return;
     }
     let cancelled = false;
-    pickAd("stream_preroll").then((a) => {
+    pickAd("stream_preroll").then((a: Ad | null) => {
       if (!cancelled) setAd(a);
     });
     return () => {

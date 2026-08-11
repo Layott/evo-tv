@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import type { Vod } from "@/lib/types";
-import { getVodById, listRelatedVods } from "@/lib/mock";
+import { getVodById, listRelatedVods } from "@/lib/client";
 import { useMockAuth } from "@/components/providers/mock-auth-provider";
 import { BackButton } from "@/components/shell/back-button";
 import { PremiumPaywallModal } from "@/components/shell/premium-paywall";

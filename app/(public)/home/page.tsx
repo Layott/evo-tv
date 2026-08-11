@@ -8,7 +8,7 @@ import {
   listGames,
   listTrendingClips,
   listVods,
-} from "@/lib/mock";
+} from "@/lib/client";
 import { useMockAuth } from "@/components/providers";
 import HeroCarousel from "@/components/home/hero-carousel";
 import LiveNow from "@/components/home/live-now-section";

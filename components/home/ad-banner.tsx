@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { pickAd } from "@/lib/mock";
+import { pickAd } from "@/lib/client";
 
 export function AdBanner() {
   const { data: ad } = useQuery({

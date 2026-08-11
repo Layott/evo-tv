@@ -11,7 +11,7 @@ import {
   getProductById,
   getProductBySlug,
   listProducts,
-} from "@/lib/mock";
+} from "@/lib/client";
 import type { Product } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

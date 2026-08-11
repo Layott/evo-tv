@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import type { Clip } from "@/lib/types";
-import { getClipById, listTrendingClips } from "@/lib/mock";
+import { getClipById, listTrendingClips } from "@/lib/client";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {

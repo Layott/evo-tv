@@ -12,7 +12,7 @@ import {
   listVods,
   listTeams,
   listPlayers,
-} from "@/lib/mock";
+} from "@/lib/client";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type ContentType = "all" | "streams" | "vods" | "teams" | "players";

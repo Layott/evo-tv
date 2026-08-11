@@ -14,7 +14,7 @@ import {
   listMatchesForEvent,
   listPlayers,
   listLiveStreams,
-} from "@/lib/mock";
+} from "@/lib/client";
 import EventHero from "@/components/events/event-hero";
 import CountdownTimer from "@/components/events/countdown-timer";
 import TeamRoster from "@/components/events/team-roster";

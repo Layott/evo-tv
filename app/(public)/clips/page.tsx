@@ -4,7 +4,7 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Clip } from "@/lib/types";
-import { listTrendingClips } from "@/lib/mock";
+import { listTrendingClips } from "@/lib/client";
 import { Badge } from "@/components/ui/badge";
 import { Flame, Play, Heart } from "lucide-react";
 
