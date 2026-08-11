@@ -10,7 +10,7 @@ import {
   getGameById,
   pickAd,
 } from "@/lib/client";
-import { useMockAuth } from "@/components/providers/mock-auth-provider";
+import { useAuth } from "@/components/providers";
 import { VideoPlayer } from "@/components/stream/video-player";
 import { LiveChat } from "@/components/stream/live-chat";
 import { LivePolls } from "@/components/stream/live-polls";
@@ -33,7 +33,7 @@ import { RICK_ROLL_EMBED_URL } from "@/lib/mock/_media";
 export default function StreamPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const { role } = useMockAuth();
+  const { role } = useAuth();
   const streamId = params?.id ?? "";
 
   const [stream, setStream] = React.useState<Stream | null | undefined>(undefined);

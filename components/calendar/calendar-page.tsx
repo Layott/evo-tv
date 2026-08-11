@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-import { useMockAuth } from "@/components/providers/mock-auth-provider";
+import { useAuth } from "@/components/providers";
 import {
   buildIcsFile,
   CALENDAR_REGIONS,
@@ -60,7 +60,7 @@ function ymKey(d: Date) {
 }
 
 export function MatchCalendarPage() {
-  const { user } = useMockAuth();
+  const { user } = useAuth();
   const tz = React.useMemo(
     () => Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
     [],

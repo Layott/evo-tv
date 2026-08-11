@@ -15,7 +15,7 @@ import {
 import { listVods } from "@/lib/client";
 import { listDownloads, type OfflineDownload } from "@/lib/mock/downloads";
 import type { Vod } from "@/lib/types";
-import { useMockAuth } from "@/components/providers";
+import { useAuth } from "@/components/providers";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -82,7 +82,7 @@ function groupByDay(vods: Vod[]) {
 }
 
 export default function LibraryPage() {
-  const { user, role } = useMockAuth();
+  const { user, role } = useAuth();
   const [vods, setVods] = React.useState<Vod[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [downloads, setDownloads] = React.useState<OfflineDownload[]>([]);

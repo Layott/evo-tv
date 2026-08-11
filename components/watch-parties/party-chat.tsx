@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useMockAuth } from "@/components/providers/mock-auth-provider";
+import { useAuth } from "@/components/providers";
 import {
   addPartyMessage,
   listPartyMessages,
@@ -34,7 +34,7 @@ interface PartyChatProps {
 }
 
 export function PartyChat({ partyId, joined, memberCount }: PartyChatProps) {
-  const { user } = useMockAuth();
+  const { user } = useAuth();
   const [messages, setMessages] = React.useState<PartyMessage[]>([]);
   const [input, setInput] = React.useState("");
   const [loading, setLoading] = React.useState(true);

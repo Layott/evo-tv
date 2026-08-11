@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { Coins, Heart, Loader2, Lock } from "lucide-react";
-import { useMockAuth } from "@/components/providers/mock-auth-provider";
+import { useAuth } from "@/components/providers";
 import {
   getCoinBalance,
   listAllReceivedForCurrentCreator,
@@ -19,7 +19,7 @@ import { TipList } from "@/components/tips/tip-list";
 import { TopTippers } from "@/components/tips/top-tippers";
 
 export default function TipsPage() {
-  const { user, role } = useMockAuth();
+  const { user, role } = useAuth();
   const [sent, setSent] = React.useState<Tip[]>([]);
   const [received, setReceived] = React.useState<Tip[]>([]);
   const [tippers, setTippers] = React.useState<TopTipper[]>([]);

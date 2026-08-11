@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-import { useMockAuth } from "@/components/providers";
+import { useAuth } from "@/components/providers";
 import {
   type BotIntegration,
   type BotKind,
@@ -57,7 +57,7 @@ const DEFAULT_MAPPINGS: ChannelMappings = {
 };
 
 export function BotConfigPage({ kind, brand }: Props) {
-  const { user } = useMockAuth();
+  const { user } = useAuth();
   const userId = user?.id ?? "user_current";
   const qc = useQueryClient();
 
@@ -155,7 +155,7 @@ function ConnectForm({
   brand: Props["brand"];
   onConnected: () => void;
 }) {
-  const { user } = useMockAuth();
+  const { user } = useAuth();
   const userId = user?.id ?? "user_current";
   const [token, setToken] = React.useState("");
   const [serverId, setServerId] = React.useState("");

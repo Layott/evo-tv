@@ -7,14 +7,14 @@ import { Plus, Sparkles, Trophy } from "lucide-react";
 import { listLeagues } from "@/lib/mock/fantasy";
 import { listGames } from "@/lib/mock/games";
 import { eventBanner } from "@/lib/mock/_media";
-import { useMockAuth } from "@/components/providers/mock-auth-provider";
+import { useAuth } from "@/components/providers";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LeagueCard } from "@/components/fantasy/league-card";
 
 export default function FantasyIndexPage() {
-  const { user } = useMockAuth();
+  const { user } = useAuth();
   const userId = user?.id ?? "user_current";
 
   const all = useQuery({ queryKey: ["fantasy", "all"], queryFn: () => listLeagues() });

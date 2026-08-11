@@ -10,7 +10,7 @@ import {
   Mic2,
   Sparkles,
 } from "lucide-react";
-import { useMockAuth } from "@/components/providers/mock-auth-provider";
+import { useAuth } from "@/components/providers";
 import { getMyApplication, type CreatorApplication } from "@/lib/mock/creators";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,7 +24,7 @@ const ELIGIBILITY = [
 ];
 
 export default function CreatorProgramPage() {
-  const { user } = useMockAuth();
+  const { user } = useAuth();
   const [application, setApplication] = React.useState<CreatorApplication | null>(null);
   const [loading, setLoading] = React.useState(true);
 

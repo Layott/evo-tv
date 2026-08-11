@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
-import { useMockAuth } from "@/components/providers/mock-auth-provider";
+import { useAuth } from "@/components/providers";
 import { addToCart } from "@/components/shop/cart-store";
 
 function ngn(n: number) {
@@ -16,7 +16,7 @@ function ngn(n: number) {
 }
 
 export function InStreamShop() {
-  const { role } = useMockAuth();
+  const { role } = useAuth();
   const [products, setProducts] = React.useState<Product[] | null>(null);
   const isPremium = role === "premium";
 

@@ -4,7 +4,7 @@ import * as React from "react";
 import { Copy, KeyRound, Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { useMockAuth } from "@/components/providers/mock-auth-provider";
+import { useAuth } from "@/components/providers";
 import { ApiAccessShell } from "@/components/api-access/api-access-shell";
 import { ApiPaywallCard } from "@/components/api-access/paywall-card";
 import {
@@ -37,7 +37,7 @@ import {
 } from "@/lib/mock/api-keys";
 
 export default function ApiKeysPage() {
-  const { role, user } = useMockAuth();
+  const { role, user } = useAuth();
   const isPremium = role === "premium" || role === "admin";
   const userId = user?.id ?? "user_premium";
 

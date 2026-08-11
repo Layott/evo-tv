@@ -23,7 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { requestAccountDeletion } from "@/lib/client";
-import { useMockAuth } from "@/components/providers/mock-auth-provider";
+import { useAuth } from "@/components/providers";
 
 const passwordSchema = z
   .object({
@@ -39,7 +39,7 @@ const passwordSchema = z
 type PwValues = z.infer<typeof passwordSchema>;
 
 export function AccountForm({ email }: { email: string }) {
-  const { user } = useMockAuth();
+  const { user } = useAuth();
   const [deleting, setDeleting] = React.useState(false);
   const {
     register,

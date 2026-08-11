@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-import { useMockAuth } from "@/components/providers";
+import { useAuth } from "@/components/providers";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -31,7 +31,7 @@ import { formatNgn } from "@/components/profile/ngn";
 const AMOUNT = 4_500;
 
 export default function UssdPage() {
-  const { user } = useMockAuth();
+  const { user } = useAuth();
   const [providers, setProviders] = React.useState<UssdProvider[] | null>(null);
   const [providerId, setProviderId] = React.useState<string | null>(null);
   const [session, setSession] = React.useState<UssdSession | null>(null);

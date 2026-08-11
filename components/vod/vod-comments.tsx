@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { useMockAuth } from "@/components/providers/mock-auth-provider";
+import { useAuth } from "@/components/providers";
 import { MessageCircle } from "lucide-react";
 
 interface Comment {
@@ -48,7 +48,7 @@ function seed(vodId: string): Comment[] {
 }
 
 export function VodComments({ vodId }: { vodId: string }) {
-  const { user } = useMockAuth();
+  const { user } = useAuth();
   const [comments, setComments] = React.useState<Comment[]>(() => seed(vodId));
   const [draft, setDraft] = React.useState("");
 

@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { Loader2, Settings, Bell, ShoppingBag } from "lucide-react";
-import { useMockAuth } from "@/components/providers";
+import { useAuth } from "@/components/providers";
 import {
   listFollows,
   listTeams,
@@ -23,7 +23,7 @@ import { SubscriptionPanel } from "@/components/profile/subscription-panel";
 import { ActivityFeed } from "@/components/profile/activity-feed";
 
 export default function ProfilePage() {
-  const { user, updateProfile } = useMockAuth();
+  const { user, updateProfile } = useAuth();
   const [edit, setEdit] = React.useState(false);
   const [teams, setTeams] = React.useState<Team[]>([]);
   const [players, setPlayers] = React.useState<Player[]>([]);

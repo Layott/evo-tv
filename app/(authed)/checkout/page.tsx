@@ -10,7 +10,7 @@ import { z } from "zod";
 import { ArrowLeft, Loader2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
-import { useMockAuth } from "@/components/providers";
+import { useAuth } from "@/components/providers";
 import { getProductById } from "@/lib/client";
 import type { Order, OrderItem, Product } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -69,7 +69,7 @@ export default function CheckoutPage() {
   const search = useSearchParams();
   const plan = search.get("plan");
   const isSubscription = plan === "premium";
-  const { user } = useMockAuth();
+  const { user } = useAuth();
 
   const [lines, setLines] = React.useState<CartLine[]>([]);
   const [products, setProducts] = React.useState<Record<string, Product>>({});

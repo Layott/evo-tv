@@ -4,14 +4,14 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Crown, Medal, Trophy } from "lucide-react";
 import { listLeaderboard } from "@/lib/mock/predictions";
-import { useMockAuth } from "@/components/providers/mock-auth-provider";
+import { useAuth } from "@/components/providers";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CoinPill } from "@/components/predictions/coin-pill";
 
 export default function PredictionsLeaderboardPage() {
-  const { user } = useMockAuth();
+  const { user } = useAuth();
   const userId = user?.id ?? "user_current";
   const board = useQuery({
     queryKey: ["predictions", "leaderboard"],

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useMockAuth } from "@/components/providers/mock-auth-provider";
+import { useAuth } from "@/components/providers";
 import { Button } from "@/components/ui/button";
 import { Heart, HeartOff } from "lucide-react";
 import { toast } from "sonner";
@@ -20,7 +20,7 @@ export function FollowButton({
   className?: string;
   size?: "sm" | "default" | "lg";
 }) {
-  const { isFollowing, toggleFollow, user } = useMockAuth();
+  const { isFollowing, toggleFollow, user } = useAuth();
   const following = isFollowing(targetType, targetId);
   const label = targetLabel ?? targetType;
 

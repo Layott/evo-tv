@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-import { useMockAuth } from "@/components/providers";
+import { useAuth } from "@/components/providers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -33,7 +33,7 @@ const READY_STATUSES: DownloadStatus[] = ["ready"];
 const ARCHIVE_STATUSES: DownloadStatus[] = ["expired", "failed"];
 
 export default function DownloadsPage() {
-  const { user, role } = useMockAuth();
+  const { user, role } = useAuth();
   const [downloads, setDownloads] = React.useState<OfflineDownload[] | null>(null);
   const [search, setSearch] = React.useState("");
 

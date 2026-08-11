@@ -8,7 +8,7 @@ import { ArrowLeft, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { createLeague, scoringLabel, type ScoringSystem } from "@/lib/mock/fantasy";
 import { listGames } from "@/lib/mock/games";
-import { useMockAuth } from "@/components/providers/mock-auth-provider";
+import { useAuth } from "@/components/providers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,7 +18,7 @@ import { CoinPill } from "@/components/predictions/coin-pill";
 
 export default function NewFantasyLeaguePage() {
   const router = useRouter();
-  const { user } = useMockAuth();
+  const { user } = useAuth();
   const userId = user?.id ?? "user_current";
 
   const games = useQuery({ queryKey: ["games"], queryFn: () => listGames() });

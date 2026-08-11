@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import type { Vod } from "@/lib/types";
 import { getVodById, listRelatedVods } from "@/lib/client";
-import { useMockAuth } from "@/components/providers/mock-auth-provider";
+import { useAuth } from "@/components/providers";
 import { BackButton } from "@/components/shell/back-button";
 import { PremiumPaywallModal } from "@/components/shell/premium-paywall";
 import { VodPlayer } from "@/components/vod/vod-player";
@@ -45,7 +45,7 @@ function relTime(iso: string): string {
 export default function VodPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const { role } = useMockAuth();
+  const { role } = useAuth();
   const vodId = params?.id ?? "";
 
   const [vod, setVod] = React.useState<Vod | null | undefined>(undefined);

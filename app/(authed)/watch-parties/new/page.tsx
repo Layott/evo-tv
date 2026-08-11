@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Globe, Lock, Loader2, Sparkles, Tv2, Users } from "lucide-react";
 import { toast } from "sonner";
-import { useMockAuth } from "@/components/providers/mock-auth-provider";
+import { useAuth } from "@/components/providers";
 import { listLiveStreams } from "@/lib/client";
 import {
   createWatchParty,
@@ -32,7 +32,7 @@ import { cn } from "@/lib/utils";
 
 export default function NewWatchPartyPage() {
   const router = useRouter();
-  const { user } = useMockAuth();
+  const { user } = useAuth();
 
   const [streams, setStreams] = React.useState<Stream[]>([]);
   const [streamsLoading, setStreamsLoading] = React.useState(true);

@@ -3,7 +3,7 @@
 import * as React from "react";
 import Image from "next/image";
 import { Check, CheckCircle2, Film, Loader2, Sparkles, Trash2, Upload } from "lucide-react";
-import { useMockAuth } from "@/components/providers/mock-auth-provider";
+import { useAuth } from "@/components/providers";
 import {
   approveClip,
   discardClip,
@@ -29,7 +29,7 @@ const STATUS_LABEL: Record<ClipStatus, { label: string; className: string }> = {
 };
 
 export default function CreatorClipsPage() {
-  const { user } = useMockAuth();
+  const { user } = useAuth();
   const [clips, setClips] = React.useState<CreatorClipDraft[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [busyId, setBusyId] = React.useState<string | null>(null);

@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { ArrowLeft, Coins, Filter, Loader2, Search, Sparkles } from "lucide-react";
-import { useMockAuth } from "@/components/providers/mock-auth-provider";
+import { useAuth } from "@/components/providers";
 import {
   getXpAndTier,
   listDrops,
@@ -30,7 +30,7 @@ const KIND_TABS: Array<{ value: "all" | DropKind; label: string }> = [
 ];
 
 export default function RewardsStorePage() {
-  const { user } = useMockAuth();
+  const { user } = useAuth();
   const [info, setInfo] = React.useState<XpTierInfo | null>(null);
   const [drops, setDrops] = React.useState<Drop[]>([]);
   const [loading, setLoading] = React.useState(true);

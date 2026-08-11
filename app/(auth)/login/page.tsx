@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { useMockAuth } from "@/components/providers";
+import { useAuth } from "@/components/providers";
 import { TextField } from "@/components/auth/form-field";
 import { OAuthButtons } from "@/components/auth/oauth-buttons";
 
@@ -28,7 +28,7 @@ export default function LoginPage() {
   const router = useRouter();
   const search = useSearchParams();
   const next = search.get("next");
-  const { login } = useMockAuth();
+  const { signIn } = useAuth();
   const [showPassword, setShowPassword] = React.useState(false);
 
   const {
@@ -45,11 +45,15 @@ export default function LoginPage() {
   const remember = watch("remember");
 
   const onSubmit = async (values: LoginValues) => {
-    await new Promise((r) => setTimeout(r, 700));
-    login("user");
-    toast.success("Welcome back to EVO TV", {
-      description: `Signed in as ${values.email}`,
-    });
+    const { error } = await signIn(values.email, values.password);
+    if (error) {
+      // Deliberately does not say whether the address exists.
+      toast.error("Could not sign in", {
+        description: "Check your email and password and try again.",
+      });
+      return;
+    }
+    toast.success("Welcome back to EVO TV");
     router.push(next || "/home");
   };
 

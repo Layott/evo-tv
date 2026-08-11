@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Coins, Crown, Trophy } from "lucide-react";
 import { listOpenPredictionEvents, getCoinBalance, listMyPredictions } from "@/lib/mock/predictions";
 import { listGames } from "@/lib/mock/games";
-import { useMockAuth } from "@/components/providers/mock-auth-provider";
+import { useAuth } from "@/components/providers";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { PredictionEventCard } from "@/components/predictions/event-card";
@@ -17,7 +17,7 @@ function SkeletonCard() {
 }
 
 export default function PredictionsIndexPage() {
-  const { user, role } = useMockAuth();
+  const { user, role } = useAuth();
   const userId = user?.id ?? "user_current";
 
   const games = useQuery({ queryKey: ["games"], queryFn: () => listGames() });

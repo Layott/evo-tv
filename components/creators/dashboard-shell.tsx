@@ -6,7 +6,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { ArrowLeft, BarChart3, Coins, Film, Lock, Mic2, Sparkles, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useMockAuth } from "@/components/providers/mock-auth-provider";
+import { useAuth } from "@/components/providers";
 import { cn } from "@/lib/utils";
 
 const TABS = [
@@ -24,7 +24,7 @@ interface DashboardShellProps {
 }
 
 export function DashboardShell({ children, title, description, actions }: DashboardShellProps) {
-  const { role } = useMockAuth();
+  const { role } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
 

@@ -4,12 +4,12 @@ import * as React from "react";
 import Link from "next/link";
 import { Code2, Lock, Sparkles } from "lucide-react";
 
-import { useMockAuth } from "@/components/providers";
+import { useAuth } from "@/components/providers";
 import { Button } from "@/components/ui/button";
 import { EmbedGenerator } from "@/components/embed/embed-generator";
 
 export default function EmbedHomePage() {
-  const { role } = useMockAuth();
+  const { role } = useAuth();
   const isPremium = role === "premium" || role === "admin";
 
   return (

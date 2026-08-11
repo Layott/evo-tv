@@ -9,7 +9,7 @@ import {
   listTrendingClips,
   listVods,
 } from "@/lib/client";
-import { useMockAuth } from "@/components/providers";
+import { useAuth } from "@/components/providers";
 import HeroCarousel from "@/components/home/hero-carousel";
 import LiveNow from "@/components/home/live-now-section";
 import UpcomingEvents from "@/components/home/upcoming-events-section";
@@ -18,7 +18,7 @@ import AdBanner from "@/components/home/ad-banner";
 import Recommendations from "@/components/home/recommendations";
 
 export default function HomePage() {
-  const { role } = useMockAuth();
+  const { role } = useAuth();
 
   const featured = useQuery({
     queryKey: ["streams", "featured"],

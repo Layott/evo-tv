@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-import { useMockAuth } from "@/components/providers";
+import { useAuth } from "@/components/providers";
 import {
   listNotifications,
   markAllAsRead,
@@ -89,7 +89,7 @@ function Row({
 }
 
 export default function NotificationsPage() {
-  const { user } = useMockAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const [items, setItems] = React.useState<NotificationItem[]>([]);
   const [loading, setLoading] = React.useState(true);

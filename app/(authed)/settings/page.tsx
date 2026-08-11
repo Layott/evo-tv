@@ -13,7 +13,7 @@ import {
   UserCog,
 } from "lucide-react";
 
-import { useMockAuth } from "@/components/providers";
+import { useAuth } from "@/components/providers";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AccountForm } from "@/components/settings/account-form";
 import { NotificationsForm } from "@/components/settings/notifications-form";
@@ -33,7 +33,7 @@ const TABS = [
 ];
 
 export default function SettingsPage() {
-  const { user } = useMockAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const search = useSearchParams();
   const tab = search.get("tab") ?? "account";

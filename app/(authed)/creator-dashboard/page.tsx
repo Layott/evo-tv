@@ -15,7 +15,7 @@ import {
   Users,
   Zap,
 } from "lucide-react";
-import { useMockAuth } from "@/components/providers/mock-auth-provider";
+import { useAuth } from "@/components/providers";
 import { getCreatorActivity, getCreatorMetrics, type CreatorMetrics } from "@/lib/mock/creators";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -38,7 +38,7 @@ const ACTIVITY_ACCENT: Record<string, string> = {
 };
 
 export default function CreatorDashboardOverviewPage() {
-  const { user } = useMockAuth();
+  const { user } = useAuth();
   const [metrics, setMetrics] = React.useState<CreatorMetrics | null>(null);
   const [activity, setActivity] = React.useState<
     Array<{ id: string; kind: string; label: string; at: string }>

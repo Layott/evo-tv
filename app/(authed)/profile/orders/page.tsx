@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { ArrowLeft, Loader2, Package } from "lucide-react";
 
-import { useMockAuth } from "@/components/providers";
+import { useAuth } from "@/components/providers";
 import { listOrdersForUser } from "@/lib/client";
 import type { Order, OrderStatus } from "@/lib/types";
 import {
@@ -54,7 +54,7 @@ function readLocalOrders(): Order[] {
 }
 
 export default function OrdersPage() {
-  const { user } = useMockAuth();
+  const { user } = useAuth();
   const [orders, setOrders] = React.useState<Order[]>([]);
   const [loading, setLoading] = React.useState(true);
 

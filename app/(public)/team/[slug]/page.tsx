@@ -12,7 +12,7 @@ import {
   listMatchesForEvent,
   listEvents,
 } from "@/lib/client";
-import { useMockAuth } from "@/components/providers";
+import { useAuth } from "@/components/providers";
 import type { Match } from "@/lib/types";
 
 function formatFollowers(n: number): string {
@@ -24,7 +24,7 @@ function formatFollowers(n: number): string {
 export default function TeamDetailPage() {
   const params = useParams<{ slug: string }>();
   const slug = params.slug;
-  const { toggleFollow, isFollowing } = useMockAuth();
+  const { toggleFollow, isFollowing } = useAuth();
 
   const teamQ = useQuery({
     queryKey: ["team", slug],

@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { ShieldAlert } from "lucide-react";
-import { useMockAuth } from "@/components/providers/mock-auth-provider";
+import { useAuth } from "@/components/providers";
 import { Button } from "@/components/ui/button";
 
 export function AdminGuard({ children }: { children: React.ReactNode }) {
-  const { role } = useMockAuth();
+  const { role } = useAuth();
 
   if (role !== "admin") {
     return (

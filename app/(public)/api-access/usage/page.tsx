@@ -11,7 +11,7 @@ import {
   YAxis,
 } from "recharts";
 
-import { useMockAuth } from "@/components/providers/mock-auth-provider";
+import { useAuth } from "@/components/providers";
 import { ApiAccessShell } from "@/components/api-access/api-access-shell";
 import { ApiPaywallCard } from "@/components/api-access/paywall-card";
 import { Progress } from "@/components/ui/progress";
@@ -35,7 +35,7 @@ import { formatNumber, formatCompact } from "@/components/admin/utils";
 import { getApiUsage, type ApiUsageBreakdown, type ApiUsageDay } from "@/lib/mock/api-keys";
 
 export default function ApiUsagePage() {
-  const { role, user } = useMockAuth();
+  const { role, user } = useAuth();
   const isPremium = role === "premium" || role === "admin";
   const userId = user?.id ?? "user_premium";
 

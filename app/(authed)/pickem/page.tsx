@@ -6,12 +6,12 @@ import { Calendar, GitBranch, MapPin, Trophy } from "lucide-react";
 import { listEvents } from "@/lib/mock/events";
 import { listGames } from "@/lib/mock/games";
 import { listMyEntries } from "@/lib/mock/pickem";
-import { useMockAuth } from "@/components/providers/mock-auth-provider";
+import { useAuth } from "@/components/providers";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 
 export default function PickemIndexPage() {
-  const { user } = useMockAuth();
+  const { user } = useAuth();
   const userId = user?.id ?? "user_current";
 
   const events = useQuery({

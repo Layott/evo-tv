@@ -16,7 +16,7 @@ import {
   Users,
 } from "lucide-react";
 import { toast } from "sonner";
-import { useMockAuth } from "@/components/providers/mock-auth-provider";
+import { useAuth } from "@/components/providers";
 import {
   getWatchPartyById,
   joinWatchParty,
@@ -42,7 +42,7 @@ export default function WatchPartyRoomPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const partyId = params?.id ?? "";
-  const { user } = useMockAuth();
+  const { user } = useAuth();
 
   const [party, setParty] = React.useState<WatchParty | null | undefined>(undefined);
   const [busy, setBusy] = React.useState(false);

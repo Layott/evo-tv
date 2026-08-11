@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Loader2, CreditCard, ArrowLeft, Crown } from "lucide-react";
 import { toast } from "sonner";
 
-import { useMockAuth } from "@/components/providers";
+import { useAuth } from "@/components/providers";
 import { getActiveSubscription } from "@/lib/client";
 import type { Subscription } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -32,7 +32,7 @@ import { formatNgn } from "@/components/profile/ngn";
 import { Badge } from "@/components/ui/badge";
 
 export default function BillingPage() {
-  const { user } = useMockAuth();
+  const { user } = useAuth();
   const [sub, setSub] = React.useState<Subscription | null>(null);
   const [loading, setLoading] = React.useState(true);
 

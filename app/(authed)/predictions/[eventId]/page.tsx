@@ -13,7 +13,7 @@ import {
 import { getEventById, listMatchesForEvent } from "@/lib/mock/events";
 import { listTeams } from "@/lib/mock/teams";
 import { listGames } from "@/lib/mock/games";
-import { useMockAuth } from "@/components/providers/mock-auth-provider";
+import { useAuth } from "@/components/providers";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { MatchPickCard } from "@/components/predictions/match-pick-card";
@@ -21,7 +21,7 @@ import { CoinPill } from "@/components/predictions/coin-pill";
 
 export default function PredictionEventPage() {
   const { eventId } = useParams<{ eventId: string }>();
-  const { user } = useMockAuth();
+  const { user } = useAuth();
   const userId = user?.id ?? "user_current";
   const [refreshKey, setRefreshKey] = React.useState(0);
 

@@ -6,7 +6,7 @@ import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ArrowUpDown, Crown, Medal, Trophy } from "lucide-react";
 import { getLeagueById, listLeagueLeaderboard } from "@/lib/mock/fantasy";
-import { useMockAuth } from "@/components/providers/mock-auth-provider";
+import { useAuth } from "@/components/providers";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -15,7 +15,7 @@ type SortKey = "rank" | "points" | "handle";
 
 export default function FantasyLeaderboardPage() {
   const { id } = useParams<{ id: string }>();
-  const { user } = useMockAuth();
+  const { user } = useAuth();
   const userId = user?.id ?? "user_current";
   const [sort, setSort] = React.useState<SortKey>("rank");
   const [dir, setDir] = React.useState<"asc" | "desc">("asc");

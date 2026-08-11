@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Plus, Sparkles, Users, Globe, Lock } from "lucide-react";
 import { toast } from "sonner";
-import { useMockAuth } from "@/components/providers/mock-auth-provider";
+import { useAuth } from "@/components/providers";
 import {
   joinWatchParty,
   leaveWatchParty,
@@ -30,7 +30,7 @@ function SkeletonCard() {
 
 export default function WatchPartiesIndexPage() {
   const router = useRouter();
-  const { user } = useMockAuth();
+  const { user } = useAuth();
 
   const [parties, setParties] = React.useState<WatchParty[]>([]);
   const [loading, setLoading] = React.useState(true);

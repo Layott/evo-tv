@@ -26,7 +26,7 @@ import {
 } from "@/lib/mock/fantasy";
 import { listGames } from "@/lib/mock/games";
 import { eventBanner } from "@/lib/mock/_media";
-import { useMockAuth } from "@/components/providers/mock-auth-provider";
+import { useAuth } from "@/components/providers";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -34,7 +34,7 @@ import { formatCoins } from "@/components/predictions/coin-pill";
 
 export default function FantasyLeaguePage() {
   const { id } = useParams<{ id: string }>();
-  const { user } = useMockAuth();
+  const { user } = useAuth();
   const userId = user?.id ?? "user_current";
   const [refreshKey, setRefreshKey] = React.useState(0);
 

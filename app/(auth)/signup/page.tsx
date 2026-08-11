@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { useMockAuth } from "@/components/providers";
+import { useAuth } from "@/components/providers";
 import { TextField, FieldWrapper } from "@/components/auth/form-field";
 import { PasswordStrengthMeter } from "@/components/auth/password-strength";
 import { CountrySelect, AFRICAN_COUNTRIES } from "@/components/auth/country-select";
@@ -42,7 +42,7 @@ type SignupValues = z.infer<typeof signupSchema>;
 
 export default function SignupPage() {
   const router = useRouter();
-  const { login } = useMockAuth();
+  const { signUp } = useAuth();
 
   const {
     register,
@@ -66,12 +66,17 @@ export default function SignupPage() {
   const country = watch("country");
   const acceptTerms = watch("acceptTerms");
 
-  const onSubmit = async (_values: SignupValues) => {
-    await new Promise((r) => setTimeout(r, 800));
-    login("user");
-    toast.success("Account created", {
-      description: "Check your email for the verification code.",
+  const onSubmit = async (values: SignupValues) => {
+    const { error } = await signUp({
+      email: values.email,
+      password: values.password,
+      name: values.handle,
     });
+    if (error) {
+      toast.error("Could not create the account", { description: error });
+      return;
+    }
+    toast.success("Account created");
     router.push("/verify-email");
   };
 

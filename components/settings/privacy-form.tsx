@@ -15,10 +15,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { requestDataExport } from "@/lib/client";
-import { useMockAuth } from "@/components/providers/mock-auth-provider";
+import { useAuth } from "@/components/providers";
 
 export function PrivacyForm() {
-  const { user } = useMockAuth();
+  const { user } = useAuth();
   const [visibility, setVisibility] = React.useState<"public" | "followers" | "private">(
     "public"
   );

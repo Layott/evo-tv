@@ -31,7 +31,7 @@ import {
   type AutoClipTrigger,
   type AutoClipperSettings,
 } from "@/lib/mock/auto-clips";
-import { useMockAuth } from "@/components/providers/mock-auth-provider";
+import { useAuth } from "@/components/providers";
 import { PageHeader } from "@/components/admin/page-header";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { DataTable, type DataColumn } from "@/components/admin/data-table";
@@ -74,7 +74,7 @@ const STATUS_TONES: Record<AutoClipStatus, "amber" | "emerald" | "neutral"> = {
 };
 
 export function AutoClipperPage() {
-  const { role } = useMockAuth();
+  const { role } = useAuth();
 
   const [filter, setFilter] = React.useState<AutoClipStatus | "all">("pending");
   const [clips, setClips] = React.useState<AutoClip[] | null>(null);

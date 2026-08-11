@@ -6,14 +6,14 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Crown, Medal, Trophy } from "lucide-react";
 import { listLeagueLeaderboardForEvent } from "@/lib/mock/pickem";
 import { getEventById } from "@/lib/mock/events";
-import { useMockAuth } from "@/components/providers/mock-auth-provider";
+import { useAuth } from "@/components/providers";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function PickemLeaderboardPage() {
   const { eventId } = useParams<{ eventId: string }>();
-  const { user } = useMockAuth();
+  const { user } = useAuth();
   const userId = user?.id ?? "user_current";
 
   const board = useQuery({

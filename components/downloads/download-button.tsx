@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useMockAuth } from "@/components/providers";
+import { useAuth } from "@/components/providers";
 import {
   enqueueDownload,
   formatBytes,
@@ -31,7 +31,7 @@ interface Props {
 }
 
 export function DownloadButton({ vodId, sizeBytes, className }: Props) {
-  const { user, role } = useMockAuth();
+  const { user, role } = useAuth();
   const [open, setOpen] = React.useState(false);
   const [premiumDialog, setPremiumDialog] = React.useState(false);
   const [busy, setBusy] = React.useState(false);

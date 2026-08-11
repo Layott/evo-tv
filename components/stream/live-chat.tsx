@@ -3,7 +3,7 @@
 import * as React from "react";
 import type { ChatMessage } from "@/lib/types";
 import { listInitialMessages, sendMessage } from "@/lib/client";
-import { useMockAuth } from "@/components/providers/mock-auth-provider";
+import { useAuth } from "@/components/providers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -18,7 +18,7 @@ const MAX_MSGS = 200;
 const CHAR_LIMIT = 400;
 
 export function LiveChat({ streamId }: { streamId: string }) {
-  const { user, role } = useMockAuth();
+  const { user, role } = useAuth();
   const [messages, setMessages] = React.useState<ChatMessage[]>([]);
   const [input, setInput] = React.useState("");
   const [subsOnly, setSubsOnly] = React.useState(false);

@@ -11,7 +11,7 @@ import {
   YAxis,
 } from "recharts";
 import { Coins, Download, FileSpreadsheet, Loader2 } from "lucide-react";
-import { useMockAuth } from "@/components/providers/mock-auth-provider";
+import { useAuth } from "@/components/providers";
 import { listPayouts, type CreatorPayout, type PayoutStatus } from "@/lib/mock/creators";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -28,7 +28,7 @@ const STATUS_BADGE: Record<PayoutStatus, { className: string; label: string }> =
 };
 
 export default function CreatorEarningsPage() {
-  const { user } = useMockAuth();
+  const { user } = useAuth();
   const [payouts, setPayouts] = React.useState<CreatorPayout[]>([]);
   const [loading, setLoading] = React.useState(true);
 

@@ -1,40 +1,29 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
-
+import { authClient } from "@/lib/auth/client";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { useMockAuth } from "@/components/providers";
-import { simulateSsoLogin, type SsoProvider } from "@/lib/mock/sso";
 import { cn } from "@/lib/utils";
 
 function GoogleIcon({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
+    <svg className={className} viewBox="0 0 24 24" aria-hidden>
       <path
-        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
         fill="#4285F4"
+        d="M23.06 12.25c0-.85-.08-1.67-.22-2.45H12v4.64h6.2a5.3 5.3 0 0 1-2.3 3.48v2.9h3.72c2.18-2 3.44-4.96 3.44-8.57Z"
       />
       <path
-        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
         fill="#34A853"
+        d="M12 24c3.11 0 5.72-1.03 7.62-2.79l-3.72-2.89c-1.03.69-2.35 1.1-3.9 1.1-3 0-5.54-2.02-6.45-4.74H1.7v2.98A11.99 11.99 0 0 0 12 24Z"
       />
       <path
-        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
         fill="#FBBC05"
+        d="M5.55 14.68a7.2 7.2 0 0 1 0-4.6V7.1H1.7a12 12 0 0 0 0 10.56l3.85-2.98Z"
       />
       <path
-        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
         fill="#EA4335"
+        d="M12 4.75c1.69 0 3.21.58 4.4 1.72l3.3-3.3C17.71 1.2 15.1 0 12 0 7.4 0 3.42 2.64 1.7 6.48l3.85 2.98C6.46 6.76 9 4.75 12 4.75Z"
       />
     </svg>
   );
@@ -42,89 +31,71 @@ function GoogleIcon({ className }: { className?: string }) {
 
 function AppleIcon({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden="true">
-      <path d="M16.365 1.43c0 1.14-.468 2.227-1.236 3.02-.823.852-2.175 1.512-3.25 1.427-.137-1.104.413-2.246 1.146-2.984.823-.83 2.23-1.437 3.34-1.463zM20.5 17.403c-.578 1.336-.855 1.932-1.6 3.114-1.04 1.648-2.505 3.7-4.32 3.717-1.613.015-2.028-1.05-4.217-1.037-2.19.012-2.646 1.053-4.26 1.037-1.815-.018-3.204-1.87-4.243-3.517C-.96 16.062-1.27 10.665 1.187 7.74c1.75-2.09 4.516-3.31 7.115-3.31 2.65 0 4.318 1.454 6.512 1.454 2.13 0 3.426-1.456 6.49-1.456 2.316 0 4.77 1.266 6.513 3.452-5.717 3.13-4.795 11.29-1.317 9.524z" />
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M16.36 12.78c-.02-2.4 1.96-3.55 2.05-3.61-1.12-1.63-2.86-1.86-3.48-1.89-1.48-.15-2.89.87-3.64.87-.75 0-1.91-.85-3.14-.83-1.61.02-3.1.94-3.93 2.38-1.68 2.9-.43 7.2 1.2 9.55.8 1.16 1.75 2.45 3 2.4 1.21-.05 1.67-.78 3.13-.78 1.46 0 1.87.78 3.14.75 1.3-.02 2.12-1.17 2.91-2.33.92-1.33 1.3-2.62 1.32-2.69-.03-.01-2.53-.97-2.56-3.82ZM14.2 5.2c.66-.8 1.11-1.92.99-3.03-.95.04-2.11.63-2.8 1.43-.61.71-1.15 1.85-1 2.94 1.06.08 2.14-.54 2.81-1.34Z" />
     </svg>
   );
 }
 
-function DiscordIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden="true">
-      <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.211.375-.444.864-.607 1.25a18.27 18.27 0 0 0-5.487 0c-.163-.386-.395-.875-.607-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.873-1.295 1.226-1.994a.076.076 0 0 0-.042-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.294.075.075 0 0 1 .078-.01c3.928 1.793 8.18 1.793 12.062 0a.075.075 0 0 1 .079.009c.12.098.246.198.373.295a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.076.076 0 0 0-.041.107c.36.698.77 1.364 1.225 1.994a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.057c.5-4.761-.838-8.898-3.549-12.562a.06.06 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-.965-2.157-2.156 0-1.193.964-2.157 2.157-2.157 1.193 0 2.156.964 2.156 2.157 0 1.19-.963 2.156-2.156 2.156zm7.975 0c-1.183 0-2.157-.965-2.157-2.156 0-1.193.964-2.157 2.157-2.157 1.193 0 2.157.964 2.157 2.157 0 1.19-.964 2.156-2.157 2.156z" />
-    </svg>
-  );
-}
-
-const providers = [
-  { key: "google", label: "Google", Icon: GoogleIcon },
-  { key: "apple", label: "Apple", Icon: AppleIcon },
-  { key: "discord", label: "Discord", Icon: DiscordIcon },
+/**
+ * Social sign-in.
+ *
+ * This used to call `simulateSsoLogin` from the mock layer, which invented a
+ * profile and signed the browser in as a fabricated "user" without ever
+ * contacting a provider. It now hands off to Better-Auth, which redirects to the
+ * provider and returns to `/oauth`.
+ *
+ * Only Google and Apple are offered, because those are the only two
+ * `lib/auth/index.ts` registers, and each is registered only when its client id
+ * and secret are present. Discord was in the mock list and has no configuration
+ * behind it, so it is gone rather than showing a button that cannot work.
+ */
+const PROVIDERS = [
+  { id: "google", label: "Google", Icon: GoogleIcon },
+  { id: "apple", label: "Apple", Icon: AppleIcon },
 ] as const;
 
-export function OAuthButtons({ className }: { className?: string }) {
-  const router = useRouter();
-  const { login, onboardingComplete } = useMockAuth();
-  const [active, setActive] = React.useState<SsoProvider | null>(null);
+type ProviderId = (typeof PROVIDERS)[number]["id"];
 
-  async function handleProvider(provider: SsoProvider, label: string) {
+export function OAuthButtons({ className }: { className?: string }) {
+  const [active, setActive] = React.useState<ProviderId | null>(null);
+
+  async function handleProvider(provider: ProviderId, label: string) {
     if (active) return;
     setActive(provider);
     try {
-      const { profile, providerLabel } = await simulateSsoLogin(provider);
-      // Mock-auth has role-based login, not arbitrary profile login. Treat all SSO logins as standard "user".
-      login("user");
-      toast.success(`Signed in as ${profile.handle} via ${providerLabel}`);
-      // Send to onboarding for first-time SSO users; otherwise to home.
-      router.push(onboardingComplete ? "/home" : "/onboarding");
+      // Redirects away on success, so nothing after this runs in that case.
+      const { error } = await authClient.signIn.social({
+        provider,
+        callbackURL: "/home",
+      });
+      if (error) {
+        toast.error(`Could not sign in with ${label}`, {
+          description: error.message,
+        });
+        setActive(null);
+      }
     } catch {
       toast.error(`Could not sign in with ${label}`);
-    } finally {
       setActive(null);
     }
   }
 
-  const activeLabel = active ? providers.find((p) => p.key === active)?.label ?? active : null;
-
   return (
-    <>
-      <div className={cn("grid grid-cols-3 gap-2", className)}>
-        {providers.map(({ key, label, Icon }) => {
-          const loading = active === key;
-          return (
-            <Button
-              key={key}
-              type="button"
-              variant="outline"
-              disabled={!!active}
-              onClick={() => handleProvider(key, label)}
-              aria-label={`Sign in with ${label}`}
-              className="w-full border-neutral-800 bg-neutral-900/50 text-neutral-200 transition-colors hover:bg-neutral-900 disabled:opacity-60"
-            >
-              {loading ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <Icon className="size-4" />
-              )}
-              <span className="hidden sm:inline">{label}</span>
-            </Button>
-          );
-        })}
-      </div>
-
-      <Dialog open={!!active}>
-        <DialogContent className="max-w-sm border-neutral-800 bg-neutral-950 text-center">
-          <DialogHeader className="items-center">
-            <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-full bg-sky-500/15 text-sky-300">
-              <Loader2 className="size-5 animate-spin" />
-            </div>
-            <DialogTitle>Authorizing with {activeLabel}…</DialogTitle>
-            <DialogDescription>
-              Connecting your {activeLabel} account to EVO TV. This won't take a second.
-            </DialogDescription>
-          </DialogHeader>
-        </DialogContent>
-      </Dialog>
-    </>
+    <div className={cn("grid gap-2 sm:grid-cols-2", className)}>
+      {PROVIDERS.map(({ id, label, Icon }) => (
+        <Button
+          key={id}
+          type="button"
+          variant="outline"
+          disabled={active !== null}
+          onClick={() => handleProvider(id, label)}
+          className="w-full justify-center gap-2"
+        >
+          <Icon className="size-4" />
+          {active === id ? `Opening ${label}…` : `Continue with ${label}`}
+        </Button>
+      ))}
+    </div>
   );
 }

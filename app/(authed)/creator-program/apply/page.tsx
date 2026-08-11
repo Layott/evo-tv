@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check, ExternalLink, Loader2, Mic2 } from "lucide-react";
-import { useMockAuth } from "@/components/providers/mock-auth-provider";
+import { useAuth } from "@/components/providers";
 import { games } from "@/lib/mock/games";
 import { submitApplication, getMyApplication, type CreatorApplication } from "@/lib/mock/creators";
 import { Button } from "@/components/ui/button";
@@ -50,7 +50,7 @@ const STEPS: Array<{ id: StepId; label: string }> = [
 
 export default function CreatorApplyPage() {
   const router = useRouter();
-  const { user } = useMockAuth();
+  const { user } = useAuth();
   const [stepIdx, setStepIdx] = React.useState(0);
   const [submitting, setSubmitting] = React.useState(false);
 

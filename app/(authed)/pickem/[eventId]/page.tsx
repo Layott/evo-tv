@@ -16,14 +16,14 @@ import {
 import { getEventById } from "@/lib/mock/events";
 import { listTeams } from "@/lib/mock/teams";
 import { listGames } from "@/lib/mock/games";
-import { useMockAuth } from "@/components/providers/mock-auth-provider";
+import { useAuth } from "@/components/providers";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { BracketView } from "@/components/pickem/bracket-view";
 
 export default function PickemBracketPage() {
   const { eventId } = useParams<{ eventId: string }>();
-  const { user } = useMockAuth();
+  const { user } = useAuth();
   const userId = user?.id ?? "user_current";
   const router = useRouter();
 

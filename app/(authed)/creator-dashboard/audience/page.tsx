@@ -16,7 +16,7 @@ import {
   YAxis,
 } from "recharts";
 import { Globe, Loader2, Smartphone, Users } from "lucide-react";
-import { useMockAuth } from "@/components/providers/mock-auth-provider";
+import { useAuth } from "@/components/providers";
 import { getAudienceBreakdown, type AudienceStat } from "@/lib/mock/creators";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DashboardShell } from "@/components/creators/dashboard-shell";
@@ -24,7 +24,7 @@ import { DashboardShell } from "@/components/creators/dashboard-shell";
 const PIE_COLORS = ["#0ea5e9", "#a855f7", "#f59e0b", "#10b981", "#f43f5e", "#737373"];
 
 export default function CreatorAudiencePage() {
-  const { user } = useMockAuth();
+  const { user } = useAuth();
   const [stat, setStat] = React.useState<AudienceStat | null>(null);
   const [loading, setLoading] = React.useState(true);
 

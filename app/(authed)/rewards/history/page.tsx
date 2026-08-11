@@ -4,7 +4,7 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, Copy, History as HistoryIcon, Loader2, Package } from "lucide-react";
-import { useMockAuth } from "@/components/providers/mock-auth-provider";
+import { useAuth } from "@/components/providers";
 import { listMyRedemptions, type Redemption } from "@/lib/mock/rewards";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -26,7 +26,7 @@ const KIND_LABEL: Record<Redemption["dropKind"], string> = {
 };
 
 export default function RewardsHistoryPage() {
-  const { user } = useMockAuth();
+  const { user } = useAuth();
   const [items, setItems] = React.useState<Redemption[]>([]);
   const [loading, setLoading] = React.useState(true);
 

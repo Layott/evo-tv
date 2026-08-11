@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { useMockAuth } from "@/components/providers/mock-auth-provider";
+import { useAuth } from "@/components/providers";
 import { sendTip, getCoinBalance } from "@/lib/mock/tips";
 
 const PRESET_AMOUNTS = [50, 200, 500, 1000];
@@ -33,7 +33,7 @@ export function TipModal({
   streamId,
   streamTitle,
 }: TipModalProps) {
-  const { user } = useMockAuth();
+  const { user } = useAuth();
   const [amount, setAmount] = React.useState<number>(200);
   const [customMode, setCustomMode] = React.useState(false);
   const [customValue, setCustomValue] = React.useState<string>("");

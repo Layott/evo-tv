@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-import { useMockAuth } from "@/components/providers";
+import { useAuth } from "@/components/providers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,7 +38,7 @@ const DEFAULT_AMOUNT = 4_500;
 
 export default function MobileMoneyCheckoutPage() {
   const router = useRouter();
-  const { user } = useMockAuth();
+  const { user } = useAuth();
 
   const [providers, setProviders] = React.useState<PaymentProvider[] | null>(null);
   const [selectedId, setSelectedId] = React.useState<string | null>(null);

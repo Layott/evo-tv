@@ -14,7 +14,7 @@ import {
   submitLineup,
 } from "@/lib/mock/fantasy";
 import type { Player } from "@/lib/types";
-import { useMockAuth } from "@/components/providers/mock-auth-provider";
+import { useAuth } from "@/components/providers";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -25,7 +25,7 @@ const ROSTER_SIZE = 5;
 
 export default function FantasyLineupPage() {
   const { id } = useParams<{ id: string }>();
-  const { user } = useMockAuth();
+  const { user } = useAuth();
   const userId = user?.id ?? "user_current";
   const [refreshKey, setRefreshKey] = React.useState(0);
 

@@ -12,7 +12,7 @@ import {
   Sparkles,
   Zap,
 } from "lucide-react";
-import { useMockAuth } from "@/components/providers/mock-auth-provider";
+import { useAuth } from "@/components/providers";
 import { ApiAccessShell } from "@/components/api-access/api-access-shell";
 import { ApiPaywallCard } from "@/components/api-access/paywall-card";
 import { Button } from "@/components/ui/button";
@@ -41,7 +41,7 @@ const FEATURES = [
 ];
 
 export default function ApiAccessLandingPage() {
-  const { role } = useMockAuth();
+  const { role } = useAuth();
   const isPremium = role === "premium" || role === "admin";
 
   return (

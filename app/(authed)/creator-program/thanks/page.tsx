@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, BarChart3, CheckCircle2, Loader2, Mail, MessageCircle, Sparkles } from "lucide-react";
-import { useMockAuth } from "@/components/providers/mock-auth-provider";
+import { useAuth } from "@/components/providers";
 import { getMyApplication, type CreatorApplication } from "@/lib/mock/creators";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +12,7 @@ import { games } from "@/lib/mock/games";
 
 export default function CreatorThanksPage() {
   const router = useRouter();
-  const { user } = useMockAuth();
+  const { user } = useAuth();
   const [app, setApp] = React.useState<CreatorApplication | null>(null);
   const [loading, setLoading] = React.useState(true);
 

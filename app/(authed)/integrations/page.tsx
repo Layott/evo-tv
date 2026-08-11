@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Loader2, Plug, Webhook } from "lucide-react";
 
-import { useMockAuth } from "@/components/providers";
+import { useAuth } from "@/components/providers";
 import { listBots, INTEGRATION_CATALOG, type BotIntegration } from "@/lib/mock/bots";
 import {
   DiscordIcon,
@@ -44,7 +44,7 @@ const ACCENT_FOR: Record<string, string> = {
 };
 
 export default function IntegrationsPage() {
-  const { user } = useMockAuth();
+  const { user } = useAuth();
   const userId = user?.id ?? "user_current";
   const botsQ = useQuery({
     queryKey: ["bots", userId],

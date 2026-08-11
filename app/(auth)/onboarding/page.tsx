@@ -32,7 +32,7 @@ import {
 import { cn } from "@/lib/utils";
 import { listGames, listTeams } from "@/lib/client";
 import type { Game, Team, UserPrefs } from "@/lib/types";
-import { useMockAuth } from "@/components/providers";
+import { useAuth } from "@/components/providers";
 
 type NotifKey = keyof UserPrefs["notifOptIn"];
 
@@ -104,7 +104,7 @@ const STEP_TITLES = [
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const { completeOnboarding } = useMockAuth();
+  const { completeOnboarding } = useAuth();
 
   const [step, setStep] = React.useState(1);
   const [state, setState] = React.useState<WizardState>(INITIAL_STATE);

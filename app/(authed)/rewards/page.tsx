@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { ArrowRight, Calendar, Gift, History, Loader2, Sparkles } from "lucide-react";
-import { useMockAuth } from "@/components/providers/mock-auth-provider";
+import { useAuth } from "@/components/providers";
 import {
   getXpAndTier,
   listDailyQuests,
@@ -23,7 +23,7 @@ import { DailyQuests } from "@/components/rewards/daily-quests";
 import { DropCard } from "@/components/rewards/drop-card";
 
 export default function RewardsLandingPage() {
-  const { user } = useMockAuth();
+  const { user } = useAuth();
   const [info, setInfo] = React.useState<XpTierInfo | null>(null);
   const [quests, setQuests] = React.useState<DailyQuest[]>([]);
   const [drops, setDrops] = React.useState<Drop[]>([]);

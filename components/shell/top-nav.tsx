@@ -21,7 +21,7 @@ import {
   Headphones,
   Plug,
 } from "lucide-react";
-import { useMockAuth } from "@/components/providers";
+import { useAuth } from "@/components/providers";
 import { countUnread } from "@/lib/mock/notifications";
 import { BrandMark } from "@/components/shell/brand-mark";
 
@@ -78,7 +78,7 @@ const moreLinks: { group: string; items: MoreLink[] }[] = [
 export function TopNav() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, role, logout } = useMockAuth();
+  const { user, role, logout } = useAuth();
   const [menu, setMenu] = React.useState(false);
   const [unread, setUnread] = React.useState(0);
   const [moreOpen, setMoreOpen] = React.useState(false);
