@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import type { Poll } from "@/lib/types";
-import { listActivePolls, listPollsForStream, votePoll } from "@/lib/mock";
+import { listActivePolls, listPollsForStream, votePoll } from "@/lib/client";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";

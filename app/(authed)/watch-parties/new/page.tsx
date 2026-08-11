@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { Globe, Lock, Loader2, Sparkles, Tv2, Users } from "lucide-react";
 import { toast } from "sonner";
 import { useMockAuth } from "@/components/providers/mock-auth-provider";
-import { listLiveStreams } from "@/lib/mock";
+import { listLiveStreams } from "@/lib/client";
 import {
   createWatchParty,
   PARTY_LANGUAGE_OPTIONS,

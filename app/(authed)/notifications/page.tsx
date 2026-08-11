@@ -22,7 +22,7 @@ import {
   listNotifications,
   markAllAsRead,
   markAsRead,
-} from "@/lib/mock";
+} from "@/lib/client";
 import type { NotificationItem, NotificationType } from "@/lib/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";

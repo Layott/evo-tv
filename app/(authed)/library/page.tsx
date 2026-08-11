@@ -12,7 +12,7 @@ import {
   Loader2,
   Play,
 } from "lucide-react";
-import { listVods } from "@/lib/mock";
+import { listVods } from "@/lib/client";
 import { listDownloads, type OfflineDownload } from "@/lib/mock/downloads";
 import type { Vod } from "@/lib/types";
 import { useMockAuth } from "@/components/providers";

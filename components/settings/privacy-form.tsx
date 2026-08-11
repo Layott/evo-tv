@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { requestDataExport } from "@/lib/mock";
+import { requestDataExport } from "@/lib/client";
 import { useMockAuth } from "@/components/providers/mock-auth-provider";
 
 export function PrivacyForm() {

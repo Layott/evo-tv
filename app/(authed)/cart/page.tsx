@@ -8,7 +8,7 @@ import { Loader2, ShoppingBag, Trash2, Tag } from "lucide-react";
 import { toast } from "sonner";
 import { BackButton } from "@/components/shell/back-button";
 
-import { getProductById } from "@/lib/mock";
+import { getProductById } from "@/lib/client";
 import type { Product } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

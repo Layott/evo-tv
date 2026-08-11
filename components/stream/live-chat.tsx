@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import type { ChatMessage } from "@/lib/types";
-import { listInitialMessages, makeIncomingMessage } from "@/lib/mock";
+import { listInitialMessages, sendMessage } from "@/lib/client";
 import { useMockAuth } from "@/components/providers/mock-auth-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,18 +39,31 @@ export function LiveChat({ streamId }: { streamId: string }) {
     };
   }, [streamId]);
 
-  // Simulated incoming messages
+  // Real incoming messages. This used to invent one every two to four seconds;
+  // the server publishes to `stream:<id>:chat` and this subscribes to it.
   React.useEffect(() => {
-    let timer: ReturnType<typeof setTimeout>;
-    const tick = () => {
+    const source = new EventSource(`/api/sse/chat/${streamId}`);
+
+    source.onmessage = (event) => {
+      let payload: unknown;
+      try {
+        payload = JSON.parse(event.data);
+      } catch {
+        return;
+      }
+      // The stream opens with a { type: "hello" } frame; only messages follow.
+      const msg = payload as Partial<ChatMessage> & { type?: string };
+      if (msg.type === "hello" || !msg.id || !msg.body) return;
+
       setMessages((prev) => {
-        const next = [...prev, makeIncomingMessage(streamId)];
+        // The sender already appended its own message optimistically.
+        if (prev.some((m) => m.id === msg.id)) return prev;
+        const next = [...prev, msg as ChatMessage];
         return next.length > MAX_MSGS ? next.slice(next.length - MAX_MSGS) : next;
       });
-      timer = setTimeout(tick, 2000 + Math.random() * 2000);
     };
-    timer = setTimeout(tick, 2000 + Math.random() * 2000);
-    return () => clearTimeout(timer);
+
+    return () => source.close();
   }, [streamId]);
 
   // Auto-scroll
@@ -67,15 +80,19 @@ export function LiveChat({ streamId }: { streamId: string }) {
     stuckToBottom.current = distance < 80;
   };
 
-  const send = () => {
+  const send = async () => {
     const body = input.trim();
     if (!body) return;
     if (!user) {
       toast.error("Sign in to chat");
       return;
     }
-    const msg: ChatMessage = {
-      id: `msg_local_${Date.now()}`,
+
+    // Optimistic: show it immediately, then reconcile with the server's row so
+    // the id matches what arrives back over SSE and the message is not doubled.
+    const optimisticId = `msg_local_${Date.now()}`;
+    const optimistic: ChatMessage = {
+      id: optimisticId,
       streamId,
       userId: user.id,
       userHandle: user.handle,
@@ -87,11 +104,24 @@ export function LiveChat({ streamId }: { streamId: string }) {
       isPinned: false,
     };
     setMessages((prev) => {
-      const next = [...prev, msg];
+      const next = [...prev, optimistic];
       return next.length > MAX_MSGS ? next.slice(next.length - MAX_MSGS) : next;
     });
     setInput("");
     stuckToBottom.current = true;
+
+    try {
+      const saved = await sendMessage(streamId, body);
+      if (saved) {
+        setMessages((prev) =>
+          prev.map((m) => (m.id === optimisticId ? saved : m)),
+        );
+      }
+    } catch {
+      setMessages((prev) => prev.filter((m) => m.id !== optimisticId));
+      setInput(body);
+      toast.error("Message not sent");
+    }
   };
 
   const insertEmoji = (e: string) => {

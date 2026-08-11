@@ -8,6 +8,10 @@ export interface Tier {
   priceNgn: number;
   periodDays: number;
   features: string[];
+  /** One-line summary for the pricing table. */
+  tagline: string;
+  /** Button label on the pricing card. */
+  cta: string;
 }
 
 /**
@@ -25,6 +29,8 @@ export const TIERS: Tier[] = [
       "Follow teams, players, and streamers",
       "Community chat (rate-limited)",
     ],
+    tagline: "Watch live and the latest VODs, with ads",
+    cta: "Current plan",
   },
   {
     id: "supporter",
@@ -36,6 +42,8 @@ export const TIERS: Tier[] = [
       "Supporter badge in chat",
       "Early access to VOD drops",
     ],
+    tagline: "Back the channel, lose the feed ads",
+    cta: "Become a supporter",
   },
   {
     id: "premium",
@@ -48,6 +56,8 @@ export const TIERS: Tier[] = [
       "1080p VOD downloads",
       "Premium-only chat rooms",
     ],
+    tagline: "Ad-free, early access, premium film room",
+    cta: "Upgrade with Paystack",
   },
   {
     id: "pro",
@@ -60,6 +70,8 @@ export const TIERS: Tier[] = [
       "Priority stream ingest slot",
       "Early API access",
     ],
+    tagline: "For creators: analytics, ingest priority, API",
+    cta: "Go Pro",
   },
 ];
 

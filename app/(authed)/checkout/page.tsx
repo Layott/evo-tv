@@ -11,7 +11,7 @@ import { ArrowLeft, Loader2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
 import { useMockAuth } from "@/components/providers";
-import { getProductById } from "@/lib/mock";
+import { getProductById } from "@/lib/client";
 import type { Order, OrderItem, Product } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

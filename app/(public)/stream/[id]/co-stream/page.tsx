@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ArrowLeft, Radio, Sparkles } from "lucide-react";
 import { toast } from "sonner";
-import { getStreamById } from "@/lib/mock";
+import { getStreamById } from "@/lib/client";
 import { listCoStreamTracks, type CoStreamTrack } from "@/lib/mock/co-streams";
 import { RICK_ROLL_EMBED_URL } from "@/lib/mock/_media";
 import type { Stream } from "@/lib/types";

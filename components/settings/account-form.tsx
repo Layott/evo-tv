@@ -22,7 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { requestAccountDeletion } from "@/lib/mock";
+import { requestAccountDeletion } from "@/lib/client";
 import { useMockAuth } from "@/components/providers/mock-auth-provider";
 
 const passwordSchema = z

@@ -30,7 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { listGames, listTeams } from "@/lib/mock";
+import { listGames, listTeams } from "@/lib/client";
 import type { Game, Team, UserPrefs } from "@/lib/types";
 import { useMockAuth } from "@/components/providers";
 

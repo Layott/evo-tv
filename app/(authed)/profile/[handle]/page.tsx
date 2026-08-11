@@ -8,7 +8,7 @@ import {
   listFollows,
   listTeams,
   listPlayers,
-} from "@/lib/mock";
+} from "@/lib/client";
 import type { Profile, Team, Player } from "@/lib/types";
 import { ProfileHeader } from "@/components/profile/profile-header";
 import { FollowingGrid } from "@/components/profile/following-grid";

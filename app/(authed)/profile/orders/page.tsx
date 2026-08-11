@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, Loader2, Package } from "lucide-react";
 
 import { useMockAuth } from "@/components/providers";
-import { listOrdersForUser } from "@/lib/mock";
+import { listOrdersForUser } from "@/lib/client";
 import type { Order, OrderStatus } from "@/lib/types";
 import {
   Table,

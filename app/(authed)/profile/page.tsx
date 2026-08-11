@@ -10,7 +10,7 @@ import {
   listPlayers,
   listVods,
   getActiveSubscription,
-} from "@/lib/mock";
+} from "@/lib/client";
 import type { Team, Player, Vod, Subscription, Profile } from "@/lib/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";

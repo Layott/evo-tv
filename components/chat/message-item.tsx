@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Pin, Trash2, Ban } from "lucide-react";
 import { toast } from "sonner";
-import { pinMessage, deleteMessage, banUser } from "@/lib/mock";
+import { pinMessage, deleteMessage, banUser } from "@/lib/client";
 
 function fmtTime(iso: string) {
   try {
@@ -70,7 +70,7 @@ export function MessageItem({
     if (busy) return;
     setBusy(true);
     try {
-      await banUser(msg.userHandle, 24);
+      await banUser(msg.streamId, msg.userId, 24);
       setBanned(true);
       setDeleted(true);
       toast.error(`Banned ${msg.userHandle} for 24h`);

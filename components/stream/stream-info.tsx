@@ -17,7 +17,7 @@ import {
 import { Share2, Flag, Users, Loader2, Radio, Languages, Headphones, BadgeCheck } from "lucide-react";
 import { toast } from "sonner";
 import { FollowButton } from "./follow-button";
-import { reportStream } from "@/lib/mock";
+import { reportStream } from "@/lib/client";
 import { CastButton } from "@/components/cast/cast-button";
 import { TipButton } from "@/components/tips/tip-button";
 import {

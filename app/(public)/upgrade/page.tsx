@@ -1,10 +1,11 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import * as React from "react";
 import Link from "next/link";
 import { Check, CreditCard, Crown, Phone, Sparkles, Star, Ticket, X } from "lucide-react";
 
-import { tiers } from "@/lib/mock";
+import { listTiers, type Tier } from "@/lib/client";
 import { BackButton } from "@/components/shell/back-button";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,8 +37,25 @@ const FAQ = [
 ];
 
 export default function UpgradePage() {
-  const free = tiers.find((t) => t.id === "free")!;
-  const premium = tiers.find((t) => t.id === "premium")!;
+  // The tier ladder comes from /api/tiers now rather than a bundled constant.
+  const { data: tiers = [] } = useQuery({
+    queryKey: ["tiers"],
+    queryFn: () => listTiers(),
+  });
+  const free = tiers.find((t: Tier) => t.id === "free");
+  const premium = tiers.find((t: Tier) => t.id === "premium");
+
+  // The ladder is fetched, so the first paint has neither tier yet.
+  if (!free || !premium) {
+    return (
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:py-12">
+        <div className="mb-4">
+          <BackButton fallbackHref="/home" />
+        </div>
+        <p className="text-sm text-neutral-400">Loading plans…</p>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:py-12">
@@ -167,7 +185,7 @@ function TierCard({
   current,
   highlight,
 }: {
-  tier: (typeof tiers)[number];
+  tier: Tier;
   current?: boolean;
   highlight?: boolean;
 }) {
@@ -202,7 +220,7 @@ function TierCard({
         ) : null}
       </div>
       <ul className="mt-5 flex-1 space-y-2">
-        {tier.features.map((f) => (
+        {tier.features.map((f: string) => (
           <li key={f} className="flex items-start gap-2 text-sm text-neutral-200">
             <Check
               className={`mt-0.5 size-4 shrink-0 ${highlight ? "text-sky-400" : "text-neutral-500"}`}

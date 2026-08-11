@@ -6,7 +6,7 @@ import { Loader2, CreditCard, ArrowLeft, Crown } from "lucide-react";
 import { toast } from "sonner";
 
 import { useMockAuth } from "@/components/providers";
-import { getActiveSubscription } from "@/lib/mock";
+import { getActiveSubscription } from "@/lib/client";
 import type { Subscription } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import {

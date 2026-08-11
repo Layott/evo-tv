@@ -11,7 +11,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
-import { listLiveStreams } from "@/lib/mock";
+import { listLiveStreams } from "@/lib/client";
 import type { Stream } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { BackButton } from "@/components/shell/back-button";

@@ -191,3 +191,16 @@ export async function searchSuggestions(
   if (!query.trim()) return [];
   return apiList<string>("/api/search", { q: query, suggest: 1, limit });
 }
+
+/**
+ * Account deletion is a GDPR erasure request, not an immediate delete: the
+ * `gdpr-purge` cron does the work on its next run. The endpoint records the
+ * request and returns when it is scheduled for.
+ */
+export async function requestAccountDeletion(
+  _userId?: string,
+): Promise<{ scheduledForIso: string }> {
+  return apiSend<{ scheduledForIso: string }>("POST", "/api/users/me/export", {
+    erase: true,
+  });
+}

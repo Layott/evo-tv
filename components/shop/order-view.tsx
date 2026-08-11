@@ -14,7 +14,7 @@ import {
   Truck,
 } from "lucide-react";
 
-import { getOrderById } from "@/lib/mock";
+import { getOrderById } from "@/lib/client";
 import type { Order, OrderStatus } from "@/lib/types";
 import { ORDERS_KEY } from "@/components/shop/cart-store";
 import { Button } from "@/components/ui/button";
