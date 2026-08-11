@@ -100,7 +100,7 @@ export default function PosterCard({ show, tilt, index }: Props) {
               >
                 <span
                   className={[
-                    "landing-display px-2.5 py-1 text-[0.72rem] uppercase tracking-[0.14em] transition-all duration-300",
+                    "landing-display px-3 py-1.5 text-[0.9rem] transition-all duration-300",
                     playing
                       ? "translate-y-1 opacity-0"
                       : "bg-[var(--ink)]/85 text-[var(--paper)] opacity-100 group-hover:bg-[var(--brand)] group-hover:text-[var(--ink)]",
@@ -117,12 +117,12 @@ export default function PosterCard({ show, tilt, index }: Props) {
       <div className="mt-7">
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           {show.brand ? (
-            <p className="font-mono text-[0.68rem] uppercase tracking-[0.26em] text-[var(--paper-faint)]">
+            <p className="landing-display text-[0.95rem] text-[var(--paper-faint)]">
               {show.brand}
             </p>
           ) : null}
           {show.airs ? (
-            <p className="font-mono text-[0.68rem] uppercase tracking-[0.2em] text-[var(--brand)]">
+            <p className="landing-display text-[0.95rem] text-[var(--brand)]">
               {show.airs}
             </p>
           ) : null}

@@ -22,13 +22,13 @@ export default function SiteHeader() {
         <nav className="flex items-center gap-6 sm:gap-8">
           <a
             href="#week"
-            className="hidden text-[0.8rem] font-medium uppercase tracking-[0.16em] text-[var(--paper-dim)] transition-colors hover:text-[var(--paper)] sm:block"
+            className="landing-display hidden text-[1.02rem] text-[var(--paper-dim)] transition-colors hover:text-[var(--paper)] sm:block"
           >
             Schedule
           </a>
           <Link
             href="/login"
-            className="text-[0.8rem] font-medium uppercase tracking-[0.16em] text-[var(--paper-dim)] transition-colors hover:text-[var(--paper)]"
+            className="landing-display text-[1.02rem] text-[var(--paper-dim)] transition-colors hover:text-[var(--paper)]"
           >
             Sign in
           </Link>

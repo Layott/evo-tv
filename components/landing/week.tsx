@@ -55,16 +55,15 @@ export default function Week({ days, nowIso }: Props) {
       id="week"
       className="relative mx-auto max-w-[92rem] px-5 py-20 sm:px-10 sm:py-28"
     >
-      <div className="reveal flex flex-wrap items-baseline gap-x-5 gap-y-2">
+      <div className="reveal">
         <h2 className="landing-display text-[clamp(2.4rem,7vw,5rem)]">The week</h2>
-        <span className="font-mono text-[0.68rem] uppercase tracking-[0.24em] text-[var(--paper-faint)]">
-          West Africa Time
-        </span>
+        {/* Just the timezone. How the grid is built — that it repeats weekly
+            and that dated rows override it — is implementation detail, and a
+            viewer has no use for it. */}
+        <p className="mt-3 text-[0.98rem] text-[var(--paper-dim)]">
+          All times West Africa Time.
+        </p>
       </div>
-
-      <p className="mt-4 max-w-[52ch] text-[0.98rem] text-[var(--paper-dim)]">
-        The grid repeats weekly. A scheduled stream replaces the slots it covers.
-      </p>
 
       {/* Day selector. Type, not pills — scrolls rather than wraps on a phone so
           the row height never changes as the week is stepped through. */}
@@ -127,7 +126,7 @@ export default function Week({ days, nowIso }: Props) {
       </div>
 
       {entries.length === 0 ? (
-        <p className="mt-14 font-mono text-[0.9rem] uppercase tracking-[0.2em] text-[var(--paper-faint)]">
+        <p className="landing-display mt-14 text-[1.15rem] text-[var(--paper-faint)]">
           Nothing on this day in that pillar
         </p>
       ) : (
@@ -181,7 +180,7 @@ function FilterLink({
       onClick={onClick}
       aria-pressed={active}
       className={[
-        "text-[0.8rem] uppercase tracking-[0.18em] underline-offset-[7px] transition-colors",
+        "landing-display text-[1.15rem] underline-offset-[7px] transition-colors",
         active
           ? "text-[var(--paper)] underline decoration-[var(--brand)] decoration-2"
           : "text-[var(--paper-faint)] hover:text-[var(--paper-dim)]",
@@ -258,7 +257,7 @@ function SlotRow({
 
       <span aria-hidden className="listing-leader hidden h-px w-10 shrink-0 lg:block" />
 
-      <span className="shrink-0 text-[0.68rem] uppercase tracking-[0.18em] text-[var(--paper-faint)]">
+      <span className="shrink-0 text-[0.85rem] text-[var(--paper-faint)]">
         {live ? (
           <span className="text-[var(--brand)]">On air</span>
         ) : entry.source === "override" ? (

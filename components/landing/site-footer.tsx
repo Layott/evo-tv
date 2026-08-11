@@ -57,7 +57,7 @@ export default function SiteFooter() {
 
           {COLUMNS.map((col) => (
             <nav key={col.heading} aria-label={col.heading}>
-              <h2 className="font-mono text-[0.68rem] uppercase tracking-[0.24em] text-[var(--brand)]">
+              <h2 className="landing-display text-[1.05rem] text-[var(--brand)]">
                 {col.heading}
               </h2>
               <ul className="mt-5 space-y-3">
@@ -76,7 +76,7 @@ export default function SiteFooter() {
           ))}
         </div>
 
-        <div className="mt-16 flex flex-col gap-2 font-mono text-[0.68rem] uppercase tracking-[0.16em] text-[var(--paper-faint)] sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-16 flex flex-col gap-2 text-[0.9rem] text-[var(--paper-faint)] sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} EVO TV</p>
           <p>Lagos, Nigeria · All times West Africa Time</p>
         </div>

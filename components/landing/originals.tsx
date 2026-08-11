@@ -21,13 +21,13 @@ export default function Originals({ shows }: Props) {
 
   return (
     <section className="relative mx-auto max-w-[92rem] px-5 py-20 sm:px-10 sm:py-28">
-      <div className="reveal flex items-baseline gap-5">
+      <div className="reveal">
         <h2 className="landing-display text-[clamp(2.4rem,7vw,5rem)]">
           EVO Originals
         </h2>
-        <span className="font-mono text-[0.68rem] uppercase tracking-[0.24em] text-[var(--paper-faint)]">
-          Made here
-        </span>
+        <p className="mt-3 max-w-[44ch] text-[0.98rem] text-[var(--paper-dim)]">
+          Shows made here, on the channel and on the way.
+        </p>
       </div>
 
       <div className="mt-12 grid gap-10 sm:grid-cols-2 sm:gap-14 lg:grid-cols-3 lg:gap-12">
