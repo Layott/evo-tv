@@ -181,28 +181,81 @@ make a correct change look broken. If a page shows empty data while its endpoint
 returns rows in the browser console, kill the dev server, delete `.next`, and
 restart before debugging further. That cost real time here.
 
-## 7. What is still on the mock layer
+## 7. The mock layer is gone
 
-Two groups. The first is mechanical, the second is a product decision.
+`lib/mock/` no longer exists. 157 files changed, 25,682 lines removed.
 
-### Backed by an API, just not swapped yet
+The last holdout was `components/admin/billing-page.tsx`, which listed USSD
+sessions with phone numbers, amounts and statuses out of `lib/mock/ussd`. USSD
+has no table and no integration, so it could not be made real by swapping an
+import: the page renders `ComingSoon` and Paystack orders stay under Orders.
+`db/seed.ts` and the mock purge scripts went with it, and `db:seed` is unwired
+from `package.json`.
 
-`rewards`, `watch-parties` (`/api/parties`), `predictions`, `fantasy`, `pickem`,
-`tips`, `creators`, `api-keys`, `flags`, `notifications`, `admin` components.
-Each has routes; each needs a `lib/client` module and an import swap, following
-the same pattern.
+Roughly 47 routes render `components/shell/coming-soon.tsx`. They have a route
+and a design already; what they lack is a table and an endpoint. Restore one by
+building its backend, not by restoring a fixture.
 
-### No backend at all: 14 domains
+### Inline fabrication is the failure mode to watch
 
-`ai-commentary`, `auto-clips`, `bots`, `calendar`, `captions`, `cast`,
-`co-streams`, `commentary-tracks`, `downloads`, `forensic`, `lite-mode`,
-`payment-methods`, `sso`, `ussd`.
+Grepping for `@/lib/mock` does not find everything. `app/(public)/channel/page.tsx`
+had six hardcoded schedule rows written directly in the component ("Weekly
+Recap: EVO Week 4", "Film Room - Team Alpha", "Casters' Cut"), an unconditional
+LIVE badge on a channel that had never been on air, a hardcoded "Running 72h+",
+and a Follow button that fired a toast without writing a follow. None of it
+imported anything, so the mock sweep passed straight over it.
 
-These are UI shells from the 2026-04-27 feature-expansion pass. They have no
-tables, no routes and no data. **They cannot be made real by swapping an
-import.** For launch the options are: hide them behind a feature flag, or ship
-them clearly labelled as not yet available. Leaving them on mock means shipping
-invented data to real users.
+**When auditing a page, read it. Do not trust the import list.** The same shape
+was behind the admin overview trend badges, the ads 30-day chart and the whole
+analytics page, all found by looking at the rendered screen rather than the
+imports.
+
+## 7b. The programme guide
+
+`/schedule` is the third leg of the MVP: sign in, watch what is on, see what is
+coming.
+
+It reads `/api/schedule`, which merges four sources and lets a dated row win the
+hours it overlaps:
+
+1. episodes by `premiereAt`
+2. streams by `scheduledStartAt`
+3. anything currently `isLive`
+4. the repeating weekly grid in `epg_slots` (168 rows, imported)
+
+Because of (4) the page has content from the moment the grid is imported, and
+gets more specific as an operator schedules real programmes. An operator never
+edits the rotation to run a one-off; they create the programme and it takes over
+its slot.
+
+Two bugs found by looking at the rendered page, not by reading the code:
+
+- **The day window was UTC while the channel clock is Africa/Lagos.** Every
+  day's listing opened at 01:00 and ended with a stray 00:00 row belonging to
+  the next day. `listScheduleForDay` now anchors to the channel day through
+  `zonedToUtc`, and steps a calendar day rather than adding 24h so a DST change
+  stays correct.
+- **The weekday label came from the browser clock while the date came from
+  Lagos.** A viewer in New York at 21:00 would see today's weekday printed
+  beside tomorrow's date. Both now derive from the channel-local date key.
+
+`lib/client/schedule.ts` re-declares `EpgRow` rather than importing it from
+`lib/api/schedule`, which is `server-only` and would drag a Postgres client into
+the browser bundle.
+
+## 7c. The nav only lists what exists
+
+It advertised twenty destinations, sixteen behind a "More" mega menu:
+predictions, pick'em, fantasy, watch parties, multi-stream, rewards, tips,
+creator program, auto-clipper, API access, embed, apps, integrations, partners.
+All of those are now `ComingSoon`, so the menu was a list of dead ends, and a
+product that is young reads as broken when most of its nav goes nowhere.
+
+- Top nav: Home, Schedule, Channel, Discover, Events, Shop.
+- Phone nav: the mock `/calendar` swapped for `/schedule`.
+- User menu: Library and Integrations removed (both stubs).
+
+**Restore an entry when its backend lands, not before.**
 
 ## 8. Run it
 
