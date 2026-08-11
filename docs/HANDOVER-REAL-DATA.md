@@ -257,6 +257,92 @@ product that is young reads as broken when most of its nav goes nowhere.
 
 **Restore an entry when its backend lands, not before.**
 
+## 7d. Five launch blockers, all found by using the product
+
+None of these came from reading code. They came from doing the MVP path end to
+end: sign up, promote an admin, create a programme, take it live, watch it.
+
+### The player could not play a live stream on any browser but Safari
+
+`VideoPlayer` set `<video src={m3u8}>` directly. Only Safari plays HLS natively.
+In Chrome, Firefox and Edge the element sat at `readyState 0` **with no error
+event**, so the player was a permanently black rectangle and nothing in the UI
+said why. Every live source here is HLS. This was the entire live path.
+
+`hls.js` was already a dependency, already wired into a second player at
+`components/stream/hls-player.tsx` that nothing rendered. Three things had to be
+right and each was wrong on the first pass:
+
+1. **hls.js must be tried before the native check.** Desktop Chrome answers
+   `"maybe"` to `canPlayType("application/vnd.apple.mpegurl")` and then cannot
+   play the manifest, so checking native first reproduces the original bug
+   exactly. Native is the fallback for Safari and iOS only.
+2. **Do not copy the old live tuning.** `liveSyncDurationCount: 3` plus
+   `lowLatencyMode` and `backBufferLength: 30` made hls.js fetch the master and
+   variant playlists and then request **no segments at all**: two requests,
+   readyState 0, no error raised. Defaults handle live and VOD. `hls-player.tsx`
+   is deleted; it had never been verified against a stream.
+3. **Strict Mode double-mounts the effect.** The import is async, so both runs
+   reached `attachMedia` on the same element and the second detached the first's
+   MediaSource. The instance is held in a ref and destroyed before a new attach.
+
+**How to tell these apart:** log every `Hls.Events` value. `MEDIA_ATTACHING`
+without `MEDIA_ATTACHED` means the MediaSource never opened. Playlists loading
+without `FRAG_LOADING` means config, not network.
+
+**Chrome will not open a MediaSource while `document.visibilityState` is
+`"hidden"`.** A headless or backgrounded window reproduces every symptom above
+with correct code. Check visibility before debugging the player.
+
+### Two of the three pillars could not be entered at all
+
+`streams.game_id` was `NOT NULL` with an FK to `games`. EVO TV is esports, anime
+and lifestyle, so scheduling "Otaku and Chills" or a podcast meant tagging it as
+Free Fire and showing viewers that badge. Migration **0032** makes `game_id`
+nullable on `streams` and `vods`. Related VODs fall back to matching on `pillar`
+when there is no game, otherwise "related" would mean the whole library.
+
+### The create route silently discarded `pillar`
+
+`POST /api/admin/streams` never read it, so every stream an admin made landed as
+`esports` whatever they intended, and the pillar filters on `/schedule` and the
+landing week grid could never surface an anime or lifestyle programme. `PATCH`
+now accepts `pillar` and `gameId` as well, so a mis-filed programme can be
+corrected rather than deleted and re-made.
+
+### Every standalone script was dead
+
+They opened with `import "dotenv/config"`, which reads `.env`. **This repo has
+no `.env`** - the configuration is in `.env.local`, which Next.js loads and
+plain dotenv does not. So every script exited with "No database URL in the
+environment", including `db/migrate.ts` and `promote-admin.ts`, the documented
+way to create the first admin. `scripts/_env.ts` loads both with Next.js
+precedence; import it from any new script.
+
+### `seededRandom` is gone
+
+It generated the admin overview trend badges, the ads impression chart and the
+analytics figures, seeded from a fixed number so they were stable across reloads
+and read as measurements. No callers remained. The comment in its place says why
+it is not coming back: **if a panel has no data, render the empty state.**
+
+## 7e. The MVP path, proven
+
+Run against the dev server, test data deleted afterwards:
+
+1. `POST /api/auth/sign-up/email` creates the account and sets the session.
+2. `pnpm tsx scripts/promote-admin.ts <email>` grants admin.
+3. `POST /api/admin/streams` with `pillar: "anime"` and **no game**.
+4. `PATCH .../[id]` with `isLive: true` and an HLS manifest.
+5. Guest `GET /api/streams/[id]`: live, `pillar: anime`, `gameId: null`.
+6. Guest `GET /api/schedule?pillar=anime`: present as a dated row overriding the
+   grid, with a working `watchUrl`.
+
+**Not yet confirmed: actual pixels moving.** hls.js attaches, both playlists
+parse, `MEDIA_ATTACHING` fires. `MEDIA_ATTACHED` does not, because the browser
+window in this environment is never visible. Someone with a window on screen
+needs to load a live stream and watch it play.
+
 ## 8. Run it
 
 ```bash
