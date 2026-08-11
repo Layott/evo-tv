@@ -180,20 +180,41 @@ export function VideoPlayer({
         return;
       }
       /*
-       * Defaults, deliberately.
+       * Tuned for stability over latency, against a real broadcast.
        *
-       * The first attempt copied `liveSyncDurationCount: 3` plus
-       * `lowLatencyMode` and `backBufferLength: 30` from the old
-       * `hls-player.tsx`, which had never actually been verified against a
-       * stream. With those set, hls.js fetched the master playlist and the
-       * variant playlist and then never requested a single segment: two
-       * network requests, readyState stuck at 0, no error raised. The defaults
-       * handle live and VOD and start loading immediately.
+       * The self-hosted path is single-bitrate: there is no lower rendition to
+       * drop to, so a viewer whose connection dips does not get a softer
+       * picture, they get a stall. The only defence is a deeper buffer.
        *
-       * Tune this only against a real broadcast, and check that segments are
-       * actually being fetched afterwards.
+       * hls.js defaults sit about three fragments from the live edge, which at
+       * 2s fragments is roughly six seconds of headroom. That is tuned for
+       * latency and is the wrong trade here: segments come from one droplet in
+       * Frankfurt to viewers in Lagos, so a single slow round trip empties the
+       * buffer. Sitting further back costs a few seconds of delay and removes
+       * most of the stalls.
+       *
+       * Note what is NOT set: `lowLatencyMode`. An earlier attempt enabled it
+       * alongside a low `liveSyncDurationCount`, and hls.js then fetched both
+       * playlists and never requested a single fragment. Do not reintroduce it
+       * without confirming segments are actually being loaded.
        */
-      const instance = new Hls();
+      const instance = new Hls({
+        // Sit ~12s behind the edge instead of ~6s.
+        liveSyncDurationCount: 6,
+        // How far behind before it seeks forward to catch up. Must comfortably
+        // exceed the sync count, or it fights its own buffer.
+        liveMaxLatencyDurationCount: 20,
+        // Buffer ahead aggressively when bandwidth allows.
+        maxBufferLength: 60,
+        maxMaxBufferLength: 120,
+        // Keep some behind, so skip-back has something to land on.
+        backBufferLength: 90,
+        // A dropped segment on a busy origin is ordinary. Retry rather than
+        // raising a fatal error and tearing the stream down.
+        fragLoadingMaxRetry: 6,
+        manifestLoadingMaxRetry: 4,
+        levelLoadingMaxRetry: 4,
+      });
       hlsRef.current = instance;
       instance.attachMedia(videoRef.current);
       instance.loadSource(src);

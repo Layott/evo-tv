@@ -231,7 +231,6 @@ function SocialTabs({
           <TabsTrigger value="chat">Chat</TabsTrigger>
           <TabsTrigger value="polls">Polls</TabsTrigger>
           <TabsTrigger value="shop">Shop</TabsTrigger>
-          <TabsTrigger value="odds">Odds</TabsTrigger>
         </TabsList>
       </div>
       <TabsContent
@@ -252,11 +251,9 @@ function SocialTabs({
       >
         <InStreamShop />
       </TabsContent>
-      <TabsContent
-        value="odds"
-        className={fill ? "flex-1 min-h-0 mt-0 overflow-hidden" : "h-[520px] mt-0 overflow-hidden"}
-      >
-      </TabsContent>
+      {/* The Odds tab is gone. It held a betting-partner widget fed by the mock
+          layer; once that went, the tab opened onto an empty panel, which is a
+          worse answer than not offering it. */}
     </Tabs>
   );
 }

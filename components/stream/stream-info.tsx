@@ -14,7 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Share2, Flag, Users, Loader2, Radio, Languages, Headphones, BadgeCheck } from "lucide-react";
+import { Share2, Flag, Loader2, Languages, Headphones, BadgeCheck } from "lucide-react";
 import { toast } from "sonner";
 import { FollowButton } from "./follow-button";
 import { reportStream } from "@/lib/client";
@@ -39,7 +39,6 @@ function streamerIdFromStream(s: Stream): string {
 
 export function StreamInfo({ stream, game }: StreamInfoProps) {
   const streamerId = streamerIdFromStream(stream);
-  const watchParty = Math.max(12, Math.floor(stream.viewerCount / 40));
   const [reporting, setReporting] = React.useState(false);
 
   // Multi-language commentary track state
@@ -153,106 +152,11 @@ export function StreamInfo({ stream, game }: StreamInfoProps) {
         />
 
         <div className="ml-auto flex flex-wrap items-center gap-2">
-          <Dialog open={tracksOpen} onOpenChange={setTracksOpen}>
-            <DialogTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="border-sky-500/40 bg-sky-500/10 text-sky-200 hover:bg-sky-500/20"
-              >
-                <Languages className="size-3.5" />
-                Languages
-                {tracks ? (
-                  <span className="ml-1 rounded bg-neutral-900/70 px-1 text-[10px] font-medium tabular-nums">
-                    {tracks.length}
-                  </span>
-                ) : null}
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>Choose commentary language</DialogTitle>
-                <DialogDescription>
-                  Pick the audio track. Switching keeps the same video stream.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-1.5">
-                {tracks ? (
-                  tracks.length === 0 ? (
-                    <div className="rounded-lg border border-neutral-800 bg-neutral-900/40 p-6 text-center text-sm text-neutral-500">
-                      No commentary tracks available for this stream.
-                    </div>
-                  ) : (
-                    tracks.map((track) => {
-                      const active = track.id === activeTrackId;
-                      return (
-                        <button
-                          key={track.id}
-                          type="button"
-                          onClick={() => handleSelectTrack(track)}
-                          className={cn(
-                            "flex w-full items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition",
-                            active
-                              ? "border-sky-500/40 bg-sky-500/10"
-                              : "border-neutral-800 bg-neutral-900/40 hover:border-neutral-700",
-                          )}
-                        >
-                          <Avatar className="size-9 shrink-0">
-                            <AvatarImage
-                              src={track.casterAvatarUrl}
-                              alt={track.casterHandle}
-                            />
-                            <AvatarFallback>
-                              {track.casterHandle.slice(0, 2)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5">
-                              <span className="truncate text-sm font-semibold text-neutral-100">
-                                {track.languageLabel}
-                              </span>
-                              {track.isOfficial ? (
-                                <BadgeCheck className="size-3.5 text-sky-400" />
-                              ) : null}
-                            </div>
-                            <div className="truncate text-xs text-neutral-400">
-                              @{track.casterHandle}
-                            </div>
-                          </div>
-                          <div className="text-right text-xs">
-                            <div className="font-mono tabular-nums text-neutral-200">
-                              {track.viewerCount.toLocaleString()}
-                            </div>
-                            <div className="text-[10px] uppercase tracking-wider text-neutral-500">
-                              listeners
-                            </div>
-                          </div>
-                          {active ? (
-                            <span className="ml-1 rounded-full bg-sky-500/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-sky-300">
-                              Active
-                            </span>
-                          ) : null}
-                        </button>
-                      );
-                    })
-                  )
-                ) : (
-                  Array.from({ length: 4 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="h-14 rounded-lg border border-neutral-800 bg-neutral-900/40 animate-pulse"
-                    />
-                  ))
-                )}
-              </div>
-            </DialogContent>
-          </Dialog>
-          <Button asChild variant="outline" size="sm">
-            <Link href={`/stream/${stream.id}/co-stream`}>
-              <Radio className="size-3.5" />
-              Co-stream
-            </Link>
-          </Button>
+          {/* The Languages picker and the Co-stream link are gone.
+              Alternate commentary tracks have no backend, so the button read
+              "Languages 0" and opened an empty dialog. Co-stream is a stubbed
+              route. Both were controls on a page real viewers are watching that
+              could only disappoint them. Restore each when its feature exists. */}
           <Button variant="outline" size="sm" onClick={share}>
             <Share2 className="size-3.5" />
             Share
@@ -286,10 +190,10 @@ export function StreamInfo({ stream, game }: StreamInfoProps) {
             {t}
           </Badge>
         ))}
-        <div className="ml-auto flex items-center gap-1.5 text-xs text-neutral-400">
-          <Users className="size-3.5" />
-          {watchParty} watch parties
-        </div>
+        {/* "N watch parties" was Math.max(12, viewerCount / 40): a number with
+            no watch party behind it, and never fewer than twelve, on a stream
+            nobody had started one for. Watch parties have no backend, so there
+            is nothing honest to put here. */}
       </div>
     </div>
   );
