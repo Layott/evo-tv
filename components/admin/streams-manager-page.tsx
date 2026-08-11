@@ -7,6 +7,7 @@ import {
   Key,
   Plus,
   RefreshCw,
+  Radio,
   Search,
   Trash2,
 } from "lucide-react";
@@ -18,6 +19,8 @@ import {
   adminListGames,
   adminListStreams,
   adminRegenerateStreamKey,
+  adminGetStreamIngest,
+  type IngestDetails,
   adminUpdateStream,
 } from "@/lib/client";
 import type { EsportsEvent, Game, Stream } from "@/lib/types";
@@ -112,7 +115,14 @@ export function StreamsManagerPage() {
 
   const [selected, setSelected] = React.useState<Stream | null>(null);
   const [createOpen, setCreateOpen] = React.useState(false);
-  const [keyReveal, setKeyReveal] = React.useState<string | null>(null);
+  /**
+   * OBS settings to show. Was a bare key string, which is half of what OBS
+   * needs: without the Server URL an operator cannot configure anything, and
+   * the RTMPS endpoint differs per ingest.
+   */
+  const [ingestReveal, setIngestReveal] = React.useState<IngestDetails | null>(
+    null,
+  );
   const [confirmDelete, setConfirmDelete] = React.useState<Stream | null>(null);
 
   const columns: DataColumn<Stream>[] = [
@@ -216,7 +226,11 @@ export function StreamsManagerPage() {
       setCreateOpen(false);
       toast.success("Stream created");
       // Shown once and never again; the server stores only a hash.
-      if (res.streamKey) setKeyReveal(res.streamKey);
+      if (res.ingestError) {
+        toast.error(`Ingest not provisioned: ${res.ingestError}`);
+      }
+      // Shown once for the self-hosted path; the server stores only a hash.
+      if (res.ingest) setIngestReveal(res.ingest);
       await refreshStreams();
     },
     onError: (err: Error) => toast.error(err.message || "Could not create the stream"),
@@ -224,8 +238,23 @@ export function StreamsManagerPage() {
 
   const regenerateMut = useMutation({
     mutationFn: (row: Stream) => adminRegenerateStreamKey(row.id),
-    onSuccess: (res) => {
-      setKeyReveal(res.streamKey);
+    onSuccess: (res, row) => {
+      // Regenerate returns the key alone. Pair it with the server URL so the
+      // dialog is still something an operator can act on.
+      setIngestReveal({
+        kind: "rtmp",
+        server: null,
+        streamKey: res.streamKey,
+        hlsUrl: "",
+        keyRetrievable: false,
+      });
+      void adminGetStreamIngest(row.id).then((ing) => {
+        if (ing?.server) {
+          setIngestReveal((cur) =>
+            cur ? { ...cur, kind: ing.kind, server: ing.server } : cur,
+          );
+        }
+      });
       toast.success("Stream key regenerated");
     },
     onError: (err: Error) => toast.error(err.message || "Could not regenerate the key"),
@@ -259,6 +288,23 @@ export function StreamsManagerPage() {
 
   function handleCreate(payload: NewStreamPayload) {
     createMut.mutate(payload);
+  }
+
+  /**
+   * Re-open the OBS settings for an existing stream.
+   *
+   * Only reachable at creation before this, so closing that dialog meant
+   * regenerating the key just to see the server URL again, which invalidates
+   * the encoder already configured with the old one.
+   */
+  function handleShowIngest(row: Stream) {
+    void adminGetStreamIngest(row.id).then((ing) => {
+      if (!ing) {
+        toast.error("Could not load the broadcast settings");
+        return;
+      }
+      setIngestReveal(ing);
+    });
   }
 
   function handleRegenerate(row: Stream) {
@@ -405,11 +451,29 @@ export function StreamsManagerPage() {
                         Shown once on creation. Regenerate to get a new one.
                       </span>
                     </Row>
-                    <Row label="Video">1080p · 6000 kbps · H.264 · 60 fps</Row>
-                    <Row label="Audio">160 kbps · AAC · 48 kHz</Row>
-                    <Row label="Keyframe">2 sec</Row>
+                    {/* These read as facts about the stream but nothing
+                        measures them: they were a hardcoded 1080p/6000kbps/60fps
+                        claim on a stream that might be anything. They are
+                        recommendations, so they say so, and the numbers now
+                        match what the self-hosted path actually handles. */}
+                    <Row label="Recommended video">
+                      720p · 2500 kbps · H.264 · 30 fps
+                    </Row>
+                    <Row label="Recommended audio">128 kbps · AAC</Row>
+                    <Row label="Keyframe interval">
+                      2 sec (required, not optional)
+                    </Row>
                   </div>
-                  <div className="mt-3 flex gap-2">
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="border-neutral-700 bg-neutral-900 text-neutral-200 hover:bg-neutral-800"
+                      onClick={() => handleShowIngest(selected)}
+                    >
+                      <Radio className="h-3.5 w-3.5" />
+                      Broadcast settings
+                    </Button>
                     <Button
                       variant="outline"
                       size="sm"
@@ -447,36 +511,65 @@ export function StreamsManagerPage() {
       />
 
       {/* Reveal key */}
-      <Dialog open={!!keyReveal} onOpenChange={(o) => !o && setKeyReveal(null)}>
+      {/* OBS setup */}
+      <Dialog
+        open={!!ingestReveal}
+        onOpenChange={(o) => !o && setIngestReveal(null)}
+      >
         <DialogContent className="border-neutral-800 bg-neutral-950 text-neutral-100">
           <DialogHeader>
-            <DialogTitle>Reveal stream key</DialogTitle>
+            <DialogTitle>Broadcast settings</DialogTitle>
             <DialogDescription className="text-neutral-400">
-              Copy this key now - it will not be shown again. Treat it like a password.
+              In OBS: Settings, Stream, Service{" "}
+              <span className="text-neutral-200">Custom</span>, then paste these
+              two fields.
             </DialogDescription>
           </DialogHeader>
-          <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-200">
-            Anyone with this key can stream on behalf of the account. Never share publicly or commit to version control.
+
+          {ingestReveal?.kind === "manual" ? (
+            <div className="rounded-lg border border-neutral-800 bg-neutral-900/60 p-3 text-xs text-neutral-300">
+              No ingest is provisioned for this stream. Set a playback URL by
+              hand, or configure an ingest and create the stream again.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <CopyField
+                label="Server"
+                value={ingestReveal?.server ?? ""}
+                empty="Not available"
+              />
+              <CopyField
+                label="Stream Key"
+                value={ingestReveal?.streamKey ?? ""}
+                empty="Not shown again. Regenerate to get a new one."
+                secret
+              />
+              {ingestReveal?.srtUrl ? (
+                <CopyField label="SRT (optional)" value={ingestReveal.srtUrl} />
+              ) : null}
+            </div>
+          )}
+
+          {!ingestReveal?.keyRetrievable && ingestReveal?.streamKey ? (
+            <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-200">
+              Copy the key now. Only a hash is stored, so it cannot be shown
+              again. Anyone holding it can broadcast as this stream, so treat it
+              like a password and never commit it.
+            </div>
+          ) : null}
+
+          <div className="rounded-lg border border-neutral-800 bg-neutral-900/40 p-3 text-xs text-neutral-400">
+            Recommended output: 1280x720, 30fps, CBR 2500 kbps, and a{" "}
+            <span className="text-neutral-200">keyframe interval of 2</span>.
+            Segments can only be cut on a keyframe, so leaving it on auto gives
+            long segments and a slow start.
           </div>
-          <div className="flex items-center gap-2 rounded-md border border-neutral-800 bg-neutral-900 p-2">
-            <code className="flex-1 truncate font-mono text-sm text-sky-300">{keyReveal}</code>
-            <Button
-              size="sm"
-              variant="outline"
-              className="border-neutral-700 bg-neutral-900 text-neutral-200 hover:bg-neutral-800"
-              onClick={() => {
-                if (keyReveal) {
-                  navigator.clipboard?.writeText(keyReveal).catch(() => {});
-                  toast.success("Stream key copied");
-                }
-              }}
-            >
-              <Copy className="h-3.5 w-3.5" />
-              Copy
-            </Button>
-          </div>
+
           <DialogFooter>
-            <Button onClick={() => setKeyReveal(null)} className="bg-sky-600 hover:bg-sky-500">
+            <Button
+              onClick={() => setIngestReveal(null)}
+              className="bg-sky-600 hover:bg-sky-500"
+            >
               Done
             </Button>
           </DialogFooter>
@@ -675,5 +768,57 @@ function CreateStreamDrawer({
         </SheetFooter>
       </SheetContent>
     </Sheet>
+  );
+}
+
+/**
+ * One labelled, copyable value.
+ *
+ * The old dialog rendered a single bare `<code>` and one Copy button, so the
+ * server URL had nowhere to go. Labels match OBS exactly so there is no
+ * guessing about which box a value belongs in.
+ */
+function CopyField({
+  label,
+  value,
+  empty,
+  secret,
+}: {
+  label: string;
+  value: string;
+  empty?: string;
+  secret?: boolean;
+}) {
+  return (
+    <div>
+      <div className="mb-1 text-xs font-medium text-neutral-400">{label}</div>
+      {value ? (
+        <div className="flex items-center gap-2 rounded-md border border-neutral-800 bg-neutral-900 p-2">
+          <code
+            className={`flex-1 truncate font-mono text-sm ${
+              secret ? "text-sky-300" : "text-neutral-200"
+            }`}
+          >
+            {value}
+          </code>
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-neutral-700 bg-neutral-900 text-neutral-200 hover:bg-neutral-800"
+            onClick={() => {
+              navigator.clipboard?.writeText(value).catch(() => {});
+              toast.success(`${label} copied`);
+            }}
+          >
+            <Copy className="h-3.5 w-3.5" />
+            Copy
+          </Button>
+        </div>
+      ) : (
+        <div className="rounded-md border border-neutral-800 bg-neutral-900/50 p-2 text-xs text-neutral-500">
+          {empty ?? "Not available"}
+        </div>
+      )}
+    </div>
   );
 }

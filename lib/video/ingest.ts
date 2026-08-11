@@ -49,6 +49,16 @@ export interface IngestDetails {
  * otherwise manual.
  */
 export function defaultIngestKind(): IngestKind {
+  // An explicit choice wins. Set LIVE_INGEST so a deployment states which path
+  // it is on rather than inferring it from whichever credentials happen to be
+  // present, which silently changes the answer the day someone adds a
+  // Cloudflare token for an unrelated reason.
+  const explicit = process.env.LIVE_INGEST as IngestKind | undefined;
+  if (explicit === "cloudflare" || explicit === "rtmp" || explicit === "manual") {
+    // Never hand back an ingest that cannot be provisioned.
+    if (explicit === "cloudflare" && !cloudflare.isConfigured()) return "manual";
+    return explicit;
+  }
   if (cloudflare.isConfigured()) return "cloudflare";
   if (process.env.RTMP_INGEST_URL) return "rtmp";
   return "manual";

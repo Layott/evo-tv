@@ -132,7 +132,9 @@ export async function POST(req: NextRequest) {
       id: streamId,
       title: `${channel.name} live`,
       description: "",
-      gameId: "game_freefire",
+      // Null, not Free Fire. This hardcoded a game onto every channel that
+      // published, so an anime or lifestyle broadcast carried an esports badge.
+      gameId: null,
       channelId: channel.id,
       streamerType: "creator",
       streamerName: channel.name,
@@ -157,8 +159,19 @@ export async function POST(req: NextRequest) {
     return new NextResponse("OK", { status: 200 });
   }
 
-  // 2. Legacy path: pre-existing streams row keyed by stream_key_hash.
-  // Phase 3 transition only. Remove once every active channel has a key row.
+  /*
+   * 2. Stream-owned key: a `streams` row whose `stream_key_hash` matches.
+   *
+   * This was labelled "legacy, remove once every channel has a key row". It is
+   * not legacy: it is the path every stream created through
+   * `POST /api/admin/streams` takes, because that route issues a key onto the
+   * stream row rather than into `channel_stream_keys`. Deleting this branch
+   * would break self-hosted ingest completely.
+   *
+   * The two paths answer different questions. `channel_stream_keys` is a
+   * standing key for a channel, and a publish on it creates a new stream. This
+   * one is a key for one specific programme an operator has already scheduled.
+   */
   const legacy = (
     await db
       .select()
@@ -173,7 +186,10 @@ export async function POST(req: NextRequest) {
     .update(schema.streams)
     .set({
       isLive: true,
-      startedAt: nowIso,
+      // An encoder that drops and reconnects publishes again within seconds.
+      // Overwriting startedAt each time would reset the broadcast clock and
+      // make "on air 2h" read "on air 4s" after a blip.
+      startedAt: legacy.startedAt ?? nowIso,
       endedAt: null,
       hlsPath: rtmpHlsUrlFor(streamKey),
       viewerCount: 0,

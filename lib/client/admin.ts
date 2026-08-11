@@ -65,10 +65,48 @@ export interface CreateStreamInput {
 }
 
 /** Returns the created stream and its one-time stream key. */
+/**
+ * What an operator puts into OBS. Both fields, because a key on its own is
+ * useless: OBS wants Server and Stream Key and will not start without both.
+ */
+export interface IngestDetails {
+  kind: "manual" | "cloudflare" | "rtmp";
+  /** OBS: Settings, Stream, Service Custom, Server. */
+  server: string | null;
+  /** OBS: Stream Key. */
+  streamKey: string | null;
+  srtUrl?: string | null;
+  /** Where viewers watch. Empty until the ingest is provisioned. */
+  hlsUrl: string;
+  /** False when the key is stored as a hash and cannot be shown twice. */
+  keyRetrievable: boolean;
+}
+
 export async function adminCreateStream(
-  input: CreateStreamInput,
-): Promise<{ stream: Stream; streamKey?: string }> {
+  input: CreateStreamInput & { ingestKind?: IngestDetails["kind"] },
+): Promise<{
+  id: string;
+  ingest: IngestDetails;
+  streamKey?: string;
+  ingestError?: string | null;
+  warning?: string | null;
+}> {
   return apiSend("POST", "/api/admin/streams", input);
+}
+
+/**
+ * Re-read the OBS settings for a stream that already exists.
+ *
+ * Create shows them once. An operator who closed that dialog, or who is setting
+ * up a second encoder, had no way back to them.
+ */
+export async function adminGetStreamIngest(
+  id: string,
+): Promise<IngestDetails | null> {
+  const res = await apiGet<{ ingest: IngestDetails }>(
+    `/api/admin/streams/${encodeURIComponent(id)}/ingest`,
+  );
+  return res?.ingest ?? null;
 }
 
 export async function adminUpdateStream(
