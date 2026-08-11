@@ -40,10 +40,52 @@ export interface SearchResults {
 
 /* ── Profile ────────────────────────────────────────────────────────────── */
 
+/**
+ * Shape of `/api/users/me`. Deliberately spelled out: it is Better-Auth's user
+ * row plus a few profile columns, and it does not match `Profile`.
+ */
+interface MeResponse {
+  id: string;
+  email?: string;
+  name?: string | null;
+  handle?: string | null;
+  image?: string | null;
+  role?: string;
+  bio?: string;
+  country?: string;
+  onboardedAt?: string | null;
+  createdAt?: string | null;
+}
+
 export async function getCurrentUser(): Promise<Profile | null> {
-  // The endpoint wraps the profile as { user }.
-  const res = await apiGet<{ user: Profile }>("/api/users/me");
-  return res?.user ?? null;
+  const res = await apiGet<{ user: MeResponse }>("/api/users/me");
+  const u = res?.user;
+  if (!u) return null;
+
+  /*
+   * Map, do not cast.
+   *
+   * This did `res.user as Profile`, and the two shapes disagree on the two
+   * fields most visible to a user: the endpoint returns Better-Auth's `image`
+   * and `name`, while `Profile` reads `avatarUrl` and `displayName`. So
+   * `profile.avatarUrl` was undefined, every avatar rendered as
+   * `<img src="">`, and uploading a new picture changed nothing on screen
+   * because the field being read was never populated in the first place.
+   *
+   * A cast asserts a shape rather than producing one, which is why TypeScript
+   * had nothing to say about it.
+   */
+  return {
+    id: u.id,
+    handle: u.handle ?? "",
+    displayName: u.name ?? u.handle ?? "",
+    avatarUrl: u.image ?? "",
+    bio: u.bio ?? "",
+    role: (u.role as Profile["role"]) ?? "user",
+    country: u.country ?? "NG",
+    onboardedAt: u.onboardedAt ?? null,
+    createdAt: u.createdAt ?? "",
+  };
 }
 
 export async function getUserByHandle(handle: string): Promise<Profile | null> {

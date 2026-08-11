@@ -85,12 +85,43 @@ export async function POST(req: NextRequest) {
   // Persist immediately. Returning the URL and leaving the caller to PATCH it
   // separately means a closed tab between the two leaves an orphaned file and
   // an unchanged profile.
-  // `image` is Better-Auth's column. The rest of the app reads it as
-  // `avatarUrl`; the mapping happens in /api/users/me.
+  /*
+   * Both columns, because two tables hold an avatar.
+   *
+   * `user.image` is Better-Auth's, and `profiles.avatar_url` is the one the
+   * edit form writes and the profile read prefers. Updating only one leaves the
+   * two disagreeing, and which picture a viewer sees then depends on which code
+   * path fetched it.
+   */
   await db
     .update(schema.user)
     .set({ image: url })
     .where(eq(schema.user.id, user.id));
+
+  const existing = (
+    await db
+      .select({ userId: schema.profiles.userId })
+      .from(schema.profiles)
+      .where(eq(schema.profiles.userId, user.id))
+      .limit(1)
+  )[0];
+
+  if (existing) {
+    await db
+      .update(schema.profiles)
+      .set({ avatarUrl: url })
+      .where(eq(schema.profiles.userId, user.id));
+  } else {
+    await db.insert(schema.profiles).values({
+      userId: user.id,
+      displayName: user.name ?? "",
+      avatarUrl: url,
+      bio: "",
+      country: "NG",
+      onboardedAt: null,
+      createdAt: new Date().toISOString(),
+    });
+  }
 
   return NextResponse.json({ url });
 }

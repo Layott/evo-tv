@@ -22,6 +22,15 @@ export async function GET() {
       .select({
         bio: schema.profiles.bio,
         country: schema.profiles.country,
+        // Read, not just written. AuthProvider derives `onboardingComplete`
+        // from this, and the endpoint never returned it, so it was always
+        // false and a user who had finished onboarding was sent back through
+        // it on every visit.
+        onboardedAt: schema.profiles.onboardedAt,
+        // The profile row is the one the edit form writes to. Preferring it
+        // means a newly uploaded picture shows immediately rather than only
+        // after Better-Auth's own column happens to be updated.
+        avatarUrl: schema.profiles.avatarUrl,
       })
       .from(schema.profiles)
       .where(eq(schema.profiles.userId, user.id))
@@ -34,7 +43,11 @@ export async function GET() {
       email: user.email,
       name: user.name,
       handle: (user as { handle?: string | null }).handle ?? null,
-      image: (user as { image?: string | null }).image ?? null,
+      image:
+        profile?.avatarUrl ||
+        (user as { image?: string | null }).image ||
+        null,
+      onboardedAt: profile?.onboardedAt ?? null,
       role: (user as { role?: string }).role ?? "user",
       bio: profile?.bio ?? "",
       country: profile?.country ?? "NG",
