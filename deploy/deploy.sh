@@ -37,16 +37,31 @@ cd "$ROOT"
 # The three files that live at $ROOT are copies of what is in the repo. Without
 # this sync a Caddyfile or compose change would be committed, pulled, and then
 # silently ignored, because deploy.sh only ever rebuilt the api image.
+#
+# deploy.sh is in this list, which needs care: bash reads a script
+# incrementally, so overwriting the file that is currently executing makes it
+# resume at a byte offset into different content. `cp` in place would do
+# exactly that. Writing a temp file and `mv`-ing it over is an atomic rename:
+# the running shell keeps the original inode open and finishes the old copy,
+# and the new one takes effect on the next run.
+#
+# Leaving deploy.sh out of the list was its own trap. It syncs the other files,
+# so a change to WHICH files it syncs could never take effect: the old copy ran,
+# used the old list, and quietly skipped the new entries. That is precisely how
+# autodeploy.sh, nginx-rtmp.conf and cloudflare-firewall.sh ended up committed,
+# pulled, and absent from the droplet.
 echo "==> syncing deploy files from the repo"
-for f in Caddyfile docker-compose.yml cron.sh autodeploy.sh nginx-rtmp.conf cloudflare-firewall.sh; do
+for f in Caddyfile docker-compose.yml cron.sh autodeploy.sh nginx-rtmp.conf cloudflare-firewall.sh deploy.sh; do
 	if ! cmp -s "$ROOT/api/deploy/$f" "$ROOT/$f"; then
-		cp "$ROOT/api/deploy/$f" "$ROOT/$f"
+		cp "$ROOT/api/deploy/$f" "$ROOT/$f.tmp"
+		mv "$ROOT/$f.tmp" "$ROOT/$f"
 		echo "    updated $f"
 		[ "$f" = "Caddyfile" ] && CADDY_CHANGED=1
 		[ "$f" = "nginx-rtmp.conf" ] && RTMP_CONF_CHANGED=1
+		[ "$f" = "deploy.sh" ] && echo "    (deploy.sh changed; the new version runs next deploy)"
 	fi
 done
-chmod +x "$ROOT/cron.sh" "$ROOT/autodeploy.sh" "$ROOT/cloudflare-firewall.sh"
+chmod +x "$ROOT/cron.sh" "$ROOT/autodeploy.sh" "$ROOT/cloudflare-firewall.sh" "$ROOT/deploy.sh"
 
 echo "==> building image ($SHA)"
 docker compose build api-1
