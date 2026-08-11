@@ -277,3 +277,83 @@ export async function adminSetFlag(
 export async function adminOverview(): Promise<Record<string, unknown> | null> {
   return apiGet<Record<string, unknown>>("/api/admin/analytics/overview");
 }
+
+/** Change an account's platform role. The API refuses to demote yourself. */
+export async function adminSetUserRole(
+  userId: string,
+  role: "user" | "premium" | "creator" | "admin",
+): Promise<void> {
+  await apiSend("PATCH", "/api/admin/users", { userId, role });
+}
+
+/**
+ * Suspend an account, or lift a suspension.
+ *
+ * Suspension is a sanction record rather than a column, so lifting one deletes
+ * the active sanction instead of setting a flag back to false.
+ */
+export async function adminSuspendUser(
+  userId: string,
+  reason = "Suspended by an administrator",
+): Promise<void> {
+  await apiSend("POST", `/api/admin/users/${encodeURIComponent(userId)}/sanction`, {
+    kind: "suspended",
+    reason,
+  });
+}
+
+export async function adminLiftSanction(
+  userId: string,
+  sanctionId: string,
+): Promise<void> {
+  await apiSend(
+    "DELETE",
+    `/api/admin/users/${encodeURIComponent(userId)}/sanction/${encodeURIComponent(sanctionId)}`,
+  );
+}
+
+export interface AdminOverviewMetrics {
+  liveStreams: number;
+  todaySignups: number;
+  activePremiumSubs: number;
+  mrrNgn: number;
+}
+
+/** Real counts out of Postgres: live streams, signups today, active subs, MRR. */
+export async function adminOverviewMetrics(): Promise<AdminOverviewMetrics> {
+  return (
+    (await apiGet<AdminOverviewMetrics>("/api/admin/analytics/overview")) ?? {
+      liveStreams: 0,
+      todaySignups: 0,
+      activePremiumSubs: 0,
+      mrrNgn: 0,
+    }
+  );
+}
+
+/** Daily view counts from `analytics_daily`, for the overview chart. */
+export async function adminViewsOverTime(
+  days = 30,
+): Promise<Array<{ day: string; views: number }>> {
+  const data = await apiGet<Array<{ day: string; views: number }>>(
+    "/api/admin/analytics/views",
+    { days },
+  );
+  return Array.isArray(data) ? data : [];
+}
+
+export interface AdminSanction {
+  id: string;
+  userId: string;
+  kind: string;
+  reason: string;
+  createdAt: string;
+  expiresAt: string | null;
+  liftedAt: string | null;
+}
+
+/** Active and historical sanctions: suspensions, bans, chat bans. */
+export async function adminListSanctions(): Promise<AdminSanction[]> {
+  const res = await apiGet<{ sanctions: AdminSanction[] }>("/api/admin/sanctions");
+  return res?.sanctions ?? [];
+}

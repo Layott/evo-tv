@@ -3,8 +3,14 @@
 import * as React from "react";
 import { AlertTriangle, Check, MessageSquare, ShieldBan, Undo2 } from "lucide-react";
 import { toast } from "sonner";
-import { seedMessages } from "@/lib/mock/chat";
-import { profiles } from "@/lib/mock/users";
+import { useQuery } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  adminLiftSanction,
+  adminListReports,
+  adminListSanctions,
+  adminResolveReport,
+} from "@/lib/client";
 import type { ChatMessage, Profile } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -37,81 +43,77 @@ interface Appeal {
   submittedAt: string;
 }
 
-function buildReports(): Report[] {
-  const rng = seededRandom(301);
-  const seed = seedMessages("stream_lagos_final", 12);
-  const reasons: Report["reason"][] = ["spam", "harassment", "off-topic"];
-  return seed.map((m, i) => ({
-    id: `report_${i + 1}`,
-    message: m,
-    reason: reasons[i % reasons.length]!,
-    reportedBy: profiles[(i + 3) % profiles.length]?.handle ?? "viewer",
-    reportedAt: new Date(Date.now() - Math.floor(rng() * 6) * 3_600_000).toISOString(),
-    state: "open",
-  }));
-}
-
-function buildBanned(): BannedUser[] {
-  return profiles.slice(12, 17).map((p, i) => ({
-    id: `ban_${i + 1}`,
-    profile: p,
-    reason: ["Repeated spam", "Hate speech", "Evasion", "Harassment", "Self-harm content"][i]!,
-    durationDays: [7, 30, 14, 3, 90][i] ?? 7,
-    bannedAt: new Date(Date.now() - (i + 1) * 86_400_000).toISOString(),
-  }));
-}
-
-function buildAppeals(): Appeal[] {
-  return profiles.slice(13, 15).map((p, i) => ({
-    id: `appeal_${i + 1}`,
-    profile: p,
-    banReason: ["Repeated spam", "Harassment"][i]!,
-    message: [
-      "I was banned by mistake — the link I shared was from an official partner.",
-      "Misunderstanding during stream — I apologized in chat afterwards.",
-    ][i]!,
-    submittedAt: new Date(Date.now() - (i + 1) * 3_600_000 * 18).toISOString(),
-  }));
-}
+/**
+ * The queue used to be fabricated end to end: reports against seeded chat
+ * messages on `stream_lagos_final` (a stream that no longer exists), bans with
+ * invented reasons including "Hate speech" and "Self-harm content", and appeal
+ * text written as if by real users. A moderator could have acted on any of it.
+ * It reads the real tables now.
+ */
 
 export function ModerationPage() {
-  const [reports, setReports] = React.useState<Report[]>(() => buildReports());
-  const [banned, setBanned] = React.useState<BannedUser[]>(() => buildBanned());
-  const [appeals, setAppeals] = React.useState<Appeal[]>(() => buildAppeals());
+  const queryClient = useQueryClient();
 
-  function reportAction(id: string, action: "approve" | "remove" | "ban" | "escalate") {
-    setReports((prev) =>
-      prev.map((r) =>
-        r.id === id
-          ? {
-              ...r,
-              state:
-                action === "approve"
-                  ? "approved"
-                  : action === "remove"
-                    ? "removed"
-                    : action === "escalate"
-                      ? "escalated"
-                      : "removed",
-            }
-          : r,
-      ),
-    );
-    if (action === "approve") toast.success("Message approved");
-    if (action === "remove") toast.success("Message removed");
-    if (action === "ban") toast.success("User banned");
-    if (action === "escalate") toast.success("Escalated to team lead");
+  const reportsQ = useQuery({
+    queryKey: ["admin", "reports"],
+    queryFn: () => adminListReports(),
+  });
+  const sanctionsQ = useQuery({
+    queryKey: ["admin", "sanctions"],
+    queryFn: () => adminListSanctions(),
+  });
+
+  const reports = (reportsQ.data ?? []) as unknown as Report[];
+  const banned = (sanctionsQ.data ?? []) as unknown as BannedUser[];
+
+  // Appeals have no table and no endpoint. An empty queue is the truth.
+  const appeals: Appeal[] = [];
+
+  const refresh = () => {
+    void queryClient.invalidateQueries({ queryKey: ["admin", "reports"] });
+    void queryClient.invalidateQueries({ queryKey: ["admin", "sanctions"] });
+  };
+
+  async function reportAction(
+    id: string,
+    action: "approve" | "remove" | "ban" | "escalate",
+  ) {
+    try {
+      await adminResolveReport(id, action);
+      toast.success(
+        action === "approve"
+          ? "Message approved"
+          : action === "remove"
+            ? "Message removed"
+            : action === "escalate"
+              ? "Escalated"
+              : "User banned",
+      );
+      refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not resolve the report");
+    }
   }
 
-  function unban(id: string) {
-    const b = banned.find((x) => x.id === id);
-    setBanned((prev) => prev.filter((x) => x.id !== id));
-    toast.success(b ? `Unbanned @${b.profile.handle}` : "Unbanned");
+  /**
+   * Lifting a sanction needs both the user and the sanction id, which this list
+   * carries, so it goes straight to the endpoint.
+   */
+  async function unban(id: string) {
+    const row = (sanctionsQ.data ?? []).find((x) => x.id === id);
+    if (!row) return;
+    try {
+      await adminLiftSanction(row.userId, row.id);
+      toast.success("Sanction lifted");
+      refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not lift the sanction");
+    }
   }
 
-  function resolveAppeal(id: string, outcome: "accept" | "reject") {
-    setAppeals((prev) => prev.filter((a) => a.id !== id));
-    toast.success(outcome === "accept" ? "Appeal accepted — ban lifted" : "Appeal rejected");
+  /** Appeals have no backend, so there is nothing to resolve. */
+  function resolveAppeal(_id: string, _outcome: "accept" | "reject") {
+    toast.error("Appeals are not implemented yet");
   }
 
   const openReports = reports.filter((r) => r.state === "open");

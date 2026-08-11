@@ -3,8 +3,8 @@
 import * as React from "react";
 import { Search } from "lucide-react";
 import { toast } from "sonner";
-import { orders as ordersSource } from "@/lib/mock/orders";
-import { profiles } from "@/lib/mock/users";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { adminListOrders, adminMarkOrderShipped } from "@/lib/client";
 import type { Order, OrderStatus } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,8 +36,12 @@ import { PageHeader } from "./page-header";
 import { StatusBadge } from "./status-badge";
 import { formatDateTime, formatNgn, seededRandom } from "./utils";
 
+/**
+ * The orders endpoint returns a user id, not a handle. Showing the id is honest;
+ * inventing a handle for it was not.
+ */
 function handleForUser(id: string): string {
-  return profiles.find((p) => p.id === id)?.handle ?? id;
+  return id;
 }
 
 function orderTone(status: OrderStatus): "emerald" | "amber" | "red" | "blue" | "neutral" {
@@ -48,60 +52,19 @@ function orderTone(status: OrderStatus): "emerald" | "amber" | "red" | "blue" | 
   return "neutral";
 }
 
-function buildExtraOrders(): Order[] {
-  const rng = seededRandom(23);
-  const statuses: OrderStatus[] = ["pending", "paid", "processing", "shipped", "delivered", "cancelled", "refunded"];
-  const items = [
-    { id: "prod_alpha_jersey", name: "Team Alpha Jersey 2026", price: 38_000, thumb: "/team-alpha-jersey.jpg" },
-    { id: "prod_evo_hoodie", name: "EVO TV Hoodie", price: 28_500, thumb: "/evo-hoodie.jpg" },
-    { id: "prod_champs_cap", name: "Championship Snapback", price: 12_000, thumb: "/championship-cap.jpg" },
-    { id: "prod_nova_scarf", name: "Nova Esports Scarf", price: 9_500, thumb: "/placeholder.svg?text=Scarf" },
-  ];
-  const people = profiles.slice(0, 12);
-  return Array.from({ length: 18 }, (_, i) => {
-    const item = items[Math.floor(rng() * items.length)]!;
-    const qty = 1 + Math.floor(rng() * 2);
-    const subtotal = item.price * qty;
-    const shipping = 2_500;
-    const status = statuses[Math.floor(rng() * statuses.length)]!;
-    const buyer = people[i % people.length]!;
-    return {
-      id: `order_mock_${i + 1}`,
-      userId: buyer.id,
-      status,
-      items: [
-        {
-          productId: item.id,
-          productName: item.name,
-          variantId: "m",
-          variantLabel: "M",
-          qty,
-          unitPriceNgn: item.price,
-          thumbnailUrl: item.thumb,
-        },
-      ],
-      subtotalNgn: subtotal,
-      shippingNgn: shipping,
-      totalNgn: subtotal + shipping,
-      shipping: {
-        fullName: buyer.displayName,
-        phone: "+234 800 000 0000",
-        address1: "12 Example Way",
-        address2: "",
-        city: "Lagos",
-        state: "Lagos",
-        country: "Nigeria",
-      },
-      paymentProvider: "paystack",
-      paymentRef: `PS_MOCK_${(i + 100).toString().padStart(4, "0")}`,
-      createdAt: new Date(Date.now() - Math.floor(rng() * 40) * 86_400_000).toISOString(),
-      trackingNumber: status === "shipped" || status === "delivered" ? `NIPOST-${Math.floor(rng() * 99999)}` : null,
-    } satisfies Order;
-  });
-}
-
 export function OrdersPage() {
-  const [all, setAll] = React.useState<Order[]>(() => [...ordersSource, ...buildExtraOrders()]);
+  const queryClient = useQueryClient();
+
+  const ordersQ = useQuery({
+    queryKey: ["admin", "orders"],
+    queryFn: () => adminListOrders({ limit: 200 }),
+  });
+  const all = ordersQ.data?.orders ?? [];
+
+  const refresh = React.useCallback(
+    () => queryClient.invalidateQueries({ queryKey: ["admin", "orders"] }),
+    [queryClient],
+  );
   const [search, setSearch] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<string>("all");
   const [selected, setSelected] = React.useState<Order | null>(null);
@@ -172,15 +135,26 @@ export function OrdersPage() {
     },
   ];
 
+  const shipMut = useMutation({
+    mutationFn: (order: Order) => adminMarkOrderShipped(order.id),
+    onSuccess: async () => {
+      toast.success("Marked as shipped");
+      await refresh();
+    },
+    onError: (e: Error) => toast.error(e.message || "Could not update the order"),
+  });
+
+  /**
+   * There is no refund endpoint. Money movement has to go through Paystack, and
+   * flipping a status column here would say "refunded" while the customer was
+   * never paid back. Marking shipped is the one order action that exists.
+   */
   function handleRefund() {
-    if (!refundConfirm) return;
-    setAll((prev) =>
-      prev.map((o) => (o.id === refundConfirm.id ? { ...o, status: "refunded" as OrderStatus } : o)),
-    );
-    setSelected((prev) => (prev && prev.id === refundConfirm.id ? { ...prev, status: "refunded" } : prev));
-    toast.success(`Refunded ${refundConfirm.id}`);
+    toast.error("Refunds are issued in Paystack, not here");
     setRefundConfirm(null);
   }
+
+  void shipMut;
 
   return (
     <div className="space-y-6">

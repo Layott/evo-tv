@@ -12,7 +12,13 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { ads as adsSource } from "@/lib/mock/ads";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  adminCreateAd,
+  adminDeleteAd,
+  adminListAds,
+  adminUpdateAd,
+} from "@/lib/client";
 import type { Ad, AdPlacement } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,7 +65,15 @@ function placementLabel(p: AdPlacement) {
 }
 
 export function AdsManagerPage() {
-  const [all, setAll] = React.useState<Ad[]>(() => [...adsSource]);
+  const queryClient = useQueryClient();
+
+  const adsQ = useQuery({ queryKey: ["admin", "ads"], queryFn: () => adminListAds() });
+  const all = adsQ.data ?? [];
+
+  const refresh = React.useCallback(
+    () => queryClient.invalidateQueries({ queryKey: ["admin", "ads"] }),
+    [queryClient],
+  );
   const [search, setSearch] = React.useState("");
   const [placementFilter, setPlacementFilter] = React.useState<string>("all");
   const [editing, setEditing] = React.useState<Ad | null>(null);
@@ -76,26 +90,53 @@ export function AdsManagerPage() {
     return rows;
   }, [all, search, placementFilter]);
 
+  /**
+   * Pausing an ad is the one control that has to be instant: it is how you pull
+   * a live campaign. It writes through and refetches rather than only flipping
+   * local state, which previously reverted on reload.
+   */
+  const toggleMut = useMutation({
+    mutationFn: ({ id, active }: { id: string; active: boolean }) =>
+      adminUpdateAd(id, { active }),
+    onSuccess: async (_r, v) => {
+      toast.success(v.active ? "Ad activated" : "Ad paused");
+      await refresh();
+    },
+    onError: (e: Error) => toast.error(e.message || "Could not change the ad"),
+  });
+
+  const saveMut = useMutation({
+    mutationFn: (ad: Ad) => (editing ? adminUpdateAd(ad.id, ad) : adminCreateAd(ad)),
+    onSuccess: async () => {
+      toast.success(editing ? "Ad updated" : "Ad created");
+      setEditing(null);
+      setCreateOpen(false);
+      await refresh();
+    },
+    onError: (e: Error) => toast.error(e.message || "Could not save the ad"),
+  });
+
+  const deleteMut = useMutation({
+    mutationFn: (ad: Ad) => adminDeleteAd(ad.id),
+    onSuccess: async () => {
+      toast.success("Ad deleted");
+      setConfirmDelete(null);
+      await refresh();
+    },
+    onError: (e: Error) => toast.error(e.message || "Could not delete the ad"),
+  });
+
   function handleToggleActive(id: string, active: boolean) {
-    setAll((prev) => prev.map((a) => (a.id === id ? { ...a, active } : a)));
-    toast.success(active ? "Ad activated" : "Ad paused");
+    toggleMut.mutate({ id, active });
   }
 
   function handleSave(ad: Ad) {
-    setAll((prev) => {
-      const exists = prev.some((a) => a.id === ad.id);
-      return exists ? prev.map((a) => (a.id === ad.id ? ad : a)) : [ad, ...prev];
-    });
-    toast.success(editing ? "Ad updated" : "Ad created");
-    setEditing(null);
-    setCreateOpen(false);
+    saveMut.mutate(ad);
   }
 
   function handleDelete() {
     if (!confirmDelete) return;
-    setAll((prev) => prev.filter((a) => a.id !== confirmDelete.id));
-    toast.success(`Deleted ${confirmDelete.advertiser}`);
-    setConfirmDelete(null);
+    deleteMut.mutate(confirmDelete);
   }
 
   const columns: DataColumn<Ad>[] = [

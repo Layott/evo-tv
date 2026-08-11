@@ -20,70 +20,66 @@ import {
   UserPlus,
   Users,
 } from "lucide-react";
-import { listLiveStreams } from "@/lib/mock/streams";
-import { profiles } from "@/lib/mock/users";
+import {
+  adminListStreams,
+  adminListUsers,
+  adminOverviewMetrics,
+  adminViewsOverTime,
+} from "@/lib/client";
 import { MetricCard } from "./metric-card";
 import { PageHeader } from "./page-header";
 import { StatusBadge } from "./status-badge";
-import { formatCompact, formatNgn, formatNumber, seededRandom, timeAgo } from "./utils";
-
-function useSeries() {
-  return React.useMemo(() => {
-    const rng = seededRandom(42);
-    const now = Date.now();
-    return Array.from({ length: 30 }, (_, i) => {
-      const d = new Date(now - (29 - i) * 86_400_000);
-      const base = 120_000 + i * 4_800;
-      const noise = rng() * 80_000;
-      const views = Math.round(base + noise + (i % 7 === 6 ? 40_000 : 0));
-      return {
-        day: d.toLocaleDateString(undefined, { month: "short", day: "numeric" }),
-        views,
-      };
-    });
-  }, []);
-}
+import { formatCompact, formatNgn, formatNumber, timeAgo } from "./utils";
 
 export function OverviewPage() {
-  const series = useSeries();
-  const streamsQ = useQuery({ queryKey: ["admin", "live-streams"], queryFn: () => listLiveStreams() });
+  /**
+   * Every number on this page used to be invented: the 30-day chart was random
+   * noise on a rising baseline, signups were `40 + random * 40`, and the
+   * subscriber count and MRR were a seeded constant. An operator reading this
+   * dashboard would have been reading fiction. It all comes out of Postgres now.
+   */
+  const metricsQ = useQuery({
+    queryKey: ["admin", "overview-metrics"],
+    queryFn: () => adminOverviewMetrics(),
+  });
+  const seriesQ = useQuery({
+    queryKey: ["admin", "views-30d"],
+    queryFn: () => adminViewsOverTime(30),
+  });
+  const streamsQ = useQuery({
+    queryKey: ["admin", "streams-all"],
+    queryFn: () => adminListStreams({ limit: 50 }),
+  });
+  const usersQ = useQuery({
+    queryKey: ["admin", "users"],
+    queryFn: () => adminListUsers({ limit: 50 }),
+  });
 
-  const liveCount = streamsQ.data?.length ?? 0;
-  const totalViewers = (streamsQ.data ?? []).reduce((acc, s) => acc + s.viewerCount, 0);
+  const series = seriesQ.data ?? [];
+  const liveStreams = (streamsQ.data?.streams ?? []).filter((s) => s.isLive);
+  const liveCount = metricsQ.data?.liveStreams ?? liveStreams.length;
+  const totalViewers = liveStreams.reduce((acc, s) => acc + s.viewerCount, 0);
 
-  const rng = React.useMemo(() => seededRandom(7), []);
-  const signupsToday = React.useMemo(() => Math.round(40 + rng() * 40), [rng]);
-  const premiumSubs = React.useMemo(() => 1_820 + Math.round(rng() * 240), [rng]);
-  const mrr = premiumSubs * 2_500;
+  const signupsToday = metricsQ.data?.todaySignups ?? 0;
+  const premiumSubs = metricsQ.data?.activePremiumSubs ?? 0;
+  const mrr = metricsQ.data?.mrrNgn ?? 0;
 
-  const recentSignups = React.useMemo(() => {
-    return [...profiles]
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .slice(0, 5);
-  }, []);
+  const recentSignups = React.useMemo(
+    () =>
+      [...(usersQ.data?.users ?? [])]
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 5),
+    [usersQ.data],
+  );
 
-  const alerts = [
-    {
-      id: "a1",
-      tone: "amber" as const,
-      title: "Stream key rotation reminder",
-      body: "3 official streams have not rotated their key in 90+ days.",
-    },
-    {
-      id: "a2",
-      tone: "red" as const,
-      title: "Chat spike on stream_lagos_final",
-      body: "Chat activity is 4× baseline. 12 reports awaiting review.",
-    },
-    {
-      id: "a3",
-      tone: "emerald" as const,
-      title: "Premium conversions up 8%",
-      body: "Week-over-week conversion ticked up to 2.4%.",
-    },
-  ];
+  /**
+   * The alert list was three hardcoded strings, one of them naming
+   * `stream_lagos_final`, a stream that no longer exists. There is no alerting
+   * backend, so showing nothing is the honest state.
+   */
+  const alerts: Array<{ id: string; tone: "amber" | "red" | "emerald"; title: string; body: string }> = [];
 
-  const topStreams = (streamsQ.data ?? []).slice(0, 5);
+  const topStreams = liveStreams.slice(0, 5);
 
   return (
     <div className="space-y-8">

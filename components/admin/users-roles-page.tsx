@@ -4,7 +4,8 @@ import * as React from "react";
 import Link from "next/link";
 import { ExternalLink, Search } from "lucide-react";
 import { toast } from "sonner";
-import { profiles } from "@/lib/mock/users";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { adminListUsers, adminSetUserRole, adminSuspendUser } from "@/lib/client";
 import type { Profile, Role } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,7 +29,7 @@ import {
 import { DataTable, type DataColumn } from "./data-table";
 import { PageHeader } from "./page-header";
 import { StatusBadge } from "./status-badge";
-import { formatDate, seededRandom, timeAgo } from "./utils";
+import { formatDate, timeAgo } from "./utils";
 
 interface AdminProfile extends Profile {
   lastActive: string;
@@ -42,17 +43,30 @@ function roleTone(role: Role): "emerald" | "amber" | "blue" | "neutral" {
   return "neutral";
 }
 
-function buildInitial(): AdminProfile[] {
-  const rng = seededRandom(11);
-  return profiles.map((p) => ({
-    ...p,
-    suspended: false,
-    lastActive: new Date(Date.now() - Math.floor(rng() * 48) * 3_600_000).toISOString(),
-  }));
-}
-
 export function UsersRolesPage() {
-  const [all, setAll] = React.useState<AdminProfile[]>(() => buildInitial());
+  const queryClient = useQueryClient();
+
+  const usersQ = useQuery({
+    queryKey: ["admin", "users"],
+    queryFn: () => adminListUsers({ limit: 200 }),
+  });
+
+  // `lastActive` and `suspended` are not on the users endpoint yet, so they are
+  // filled from what the row does carry rather than invented per render.
+  const all: AdminProfile[] = React.useMemo(
+    () =>
+      (usersQ.data?.users ?? []).map((p) => ({
+        ...p,
+        suspended: Boolean((p as { suspended?: boolean }).suspended),
+        lastActive: (p as { lastActive?: string }).lastActive ?? p.createdAt,
+      })),
+    [usersQ.data],
+  );
+
+  const refresh = React.useCallback(
+    () => queryClient.invalidateQueries({ queryKey: ["admin", "users"] }),
+    [queryClient],
+  );
   const [search, setSearch] = React.useState("");
   const [roleFilter, setRoleFilter] = React.useState<string>("all");
   const [selected, setSelected] = React.useState<AdminProfile | null>(null);
@@ -130,16 +144,41 @@ export function UsersRolesPage() {
     },
   ];
 
+  const roleMut = useMutation({
+    mutationFn: ({ id, role }: { id: string; role: Role }) =>
+      adminSetUserRole(id, role as "user" | "premium" | "creator" | "admin"),
+    onSuccess: async (_r, v) => {
+      setSelected((prev) => (prev && prev.id === v.id ? { ...prev, role: v.role } : prev));
+      toast.success(`Role changed to ${v.role}`);
+      await refresh();
+    },
+    onError: (e: Error) => toast.error(e.message || "Could not change the role"),
+  });
+
+  const suspendMut = useMutation({
+    mutationFn: ({ id }: { id: string; suspended: boolean }) => adminSuspendUser(id),
+    onSuccess: async (_r, v) => {
+      toast.success("User suspended");
+      await refresh();
+    },
+    onError: (e: Error) => toast.error(e.message || "Could not suspend the user"),
+  });
+
   function handleRoleChange(id: string, role: Role) {
-    setAll((prev) => prev.map((p) => (p.id === id ? { ...p, role } : p)));
-    setSelected((prev) => (prev && prev.id === id ? { ...prev, role } : prev));
-    toast.success(`Role changed to ${role}`);
+    roleMut.mutate({ id, role });
   }
 
+  /**
+   * Lifting a suspension needs the sanction id, which this list does not carry,
+   * so only issuing one is wired. The moderation page is where a sanction is
+   * reviewed and lifted.
+   */
   function handleSuspendToggle(id: string, suspended: boolean) {
-    setAll((prev) => prev.map((p) => (p.id === id ? { ...p, suspended } : p)));
-    setSelected((prev) => (prev && prev.id === id ? { ...prev, suspended } : prev));
-    toast.success(suspended ? "User suspended" : "Suspension lifted");
+    if (!suspended) {
+      toast.error("Lift a suspension from the Moderation page");
+      return;
+    }
+    suspendMut.mutate({ id, suspended });
   }
 
   return (
