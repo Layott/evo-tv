@@ -12,10 +12,19 @@
 #   0    3 * * 0   /srv/evotv/cron.sh payouts
 #   0    4 * * 0   /srv/evotv/cron.sh gdpr-purge
 #   0    5 * * *   /srv/evotv/cron.sh fantasy-score
-#   */5  * * * *   /srv/evotv/cron.sh viewer-count
+#   */2  * * * *   /srv/evotv/cron.sh reconcile-live
 #   */15 * * * *   /srv/evotv/cron.sh reminders
+#   */2  * * * *   /srv/evotv/autodeploy.sh
 #
-# viewer-count and reminders were never scheduled on Vercel. They are now.
+# reconcile-live REPLACES the old viewer-count job, which no longer exists:
+# viewer counts are derived at read time from watch_events now, so nothing
+# needs to precompute them. A crontab still calling viewer-count gets a 404
+# every five minutes.
+#
+# reconcile-live is what ends a broadcast when the encoder vanished without
+# nginx's on-publish-done callback arriving, so a stream is not left
+# advertised as live all night. Every two minutes because that is the window
+# a viewer would otherwise stare at a dead player.
 
 set -euo pipefail
 

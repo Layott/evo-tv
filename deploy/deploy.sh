@@ -24,6 +24,7 @@ BRANCH="${1:-main}"
 API_SERVICES=(api-1 api-2)
 HEALTH_TIMEOUT=120
 CADDY_CHANGED=0
+RTMP_CONF_CHANGED=0
 
 cd "$ROOT/api"
 echo "==> pulling $BRANCH"
@@ -37,14 +38,15 @@ cd "$ROOT"
 # this sync a Caddyfile or compose change would be committed, pulled, and then
 # silently ignored, because deploy.sh only ever rebuilt the api image.
 echo "==> syncing deploy files from the repo"
-for f in Caddyfile docker-compose.yml cron.sh; do
+for f in Caddyfile docker-compose.yml cron.sh autodeploy.sh nginx-rtmp.conf cloudflare-firewall.sh; do
 	if ! cmp -s "$ROOT/api/deploy/$f" "$ROOT/$f"; then
 		cp "$ROOT/api/deploy/$f" "$ROOT/$f"
 		echo "    updated $f"
 		[ "$f" = "Caddyfile" ] && CADDY_CHANGED=1
+		[ "$f" = "nginx-rtmp.conf" ] && RTMP_CONF_CHANGED=1
 	fi
 done
-chmod +x "$ROOT/cron.sh"
+chmod +x "$ROOT/cron.sh" "$ROOT/autodeploy.sh" "$ROOT/cloudflare-firewall.sh"
 
 echo "==> building image ($SHA)"
 docker compose build api-1
@@ -86,6 +88,18 @@ for svc in "${API_SERVICES[@]}"; do
 	docker compose up -d --no-deps --force-recreate "$svc"
 	wait_healthy "$svc"
 done
+
+# nginx-rtmp reads its config once at start, and the file is bind mounted from
+# $ROOT, so a changed on_publish callback or DVR window does nothing until the
+# container is recreated. Only touched when the rtmp profile is actually up:
+# `ps -q` is empty otherwise and this is skipped, so a Cloudflare-only
+# deployment never sees it.
+if [ "$RTMP_CONF_CHANGED" = "1" ] && [ -n "$(docker compose ps -q nginx-rtmp 2>/dev/null)" ]; then
+	echo "==> restarting nginx-rtmp (config changed)"
+	# Interrupts any broadcast in progress. There is no reload for the RTMP
+	# module, so this is the honest cost of changing that file.
+	docker compose --profile rtmp up -d --no-deps --force-recreate nginx-rtmp
+fi
 
 if [ "$CADDY_CHANGED" = "1" ]; then
 	# Reload rather than restart: Caddy swaps config with no dropped
