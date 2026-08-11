@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { and, eq, isNull } from "drizzle-orm";
 
 import { db, schema } from "@/lib/db";
+import { getCurrentUser } from "@/lib/auth/guards";
 import { liveViewerCounts } from "@/lib/api/streams";
 import { listScheduleForDay, type EpgRow } from "@/lib/api/schedule";
 import { zonedDateKey } from "@/lib/epg/grid";
@@ -31,6 +32,7 @@ export interface MainChannelResponse {
     thumbnailUrl: string;
     isLive: boolean;
     hlsUrl: string;
+    requiresAuth?: true;
     viewerCount: number;
     startedAt: string | null;
   } | null;
@@ -92,6 +94,10 @@ export async function GET() {
   // is only meaningful for a stream that ended.
   const counts = row.isLive ? await liveViewerCounts([row.id]) : new Map();
 
+  // Same gate as every other stream endpoint: watching needs an account, so a
+  // signed-out caller gets everything except the manifest.
+  const signedIn = Boolean(await getCurrentUser());
+
   return NextResponse.json({
     channel: {
       id: row.id,
@@ -100,7 +106,8 @@ export async function GET() {
       posterUrl: row.posterUrl,
       thumbnailUrl: row.thumbnailUrl,
       isLive: row.isLive,
-      hlsUrl: row.hlsPath,
+      hlsUrl: signedIn ? row.hlsPath : "",
+      requiresAuth: signedIn ? undefined : (true as const),
       viewerCount: counts.get(row.id) ?? 0,
       startedAt: row.startedAt ?? null,
     },

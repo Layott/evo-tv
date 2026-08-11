@@ -8,6 +8,7 @@ import {
   Plus,
   RefreshCw,
   Radio,
+  Star,
   Search,
   Trash2,
 } from "lucide-react";
@@ -279,6 +280,22 @@ export function StreamsManagerPage() {
     onError: (err: Error) => toast.error(err.message || "Could not regenerate the key"),
   });
 
+  const mainChannelMut = useMutation({
+    mutationFn: ({ row, value }: { row: Stream; value: boolean }) =>
+      adminUpdateStream(row.id, { isMainChannel: value }),
+    onSuccess: async (_res, vars) => {
+      toast.success(
+        vars.value
+          ? "This is now the main channel"
+          : "No longer the main channel",
+      );
+      setSelected(null);
+      await refreshStreams();
+    },
+    onError: (err: Error) =>
+      toast.error(err.message || "Could not change the main channel"),
+  });
+
   const deleteMut = useMutation({
     mutationFn: (row: Stream) => adminDeleteStream(row.id),
     onSuccess: async () => {
@@ -496,6 +513,32 @@ export function StreamsManagerPage() {
                     </Row>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">
+                    {/* The flagship. Exactly one stream can hold it; the API
+                        demotes the incumbent, so this is a plain toggle rather
+                        than a two-step the operator has to remember. */}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className={
+                        (selected as Stream & { isMainChannel?: boolean })
+                          .isMainChannel
+                          ? "border-sky-500/60 bg-sky-500/10 text-sky-200 hover:bg-sky-500/20"
+                          : "border-neutral-700 bg-neutral-900 text-neutral-200 hover:bg-neutral-800"
+                      }
+                      onClick={() =>
+                        mainChannelMut.mutate({
+                          row: selected,
+                          value: !(selected as Stream & { isMainChannel?: boolean })
+                            .isMainChannel,
+                        })
+                      }
+                    >
+                      <Star className="h-3.5 w-3.5" />
+                      {(selected as Stream & { isMainChannel?: boolean })
+                        .isMainChannel
+                        ? "Main channel"
+                        : "Make main channel"}
+                    </Button>
                     <Button
                       variant="outline"
                       size="sm"

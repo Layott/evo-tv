@@ -112,6 +112,9 @@ export async function PATCH(
     isLive?: boolean;
     pillar?: string;
     gameId?: string | null;
+    isMainChannel?: boolean;
+    posterUrl?: string;
+    tagline?: string;
   } | null;
   if (!body) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
@@ -131,6 +134,9 @@ export async function PATCH(
     viewerCount?: number;
     pillar?: "esports" | "anime" | "lifestyle";
     gameId?: string | null;
+    isMainChannel?: boolean;
+    posterUrl?: string;
+    tagline?: string;
   } = {};
 
   // Pillar and game are editable, so a programme filed under the wrong one can
@@ -156,6 +162,48 @@ export async function PATCH(
     }
     // Null is meaningful: an anime or lifestyle programme has no game.
     update.gameId = v === "" ? null : v;
+  }
+
+  /*
+   * The flagship channel. At most one stream may hold it, enforced by a partial
+   * unique index, so promoting one has to demote the incumbent first or the
+   * insert fails. Doing it here rather than asking an operator to remember is
+   * the difference between a setting and a footgun.
+   */
+  if ("isMainChannel" in body) {
+    if (typeof body.isMainChannel !== "boolean") {
+      return NextResponse.json(
+        { error: "isMainChannel must be a boolean" },
+        { status: 400 },
+      );
+    }
+    if (body.isMainChannel) {
+      await db
+        .update(schema.streams)
+        .set({ isMainChannel: false })
+        .where(eq(schema.streams.isMainChannel, true));
+    }
+    update.isMainChannel = body.isMainChannel;
+  }
+
+  if ("posterUrl" in body) {
+    if (typeof body.posterUrl !== "string") {
+      return NextResponse.json(
+        { error: "posterUrl must be a string" },
+        { status: 400 },
+      );
+    }
+    update.posterUrl = body.posterUrl.trim();
+  }
+
+  if ("tagline" in body) {
+    if (typeof body.tagline !== "string") {
+      return NextResponse.json(
+        { error: "tagline must be a string" },
+        { status: 400 },
+      );
+    }
+    update.tagline = body.tagline.trim().slice(0, 160);
   }
 
   if ("isLive" in body) {

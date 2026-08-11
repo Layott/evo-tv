@@ -10,6 +10,7 @@ import {
   listVods,
 } from "@/lib/client";
 import { useAuth } from "@/components/providers";
+import { MainChannelHero } from "@/components/home/main-channel";
 import HeroCarousel from "@/components/home/hero-carousel";
 import LiveNow from "@/components/home/live-now-section";
 import UpcomingEvents from "@/components/home/upcoming-events-section";
@@ -53,6 +54,10 @@ export default function HomePage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 px-4 py-6">
+      {/* Fixed prime position. The channel comes before the catalogue, and
+          stays put whether or not it is broadcasting. */}
+      <MainChannelHero />
+
       <HeroCarousel streams={featured.data ?? []} />
 
       {role !== "premium" && <AdBanner />}

@@ -137,6 +137,8 @@ export interface Stream {
    * input, our own nginx-rtmp, or a manifest URL pasted by hand.
    */
   ingestKind: "manual" | "cloudflare" | "rtmp";
+  /** The flagship channel. At most one stream carries this. */
+  isMainChannel?: boolean;
   /** Null for anime, lifestyle and podcast programmes. */
   gameId: UUID | null;
   channelId?: UUID | null;

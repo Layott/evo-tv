@@ -114,7 +114,13 @@ export async function adminGetStreamIngest(
 
 export async function adminUpdateStream(
   id: string,
-  patch: Partial<CreateStreamInput> & { isLive?: boolean },
+  patch: Partial<CreateStreamInput> & {
+    isLive?: boolean;
+    /** Promote this stream to the flagship. The API demotes the incumbent. */
+    isMainChannel?: boolean;
+    posterUrl?: string;
+    tagline?: string;
+  },
 ): Promise<{ stream: Stream }> {
   return apiSend("PATCH", `/api/admin/streams/${encodeURIComponent(id)}`, patch);
 }

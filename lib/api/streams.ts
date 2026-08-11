@@ -55,6 +55,7 @@ function toStream(r: typeof schema.streams.$inferSelect): Stream {
     endedAt: r.endedAt,
     hlsUrl: r.hlsPath,
     ingestKind: r.ingestKind ?? "manual",
+    isMainChannel: r.isMainChannel ?? false,
     thumbnailUrl: r.thumbnailUrl,
     viewerCount: r.viewerCount,
     peakViewerCount: r.peakViewerCount,
