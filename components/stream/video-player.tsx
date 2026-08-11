@@ -324,6 +324,17 @@ export function VideoPlayer({
    */
   const [seekStart, setSeekStart] = React.useState(0);
   const [seekEnd, setSeekEnd] = React.useState(0);
+  /**
+   * The handle position while dragging.
+   *
+   * Null when not dragging, and the slider reads `currentTime` as usual. While
+   * dragging it is the authority, because `timeupdate` fires about four times a
+   * second and would otherwise yank the handle back under the pointer between
+   * frames. That fight is what made scrubbing feel like it was resisting.
+   */
+  const [scrubValue, setScrubValue] = React.useState<number | null>(null);
+  /** Ref, not state: the timeupdate listener reads it without re-subscribing. */
+  const scrubbingRef = React.useRef(false);
   const [isFullscreen, setIsFullscreen] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(false);
@@ -407,7 +418,10 @@ export function VideoPlayer({
     const onTime = () => {
       setCurrentTime(v.currentTime);
       onTimeUpdate?.(v.currentTime);
-      if (v.seekable.length > 0) {
+      // Frozen while dragging. The live window slides forward continuously, so
+      // updating min and max mid-gesture moves the whole scale under the
+      // pointer and the handle appears to drift on its own.
+      if (v.seekable.length > 0 && !scrubbingRef.current) {
         setSeekStart(v.seekable.start(0));
         setSeekEnd(v.seekable.end(v.seekable.length - 1));
       }
@@ -592,14 +606,35 @@ export function VideoPlayer({
   /** Seconds behind the live edge. Zero when watching live or not live. */
   const behindLiveSec = isLive && seekEnd > 0 ? Math.max(0, seekEnd - currentTime) : 0;
 
-  const handleSeek = (values: number[]) => {
+  /**
+   * Dragging moves the handle only. The seek happens once, on release.
+   *
+   * Seeking on every drag frame asks the player to flush and refill its buffer
+   * dozens of times across one gesture, so the picture stutters and the handle
+   * stalls behind the pointer. One seek at the end is both smoother and less
+   * work.
+   */
+  const handleScrub = (values: number[]) => {
+    const next = values[0];
+    if (typeof next !== "number") return;
+    scrubbingRef.current = true;
+    setScrubValue(next);
+  };
+
+  const handleSeekCommit = (values: number[]) => {
     const v = videoRef.current;
     const next = values[0];
+    scrubbingRef.current = false;
+    setScrubValue(null);
     if (!v || typeof next !== "number") return;
     // Never land exactly on the live edge: that position has no buffered data
     // yet, so it re-buffers immediately and looks like a failed seek.
     const max = isLive && seekEnd > 0 ? Math.max(seekStart, seekEnd - 0.5) : next;
-    v.currentTime = isLive ? Math.min(next, max) : next;
+    const target = isLive ? Math.min(next, max) : next;
+    v.currentTime = target;
+    // Reflect it immediately rather than waiting for the next timeupdate, so
+    // the handle does not jump back for a frame after release.
+    setCurrentTime(target);
   };
 
   /** Jump back to the live edge after scrubbing into the DVR window. */
@@ -785,14 +820,17 @@ export function VideoPlayer({
               holds five minutes. Dragging did nothing at all. */}
           <Slider
             value={[
-              isLive
-                ? Math.min(Math.max(currentTime, seekStart), seekEnd || seekStart + 1)
-                : Math.min(currentTime, duration || 0),
+              scrubValue !== null
+                ? scrubValue
+                : isLive
+                  ? Math.min(Math.max(currentTime, seekStart), seekEnd || seekStart + 1)
+                  : Math.min(currentTime, duration || 0),
             ]}
             min={isLive ? seekStart : 0}
             max={isLive ? seekEnd || seekStart + 1 : duration || 1}
             step={0.1}
-            onValueChange={handleSeek}
+            onValueChange={handleScrub}
+            onValueCommit={handleSeekCommit}
             className="w-full"
             disabled={error || (isLive && seekEnd - seekStart < 5)}
           />
