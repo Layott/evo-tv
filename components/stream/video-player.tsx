@@ -201,9 +201,26 @@ export function VideoPlayer({
       const instance = new Hls({
         // Sit ~12s behind the edge instead of ~6s.
         liveSyncDurationCount: 6,
-        // How far behind before it seeks forward to catch up. Must comfortably
-        // exceed the sync count, or it fights its own buffer.
-        liveMaxLatencyDurationCount: 20,
+        /*
+         * How far behind hls.js tolerates before it seeks the viewer forward.
+         *
+         * This is counted in fragments, so at 2s fragments the value of 20 it
+         * held meant a 40 second ceiling: scrubbing further back than that was
+         * silently undone within a couple of seconds, which is exactly what
+         * "the slider does not work" looked like. Measured on the live stream,
+         * 20s and 35s back held and 60s and 150s were both dragged back to
+         * about 13s behind.
+         *
+         * nginx keeps a 300s DVR window, which is 150 fragments, so anything
+         * below that fights the scrub bar. 200 clears the whole window with
+         * headroom, and being behind is then the viewer's choice rather than
+         * something the player overrides. The "Go live" control is how they
+         * come back.
+         *
+         * Keep this above `hls_playlist_length / hls_fragment` whenever either
+         * of those changes in nginx.conf.
+         */
+        liveMaxLatencyDurationCount: 200,
         // Buffer ahead aggressively when bandwidth allows.
         maxBufferLength: 60,
         maxMaxBufferLength: 120,
