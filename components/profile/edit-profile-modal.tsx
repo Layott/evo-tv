@@ -69,7 +69,9 @@ export function EditProfileModal({ open, onOpenChange, profile, onSave }: Props)
   }, [open, profile, reset]);
 
   async function onSubmit(values: Values) {
-    await new Promise((r) => setTimeout(r, 600));
+    // `onSave` PATCHes /api/users/me, so this is real. The 600ms sleep that
+    // used to sit here was left over from the mock era and only made a working
+    // save feel slower than it is.
     onSave({
       displayName: values.displayName,
       handle: values.handle,

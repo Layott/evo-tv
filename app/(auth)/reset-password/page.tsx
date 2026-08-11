@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -12,9 +12,18 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { PasswordStrengthMeter } from "@/components/auth/password-strength";
+import { TextField } from "@/components/auth/form-field";
+import { authClient } from "@/lib/auth/client";
 
 const schema = z
   .object({
+    // The address the code was sent to. Prefilled from the query string when
+    // arriving from /forgot-password, editable in case someone lands here
+    // directly with the code from their inbox.
+    email: z.string().email("Enter a valid email"),
+    otp: z
+      .string()
+      .regex(/^\d{6}$/, "The code is six digits"),
     password: z.string().min(8, "Password must be at least 8 characters"),
     confirmPassword: z.string().min(8, "Please confirm your password"),
   })
@@ -26,7 +35,18 @@ const schema = z
 type Values = z.infer<typeof schema>;
 
 export default function ResetPasswordPage() {
+  // useSearchParams needs a Suspense boundary above it or `next build` fails
+  // prerendering the static shell for this route.
+  return (
+    <React.Suspense fallback={null}>
+      <ResetPasswordForm />
+    </React.Suspense>
+  );
+}
+
+function ResetPasswordForm() {
   const router = useRouter();
+  const params = useSearchParams();
 
   const {
     register,
@@ -35,13 +55,42 @@ export default function ResetPasswordPage() {
     formState: { errors, isSubmitting },
   } = useForm<Values>({
     resolver: zodResolver(schema),
-    defaultValues: { password: "", confirmPassword: "" },
+    defaultValues: {
+      email: params.get("email") ?? "",
+      otp: "",
+      password: "",
+      confirmPassword: "",
+    },
   });
 
   const password = watch("password");
 
-  const onSubmit = async (_values: Values) => {
-    await new Promise((r) => setTimeout(r, 600));
+  /**
+   * Actually reset the password.
+   *
+   * This slept for 600ms, said "Password updated", and sent the user to the
+   * sign-in screen with their old password still in force. Someone following
+   * the reset flow would have been told it worked and then locked out again by
+   * a password they had just been told was replaced.
+   *
+   * The code is the proof of ownership, so it is collected here rather than
+   * being embedded in a link. That also means a code read off a phone works on
+   * a desktop, which a link in a mobile mailbox does not.
+   */
+  const onSubmit = async (values: Values) => {
+    const { error } = await authClient.emailOtp.resetPassword({
+      email: values.email,
+      otp: values.otp,
+      password: values.password,
+    });
+
+    if (error) {
+      toast.error(
+        error.message ?? "That code was not accepted. Request a new one.",
+      );
+      return;
+    }
+
     toast.success("Password updated", {
       description: "Sign in with your new password.",
     });
@@ -65,6 +114,29 @@ export default function ResetPasswordPage() {
         className="space-y-4 rounded-2xl border border-neutral-800 bg-neutral-900/50 p-6"
         noValidate
       >
+        {/* The code proves ownership of the address, so both are collected
+            before a new password is accepted. */}
+        <TextField
+          id="email"
+          label="Email"
+          type="email"
+          placeholder="you@example.com"
+          autoComplete="email"
+          error={errors.email?.message}
+          {...register("email")}
+        />
+
+        <TextField
+          id="otp"
+          label="Six digit code"
+          inputMode="numeric"
+          placeholder="123456"
+          autoComplete="one-time-code"
+          maxLength={6}
+          error={errors.otp?.message}
+          {...register("otp")}
+        />
+
         <div className="space-y-1.5">
           <Label htmlFor="password" className="text-neutral-200 font-semibold">
             New password

@@ -2,6 +2,7 @@ import "server-only";
 import { Resend } from "resend";
 
 import { log } from "@/lib/log";
+import { isMailConfigured, sendMail } from "./index";
 
 const FROM = process.env.EMAIL_FROM ?? "EVO TV <noreply@evo.tv>";
 
@@ -21,12 +22,18 @@ function getResend(): Resend | null {
 }
 
 /**
- * Send a transactional email. Falls back to console.log when
- * `RESEND_API_KEY` is unset so dev environments don't need a real provider
- * — the OTP is still printed so testers can copy it from the server log.
+ * Send a transactional email: Resend first, SMTP second, console last.
  *
- * Throws on Resend API error so call sites can surface the failure to the
- * user (Better-Auth surfaces this as a sign-up error toast).
+ * This used Resend and nothing else, and threw when Resend refused. Production
+ * had an invalid RESEND_API_KEY, so every password reset code and every
+ * verification email failed with "API key is invalid" while a perfectly good
+ * Gmail SMTP transport sat configured and unused in the same environment. From
+ * the outside it looked like the emails simply never arrived.
+ *
+ * One provider is a single point of failure for the only channel that can get
+ * a locked-out user back in. Two providers, tried in order, is the fix; the
+ * failure of the first is logged rather than swallowed, so a bad key is still
+ * visible instead of being quietly masked forever.
  */
 export async function sendEmail({
   to,
@@ -35,16 +42,40 @@ export async function sendEmail({
   html,
 }: SendEmailParams): Promise<{ id: string }> {
   const resend = getResend();
-  if (!resend) {
-    log.info("email.send.console_fallback", { to, subject, preview: text });
-    return { id: `console_${Date.now()}` };
+
+  if (resend) {
+    try {
+      const result = await resend.emails.send({
+        from: FROM,
+        to,
+        subject,
+        text,
+        html,
+      });
+      if ("error" in result && result.error) {
+        throw new Error(result.error.message);
+      }
+      const id = (result as { data?: { id?: string } }).data?.id ?? "unknown";
+      log.info("email.send.ok", { to, subject, id, via: "resend" });
+      return { id };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      // Warn, do not throw: SMTP may still deliver it.
+      log.warn("email.send.failed", { to, subject, via: "resend", error: message });
+      if (!isMailConfigured()) {
+        throw new Error(`Email send failed: ${message}`);
+      }
+    }
   }
-  const result = await resend.emails.send({ from: FROM, to, subject, text, html });
-  if ("error" in result && result.error) {
-    log.warn("email.send.failed", { to, subject, error: result.error });
-    throw new Error(`Email send failed: ${result.error.message}`);
+
+  if (isMailConfigured()) {
+    await sendMail({ to, subject, html, text });
+    log.info("email.send.ok", { to, subject, id: "smtp", via: "smtp" });
+    return { id: `smtp_${Date.now()}` };
   }
-  const id = (result as { data?: { id?: string } }).data?.id ?? "unknown";
-  log.info("email.send.ok", { to, subject, id });
-  return { id };
+
+  // No provider at all. Print it so local development can read the code out of
+  // the server log rather than needing an account anywhere.
+  log.info("email.send.console_fallback", { to, subject, preview: text });
+  return { id: `console_${Date.now()}` };
 }

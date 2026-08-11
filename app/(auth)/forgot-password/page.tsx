@@ -11,6 +11,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { TextField } from "@/components/auth/form-field";
+import { authClient } from "@/lib/auth/client";
 
 const schema = z.object({
   email: z.string().email("Enter a valid email"),
@@ -31,13 +32,37 @@ export default function ForgotPasswordPage() {
     defaultValues: { email: "" },
   });
 
-  const onSubmit = async (_values: Values) => {
-    await new Promise((r) => setTimeout(r, 600));
-    setSent(true);
-    toast.success("Reset link sent", {
-      description: "Check your inbox for instructions.",
+  /**
+   * Send a real reset code.
+   *
+   * This slept for 600ms and then claimed "Reset link sent". It called nothing.
+   * Anyone locked out followed the instruction, waited for an email that was
+   * never requested, and had no way back into their account.
+   *
+   * It is a six digit code rather than a link, which is what the server's
+   * emailOTP plugin issues, so the copy says code and the next screen asks for
+   * one.
+   */
+  const onSubmit = async (values: Values) => {
+    const { error } = await authClient.emailOtp.sendVerificationOtp({
+      email: values.email,
+      type: "forget-password",
     });
-    setTimeout(() => router.push("/login"), 1500);
+
+    if (error) {
+      toast.error(error.message ?? "Could not send the code. Try again.");
+      return;
+    }
+
+    setSent(true);
+    toast.success("Code sent", {
+      description: "Check your inbox for a six digit code.",
+    });
+    // Carry the address forward so the reset screen does not ask for it twice.
+    setTimeout(
+      () => router.push(`/reset-password?email=${encodeURIComponent(values.email)}`),
+      1200,
+    );
   };
 
   return (
@@ -55,8 +80,8 @@ export default function ForgotPasswordPage() {
         </h1>
         <p className="text-sm text-neutral-400">
           {sent
-            ? "We sent you a link to reset your password. Redirecting to sign in…"
-            : "Enter your email and we'll send you a password reset link."}
+            ? "We sent a six digit code to your inbox. Taking you to the next step…"
+            : "Enter your email and we'll send you a six digit code to reset your password."}
         </p>
       </div>
 

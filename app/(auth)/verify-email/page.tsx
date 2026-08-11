@@ -7,9 +7,22 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { authClient } from "@/lib/auth/client";
 
-const MOCK_EMAIL = "ade***@gmail.com";
 const RESEND_COOLDOWN = 30;
+
+/**
+ * Show enough of the address to recognise it, not enough to leak it on a
+ * shared screen. `MOCK_EMAIL = "ade***@gmail.com"` used to be hardcoded here
+ * and shown to every user as their own address, which is worse than showing
+ * nothing: it tells someone the code went somewhere it did not.
+ */
+function maskEmail(email: string): string {
+  const [name, domain] = email.split("@");
+  if (!name || !domain) return email;
+  const head = name.slice(0, Math.min(3, name.length));
+  return `${head}${"*".repeat(Math.max(1, name.length - head.length))}@${domain}`;
+}
 
 export default function VerifyEmailPage() {
   const router = useRouter();
@@ -17,6 +30,8 @@ export default function VerifyEmailPage() {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [cooldown, setCooldown] = React.useState(RESEND_COOLDOWN);
+  const { data: session } = authClient.useSession();
+  const email = session?.user?.email ?? "";
 
   React.useEffect(() => {
     if (cooldown <= 0) return;
@@ -24,6 +39,13 @@ export default function VerifyEmailPage() {
     return () => clearInterval(t);
   }, [cooldown]);
 
+  /**
+   * Verify for real.
+   *
+   * This slept for 600ms, said "Email verified", and sent the user to
+   * onboarding with `email_verified` still false. Any code at all was accepted,
+   * including one typed at random, so the screen proved nothing.
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -31,17 +53,42 @@ export default function VerifyEmailPage() {
       setError("Enter the 6-digit code");
       return;
     }
+    if (!email) {
+      setError("Sign in first, then verify this address.");
+      return;
+    }
     setIsSubmitting(true);
-    await new Promise((r) => setTimeout(r, 600));
-    toast.success("Email verified");
+    const { error: err } = await authClient.emailOtp.verifyEmail({
+      email,
+      otp: code,
+    });
     setIsSubmitting(false);
+
+    if (err) {
+      setError(err.message ?? "That code was not accepted. Request a new one.");
+      return;
+    }
+
+    toast.success("Email verified");
     router.push("/onboarding");
   };
 
-  const handleResend = () => {
-    if (cooldown > 0) return;
+  const handleResend = async () => {
+    if (cooldown > 0 || !email) return;
+    const { error: err } = await authClient.emailOtp.sendVerificationOtp({
+      email,
+      type: "email-verification",
+    });
+    if (err) {
+      toast.error(err.message ?? "Could not resend the code.");
+      return;
+    }
+    // Only start the cooldown once something was actually sent, so a failed
+    // attempt does not lock the button for 30 seconds.
     setCooldown(RESEND_COOLDOWN);
-    toast.success("Verification code resent", { description: `Sent to ${MOCK_EMAIL}` });
+    toast.success("Verification code resent", {
+      description: `Sent to ${maskEmail(email)}`,
+    });
   };
 
   return (
@@ -52,8 +99,16 @@ export default function VerifyEmailPage() {
         </div>
         <h1 className="text-2xl font-bold tracking-tight text-neutral-50">Verify your email</h1>
         <p className="text-sm text-neutral-400">
-          We sent a 6-digit code to{" "}
-          <span className="font-mono font-semibold text-neutral-200">{MOCK_EMAIL}</span>
+          {email ? (
+            <>
+              We sent a 6-digit code to{" "}
+              <span className="font-mono font-semibold text-neutral-200">
+                {maskEmail(email)}
+              </span>
+            </>
+          ) : (
+            "Sign in first, then come back to verify your address."
+          )}
         </p>
       </div>
 
