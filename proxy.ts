@@ -84,7 +84,22 @@ export function proxy(req: NextRequest) {
   }
 
   // Page-level auth routing for everything else.
-  const role = req.cookies.get("evotv_role")?.value ?? "guest";
+  //
+  // Whether someone is signed in comes from the Better-Auth session cookie,
+  // which the server sets and the browser cannot forge. `evotv_role` is written
+  // by the client after the profile loads, so it lags a fresh sign-in by a
+  // round trip: gating on it bounced admins straight back to the login page
+  // they had just used.
+  //
+  // Role is therefore a hint here and nothing more. Real enforcement is
+  // `AdminGuard`, which reads the resolved session, and every /api/admin route,
+  // which re-checks server-side and 403s.
+  const signedIn =
+    req.cookies.has("evotv.session_token") ||
+    req.cookies.has("__Secure-evotv.session_token");
+  const role = signedIn
+    ? (req.cookies.get("evotv_role")?.value ?? "user")
+    : "guest";
 
   // `/` is the public landing page. Signed-in users are sent to the app before
   // it renders, so the landing stays a pure guest surface and never has to
@@ -95,8 +110,10 @@ export function proxy(req: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Only the signed-out are turned away here; a signed-in non-admin gets the
+  // "Admin access required" screen from AdminGuard rather than a redirect loop.
   if (pathname.startsWith(ADMIN_PREFIX)) {
-    if (role !== "admin") {
+    if (!signedIn) {
       const url = req.nextUrl.clone();
       url.pathname = "/login";
       url.searchParams.set("next", pathname);

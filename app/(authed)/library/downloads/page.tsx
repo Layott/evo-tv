@@ -33,7 +33,7 @@ const READY_STATUSES: DownloadStatus[] = ["ready"];
 const ARCHIVE_STATUSES: DownloadStatus[] = ["expired", "failed"];
 
 export default function DownloadsPage() {
-  const { user, role } = useAuth();
+  const { user, role, ready } = useAuth();
   const [downloads, setDownloads] = React.useState<OfflineDownload[] | null>(null);
   const [search, setSearch] = React.useState("");
 
@@ -90,7 +90,16 @@ export default function DownloadsPage() {
     void refresh();
   }
 
-  // Premium-only feature gate
+  // Premium-only feature gate. `ready` first: role is "guest" until the
+  // session resolves, which would flash the paywall at a paying member.
+  if (!ready) {
+    return (
+      <div className="mx-auto max-w-3xl px-4 py-10 text-center text-sm text-neutral-500">
+        Checking your plan…
+      </div>
+    );
+  }
+
   if (role !== "premium" && role !== "admin") {
     return (
       <div className="mx-auto max-w-3xl px-4 py-10 sm:py-16 text-center">

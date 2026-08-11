@@ -3,10 +3,17 @@
 import * as React from "react";
 import { Plus, Search, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
-import { games as gamesSource } from "@/lib/mock/games";
-import { teams as teamsSource } from "@/lib/mock/teams";
-import { players as playersSource } from "@/lib/mock/players";
-import { events as eventsSource } from "@/lib/mock/events";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  adminCreateEvent,
+  adminCreateGame,
+  adminCreatePlayer,
+  adminCreateTeam,
+  adminListEvents,
+  adminListGames,
+  adminListPlayers,
+  adminListTeams,
+} from "@/lib/client";
 import type {
   EsportsEvent,
   EventStatus,
@@ -53,10 +60,22 @@ type ContentTab = "games" | "teams" | "players" | "events";
 export function ContentManagerPage() {
   const [tab, setTab] = React.useState<ContentTab>("games");
 
-  const [games, setGames] = React.useState<Game[]>(() => [...gamesSource]);
-  const [teams, setTeams] = React.useState<Team[]>(() => [...teamsSource]);
-  const [players, setPlayers] = React.useState<Player[]>(() => [...playersSource]);
-  const [events, setEvents] = React.useState<EsportsEvent[]>(() => [...eventsSource]);
+  const queryClient = useQueryClient();
+
+  const gamesQ = useQuery({ queryKey: ["admin", "games"], queryFn: () => adminListGames() });
+  const teamsQ = useQuery({ queryKey: ["admin", "teams"], queryFn: () => adminListTeams() });
+  const playersQ = useQuery({ queryKey: ["admin", "players"], queryFn: () => adminListPlayers() });
+  const eventsQ = useQuery({ queryKey: ["admin", "events"], queryFn: () => adminListEvents() });
+
+  const games = gamesQ.data ?? [];
+  const teams = teamsQ.data ?? [];
+  const players = playersQ.data ?? [];
+  const events = eventsQ.data ?? [];
+
+  const refresh = React.useCallback(
+    (key: string) => queryClient.invalidateQueries({ queryKey: ["admin", key] }),
+    [queryClient],
+  );
 
   const [search, setSearch] = React.useState("");
   const [editing, setEditing] = React.useState<
@@ -70,47 +89,44 @@ export function ContentManagerPage() {
     null,
   );
 
-  const handleSaveGame = (row: Game) => {
-    setGames((prev) => {
-      const exists = prev.some((g) => g.id === row.id);
-      return exists ? prev.map((g) => (g.id === row.id ? row : g)) : [row, ...prev];
-    });
-    toast.success(editing?.row ? "Game updated" : "Game created");
-    setEditing(null);
-  };
-  const handleSaveTeam = (row: Team) => {
-    setTeams((prev) => {
-      const exists = prev.some((g) => g.id === row.id);
-      return exists ? prev.map((g) => (g.id === row.id ? row : g)) : [row, ...prev];
-    });
-    toast.success(editing?.row ? "Team updated" : "Team created");
-    setEditing(null);
-  };
-  const handleSavePlayer = (row: Player) => {
-    setPlayers((prev) => {
-      const exists = prev.some((g) => g.id === row.id);
-      return exists ? prev.map((g) => (g.id === row.id ? row : g)) : [row, ...prev];
-    });
-    toast.success(editing?.row ? "Player updated" : "Player created");
-    setEditing(null);
-  };
-  const handleSaveEvent = (row: EsportsEvent) => {
-    setEvents((prev) => {
-      const exists = prev.some((g) => g.id === row.id);
-      return exists ? prev.map((g) => (g.id === row.id ? row : g)) : [row, ...prev];
-    });
-    toast.success(editing?.row ? "Event updated" : "Event created");
-    setEditing(null);
-  };
+  /**
+   * Saves persist now. The admin catalogue routes are create-only, so editing an
+   * existing row is not supported by the backend yet and the form reports that
+   * rather than pretending it saved.
+   */
+  function makeSave<T extends { id: string }>(
+    label: string,
+    key: string,
+    create: (row: T) => Promise<unknown>,
+  ) {
+    return async (row: T) => {
+      if (editing?.row) {
+        toast.error(`Editing an existing ${label} is not supported yet`);
+        return;
+      }
+      try {
+        await create(row);
+        toast.success(`${label[0]!.toUpperCase()}${label.slice(1)} created`);
+        setEditing(null);
+        await refresh(key);
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : `Could not create the ${label}`);
+      }
+    };
+  }
 
+  const handleSaveGame = makeSave<Game>("game", "games", (r) => adminCreateGame(r));
+  const handleSaveTeam = makeSave<Team>("team", "teams", (r) => adminCreateTeam(r));
+  const handleSavePlayer = makeSave<Player>("player", "players", (r) => adminCreatePlayer(r));
+  const handleSaveEvent = makeSave<EsportsEvent>("event", "events", (r) => adminCreateEvent(r));
+
+  /**
+   * There is no delete endpoint for the catalogue. Removing a game or team that
+   * streams and matches point at is a destructive cascade, so it is deliberately
+   * not a button in the CMS.
+   */
   const handleDelete = () => {
-    if (!confirmDelete) return;
-    const { kind, id, label } = confirmDelete;
-    if (kind === "games") setGames((p) => p.filter((x) => x.id !== id));
-    if (kind === "teams") setTeams((p) => p.filter((x) => x.id !== id));
-    if (kind === "players") setPlayers((p) => p.filter((x) => x.id !== id));
-    if (kind === "events") setEvents((p) => p.filter((x) => x.id !== id));
-    toast.success(`Deleted "${label}"`);
+    toast.error("Deleting catalogue entries is not supported yet");
     setConfirmDelete(null);
   };
 
@@ -171,6 +187,7 @@ export function ContentManagerPage() {
         <TabsContent value="teams" className="mt-4">
           <TeamsTable
             rows={filteredTeams}
+            games={games}
             onEdit={(r) => setEditing({ kind: "team", row: r })}
             onDelete={(r) => setConfirmDelete({ kind: "teams", id: r.id, label: r.name })}
           />
@@ -178,6 +195,8 @@ export function ContentManagerPage() {
         <TabsContent value="players" className="mt-4">
           <PlayersTable
             rows={filteredPlayers}
+            games={games}
+            teams={teams}
             onEdit={(r) => setEditing({ kind: "player", row: r })}
             onDelete={(r) => setConfirmDelete({ kind: "players", id: r.id, label: r.handle })}
           />
@@ -185,6 +204,7 @@ export function ContentManagerPage() {
         <TabsContent value="events" className="mt-4">
           <EventsTable
             rows={filteredEvents}
+            games={games}
             onEdit={(r) => setEditing({ kind: "event", row: r })}
             onDelete={(r) => setConfirmDelete({ kind: "events", id: r.id, label: r.title })}
           />
@@ -201,6 +221,7 @@ export function ContentManagerPage() {
       {editing?.kind === "team" ? (
         <TeamForm
           initial={editing.row}
+          games={games}
           onCancel={() => setEditing(null)}
           onSave={handleSaveTeam}
         />
@@ -208,6 +229,8 @@ export function ContentManagerPage() {
       {editing?.kind === "player" ? (
         <PlayerForm
           initial={editing.row}
+          games={games}
+          teams={teams}
           onCancel={() => setEditing(null)}
           onSave={handleSavePlayer}
         />
@@ -215,6 +238,8 @@ export function ContentManagerPage() {
       {editing?.kind === "event" ? (
         <EventForm
           initial={editing.row}
+          games={games}
+          teams={teams}
           onCancel={() => setEditing(null)}
           onSave={handleSaveEvent}
         />
@@ -313,7 +338,9 @@ function TeamsTable({
   rows,
   onEdit,
   onDelete,
+  games,
 }: {
+  games: Game[];
   rows: Team[];
   onEdit: (r: Team) => void;
   onDelete: (r: Team) => void;
@@ -341,10 +368,10 @@ function TeamsTable({
       key: "game",
       header: "Game",
       sortable: true,
-      accessor: (r) => gamesSource.find((g) => g.id === r.gameId)?.shortName ?? "",
+      accessor: (r) => games.find((g) => g.id === r.gameId)?.shortName ?? "",
       cell: (row) => (
         <span className="text-sm text-neutral-300">
-          {gamesSource.find((g) => g.id === row.gameId)?.shortName ?? "—"}
+          {games.find((g) => g.id === row.gameId)?.shortName ?? "—"}
         </span>
       ),
     },
@@ -384,7 +411,10 @@ function PlayersTable({
   rows,
   onEdit,
   onDelete,
+  games, teams,
 }: {
+  games: Game[];
+  teams: Team[];
   rows: Player[];
   onEdit: (r: Player) => void;
   onDelete: (r: Player) => void;
@@ -420,7 +450,7 @@ function PlayersTable({
       header: "Team",
       cell: (row) => (
         <span className="text-sm text-neutral-300">
-          {teamsSource.find((t) => t.id === row.teamId)?.name ?? "—"}
+          {teams.find((t) => t.id === row.teamId)?.name ?? "—"}
         </span>
       ),
     },
@@ -429,7 +459,7 @@ function PlayersTable({
       header: "Game",
       cell: (row) => (
         <span className="text-sm text-neutral-300">
-          {gamesSource.find((g) => g.id === row.gameId)?.shortName ?? "—"}
+          {games.find((g) => g.id === row.gameId)?.shortName ?? "—"}
         </span>
       ),
     },
@@ -455,7 +485,9 @@ function EventsTable({
   rows,
   onEdit,
   onDelete,
+  games,
 }: {
+  games: Game[];
   rows: EsportsEvent[];
   onEdit: (r: EsportsEvent) => void;
   onDelete: (r: EsportsEvent) => void;
@@ -478,7 +510,7 @@ function EventsTable({
       header: "Game",
       cell: (row) => (
         <span className="text-sm text-neutral-300">
-          {gamesSource.find((g) => g.id === row.gameId)?.shortName ?? "—"}
+          {games.find((g) => g.id === row.gameId)?.shortName ?? "—"}
         </span>
       ),
     },
@@ -748,7 +780,9 @@ function TeamForm({
   initial,
   onCancel,
   onSave,
+  games,
 }: {
+  games: Game[];
   initial: Team | null;
   onCancel: () => void;
   onSave: (t: Team) => void;
@@ -762,7 +796,7 @@ function TeamForm({
       logoUrl: "/placeholder.svg?height=120&width=120&text=NEW",
       country: "NG",
       region: "West Africa",
-      gameId: gamesSource[0]?.id ?? "",
+      gameId: games[0]?.id ?? "",
       ranking: 99,
       followers: 0,
       wins: 0,
@@ -845,7 +879,7 @@ function TeamForm({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {gamesSource.map((g) => (
+              {games.map((g) => (
                 <SelectItem key={g.id} value={g.id}>
                   {g.shortName}
                 </SelectItem>
@@ -880,7 +914,10 @@ function PlayerForm({
   initial,
   onCancel,
   onSave,
+  games, teams,
 }: {
+  games: Game[];
+  teams: Team[];
   initial: Player | null;
   onCancel: () => void;
   onSave: (p: Player) => void;
@@ -891,8 +928,8 @@ function PlayerForm({
       handle: "",
       realName: "",
       avatarUrl: "/placeholder.svg?height=96&width=96&text=NEW",
-      teamId: teamsSource[0]?.id ?? null,
-      gameId: gamesSource[0]?.id ?? "",
+      teamId: teams[0]?.id ?? null,
+      gameId: games[0]?.id ?? "",
       role: "IGL",
       country: "NG",
       kda: 1.5,
@@ -939,7 +976,7 @@ function PlayerForm({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="none">Free agent</SelectItem>
-              {teamsSource.map((t) => (
+              {teams.map((t) => (
                 <SelectItem key={t.id} value={t.id}>
                   {t.name}
                 </SelectItem>
@@ -954,7 +991,7 @@ function PlayerForm({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {gamesSource.map((g) => (
+              {games.map((g) => (
                 <SelectItem key={g.id} value={g.id}>
                   {g.shortName}
                 </SelectItem>
@@ -1003,7 +1040,11 @@ function EventForm({
   initial,
   onCancel,
   onSave,
+  games,
+  teams,
 }: {
+  games: Game[];
+  teams: Team[];
   initial: EsportsEvent | null;
   onCancel: () => void;
   onSave: (e: EsportsEvent) => void;
@@ -1013,7 +1054,7 @@ function EventForm({
       id: `event_new_${Date.now()}`,
       slug: "",
       title: "",
-      gameId: gamesSource[0]?.id ?? "",
+      gameId: games[0]?.id ?? "",
       startsAt: new Date().toISOString(),
       endsAt: new Date(Date.now() + 86_400_000).toISOString(),
       status: "scheduled",
@@ -1084,7 +1125,7 @@ function EventForm({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {gamesSource.map((g) => (
+              {games.map((g) => (
                 <SelectItem key={g.id} value={g.id}>
                   {g.shortName}
                 </SelectItem>
@@ -1175,7 +1216,7 @@ function EventForm({
       <div className="space-y-1.5">
         <Label>Participating teams</Label>
         <div className="flex max-h-48 flex-wrap gap-2 overflow-y-auto rounded-md border border-neutral-800 bg-neutral-900/40 p-2">
-          {teamsSource.map((t) => {
+          {teams.map((t) => {
             const selected = form.teamIds.includes(t.id);
             return (
               <button

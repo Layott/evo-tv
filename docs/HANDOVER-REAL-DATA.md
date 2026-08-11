@@ -124,6 +124,34 @@ broken-image glyph. `components/ui/media-image.tsx` falls back to a deterministi
 gradient seeded from the item id, with initials. Adopted in the hero carousel,
 live-now, recommendations and trending-clips. **Use it for any new thumbnail.**
 
+## 6b. Admin surface: done and remaining
+
+**Streams manager is real** (`9215d56`). It was pure local state seeded from
+bundled arrays: creating a stream pushed an object into a React array and never
+persisted; reloading undid everything. It now reads `/api/admin/streams` and
+mutates through create, delete, regenerate-key and a live toggle, with games and
+events fetched so the create form offers what actually exists.
+
+Two bugs that surfaced there, worth knowing because the same shape will recur:
+
+- **`AdminGuard` locked real admins out.** `role` is `"guest"` for the first
+  paint of every load while the session resolves, and the guard denied on that.
+  It now waits for `ready`. **Any component gating on `role` has this bug** -
+  check `ready` first. Known remaining sites: `library/downloads`, `library`,
+  `tips`, `embed`, `api-access/keys`.
+- **A fabricated stream key was on display**, derived from the stream id. It
+  looked real; pasting it into OBS would have failed. The server stores only a
+  hash, so a key genuinely cannot be shown twice.
+
+`scripts/promote-admin.ts` was still opening `./data/evo.db` with better-sqlite3
+and silently did nothing against Postgres. Rewritten; it promotes and demotes.
+**To make the first admin: sign up through the app, then run it.**
+
+Still on mock, in priority order: `content-manager` (games, teams, players,
+events), `ads-manager`, `overview`, `orders`, `users-roles`, `moderation`,
+`polls-manager`, `billing`, `admin-settings`. Each has routes and a
+`lib/client/admin.ts` helper already; the work is the same swap.
+
 ## 7. What is still on the mock layer
 
 Two groups. The first is mechanical, the second is a product decision.

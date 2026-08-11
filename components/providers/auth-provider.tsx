@@ -24,7 +24,7 @@ type FollowTargetType = "team" | "player" | "streamer";
 interface AuthContextValue {
   user: Profile | null;
   role: Role;
-  /** False until the session and profile have both resolved. */
+  /** False until the Better-Auth session has resolved. */
   ready: boolean;
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
   signUp: (
@@ -62,7 +62,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signedIn = Boolean(session?.user);
 
   // The profile is the server's view of the account, not the session payload.
-  const { data: user = null, isPending: profilePending } = useQuery({
+  const { data: user = null } = useQuery({
     queryKey: ["auth", "me", session?.user?.id ?? null],
     queryFn: () => getCurrentUser(),
     enabled: signedIn,
@@ -74,7 +74,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     enabled: signedIn,
   });
 
-  const role: Role = signedIn ? ((user?.role as Role) ?? "user") : "guest";
+  /**
+   * Role comes from the session, not the profile.
+   *
+   * Better-Auth puts `role` on the session user, so gating does not have to wait
+   * for `/api/users/me`. Waiting on the profile left AdminGuard showing
+   * "Checking your access" indefinitely whenever that request was slow or
+   * failed, which locked admins out of the CMS.
+   */
+  const sessionRole = (session?.user as { role?: string } | undefined)?.role;
+  const role: Role = signedIn
+    ? ((sessionRole as Role) ?? (user?.role as Role) ?? "user")
+    : "guest";
 
   React.useEffect(() => {
     syncRoleCookie(role);
@@ -92,7 +103,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value: AuthContextValue = {
     user,
     role,
-    ready: !sessionPending && (!signedIn || !profilePending),
+    // Ready as soon as the session resolves. The profile is extra detail for
+    // the UI; it must not hold up an access decision.
+    ready: !sessionPending,
 
     async signIn(email, password) {
       const res = await authClient.signIn.email({ email, password });
