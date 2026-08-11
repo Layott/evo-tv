@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Copy,
   Key,
@@ -11,10 +11,16 @@ import {
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { listLiveStreams, streams as streamsSource } from "@/lib/mock/streams";
-import { listGames, games as gamesSource } from "@/lib/mock/games";
-import { events as eventsSource } from "@/lib/mock/events";
-import type { Stream } from "@/lib/types";
+import {
+  adminCreateStream,
+  adminDeleteStream,
+  adminListEvents,
+  adminListGames,
+  adminListStreams,
+  adminRegenerateStreamKey,
+  adminUpdateStream,
+} from "@/lib/client";
+import type { EsportsEvent, Game, Stream } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -46,32 +52,43 @@ import {
 import { DataTable, type DataColumn } from "./data-table";
 import { PageHeader } from "./page-header";
 import { StatusBadge } from "./status-badge";
-import { formatCompact, hashStreamKey, randomHex, timeAgo } from "./utils";
+import { formatCompact, timeAgo } from "./utils";
 
-function resolveGameName(id: string) {
-  return gamesSource.find((g) => g.id === id)?.shortName ?? id;
+function resolveGameName(games: Game[], id: string) {
+  return games.find((g) => g.id === id)?.shortName ?? id;
 }
 
-function resolveEventTitle(id: string | null) {
+function resolveEventTitle(events: EsportsEvent[], id: string | null) {
   if (!id) return null;
-  return eventsSource.find((e) => e.id === id)?.title ?? null;
+  return events.find((e) => e.id === id)?.title ?? null;
 }
 
 export function StreamsManagerPage() {
-  const gamesQ = useQuery({ queryKey: ["admin", "games"], queryFn: listGames });
-  const [all, setAll] = React.useState<Stream[]>(() => [...streamsSource]);
+  const queryClient = useQueryClient();
 
-  const streamsQ = useQuery({
-    queryKey: ["admin", "streams-all"],
-    queryFn: async () => {
-      await listLiveStreams();
-      return all;
-    },
+  const gamesQ = useQuery({
+    queryKey: ["admin", "games"],
+    queryFn: () => adminListGames(),
+  });
+  const eventsQ = useQuery({
+    queryKey: ["admin", "events"],
+    queryFn: () => adminListEvents(),
   });
 
-  React.useEffect(() => {
-    if (streamsQ.data) setAll(streamsQ.data as Stream[]);
-  }, [streamsQ.data]);
+  // Admin sees every stream, live or not, unlike the public list.
+  const streamsQ = useQuery({
+    queryKey: ["admin", "streams-all"],
+    queryFn: () => adminListStreams({ limit: 200 }),
+  });
+
+  const games = gamesQ.data ?? [];
+  const events = eventsQ.data ?? [];
+  const all = streamsQ.data?.streams ?? [];
+
+  const refreshStreams = React.useCallback(
+    () => queryClient.invalidateQueries({ queryKey: ["admin", "streams-all"] }),
+    [queryClient],
+  );
 
   const [search, setSearch] = React.useState("");
   const [gameFilter, setGameFilter] = React.useState<string>("all");
@@ -117,8 +134,8 @@ export function StreamsManagerPage() {
       key: "game",
       header: "Game",
       sortable: true,
-      accessor: (r) => resolveGameName(r.gameId),
-      cell: (row) => <span className="text-sm text-neutral-300">{resolveGameName(row.gameId)}</span>,
+      accessor: (r) => resolveGameName(games, r.gameId),
+      cell: (row) => <span className="text-sm text-neutral-300">{resolveGameName(games, row.gameId)}</span>,
     },
     {
       key: "status",
@@ -183,47 +200,72 @@ export function StreamsManagerPage() {
     },
   ];
 
+  const createMut = useMutation({
+    mutationFn: (payload: NewStreamPayload) =>
+      adminCreateStream({
+        title: payload.title,
+        description: payload.description,
+        gameId: payload.gameId,
+        eventId: payload.eventId || null,
+        streamerName: payload.streamerName,
+        isPremium: payload.isPremium,
+      }),
+    onSuccess: async (res) => {
+      setCreateOpen(false);
+      toast.success("Stream created");
+      // Shown once and never again; the server stores only a hash.
+      if (res.streamKey) setKeyReveal(res.streamKey);
+      await refreshStreams();
+    },
+    onError: (err: Error) => toast.error(err.message || "Could not create the stream"),
+  });
+
+  const regenerateMut = useMutation({
+    mutationFn: (row: Stream) => adminRegenerateStreamKey(row.id),
+    onSuccess: (res) => {
+      setKeyReveal(res.streamKey);
+      toast.success("Stream key regenerated");
+    },
+    onError: (err: Error) => toast.error(err.message || "Could not regenerate the key"),
+  });
+
+  const deleteMut = useMutation({
+    mutationFn: (row: Stream) => adminDeleteStream(row.id),
+    onSuccess: async () => {
+      toast.success("Stream deleted");
+      setConfirmDelete(null);
+      setSelected(null);
+      await refreshStreams();
+    },
+    onError: (err: Error) => toast.error(err.message || "Could not delete the stream"),
+  });
+
+  /**
+   * Taking a stream live. Nothing else can do this for an externally originated
+   * channel: the RTMP callback only fires for encoders publishing to our own
+   * ingest, and a Cloudflare-hosted channel never calls back.
+   */
+  const liveMut = useMutation({
+    mutationFn: ({ row, isLive }: { row: Stream; isLive: boolean }) =>
+      adminUpdateStream(row.id, { isLive }),
+    onSuccess: async (_res, vars) => {
+      toast.success(vars.isLive ? "Stream is live" : "Stream ended");
+      await refreshStreams();
+    },
+    onError: (err: Error) => toast.error(err.message || "Could not change the stream state"),
+  });
+
   function handleCreate(payload: NewStreamPayload) {
-    const id = `stream_new_${Date.now()}`;
-    const newStream: Stream = {
-      id,
-      title: payload.title,
-      description: payload.description,
-      gameId: payload.gameId,
-      eventId: payload.eventId || null,
-      streamerType: "official",
-      streamerName: payload.streamerName,
-      streamerAvatarUrl: "/placeholder.svg?height=80&width=80&text=NEW",
-      isLive: false,
-      startedAt: null,
-      endedAt: null,
-      hlsUrl: "/demo/sample.m3u8",
-      thumbnailUrl: "/placeholder.svg?height=400&width=720&text=New+Stream",
-      viewerCount: 0,
-      peakViewerCount: 0,
-      language: "en",
-      tags: [],
-      isPremium: payload.isPremium,
-    };
-    setAll((prev) => [newStream, ...prev]);
-    setCreateOpen(false);
-    toast.success("Stream created");
-    const key = `sk_live_${randomHex(16)}`;
-    setKeyReveal(key);
+    createMut.mutate(payload);
   }
 
   function handleRegenerate(row: Stream) {
-    const key = `sk_live_${randomHex(16)}`;
-    setKeyReveal(key);
-    toast.success(`Regenerated stream key for ${row.title}`);
+    regenerateMut.mutate(row);
   }
 
   function handleDelete() {
     if (!confirmDelete) return;
-    setAll((prev) => prev.filter((s) => s.id !== confirmDelete.id));
-    toast.success(`Deleted "${confirmDelete.title}"`);
-    setConfirmDelete(null);
-    setSelected(null);
+    deleteMut.mutate(confirmDelete);
   }
 
   return (
@@ -295,7 +337,7 @@ export function StreamsManagerPage() {
               <SheetHeader>
                 <SheetTitle>{selected.title}</SheetTitle>
                 <SheetDescription>
-                  {resolveGameName(selected.gameId)} · {selected.streamerName}
+                  {resolveGameName(games, selected.gameId)} · {selected.streamerName}
                 </SheetDescription>
               </SheetHeader>
               <div className="space-y-5 px-4 pb-4">
@@ -329,9 +371,9 @@ export function StreamsManagerPage() {
                   </Info>
                   <Info label="Started">{timeAgo(selected.startedAt)}</Info>
                   <Info label="Language">{selected.language.toUpperCase()}</Info>
-                  {resolveEventTitle(selected.eventId) ? (
+                  {resolveEventTitle(events, selected.eventId) ? (
                     <div className="col-span-2">
-                      <Info label="Event">{resolveEventTitle(selected.eventId)}</Info>
+                      <Info label="Event">{resolveEventTitle(events, selected.eventId)}</Info>
                     </div>
                   ) : null}
                 </div>
@@ -352,10 +394,14 @@ export function StreamsManagerPage() {
                         rtmp://localhost:1935/live
                       </code>
                     </Row>
+                    {/* The server stores only a hash, so a key can never be
+                        shown again. This used to render one derived from the
+                        stream id, which looked real and was not: pasting it into
+                        OBS would have failed to authenticate. */}
                     <Row label="Stream key">
-                      <code className="rounded bg-neutral-950 px-2 py-1 font-mono text-neutral-300">
-                        {hashStreamKey(`sk_live_${selected.id.slice(-16).padStart(16, "0")}`)}
-                      </code>
+                      <span className="text-neutral-400">
+                        Shown once on creation. Regenerate to get a new one.
+                      </span>
                     </Row>
                     <Row label="Video">1080p · 6000 kbps · H.264 · 60 fps</Row>
                     <Row label="Audio">160 kbps · AAC · 48 kHz</Row>
@@ -394,6 +440,8 @@ export function StreamsManagerPage() {
         open={createOpen}
         onOpenChange={setCreateOpen}
         onSubmit={handleCreate}
+        games={games}
+        events={events}
       />
 
       {/* Reveal key */}
@@ -491,14 +539,18 @@ function CreateStreamDrawer({
   open,
   onOpenChange,
   onSubmit,
+  games,
+  events,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   onSubmit: (payload: NewStreamPayload) => void;
+  games: Game[];
+  events: EsportsEvent[];
 }) {
   const [title, setTitle] = React.useState("");
   const [description, setDescription] = React.useState("");
-  const [gameId, setGameId] = React.useState(gamesSource[0]?.id ?? "");
+  const [gameId, setGameId] = React.useState(games[0]?.id ?? "");
   const [eventId, setEventId] = React.useState<string>("none");
   const [streamerName, setStreamerName] = React.useState("EVO TV Official");
   const [isPremium, setIsPremium] = React.useState(false);
@@ -507,7 +559,7 @@ function CreateStreamDrawer({
     if (open) {
       setTitle("");
       setDescription("");
-      setGameId(gamesSource[0]?.id ?? "");
+      setGameId(games[0]?.id ?? "");
       setEventId("none");
       setStreamerName("EVO TV Official");
       setIsPremium(false);
@@ -552,7 +604,7 @@ function CreateStreamDrawer({
                   <SelectValue placeholder="Select game" />
                 </SelectTrigger>
                 <SelectContent>
-                  {gamesSource.map((g) => (
+                  {games.map((g) => (
                     <SelectItem key={g.id} value={g.id}>
                       {g.shortName}
                     </SelectItem>
@@ -568,7 +620,7 @@ function CreateStreamDrawer({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">No event</SelectItem>
-                  {eventsSource.map((e) => (
+                  {events.map((e) => (
                     <SelectItem key={e.id} value={e.id}>
                       {e.title}
                     </SelectItem>

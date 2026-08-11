@@ -6,7 +6,18 @@ import { useAuth } from "@/components/providers";
 import { Button } from "@/components/ui/button";
 
 export function AdminGuard({ children }: { children: React.ReactNode }) {
-  const { role } = useAuth();
+  const { role, ready } = useAuth();
+
+  // The session and profile resolve over the network, so `role` is "guest" for
+  // the first paint of every load. Denying on that flashed "Admin access
+  // required" at real admins and, on a slow connection, left it up.
+  if (!ready) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center p-8">
+        <p className="text-sm text-neutral-500">Checking your access…</p>
+      </div>
+    );
+  }
 
   if (role !== "admin") {
     return (
