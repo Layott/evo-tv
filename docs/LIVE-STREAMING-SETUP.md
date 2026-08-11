@@ -178,14 +178,64 @@ ffmpeg -re -f lavfi -i "testsrc2=size=1280x720:rate=30" \
 docker compose --profile rtmp up -d
 ```
 
-Then open **1935/tcp** in the DigitalOcean firewall. Port 8080 stays closed:
-Caddy reaches nginx over the compose network and serves `/hls/*` on the API
-host over TLS, with playlists set to no-cache and segments immutable.
+Port 8080 stays closed. Caddy reaches nginx over the compose network and serves
+`/hls/*` on the API host over TLS, with playlists no-cache and segments
+immutable. Only 1935 is exposed.
 
 ```
-RTMP_INGEST_URL=rtmp://api.evotv.co:1935/live
+LIVE_INGEST=rtmp
+RTMP_INGEST_URL=rtmp://ingest.evotv.co:1935/live
 RTMP_HLS_BASE_URL=https://api.evotv.co/hls
 ```
+
+#### DNS for the ingest hostname
+
+Add one **A record**: `ingest` -> the droplet IP. It costs nothing; a
+subdomain is free and RTMP needs no certificate, because RTMP is not HTTPS and
+Caddy is not involved on that port.
+
+**The record must be DNS-only, not proxied.** Cloudflare's proxy handles HTTP
+and HTTPS ports only, so an orange-clouded record cannot carry RTMP on 1935 and
+OBS will simply fail to connect. Leave the cloud grey on `ingest`, and if
+`evotv.co` is ever switched to proxied, `ingest` stays grey.
+
+That has a consequence worth stating plainly: a DNS-only record publishes the
+droplet's real IP. That is already true of the current setup, and it is the
+reason the firewall below matters.
+
+#### Firewall
+
+The droplet runs a DO Cloud Firewall with inbound TCP 22, 80 and 443 only, and
+no `ufw` on top. Ingest needs **1935/tcp** added.
+
+**Restrict the source if you can.** RTMP is plaintext: the stream key crosses
+the network in the clear, and anyone who captures it can broadcast as you from
+anywhere. Limiting 1935 to the office IP means a leaked key is unusable from
+anywhere else. Open to `0.0.0.0/0` only if broadcasting from changing
+locations.
+
+Control panel: Networking, Firewalls, pick the droplet's firewall, Inbound
+Rules, New rule -> Custom, TCP, port `1935`, Sources: your office IP (or All
+IPv4 / All IPv6), Save.
+
+Or with `doctl`:
+
+```bash
+doctl compute firewall list                       # find the firewall id
+doctl compute firewall add-rules <FIREWALL_ID>   --inbound-rules "protocol:tcp,ports:1935,address:<OFFICE_IP>/32"
+```
+
+Confirm from a machine outside the droplet:
+
+```bash
+nc -vz ingest.evotv.co 1935
+```
+
+#### Rotate the key if it ever leaks
+
+Admin, Streams, open the stream, **Regenerate key**. The old key stops
+authenticating immediately. Any encoder still configured with it will be
+rejected at connect, so re-paste the new one into OBS.
 
 ### What Path A will not do
 
