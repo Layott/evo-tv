@@ -198,6 +198,8 @@ export function VideoPlayer({
       instance.attachMedia(videoRef.current);
       instance.loadSource(src);
       instance.on(Hls.Events.MANIFEST_PARSED, () => {
+        // Belt and braces: if a policy still refuses, mute and try once more,
+        // so the picture starts even where the rules are stricter than usual.
         // The real ladder for this stream. A self-hosted single-bitrate
         // broadcast yields one entry and the menu hides itself.
         setRenditions(
@@ -207,7 +209,15 @@ export function VideoPlayer({
           })),
         );
         setSelectedLevel(instance.currentLevel ?? -1);
-        if (autoPlay) void videoRef.current?.play().catch(() => {});
+        if (autoPlay) {
+          void videoRef.current?.play().catch(() => {
+            const v = videoRef.current;
+            if (!v) return;
+            v.muted = true;
+            setMuted(true);
+            void v.play().catch(() => {});
+          });
+        }
       });
       instance.on(Hls.Events.LEVEL_SWITCHED, (_e, data) => {
         setActiveLevel(data.level);
@@ -237,7 +247,20 @@ export function VideoPlayer({
   const controlsTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [playing, setPlaying] = React.useState(false);
-  const [muted, setMuted] = React.useState(false);
+  /**
+   * Autoplay implies muted, because every browser blocks a sound-on autoplay.
+   *
+   * This started false, so `video.play()` was rejected and the player sat on a
+   * poster with a play button. A viewer arriving at a live broadcast had to
+   * click before anything happened, which is not how a channel behaves.
+   *
+   * Muted autoplay is allowed everywhere, so the picture starts immediately and
+   * the viewer turns sound on. The overlay below makes that one click and says
+   * so, rather than leaving them to work out why it is silent.
+   */
+  const [muted, setMuted] = React.useState(autoPlay);
+  /** True once the viewer has chosen sound, so the prompt does not return. */
+  const [soundChosen, setSoundChosen] = React.useState(!autoPlay);
   const [volume, setVolume] = React.useState(1);
   const [currentTime, setCurrentTime] = React.useState(0);
   const [duration, setDuration] = React.useState(0);
@@ -386,6 +409,9 @@ export function VideoPlayer({
     const v = videoRef.current;
     if (!v) return;
     v.muted = !v.muted;
+    // Using the normal mute control counts as choosing, so the prompt does not
+    // reappear the moment they mute deliberately.
+    setSoundChosen(true);
   }, []);
 
   const adjustVolume = React.useCallback((delta: number) => {
@@ -564,6 +590,29 @@ export function VideoPlayer({
           </p>
         </div>
       )}
+
+      {/* Sound is off because autoplay required it, and the viewer has not
+          chosen yet. One tap, and it says what it does: a muted live stream
+          with no prompt just looks like broken audio. */}
+      {muted && soundChosen === false && !hlsError ? (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            const v = videoRef.current;
+            if (v) {
+              v.muted = false;
+              if (v.volume === 0) v.volume = 1;
+            }
+            setMuted(false);
+            setSoundChosen(true);
+          }}
+          className="absolute left-1/2 top-4 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full bg-black/75 px-4 py-2 text-sm font-medium text-white backdrop-blur transition-colors hover:bg-black/90"
+        >
+          <VolumeX className="size-4" />
+          Tap for sound
+        </button>
+      ) : null}
 
       {/* Live badge + viewers + AI badge */}
       {isLive && (
