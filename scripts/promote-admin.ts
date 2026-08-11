@@ -11,7 +11,7 @@
  * This previously opened `./data/evo.db` with better-sqlite3, left over from
  * before the Postgres move, so it silently did nothing on a real database.
  */
-import "dotenv/config";
+import "./_env";
 import postgres from "postgres";
 
 const VALID_ROLES = ["user", "premium", "creator", "admin"] as const;

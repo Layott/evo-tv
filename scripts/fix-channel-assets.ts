@@ -20,7 +20,7 @@
  * Only rewrites a field when it still matches the known placeholder, so a value
  * an admin has since set by hand is never clobbered.
  */
-import "dotenv/config";
+import "./_env";
 import postgres from "postgres";
 
 const AVATAR = "/evo-logo/evo-tv-152.png";

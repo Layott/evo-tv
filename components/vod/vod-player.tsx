@@ -32,7 +32,7 @@ export function VodPlayer({ vod, onTimeUpdate, onReady, seekRef }: VodPlayerProp
       onTimeUpdate={onTimeUpdate}
       onReady={handleReady}
       mediaId={vod.id}
-      gameId={vod.gameId}
+      gameId={vod.gameId ?? undefined}
     />
   );
 }

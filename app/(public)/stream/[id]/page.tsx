@@ -47,7 +47,8 @@ export default function StreamPage() {
     getStreamById(streamId).then((s) => {
       if (cancelled) return;
       setStream(s);
-      if (s) {
+      // Anime, lifestyle and podcast programmes carry no game.
+      if (s?.gameId) {
         getGameById(s.gameId).then((g) => {
           if (!cancelled) setGame(g);
         });
@@ -176,7 +177,7 @@ export default function StreamPage() {
                 isLive={stream.isLive}
                 viewerCount={stream.viewerCount}
                 mediaId={stream.id}
-                gameId={stream.gameId}
+                gameId={stream.gameId ?? undefined}
               />
             ) : (
               <div className="flex aspect-video w-full flex-col items-center justify-center gap-2 bg-neutral-950 text-center">

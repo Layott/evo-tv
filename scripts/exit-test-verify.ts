@@ -1,4 +1,4 @@
-import "dotenv/config";
+import "./_env";
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { desc, eq } from "drizzle-orm";

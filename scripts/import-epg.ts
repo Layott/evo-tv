@@ -19,7 +19,7 @@
  * the CSV so the transcription stays lossless. `scripts/epg-pdf-to-csv.py`
  * regenerates it from a PDF.
  */
-import "dotenv/config";
+import "./_env";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import postgres from "postgres";

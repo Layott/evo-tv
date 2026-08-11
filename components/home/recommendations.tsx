@@ -57,7 +57,7 @@ export function Recommendations({ vods, games, loading }: RecommendationsProps) 
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {vods.map((v) => {
-            const game = gameMap.get(v.gameId);
+            const game = v.gameId ? gameMap.get(v.gameId) : undefined;
             return (
               <Link
                 key={v.id}

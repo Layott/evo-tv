@@ -73,7 +73,7 @@ export async function DELETE(
  * playback URL (`hlsUrl`, stored as `hlsPath`). For a linear channel served by
  * an external origin (e.g. Cloudflare Stream), an admin pastes the Cloudflare
  * `.m3u8` manifest here and the app plays it directly. Schedule fields are
- * nullable — passing `null` clears them; `hlsUrl: null | ""` clears the URL.
+ * nullable - passing `null` clears them; `hlsUrl: null | ""` clears the URL.
  *
  * Body: {
  *   scheduledStartAt?: string | null;
@@ -90,7 +90,7 @@ export async function DELETE(
  * the stream never appear under "Live now". Going live stamps `startedAt`;
  * ending stamps `endedAt` and zeroes the viewer count.
  *
- * Requires `support_admin` or higher — programming the schedule + playback URL
+ * Requires `support_admin` or higher - programming the schedule + playback URL
  * is a routine operation that doesn't need full admin.
  */
 export async function PATCH(
@@ -110,6 +110,8 @@ export async function PATCH(
     maturityRating?: string;
     contentTags?: string[];
     isLive?: boolean;
+    pillar?: string;
+    gameId?: string | null;
   } | null;
   if (!body) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
@@ -127,7 +129,34 @@ export async function PATCH(
     startedAt?: string;
     endedAt?: string | null;
     viewerCount?: number;
+    pillar?: "esports" | "anime" | "lifestyle";
+    gameId?: string | null;
   } = {};
+
+  // Pillar and game are editable, so a programme filed under the wrong one can
+  // be corrected. Without these the only fix was to delete it and start again.
+  if ("pillar" in body) {
+    const PILLARS = ["esports", "anime", "lifestyle"] as const;
+    if (!PILLARS.includes(body.pillar as (typeof PILLARS)[number])) {
+      return NextResponse.json(
+        { error: `pillar must be one of ${PILLARS.join(", ")}` },
+        { status: 400 },
+      );
+    }
+    update.pillar = body.pillar as (typeof PILLARS)[number];
+  }
+
+  if ("gameId" in body) {
+    const v = body.gameId;
+    if (v !== null && typeof v !== "string") {
+      return NextResponse.json(
+        { error: "gameId must be a string or null" },
+        { status: 400 },
+      );
+    }
+    // Null is meaningful: an anime or lifestyle programme has no game.
+    update.gameId = v === "" ? null : v;
+  }
 
   if ("isLive" in body) {
     if (typeof body.isLive !== "boolean") {

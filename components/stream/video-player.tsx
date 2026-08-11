@@ -28,6 +28,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import type HlsType from "hls.js";
 import { toast } from "sonner";
 import {
   getCaptionPhrasesSync,
@@ -86,6 +87,115 @@ export function VideoPlayer({
 }: VideoPlayerProps) {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const videoRef = React.useRef<HTMLVideoElement>(null);
+  const [hlsError, setHlsError] = React.useState<string | null>(null);
+  /** The attached hls.js instance, so a re-run can tear the old one down. */
+  const hlsRef = React.useRef<HlsType | null>(null);
+
+  /**
+   * Attach hls.js when the source is an HLS manifest.
+   *
+   * The element was given `src={src}` directly. Only Safari can play `.m3u8`
+   * natively; in Chrome, Firefox and Edge the video sat at readyState 0 with no
+   * error event, so a live stream rendered as a permanently black player. Every
+   * live source here is HLS, from Cloudflare Stream or from our own ffmpeg
+   * output, which made this the whole live path on most browsers.
+   *
+   * `hls.js` was already a dependency and already wired up in
+   * `components/stream/hls-player.tsx`, a second player this one replaced. The
+   * import is dynamic so the library only loads for a page that plays HLS.
+   */
+  React.useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !src) return;
+    setHlsError(null);
+
+    const isHls = src.includes(".m3u8");
+
+    // A plain progressive file needs nothing.
+    if (!isHls) {
+      video.src = src;
+      return;
+    }
+
+    let cancelled = false;
+
+    // Any instance still attached from a previous run has to go before a new
+    // one touches the element. React's dev Strict Mode mounts this effect
+    // twice, and because the import is async both runs used to reach
+    // `attachMedia` on the same <video>: the second detached the first's
+    // MediaSource, and the result was two playlist fetches followed by no
+    // segment requests at all, with the player stuck at readyState 0.
+    hlsRef.current?.destroy();
+    hlsRef.current = null;
+
+    void import("hls.js").then(({ default: Hls }) => {
+      if (cancelled || !videoRef.current) return;
+
+      /*
+       * hls.js first, native second, and the order matters.
+       *
+       * The obvious check is `canPlayType("application/vnd.apple.mpegurl")` and
+       * to use native playback when it is non-empty. Desktop Chrome answers
+       * "maybe" to that and then cannot play the manifest at all: the element
+       * sits at readyState 0 with no error event and the player is a black
+       * rectangle forever. That is exactly the bug this replaced.
+       *
+       * Where Media Source Extensions exist, hls.js is the reliable path.
+       * Native is the fallback for Safari and iOS, which cannot run hls.js but
+       * genuinely do play HLS themselves.
+       */
+      if (!Hls.isSupported()) {
+        if (videoRef.current.canPlayType("application/vnd.apple.mpegurl")) {
+          videoRef.current.src = src;
+          if (autoPlay) void videoRef.current.play().catch(() => {});
+        } else {
+          setHlsError("This browser cannot play live streams.");
+        }
+        return;
+      }
+      /*
+       * Defaults, deliberately.
+       *
+       * The first attempt copied `liveSyncDurationCount: 3` plus
+       * `lowLatencyMode` and `backBufferLength: 30` from the old
+       * `hls-player.tsx`, which had never actually been verified against a
+       * stream. With those set, hls.js fetched the master playlist and the
+       * variant playlist and then never requested a single segment: two
+       * network requests, readyState stuck at 0, no error raised. The defaults
+       * handle live and VOD and start loading immediately.
+       *
+       * Tune this only against a real broadcast, and check that segments are
+       * actually being fetched afterwards.
+       */
+      const instance = new Hls();
+      hlsRef.current = instance;
+      instance.attachMedia(videoRef.current);
+      instance.loadSource(src);
+      instance.on(Hls.Events.MANIFEST_PARSED, () => {
+        if (autoPlay) void videoRef.current?.play().catch(() => {});
+      });
+      instance.on(Hls.Events.ERROR, (_evt, data) => {
+        if (!data.fatal) return;
+        // Network and media errors are usually a dropped segment rather than a
+        // dead stream, so recover in place before giving up on it.
+        if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+          instance.startLoad();
+        } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+          instance.recoverMediaError();
+        } else {
+          setHlsError("This stream is not available right now.");
+          instance.destroy();
+          if (hlsRef.current === instance) hlsRef.current = null;
+        }
+      });
+    });
+
+    return () => {
+      cancelled = true;
+      hlsRef.current?.destroy();
+      hlsRef.current = null;
+    };
+  }, [src, autoPlay]);
   const controlsTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [playing, setPlaying] = React.useState(false);
@@ -363,7 +473,9 @@ export function VideoPlayer({
     >
       <video
         ref={videoRef}
-        src={src}
+        /* No `src` here: the effect above assigns it, or hands the element to
+           hls.js. Setting both makes the browser fetch the manifest twice and
+           race hls.js for the media element. */
         poster={poster}
         autoPlay={autoPlay}
         playsInline
@@ -374,6 +486,18 @@ export function VideoPlayer({
           togglePlay();
         }}
       />
+
+      {/* A fatal playback failure has to say so. Without this the player is a
+          black rectangle and the viewer cannot tell it apart from a stream
+          that simply has not started. */}
+      {hlsError && (
+        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-2 bg-black/90 px-6 text-center">
+          <p className="text-sm font-medium text-neutral-200">{hlsError}</p>
+          <p className="text-xs text-neutral-500">
+            Try reloading the page in a moment.
+          </p>
+        </div>
+      )}
 
       {/* Live badge + viewers + AI badge */}
       {isLive && (

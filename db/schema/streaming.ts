@@ -10,12 +10,13 @@ export const streams = pgTable(
     title: text("title").notNull(),
     description: text("description").notNull().default(""),
     eventId: text("event_id").references(() => events.id, { onDelete: "set null" }),
+    // Optional: an anime episode or a podcast has no game. `pillar` is what
+    // classifies a programme; this stays a real FK when a game does apply.
     gameId: text("game_id")
-      .notNull()
       .references(() => games.id, { onDelete: "cascade" }),
     // Phase 3 multi-tenant: nullable during backfill; will be required once
     // Phase 3.2 populates every row. Not adding FK constraint via Drizzle since
-    // `channels` is in a separate schema file — let the migration capture it.
+    // `channels` is in a separate schema file - let the migration capture it.
     channelId: text("channel_id"),
     streamerType: text("streamer_type", { enum: ["official", "creator"] })
       .notNull()
@@ -26,11 +27,11 @@ export const streams = pgTable(
     isLive: boolean("is_live").notNull().default(false),
     startedAt: text("started_at"),
     endedAt: text("ended_at"),
-    // Phase MVP — EPG/schedule. Pre-announced airtime for upcoming streams.
+    // Phase MVP - EPG/schedule. Pre-announced airtime for upcoming streams.
     // NULL for live-only or unscheduled streams.
     scheduledStartAt: text("scheduled_start_at"),
     scheduledDurationMin: integer("scheduled_duration_min"),
-    // Linear playout — "now airing" pointer. Set by the playout engine
+    // Linear playout - "now airing" pointer. Set by the playout engine
     // (ffplayout) via POST /api/internal/now-airing on every program change so
     // a continuous linear-channel stream can advertise what is REALLY on air,
     // not just what was scheduled. NULL on non-linear / idle streams.
@@ -39,7 +40,7 @@ export const streams = pgTable(
     nowAiringTargetId: text("now_airing_target_id"),
     nowAiringThumbnailUrl: text("now_airing_thumbnail_url"),
     nowAiringStartedAt: text("now_airing_started_at"),
-    // Linear playout — which media file the office playout engine should air for
+    // Linear playout - which media file the office playout engine should air for
     // this scheduled program. References playout_media.file_path. NULL = no file
     // chosen yet (the playout adapter falls back to filler). Set by admins via
     // the stream schedule editor's file picker.
@@ -51,7 +52,7 @@ export const streams = pgTable(
     language: text("language").notNull().default("en"),
     tags: jsonb("tags").$type<string[]>().notNull().default([]),
     isPremium: boolean("is_premium").notNull().default(false),
-    // Phase 9a — top-level content pillar. Defaults to esports for legacy rows.
+    // Phase 9a - top-level content pillar. Defaults to esports for legacy rows.
     pillar: text("pillar", {
       enum: ["esports", "anime", "lifestyle"],
     })
@@ -101,9 +102,9 @@ export const vods = pgTable(
     channelId: text("channel_id"),
     title: text("title").notNull(),
     description: text("description").notNull().default(""),
-    gameId: text("game_id")
-      .notNull()
-      .references(() => games.id, { onDelete: "cascade" }),
+    // Nullable for the same reason as `streams.gameId`: the recording of an
+    // anime episode or a podcast has no game.
+    gameId: text("game_id").references(() => games.id, { onDelete: "cascade" }),
     durationSec: integer("duration_sec").notNull(),
     hlsPath: text("hls_path").notNull().default(""),
     mp4Path: text("mp4_path").notNull().default(""),
@@ -116,7 +117,7 @@ export const vods = pgTable(
     viewCount: integer("view_count").notNull().default(0),
     likeCount: integer("like_count").notNull().default(0),
     isPremium: boolean("is_premium").notNull().default(false),
-    // Phase 9a — top-level content pillar. Defaults to esports for legacy rows.
+    // Phase 9a - top-level content pillar. Defaults to esports for legacy rows.
     pillar: text("pillar", {
       enum: ["esports", "anime", "lifestyle"],
     })
@@ -150,7 +151,7 @@ export const clips = pgTable(
     gameId: text("game_id")
       .notNull()
       .references(() => games.id, { onDelete: "cascade" }),
-    // Phase 9a — top-level content pillar. Defaults to esports for legacy rows.
+    // Phase 9a - top-level content pillar. Defaults to esports for legacy rows.
     pillar: text("pillar", {
       enum: ["esports", "anime", "lifestyle"],
     })

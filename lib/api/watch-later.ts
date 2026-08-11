@@ -8,7 +8,8 @@ export interface WatchLaterEntry {
   title: string;
   thumbnailUrl: string;
   durationSec: number;
-  gameId: string;
+  /** Null for anime, lifestyle and podcast recordings. */
+  gameId: string | null;
   isPremium: boolean;
   pillar: "esports" | "anime" | "lifestyle" | null;
 }

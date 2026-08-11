@@ -19,7 +19,7 @@ const listQuerySchema = z.object({
 });
 
 /**
- * GET /api/admin/streams — admin list of ALL streams (live + offline).
+ * GET /api/admin/streams - admin list of ALL streams (live + offline).
  * Optional filters: ?gameId=&isLive=true|false&limit=&offset=
  */
 export async function GET(req: NextRequest) {
@@ -101,7 +101,16 @@ export async function GET(req: NextRequest) {
 const createSchema = z.object({
   title: z.string().min(3).max(200),
   description: z.string().max(2000).default(""),
-  gameId: z.string().min(1),
+  // Optional: two of the three pillars have no game. Requiring it forced an
+  // operator to tag an anime episode or a podcast as Free Fire, and viewers
+  // then saw that badge on it.
+  gameId: z.string().min(1).nullish(),
+  // What the programme is. The create route accepted no pillar at all, so
+  // every stream an admin made landed as `esports` whatever they meant, and
+  // the pillar filters on /schedule and the landing week grid could never see
+  // an anime or lifestyle programme. This is the field that classifies a
+  // programme now that a game is optional.
+  pillar: z.enum(["esports", "anime", "lifestyle"]).default("esports"),
   eventId: z.string().nullable().optional(),
   streamerName: z.string().min(1).max(100),
   streamerAvatarUrl: z.string().default(""),
@@ -139,7 +148,8 @@ export async function POST(req: NextRequest) {
       title: parsed.data.title,
       description: parsed.data.description,
       eventId: parsed.data.eventId ?? null,
-      gameId: parsed.data.gameId,
+      gameId: parsed.data.gameId ?? null,
+      pillar: parsed.data.pillar,
       streamerType: "official",
       streamerName: parsed.data.streamerName,
       streamerAvatarUrl: parsed.data.streamerAvatarUrl,

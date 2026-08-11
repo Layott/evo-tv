@@ -17,7 +17,7 @@ export function formatNumber(value: number): string {
 }
 
 export function timeAgo(iso: string | null | undefined): string {
-  if (!iso) return "—";
+  if (!iso) return "-";
   const diffMs = Date.now() - new Date(iso).getTime();
   if (diffMs < 0) {
     const ahead = Math.abs(diffMs);
@@ -34,12 +34,12 @@ export function timeAgo(iso: string | null | undefined): string {
 }
 
 export function formatDate(iso: string | null | undefined): string {
-  if (!iso) return "—";
+  if (!iso) return "-";
   return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
 }
 
 export function formatDateTime(iso: string | null | undefined): string {
-  if (!iso) return "—";
+  if (!iso) return "-";
   return new Date(iso).toLocaleString(undefined, {
     year: "numeric",
     month: "short",
@@ -49,26 +49,20 @@ export function formatDateTime(iso: string | null | undefined): string {
   });
 }
 
-export function randomHex(length: number): string {
-  const chars = "0123456789abcdef";
-  let out = "";
-  for (let i = 0; i < length; i++) out += chars[Math.floor(Math.random() * chars.length)];
-  return out;
-}
-
 export function hashStreamKey(key: string): string {
   if (!key) return "";
   const prefix = key.slice(0, 8);
   return `${prefix}${"•".repeat(Math.max(0, key.length - 12))}${key.slice(-4)}`;
 }
 
-export function seededRandom(seed: number) {
-  let state = seed;
-  return () => {
-    state |= 0;
-    state = (state + 0x6d2b79f5) | 0;
-    let t = Math.imul(state ^ (state >>> 15), 1 | state);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
+/*
+ * `seededRandom` lived here and is deliberately gone.
+ *
+ * It generated the admin overview's trend badges ("+12.4% vs last hour" beside
+ * zero streams), the ads 30-day impression chart (~8,000 impressions above
+ * "0 campaigns") and every figure on the analytics page. Seeded from a fixed
+ * number, so the numbers were stable across reloads and looked like real
+ * measurements. An operator would have made decisions on them.
+ *
+ * If a panel has no data, render the empty state. Do not synthesise a curve.
+ */

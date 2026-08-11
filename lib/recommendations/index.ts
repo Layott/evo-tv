@@ -31,7 +31,7 @@ function watchedGameIds(progress: ProgressRow[], vodMap: Map<string, Vod>): Set<
   const gameIds = new Set<string>();
   for (const p of progress) {
     const vod = vodMap.get(p.vodId);
-    if (vod) gameIds.add(vod.gameId);
+    if (vod?.gameId) gameIds.add(vod.gameId);
   }
   return gameIds;
 }
@@ -103,7 +103,7 @@ export async function recommendForUser(userId: string, limit = 20): Promise<Vod[
       : [];
   const interactedVodMap = new Map<string, Vod>(interactedVods.map((v) => [v.id, v]));
 
-  // Which vods are fully watched (>80%) — exclude these.
+  // Which vods are fully watched (>80%) - exclude these.
   const fullyWatched = new Set<string>();
   for (const p of recentProgress) {
     const vod = interactedVodMap.get(p.vodId);
@@ -125,8 +125,8 @@ export async function recommendForUser(userId: string, limit = 20): Promise<Vod[
     eligible.reduce((m, v) => (v.viewCount > m ? v.viewCount : m), 0) || 1;
 
   const scored = eligible.map((v) => {
-    const sameGameBoost = likedGameIds.has(v.gameId) ? 1 : 0;
-    const followSignalBoost = followedGameIds.has(v.gameId) ? 1 : 0;
+    const sameGameBoost = v.gameId && likedGameIds.has(v.gameId) ? 1 : 0;
+    const followSignalBoost = v.gameId && followedGameIds.has(v.gameId) ? 1 : 0;
     const recency = recencyScore(v.publishedAt);
     const globalViewCountNorm = v.viewCount / maxViews;
     const score =

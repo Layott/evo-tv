@@ -98,7 +98,12 @@ export async function listRelatedVods(vodId: string, limit = 6): Promise<Vod[]> 
       .from(schema.vods)
       .where(
         and(
-          eq(schema.vods.gameId, base.gameId),
+          // Same game when there is one. An anime or lifestyle recording has
+          // no game, so the pillar is what makes another VOD related; without
+          // this fallback "related" would mean the entire library.
+          base.gameId
+            ? eq(schema.vods.gameId, base.gameId)
+            : eq(schema.vods.pillar, base.pillar),
           ne(schema.vods.id, vodId),
           isNull(schema.vods.deletedAt),
         ),

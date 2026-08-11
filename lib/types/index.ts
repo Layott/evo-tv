@@ -124,7 +124,7 @@ export interface Match {
 
 export type StreamerType = "official" | "creator";
 
-/** Phase 9a — top-level content pillar. */
+/** Phase 9a - top-level content pillar. */
 export type ContentPillar = "esports" | "anime" | "lifestyle";
 
 export interface Stream {
@@ -132,7 +132,8 @@ export interface Stream {
   title: string;
   description: string;
   eventId: UUID | null;
-  gameId: UUID;
+  /** Null for anime, lifestyle and podcast programmes. */
+  gameId: UUID | null;
   channelId?: UUID | null;
   streamerType: StreamerType;
   streamerName: string;
@@ -166,7 +167,8 @@ export interface Vod {
   streamId: UUID | null;
   title: string;
   description: string;
-  gameId: UUID;
+  /** Null for anime, lifestyle and podcast programmes. */
+  gameId: UUID | null;
   durationSec: number;
   hlsUrl: string;
   mp4Url: string;
@@ -200,7 +202,7 @@ export interface Clip {
   contentTags?: string[];
 }
 
-/* ── Phase 9b — Shows / Seasons / Episodes ───────────────────────────── */
+/* ── Phase 9b - Shows / Seasons / Episodes ───────────────────────────── */
 
 export type ShowOriginType = "evo_original" | "licensed" | "syndicated";
 export type ShowStatus = "airing" | "completed" | "upcoming" | "hiatus";

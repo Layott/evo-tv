@@ -54,7 +54,9 @@ import { PageHeader } from "./page-header";
 import { StatusBadge } from "./status-badge";
 import { formatCompact, timeAgo } from "./utils";
 
-function resolveGameName(games: Game[], id: string) {
+function resolveGameName(games: Game[], id: string | null | undefined) {
+  // A stream in the anime or lifestyle pillar has no game.
+  if (!id) return "-";
   return games.find((g) => g.id === id)?.shortName ?? id;
 }
 
@@ -134,8 +136,8 @@ export function StreamsManagerPage() {
       key: "game",
       header: "Game",
       sortable: true,
-      accessor: (r) => resolveGameName(games, r.gameId),
-      cell: (row) => <span className="text-sm text-neutral-300">{resolveGameName(games, row.gameId)}</span>,
+      accessor: (r) => resolveGameName(games, r.gameId ?? undefined),
+      cell: (row) => <span className="text-sm text-neutral-300">{resolveGameName(games, row.gameId ?? undefined)}</span>,
     },
     {
       key: "status",
@@ -337,7 +339,7 @@ export function StreamsManagerPage() {
               <SheetHeader>
                 <SheetTitle>{selected.title}</SheetTitle>
                 <SheetDescription>
-                  {resolveGameName(games, selected.gameId)} · {selected.streamerName}
+                  {resolveGameName(games, selected.gameId ?? undefined)} · {selected.streamerName}
                 </SheetDescription>
               </SheetHeader>
               <div className="space-y-5 px-4 pb-4">
@@ -450,7 +452,7 @@ export function StreamsManagerPage() {
           <DialogHeader>
             <DialogTitle>Reveal stream key</DialogTitle>
             <DialogDescription className="text-neutral-400">
-              Copy this key now — it will not be shown again. Treat it like a password.
+              Copy this key now - it will not be shown again. Treat it like a password.
             </DialogDescription>
           </DialogHeader>
           <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-200">
@@ -582,7 +584,7 @@ function CreateStreamDrawer({
               id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="EVO Finals — Grand Final LIVE"
+              placeholder="EVO Finals - Grand Final LIVE"
               className="border-neutral-800 bg-neutral-900"
             />
           </div>

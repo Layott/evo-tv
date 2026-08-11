@@ -24,7 +24,7 @@
  * them, and refuses to run if any real user progress or watchlist row would be
  * destroyed as collateral.
  */
-import "dotenv/config";
+import "./_env";
 import postgres from "postgres";
 
 /** Exactly the ids created by app/api/admin/db/seed-originals/route.ts. */

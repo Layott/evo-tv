@@ -63,7 +63,7 @@ export function LiveNow({ streams, games, loading }: LiveNowProps) {
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {streams.map((s) => {
-            const game = gameMap.get(s.gameId);
+            const game = s.gameId ? gameMap.get(s.gameId) : undefined;
             return (
               <Link
                 key={s.id}
