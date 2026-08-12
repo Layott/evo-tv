@@ -138,9 +138,19 @@
 }
 
 # ------------------------------------------------------------- web app
+#
+# app. is a 301 to the apex. Both hostnames served the same application, which
+# is duplicate content to a search engine and two places to check when
+# something looks wrong. Nothing is lost: the native apps never talk to this
+# hostname, they call {$API_HOST} directly.
+#
+# Safe because COOKIE_DOMAIN is `.evotv.co`, so the session cookie is valid on
+# the apex too and a signed-in visitor stays signed in across the redirect. If
+# COOKIE_DOMAIN is ever unset, revert this to `import evotv_next` first or
+# everyone on app. lands signed out.
 {$APP_HOST} {
 	import common
-	import evotv_next
+	redir https://{$REDIRECT_TARGET:evotv.co}{uri} permanent
 }
 
 # ------------------------------------------------------------------ evotv.co
