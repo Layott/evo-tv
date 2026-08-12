@@ -50,7 +50,7 @@ export default function Hero({ onAir, next, upcoming }: Props) {
             <div className="mt-6 flex items-center gap-3.5">
               <TvMark className="h-11 w-[3.3rem] shrink-0" />
               <p className="landing-display text-[1.35rem] text-[var(--brand)]">
-                EVO TV is coming soon to UCH.
+                EVO TV is coming soon to UHF.
               </p>
             </div>
           </div>

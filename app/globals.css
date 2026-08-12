@@ -208,7 +208,7 @@
   to { transform: translate3d(-50%, 0, 0); }
 }
 
-/* The little television beside the UCH line. Test-card bars sweeping behind
+/* The little television beside the UHF line. Test-card bars sweeping behind
    the screen, and a scanline crossing it, both looping forever. Coordinates
    are SVG user units from `tv-mark.tsx`: the screen is 35 wide starting at
    x=8, and 23 tall starting at y=19. The bar strip is drawn twice its width so
