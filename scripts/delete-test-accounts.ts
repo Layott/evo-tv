@@ -193,54 +193,76 @@ async function referencingColumns(): Promise<Ref[]> {
     console.log(`  ${ref.table}.${ref.column}  ${ref.n} row(s)  [${ref.onDelete}] -> ${verb}`);
   }
 
-  const blocked = withRows.filter((r) => r.action === "blocked");
-  if (blocked.length > 0) {
-    console.error("[accounts] stopping. These hold rows, cannot be nulled, and are not cascades:");
-    for (const b of blocked) {
-      console.error(`  ${b.table}.${b.column}  ${b.n} row(s)`);
-      // Print them. The decision is "is this record about a real person or
-      // about another test account", and that cannot be made from a count.
-      const rows = await sql`
-        select * from ${sql(b.schema)}.${sql(b.table)}
-        where ${sql(b.column)} = any(${ids})
-        limit 20
-      `;
-      for (const row of rows) console.error(`    ${JSON.stringify(row)}`);
-    }
-    console.error(
-      "[accounts] each one is a record about somebody else that names this account. Decide per table; nothing was changed.",
-    );
-    process.exitCode = 1;
-    return;
-  }
+  /*
+   * The dry run does the real work and rolls it back.
+   *
+   * Reporting from counts alone was wrong in a way worth keeping a note about:
+   * it flagged `user_sanctions.issued_by` as blocking, when that row is a
+   * sanction ON one of the other test accounts, so the cascade on `user_id`
+   * removes it long before `issued_by` matters. A count taken before anything
+   * happens cannot see that. Doing the work and rolling back can.
+   *
+   * Deletes run before nulls, and the blocked check runs last, against what is
+   * actually left.
+   */
+  const DRY_RUN = Symbol("dry run");
 
-  if (!apply) {
-    console.log("[accounts] dry run. Re-run with --apply to delete.");
-    return;
-  }
-
-  await sql.begin(async (tx) => {
-    for (const ref of withRows) {
-      if (ref.action === "null") {
-        const updated = await tx`
-          update ${tx(ref.schema)}.${tx(ref.table)}
-          set ${tx(ref.column)} = null
-          where ${tx(ref.column)} = any(${ids})
-        `;
-        console.log(`[accounts] ${ref.table}.${ref.column}: ${updated.count} row(s) kept, reference nulled`);
-      } else {
+  try {
+    await sql.begin(async (tx) => {
+      for (const ref of withRows.filter((r) => r.action === "delete")) {
         const removed = await tx`
           delete from ${tx(ref.schema)}.${tx(ref.table)}
           where ${tx(ref.column)} = any(${ids})
         `;
         console.log(`[accounts] ${ref.table}: ${removed.count} row(s) removed`);
       }
-    }
-    const removed = await tx`delete from "user" where id = any(${ids})`;
-    console.log(`[accounts] user: ${removed.count} row(s) removed`);
-  });
 
-  console.log("[accounts] done.");
+      for (const ref of withRows.filter((r) => r.action !== "delete")) {
+        const [{ n }] = await tx<Array<{ n: number }>>`
+          select count(*)::int as n
+          from ${tx(ref.schema)}.${tx(ref.table)}
+          where ${tx(ref.column)} = any(${ids})
+        `;
+        if (n === 0) continue;
+
+        if (ref.action === "blocked") {
+          const rows = await tx`
+            select * from ${tx(ref.schema)}.${tx(ref.table)}
+            where ${tx(ref.column)} = any(${ids})
+            limit 20
+          `;
+          console.error(
+            `[accounts] ${ref.table}.${ref.column} still holds ${n} row(s), is NOT NULL, and is not a cascade:`,
+          );
+          for (const row of rows) console.error(`    ${JSON.stringify(row)}`);
+          throw new Error(
+            `${ref.table}.${ref.column} names this account in a record about somebody else. Decide what that record should say, then rerun.`,
+          );
+        }
+
+        const updated = await tx`
+          update ${tx(ref.schema)}.${tx(ref.table)}
+          set ${tx(ref.column)} = null
+          where ${tx(ref.column)} = any(${ids})
+        `;
+        console.log(
+          `[accounts] ${ref.table}.${ref.column}: ${updated.count} row(s) kept, reference nulled`,
+        );
+      }
+
+      const removed = await tx`delete from "user" where id = any(${ids})`;
+      console.log(`[accounts] user: ${removed.count} row(s) removed`);
+
+      if (!apply) throw DRY_RUN;
+    });
+    console.log("[accounts] done.");
+  } catch (err) {
+    if (err === DRY_RUN) {
+      console.log("[accounts] dry run: everything above was rolled back. Rerun with --apply to keep it.");
+      return;
+    }
+    throw err;
+  }
 })()
   .catch((err) => {
     console.error("[accounts] failed, nothing was deleted:", err);
