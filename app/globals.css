@@ -208,10 +208,38 @@
   to { transform: translate3d(-50%, 0, 0); }
 }
 
+/* The little television beside the UCH line. Test-card bars sweeping behind
+   the screen, and a scanline crossing it, both looping forever. Coordinates
+   are SVG user units from `tv-mark.tsx`: the screen is 35 wide starting at
+   x=8, and 23 tall starting at y=19. The bar strip is drawn twice its width so
+   translating by exactly one screen width loops seamlessly, the same trick the
+   running-order marquee uses. */
+.tv-bars {
+  animation: tv-bars-sweep 4.5s linear infinite;
+}
+@keyframes tv-bars-sweep {
+  from { transform: translateX(0); }
+  to { transform: translateX(-35px); }
+}
+
+.tv-scan {
+  animation: tv-scan-fall 2.6s linear infinite;
+}
+@keyframes tv-scan-fall {
+  from { transform: translateY(0); opacity: 0; }
+  12% { opacity: 0.55; }
+  88% { opacity: 0.55; }
+  to { transform: translateY(23px); opacity: 0; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .marquee-track { animation: none; }
   .poster-pin { transition: none; }
   .poster-pin:hover { transform: none; }
+  /* The bars stay, they just stop moving. The scanline is pure motion, so it
+     goes entirely rather than parking a grey band across the screen. */
+  .tv-bars { animation: none; }
+  .tv-scan { animation: none; opacity: 0; }
 }
 
 .brand-bar {
