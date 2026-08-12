@@ -234,9 +234,13 @@ Two verification habits that paid for themselves repeatedly:
    ssh evotv 'cd /srv/evotv && docker compose run --rm --no-deps api-1 \
      pnpm tsx scripts/delete-test-accounts.ts --apply'  # delete
    ```
-6. **The native app has had none of this.** Every fix here is web only. The RN
-   app still has the fake auth screens, the old avatar mapping and no main
-   channel.
+6. **The native app.** Started 2026-08-12 and paused mid-task. Two of the three
+   claims here were already stale: the RN auth screens do call real endpoints,
+   and its avatar mapping was always correct. What was true: no main channel,
+   which is now built but **has not been opened in a running app**. Full state,
+   and the next step, in `EVOTV-app/docs/HANDOVER-NATIVE-2026-08-12.md`.
+   Its EAS profiles also pointed at the dead Vercel host, so any build cut
+   before that fix could not reach a single endpoint.
 7. ~~**`app.evotv.co` still serves the app.**~~ It is a 301 to the apex in the
    Caddyfile now. Reverting is one line: `import evotv_next` in place of the
    `redir`. Do revert it if `COOKIE_DOMAIN` ever stops being `.evotv.co`, or
