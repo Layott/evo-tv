@@ -16,8 +16,18 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <main className="flex flex-1 items-center justify-center px-4 pb-10">
           <div className="w-full max-w-md">{children}</div>
         </main>
-        <footer className="border-t border-neutral-900 px-6 py-4 text-[11px] text-neutral-500">
-          © {new Date().getFullYear()} EVO TV — Africa&apos;s home of mobile esports
+        {/* Signing up is the moment the terms start applying, so both links
+            belong on this page rather than only in the landing footer. */}
+        <footer className="flex flex-col gap-2 px-6 py-4 text-[11px] text-neutral-500 sm:flex-row sm:items-center sm:justify-between">
+          <span>© {new Date().getFullYear()} EVO TV, Africa&apos;s home for esports, anime and lifestyle</span>
+          <span className="flex gap-5">
+            <Link href="/privacy" className="transition-colors hover:text-neutral-200">
+              Privacy
+            </Link>
+            <Link href="/terms" className="transition-colors hover:text-neutral-200">
+              Terms
+            </Link>
+          </span>
         </footer>
       </div>
     </div>

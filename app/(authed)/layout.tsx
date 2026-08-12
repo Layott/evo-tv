@@ -1,6 +1,7 @@
 import { TopNav } from "@/components/shell/top-nav";
 import { BottomNav } from "@/components/shell/bottom-nav";
 import { LiteModeBanner } from "@/components/shell/lite-mode-banner";
+import { AppFooter } from "@/components/shell/app-footer";
 
 export default function AuthedLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -8,6 +9,7 @@ export default function AuthedLayout({ children }: { children: React.ReactNode }
       <LiteModeBanner />
       <TopNav />
       <main className="flex-1">{children}</main>
+      <AppFooter />
       <BottomNav />
     </div>
   );
