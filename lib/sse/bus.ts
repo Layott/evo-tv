@@ -66,6 +66,7 @@ function createRedis(url: string, role: string): Redis {
 }
 
 let publisher: Redis | undefined;
+let subscriberConnection: Redis | undefined;
 
 if (REDIS_URL) {
   publisher = globalThis.__evo_redis_pub ?? createRedis(REDIS_URL, "publisher");
@@ -73,6 +74,7 @@ if (REDIS_URL) {
   // A connection in subscriber mode cannot issue other commands, so publishing
   // and subscribing need separate connections.
   const subscriber = globalThis.__evo_redis_sub ?? createRedis(REDIS_URL, "subscriber");
+  subscriberConnection = subscriber;
 
   if (!globalThis.__evo_redis_sub) {
     // One pattern subscription for every topic. Subscribing per topic would
@@ -110,6 +112,21 @@ if (process.env.NODE_ENV !== "production") globalThis.__evo_bus = bus;
  */
 export function redisClient(): Redis | undefined {
   return publisher;
+}
+
+/**
+ * Close both connections.
+ *
+ * The server never calls this: the bus lives as long as the process. It exists
+ * because ioredis keeps the event loop alive, so a test file or a one-shot
+ * script that imports this module succeeds and then hangs forever, which is
+ * the same trap as a postgres-js script without `sql.end()`.
+ */
+export async function closeBus(): Promise<void> {
+  const clients = [publisher, subscriberConnection].filter(
+    (c): c is Redis => Boolean(c),
+  );
+  await Promise.all(clients.map((c) => c.quit().catch(() => c.disconnect())));
 }
 
 export function emit(topic: string, payload: Payload): void {
