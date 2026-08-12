@@ -198,6 +198,14 @@ async function referencingColumns(): Promise<Ref[]> {
     console.error("[accounts] stopping. These hold rows, cannot be nulled, and are not cascades:");
     for (const b of blocked) {
       console.error(`  ${b.table}.${b.column}  ${b.n} row(s)`);
+      // Print them. The decision is "is this record about a real person or
+      // about another test account", and that cannot be made from a count.
+      const rows = await sql`
+        select * from ${sql(b.schema)}.${sql(b.table)}
+        where ${sql(b.column)} = any(${ids})
+        limit 20
+      `;
+      for (const row of rows) console.error(`    ${JSON.stringify(row)}`);
     }
     console.error(
       "[accounts] each one is a record about somebody else that names this account. Decide per table; nothing was changed.",
