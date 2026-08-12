@@ -201,7 +201,7 @@ export default function SignupPage() {
           </div>
           <div className="relative flex justify-center">
             <span className="bg-neutral-900/50 px-2 text-[11px] uppercase tracking-widest text-neutral-500">
-              or continue with
+              or
             </span>
           </div>
         </div>
