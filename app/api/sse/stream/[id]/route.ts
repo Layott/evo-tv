@@ -1,26 +1,34 @@
 import type { NextRequest } from "next/server";
-import { sseStream } from "@/lib/sse/bus";
 import { db, schema } from "@/lib/db";
 import { eq, sql } from "drizzle-orm";
 import { emit, subscribe } from "@/lib/sse/bus";
+import { join, leave, refresh } from "@/lib/sse/presence";
 
-const viewerCounts = new Map<string, Set<string>>();
-
+/**
+ * Live status and viewer count for one stream.
+ *
+ * The count used to live in a `Map` in this module, which meant it counted the
+ * viewers this container was serving rather than the viewers watching. Two
+ * `api` containers therefore reported half the audience each, and whichever
+ * wrote last was the number on screen. It is a Valkey sorted set now, shared
+ * by every container: see `lib/sse/presence.ts`.
+ */
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const viewerId = crypto.randomUUID();
+  const topic = `stream:${id}`;
 
-  if (!viewerCounts.has(id)) viewerCounts.set(id, new Set());
-  const set = viewerCounts.get(id)!;
-  set.add(viewerId);
+  const initialCount = await join(topic, viewerId);
 
   await db
     .update(schema.streams)
-    .set({ viewerCount: set.size, peakViewerCount: sql`GREATEST(peak_viewer_count, ${set.size})` })
+    .set({
+      viewerCount: initialCount,
+      peakViewerCount: sql`GREATEST(peak_viewer_count, ${initialCount})`,
+    })
     .where(eq(schema.streams.id, id));
-  emit(`stream:${id}:viewers`, { count: set.size });
+  emit(`stream:${id}:viewers`, { count: initialCount });
 
-  const topic = `stream:${id}:*`;
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream<Uint8Array>({
@@ -34,7 +42,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       )[0];
       controller.enqueue(
         encoder.encode(
-          `data: ${JSON.stringify({ type: "hello", viewerCount: set.size, isLive: row?.isLive ?? false })}\n\n`
+          `data: ${JSON.stringify({ type: "hello", viewerCount: initialCount, isLive: row?.isLive ?? false })}\n\n`
         )
       );
 
@@ -47,23 +55,37 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         ),
       ];
 
+      // The heartbeat does double duty: it keeps the connection from being
+      // reaped by an idle proxy, and it renews this viewer's presence. A
+      // viewer who stops being renewed ages out of the count, which is how a
+      // container that dies without cleaning up stops inflating it.
       const heartbeat = setInterval(() => {
         try {
           controller.enqueue(encoder.encode(`: ping\n\n`));
         } catch {
           /* closed */
         }
+        void refresh(topic, viewerId).then((count) => {
+          void db
+            .update(schema.streams)
+            .set({
+              viewerCount: count,
+              peakViewerCount: sql`GREATEST(peak_viewer_count, ${count})`,
+            })
+            .where(eq(schema.streams.id, id));
+        });
       }, 30_000);
 
       const onAbort = () => {
         clearInterval(heartbeat);
         unsubs.forEach((u) => u());
-        set.delete(viewerId);
-        void db
-          .update(schema.streams)
-          .set({ viewerCount: set.size })
-          .where(eq(schema.streams.id, id));
-        emit(`stream:${id}:viewers`, { count: set.size });
+        void leave(topic, viewerId).then((count) => {
+          void db
+            .update(schema.streams)
+            .set({ viewerCount: count })
+            .where(eq(schema.streams.id, id));
+          emit(`stream:${id}:viewers`, { count });
+        });
         try {
           controller.close();
         } catch {
@@ -82,5 +104,3 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     },
   });
 }
-
-void sseStream;

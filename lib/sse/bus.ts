@@ -102,6 +102,16 @@ if (REDIS_URL) {
 // connections.
 if (process.env.NODE_ENV !== "production") globalThis.__evo_bus = bus;
 
+/**
+ * The publishing connection, for code that needs plain commands rather than
+ * pub/sub. Undefined when REDIS_URL is unset, which is the signal to fall back
+ * to per-process state. Only the subscriber connection is in subscriber mode,
+ * so this one can run ordinary commands.
+ */
+export function redisClient(): Redis | undefined {
+  return publisher;
+}
+
 export function emit(topic: string, payload: Payload): void {
   if (publisher) {
     // Publish only. The subscriber connection loops it back to this process
