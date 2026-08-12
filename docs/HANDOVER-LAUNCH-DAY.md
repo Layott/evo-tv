@@ -206,20 +206,41 @@ Two verification habits that paid for themselves repeatedly:
 
 ## 7. Still owed
 
-1. **Rotate the stream key.** See section 1.
-2. **Lock the Cloudflare origin.** See section 1.
-3. **Designate the main channel.** One click; the hero shows an admin prompt
-   until then.
+> **Update, 2026-08-12.** Items 3 and 6 of section 1 and this list moved. The
+> key was rotated, the main channel was designated, `app.` now 301s to the
+> apex, privacy and terms are on every page, the viewer count is shared across
+> containers, and the test accounts have a script rather than a note. What is
+> genuinely still open is the origin lock, which is blocked on DNS: only
+> `api.evotv.co` is proxied. `evotv.co`, `www.` and `app.` all still resolve
+> straight to the droplet, so locking 80 and 443 to Cloudflare ranges today
+> takes the site down. Orange-cloud those three records first; the script
+> refuses to run until they are, which is the correct order and not a bug.
+
+1. **Rotate the stream key.** Done, and note that the regenerate dialog was
+   handing back the *old* leaky form when it was rotated, which is fixed. Any
+   key rotated before that fix should be rotated once more.
+2. **Lock the Cloudflare origin.** See section 1, and the DNS blocker above.
+3. ~~**Designate the main channel.**~~ Done: `EVO TV 24/7 LIVE`. It has no
+   poster, thumbnail or tagline, so the hero renders bare between broadcasts.
 4. **Legal review** of `/privacy` and `/terms`, particularly the NDPA sections.
 5. **Delete the leftover test accounts.** `claude-test-admin@evo.tv` is an
    **admin** account from May with an unknown password, plus three
-   `@evotv.local` users. Flagged, not deleted, because deleting accounts is the
-   owner's call.
+   `@evotv.local` users. The owner has since said delete, and
+   `scripts/delete-test-accounts.ts` does it. Run the dry run first, then:
+
+   ```bash
+   ssh evotv 'cd /srv/evotv && docker compose run --rm --no-deps api-1 \
+     pnpm tsx scripts/delete-test-accounts.ts'          # report
+   ssh evotv 'cd /srv/evotv && docker compose run --rm --no-deps api-1 \
+     pnpm tsx scripts/delete-test-accounts.ts --apply'  # delete
+   ```
 6. **The native app has had none of this.** Every fix here is web only. The RN
    app still has the fake auth screens, the old avatar mapping and no main
    channel.
-7. **`app.evotv.co` still serves the app** rather than 301ing to the apex. Safe
-   to do now that the session cookie is shared across `.evotv.co`, not done.
+7. ~~**`app.evotv.co` still serves the app.**~~ It is a 301 to the apex in the
+   Caddyfile now. Reverting is one line: `import evotv_next` in place of the
+   `redir`. Do revert it if `COOKIE_DOMAIN` ever stops being `.evotv.co`, or
+   everyone on `app.` lands signed out.
 8. **Secrets passed through the session transcript**: the Resend key and the
    Google client secret. Rotate when convenient.
 
