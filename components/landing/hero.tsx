@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ScheduleEntry } from "@/lib/epg/grid";
 import { PILLARS } from "./pillar";
+import TvMark from "./tv-mark";
 
 interface Props {
   onAir: ScheduleEntry | null;
@@ -46,9 +47,12 @@ export default function Hero({ onAir, next, upcoming }: Props) {
             {/* An announcement, not furniture. It sits in the flow under the
                 subheading rather than in a bordered box or a second coloured
                 bar, which would compete with the on-air bug directly below. */}
-            <p className="landing-display mt-6 text-[1.35rem] text-[var(--brand)]">
-              EVO TV is coming soon to UCH.
-            </p>
+            <div className="mt-6 flex items-center gap-3.5">
+              <TvMark className="h-11 w-[3.3rem] shrink-0" />
+              <p className="landing-display text-[1.35rem] text-[var(--brand)]">
+                EVO TV is coming soon to UCH.
+              </p>
+            </div>
           </div>
 
           <div className="flex shrink-0 items-center gap-3">
