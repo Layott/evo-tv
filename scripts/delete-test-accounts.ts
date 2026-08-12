@@ -16,13 +16,26 @@ import postgres from "postgres";
  *   docker compose run --rm --no-deps api-1 pnpm tsx scripts/delete-test-accounts.ts --apply
  *
  * Without `--apply` it only reports. With it, everything happens in one
- * transaction: if any child row cannot be removed the whole thing rolls back
- * and prints the constraint that stopped it, rather than leaving an account
- * half-deleted.
+ * transaction: if any row cannot be dealt with the whole thing rolls back and
+ * prints what stopped it, rather than leaving an account half-deleted.
  *
  * Matching is deliberately narrow. A pattern like `%test%` would also match a
  * real signup called `testimony@`, so the rule is: the exact admin address, or
  * the `@evotv.local` domain, which is reserved and unroutable.
+ *
+ * ── What happens to rows that point at these accounts ────────────────────────
+ *
+ * Each foreign key already declares what should happen, and the script obeys
+ * it rather than deleting everything it can reach:
+ *
+ *   cascade    delete the row. It exists only because the user does.
+ *   set null   keep the row, null the reference. This is the schema saying the
+ *              record outlives the account, which is the entire point of
+ *              `audit_log`: the action stays, the actor becomes unknown.
+ *   no action  a decision, not a default. If the column is nullable it is
+ *              nulled; if it is NOT NULL the script stops and names it, since
+ *              deleting a sanction issued BY the test admin would erase a
+ *              moderation record about somebody else.
  */
 
 const EXACT_EMAILS = ["claude-test-admin@evo.tv"];
@@ -53,31 +66,43 @@ interface UserRow {
   created_at: unknown;
 }
 
+type Action = "delete" | "null" | "blocked";
+
+interface Ref {
+  schema: string;
+  table: string;
+  column: string;
+  onDelete: string;
+  notNull: boolean;
+  action: Action;
+}
+
 /**
- * Every table with a foreign key pointing at `user`, and the column that
- * points. Read from the catalog rather than the schema files so a table added
- * after this was written is still cleaned up instead of blocking the delete.
+ * Every column pointing at `user`, with the behaviour its constraint declares.
+ *
+ * Schema-qualified on both sides, because this database has more than one: a
+ * leftover Neon Auth schema carries its own `user`, `account`, `member` and
+ * `invitation`. Matching on bare relname pulled those in, then counting them
+ * unqualified resolved to the public table, which reported that
+ * `account.userId` does not exist on a table whose column is `user_id`. Both
+ * true, neither the same table.
  */
-async function referencingTables(): Promise<
-  Array<{ schema: string; table: string; column: string; onDelete: string }>
-> {
-  /*
-   * Schema-qualified on both sides, because this database has more than one.
-   * A leftover Neon Auth schema carries its own `user`, `account`, `member`
-   * and `invitation` tables. Matching on bare relname pulled those in, and
-   * then counting them with an unqualified name resolved to the public table,
-   * which produced "column userId does not exist" against a table whose column
-   * is `user_id`. The right answer is not to guess a name but to stay inside
-   * the schema the app actually uses.
-   */
+async function referencingColumns(): Promise<Ref[]> {
   const rows = await sql<
-    Array<{ schema: string; table: string; column: string; confdeltype: string }>
+    Array<{
+      schema: string;
+      table: string;
+      column: string;
+      confdeltype: string;
+      attnotnull: boolean;
+    }>
   >`
     select
       nsp.nspname            as schema,
       src.relname            as table,
       att.attname            as column,
-      c.confdeltype::text    as confdeltype
+      c.confdeltype::text    as confdeltype,
+      att.attnotnull         as attnotnull
     from pg_constraint c
     join pg_class src        on src.oid = c.conrelid
     join pg_namespace nsp    on nsp.oid = src.relnamespace
@@ -90,8 +115,9 @@ async function referencingTables(): Promise<
       and tnsp.nspname = current_schema()
       and nsp.nspname = current_schema()
       and src.relname <> 'user'
-    order by src.relname
+    order by src.relname, att.attname
   `;
+
   const meaning: Record<string, string> = {
     a: "no action",
     r: "restrict",
@@ -99,12 +125,22 @@ async function referencingTables(): Promise<
     n: "set null",
     d: "set default",
   };
-  return rows.map((r) => ({
-    schema: r.schema,
-    table: r.table,
-    column: r.column,
-    onDelete: meaning[r.confdeltype] ?? r.confdeltype,
-  }));
+
+  return rows.map((r) => {
+    const onDelete = meaning[r.confdeltype] ?? r.confdeltype;
+    let action: Action;
+    if (onDelete === "cascade") action = "delete";
+    else if (onDelete === "set null") action = "null";
+    else action = r.attnotnull ? "blocked" : "null";
+    return {
+      schema: r.schema,
+      table: r.table,
+      column: r.column,
+      onDelete,
+      notNull: r.attnotnull,
+      action,
+    };
+  });
 }
 
 (async () => {
@@ -125,10 +161,10 @@ async function referencingTables(): Promise<
     console.log(`  ${u.email}  role=${u.role ?? "user"}  id=${u.id}  created=${String(u.created_at)}`);
   }
 
-  const refs = await referencingTables();
+  const refs = await referencingColumns();
   const ids = users.map((u) => u.id);
+  const withRows: Array<Ref & { n: number }> = [];
 
-  console.log(`[accounts] ${refs.length} table(s) reference "user":`);
   for (const ref of refs) {
     // One unreadable table must not hide the other fifty. Report and carry on:
     // this loop only counts, so a failure here costs information, not safety.
@@ -138,14 +174,36 @@ async function referencingTables(): Promise<
         from ${sql(ref.schema)}.${sql(ref.table)}
         where ${sql(ref.column)} = any(${ids})
       `;
-      if (n > 0) {
-        console.log(`  ${ref.table}.${ref.column}  ${n} row(s)  on delete ${ref.onDelete}`);
-      }
+      if (n > 0) withRows.push({ ...ref, n });
     } catch (err) {
       console.error(
         `  ${ref.table}.${ref.column}  COULD NOT COUNT: ${err instanceof Error ? err.message : err}`,
       );
     }
+  }
+
+  console.log(`[accounts] ${refs.length} column(s) reference "user"; ${withRows.length} hold rows:`);
+  for (const ref of withRows) {
+    const verb =
+      ref.action === "delete"
+        ? "delete"
+        : ref.action === "null"
+          ? "keep, null the reference"
+          : "BLOCKED, NOT NULL";
+    console.log(`  ${ref.table}.${ref.column}  ${ref.n} row(s)  [${ref.onDelete}] -> ${verb}`);
+  }
+
+  const blocked = withRows.filter((r) => r.action === "blocked");
+  if (blocked.length > 0) {
+    console.error("[accounts] stopping. These hold rows, cannot be nulled, and are not cascades:");
+    for (const b of blocked) {
+      console.error(`  ${b.table}.${b.column}  ${b.n} row(s)`);
+    }
+    console.error(
+      "[accounts] each one is a record about somebody else that names this account. Decide per table; nothing was changed.",
+    );
+    process.exitCode = 1;
+    return;
   }
 
   if (!apply) {
@@ -154,15 +212,19 @@ async function referencingTables(): Promise<
   }
 
   await sql.begin(async (tx) => {
-    // Children first. A cascade would handle its own, but deleting explicitly
-    // means the count printed above is the count actually removed, and a
-    // restrict constraint fails here rather than at the end.
-    for (const ref of refs) {
-      const removed = await tx`
-        delete from ${tx(ref.schema)}.${tx(ref.table)}
-        where ${tx(ref.column)} = any(${ids})
-      `;
-      if (removed.count > 0) {
+    for (const ref of withRows) {
+      if (ref.action === "null") {
+        const updated = await tx`
+          update ${tx(ref.schema)}.${tx(ref.table)}
+          set ${tx(ref.column)} = null
+          where ${tx(ref.column)} = any(${ids})
+        `;
+        console.log(`[accounts] ${ref.table}.${ref.column}: ${updated.count} row(s) kept, reference nulled`);
+      } else {
+        const removed = await tx`
+          delete from ${tx(ref.schema)}.${tx(ref.table)}
+          where ${tx(ref.column)} = any(${ids})
+        `;
         console.log(`[accounts] ${ref.table}: ${removed.count} row(s) removed`);
       }
     }
