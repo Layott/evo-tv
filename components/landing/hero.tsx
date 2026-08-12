@@ -37,11 +37,19 @@ export default function Hero({ onAir, next, upcoming }: Props) {
           className="reveal mt-10 flex flex-col gap-10 sm:flex-row sm:items-end sm:justify-between"
           style={{ animationDelay: "260ms" }}
         >
-          <p className="max-w-[46ch] text-[1.02rem] leading-relaxed text-[var(--paper-dim)]">
-            One channel, always on, out of Lagos. League nights, watch-alongs
-            and the creators around them, running to a schedule you can plan
-            your evening by.
-          </p>
+          <div className="max-w-[46ch]">
+            <p className="text-[1.02rem] leading-relaxed text-[var(--paper-dim)]">
+              One channel, always on, out of Lagos. League nights, watch-alongs
+              and the creators around them, running to a schedule you can plan
+              your evening by.
+            </p>
+            {/* An announcement, not furniture. It sits in the flow under the
+                subheading rather than in a bordered box or a second coloured
+                bar, which would compete with the on-air bug directly below. */}
+            <p className="landing-display mt-6 text-[1.35rem] text-[var(--brand)]">
+              EVO TV is coming soon to UCH.
+            </p>
+          </div>
 
           <div className="flex shrink-0 items-center gap-3">
             {/* Anchors the week grid further down this page. There is no
