@@ -18,8 +18,16 @@ import { auth } from "@/lib/auth";
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
   const provider = url.searchParams.get("provider");
-  if (provider !== "google" && provider !== "apple") {
-    return new NextResponse("Invalid provider", { status: 400 });
+  /*
+   * Google only, matching what `lib/auth/index.ts` actually registers. Apple
+   * was accepted here and has no client id or secret in production, so the
+   * request reached `signInSocial` for a provider that does not exist and came
+   * back a 500. A 400 naming the provider is the honest answer.
+   */
+  if (provider !== "google") {
+    return new NextResponse(`Unsupported provider: ${provider ?? "none"}`, {
+      status: 400,
+    });
   }
 
   const baseURL = process.env.BETTER_AUTH_URL ?? "https://evo-tv.vercel.app";

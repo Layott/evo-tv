@@ -29,14 +29,6 @@ function GoogleIcon({ className }: { className?: string }) {
   );
 }
 
-function AppleIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-      <path d="M16.36 12.78c-.02-2.4 1.96-3.55 2.05-3.61-1.12-1.63-2.86-1.86-3.48-1.89-1.48-.15-2.89.87-3.64.87-.75 0-1.91-.85-3.14-.83-1.61.02-3.1.94-3.93 2.38-1.68 2.9-.43 7.2 1.2 9.55.8 1.16 1.75 2.45 3 2.4 1.21-.05 1.67-.78 3.13-.78 1.46 0 1.87.78 3.14.75 1.3-.02 2.12-1.17 2.91-2.33.92-1.33 1.3-2.62 1.32-2.69-.03-.01-2.53-.97-2.56-3.82ZM14.2 5.2c.66-.8 1.11-1.92.99-3.03-.95.04-2.11.63-2.8 1.43-.61.71-1.15 1.85-1 2.94 1.06.08 2.14-.54 2.81-1.34Z" />
-    </svg>
-  );
-}
-
 /**
  * Social sign-in.
  *
@@ -45,15 +37,15 @@ function AppleIcon({ className }: { className?: string }) {
  * contacting a provider. It now hands off to Better-Auth, which redirects to the
  * provider and returns to `/oauth`.
  *
- * Only Google and Apple are offered, because those are the only two
- * `lib/auth/index.ts` registers, and each is registered only when its client id
- * and secret are present. Discord was in the mock list and has no configuration
- * behind it, so it is gone rather than showing a button that cannot work.
+ * Google only. `lib/auth/index.ts` registers a provider solely when its client
+ * id and secret are both present, and there is no Apple pair in production, so
+ * the Apple button rendered, redirected, and failed. Discord went the same way
+ * earlier for the same reason. A button that cannot work is worse than an
+ * absent one: it reads as a broken product rather than a missing feature.
+ *
+ * Adding Apple back is this list plus the two env vars, nothing else.
  */
-const PROVIDERS = [
-  { id: "google", label: "Google", Icon: GoogleIcon },
-  { id: "apple", label: "Apple", Icon: AppleIcon },
-] as const;
+const PROVIDERS = [{ id: "google", label: "Google", Icon: GoogleIcon }] as const;
 
 type ProviderId = (typeof PROVIDERS)[number]["id"];
 
@@ -81,8 +73,10 @@ export function OAuthButtons({ className }: { className?: string }) {
     }
   }
 
+  // One column. It was a two-column grid for Google beside Apple, which with a
+  // single provider left a half-width button next to a gap.
   return (
-    <div className={cn("grid gap-2 sm:grid-cols-2", className)}>
+    <div className={cn("grid gap-2", className)}>
       {PROVIDERS.map(({ id, label, Icon }) => (
         <Button
           key={id}
