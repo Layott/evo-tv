@@ -58,19 +58,37 @@ interface UserRow {
  * points. Read from the catalog rather than the schema files so a table added
  * after this was written is still cleaned up instead of blocking the delete.
  */
-async function referencingTables(): Promise<Array<{ table: string; column: string; onDelete: string }>> {
-  const rows = await sql<Array<{ table: string; column: string; confdeltype: string }>>`
+async function referencingTables(): Promise<
+  Array<{ schema: string; table: string; column: string; onDelete: string }>
+> {
+  /*
+   * Schema-qualified on both sides, because this database has more than one.
+   * A leftover Neon Auth schema carries its own `user`, `account`, `member`
+   * and `invitation` tables. Matching on bare relname pulled those in, and
+   * then counting them with an unqualified name resolved to the public table,
+   * which produced "column userId does not exist" against a table whose column
+   * is `user_id`. The right answer is not to guess a name but to stay inside
+   * the schema the app actually uses.
+   */
+  const rows = await sql<
+    Array<{ schema: string; table: string; column: string; confdeltype: string }>
+  >`
     select
+      nsp.nspname            as schema,
       src.relname            as table,
       att.attname            as column,
       c.confdeltype::text    as confdeltype
     from pg_constraint c
     join pg_class src        on src.oid = c.conrelid
+    join pg_namespace nsp    on nsp.oid = src.relnamespace
     join pg_class tgt        on tgt.oid = c.confrelid
+    join pg_namespace tnsp   on tnsp.oid = tgt.relnamespace
     join unnest(c.conkey) with ordinality as k(attnum, ord) on true
     join pg_attribute att    on att.attrelid = c.conrelid and att.attnum = k.attnum
     where c.contype = 'f'
       and tgt.relname = 'user'
+      and tnsp.nspname = current_schema()
+      and nsp.nspname = current_schema()
       and src.relname <> 'user'
     order by src.relname
   `;
@@ -82,6 +100,7 @@ async function referencingTables(): Promise<Array<{ table: string; column: strin
     d: "set default",
   };
   return rows.map((r) => ({
+    schema: r.schema,
     table: r.table,
     column: r.column,
     onDelete: meaning[r.confdeltype] ?? r.confdeltype,
@@ -116,7 +135,7 @@ async function referencingTables(): Promise<Array<{ table: string; column: strin
     try {
       const [{ n }] = await sql<Array<{ n: number }>>`
         select count(*)::int as n
-        from ${sql(ref.table)}
+        from ${sql(ref.schema)}.${sql(ref.table)}
         where ${sql(ref.column)} = any(${ids})
       `;
       if (n > 0) {
@@ -140,7 +159,8 @@ async function referencingTables(): Promise<Array<{ table: string; column: strin
     // restrict constraint fails here rather than at the end.
     for (const ref of refs) {
       const removed = await tx`
-        delete from ${tx(ref.table)} where ${tx(ref.column)} = any(${ids})
+        delete from ${tx(ref.schema)}.${tx(ref.table)}
+        where ${tx(ref.column)} = any(${ids})
       `;
       if (removed.count > 0) {
         console.log(`[accounts] ${ref.table}: ${removed.count} row(s) removed`);
