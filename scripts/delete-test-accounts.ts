@@ -111,13 +111,21 @@ async function referencingTables(): Promise<Array<{ table: string; column: strin
 
   console.log(`[accounts] ${refs.length} table(s) reference "user":`);
   for (const ref of refs) {
-    const [{ n }] = await sql<Array<{ n: number }>>`
-      select count(*)::int as n
-      from ${sql(ref.table)}
-      where ${sql(ref.column)} = any(${ids})
-    `;
-    if (n > 0) {
-      console.log(`  ${ref.table}.${ref.column}  ${n} row(s)  on delete ${ref.onDelete}`);
+    // One unreadable table must not hide the other fifty. Report and carry on:
+    // this loop only counts, so a failure here costs information, not safety.
+    try {
+      const [{ n }] = await sql<Array<{ n: number }>>`
+        select count(*)::int as n
+        from ${sql(ref.table)}
+        where ${sql(ref.column)} = any(${ids})
+      `;
+      if (n > 0) {
+        console.log(`  ${ref.table}.${ref.column}  ${n} row(s)  on delete ${ref.onDelete}`);
+      }
+    } catch (err) {
+      console.error(
+        `  ${ref.table}.${ref.column}  COULD NOT COUNT: ${err instanceof Error ? err.message : err}`,
+      );
     }
   }
 
