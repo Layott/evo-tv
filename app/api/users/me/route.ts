@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
-import { and, eq, ne } from "drizzle-orm";
+import { and, eq, ne, sql } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { getCurrentUser } from "@/lib/auth/guards";
@@ -76,6 +76,12 @@ const patchSchema = z.object({
     .optional(),
   bio: z.string().max(280).optional(),
   country: z.string().min(2).max(64).optional(),
+  /**
+   * Finishing onboarding, recorded against the account rather than the device.
+   * Only ever true: onboarding is not something a client gets to un-finish, and
+   * the timestamp is the server's to write.
+   */
+  onboarded: z.literal(true).optional(),
 });
 
 /**
@@ -100,7 +106,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 });
   }
 
-  const { name, handle, bio, country } = parsed.data;
+  const { name, handle, bio, country, onboarded } = parsed.data;
 
   // Handle uniqueness - reject early with a 409 so the form can highlight.
   if (typeof handle === "string") {
@@ -132,6 +138,10 @@ export async function PATCH(req: NextRequest) {
   const profilePatch: Record<string, unknown> = {};
   if (typeof bio === "string") profilePatch.bio = bio;
   if (typeof country === "string") profilePatch.country = country;
+  // Written once. Onboarding again on a second device is the bug this fixes,
+  // and re-stamping it on every call would lose the date it actually happened.
+  const onboardedNow = onboarded === true ? new Date().toISOString() : null;
+  if (onboardedNow) profilePatch.onboardedAt = onboardedNow;
   if (Object.keys(profilePatch).length > 0) {
     const exists = (
       await db
@@ -141,10 +151,22 @@ export async function PATCH(req: NextRequest) {
         .limit(1)
     )[0];
     if (exists) {
-      await db
-        .update(schema.profiles)
-        .set(profilePatch)
-        .where(eq(schema.profiles.userId, user.id));
+      if (onboardedNow) {
+        // Keep the first stamp. `sql` coalesce rather than a read-then-write so
+        // two devices finishing at once cannot race each other.
+        await db
+          .update(schema.profiles)
+          .set({
+            ...profilePatch,
+            onboardedAt: sql`coalesce(${schema.profiles.onboardedAt}, ${onboardedNow})`,
+          })
+          .where(eq(schema.profiles.userId, user.id));
+      } else {
+        await db
+          .update(schema.profiles)
+          .set(profilePatch)
+          .where(eq(schema.profiles.userId, user.id));
+      }
     } else {
       await db.insert(schema.profiles).values({
         userId: user.id,
@@ -152,7 +174,7 @@ export async function PATCH(req: NextRequest) {
         avatarUrl: (user as { image?: string | null }).image ?? "",
         bio: typeof bio === "string" ? bio : "",
         country: typeof country === "string" ? country : "NG",
-        onboardedAt: null,
+        onboardedAt: onboardedNow,
         createdAt: new Date().toISOString(),
       });
     }
@@ -172,6 +194,7 @@ export async function PATCH(req: NextRequest) {
       .select({
         bio: schema.profiles.bio,
         country: schema.profiles.country,
+        onboardedAt: schema.profiles.onboardedAt,
       })
       .from(schema.profiles)
       .where(eq(schema.profiles.userId, user.id))
@@ -200,6 +223,8 @@ export async function PATCH(req: NextRequest) {
       handle: fresh?.handle ?? null,
       image: fresh?.image ?? null,
       role: fresh?.role ?? "user",
+      // Same shape GET returns, so a client can re-hydrate from either.
+      onboardedAt: profile?.onboardedAt ?? null,
       bio: profile?.bio ?? "",
       country: profile?.country ?? "NG",
     },
