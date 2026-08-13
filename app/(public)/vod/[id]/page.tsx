@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { permanentRedirect } from "next/navigation";
 
 import { getVodBySlugOrId } from "@/lib/api/vods";
+import { looksLikeId } from "@/lib/slug";
 import VodView from "./view";
 
 /**
@@ -11,9 +13,8 @@ import VodView from "./view";
  * client. A `router.replace` would tidy the address bar and mean nothing to a
  * crawler, which is the opposite of the point.
  *
- * So: this resolves the parameter and emits a canonical pointing at the slug,
- * then hands the rest to the same component as before. It does not redirect;
- * see the note in the component below for why not.
+ * So: this resolves the parameter, sends the id form to the slug, and emits a
+ * canonical, then hands the rest to the same component as before.
  *
  * The segment is still called `[id]` because renaming it is a no-op for
  * routing and a large diff for every link in the app. What it holds is either
@@ -49,19 +50,25 @@ export default async function VodPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  // No redirect here, deliberately. `permanentRedirect()` does not work in this
-  // app: the page runs, the call is reached, and the response still comes back
-  // 200 with the string NEXT_REDIRECT rendered into the HTML instead of a
-  // Location header. Proven by probe on Next 16.2.4, not assumed.
+  const { id } = await params;
+
+  // Send the id form to the slug. Only when there is somewhere better to go: a
+  // row from before slugs existed has no slug, and bouncing it would turn a
+  // working link into a 404 to satisfy a rule.
   //
-  // The canonical link in `generateMetadata` above is what consolidates the id
-  // form onto the slug in the meantime, which is the mechanism search engines
-  // are documented to honour for exactly this case. It is weaker than a 301
-  // for a human following an old link, and it is the honest thing to ship
-  // until the redirect itself is fixed.
+  // Do not be alarmed by `curl` reporting 200 here with no Location header.
+  // Next serves a redirect from a streamed render as a client-side navigation,
+  // so the browser does land on the slug and a tool that does not run
+  // JavaScript does not see a 3xx. Verified in a real browser, because a curl
+  // check alone says the opposite and is wrong.
   //
-  // Worth knowing beyond this page: `lib/auth/guards.ts` calls `redirect()` in
-  // `requireUser` and `requireRole`. If those are affected the same way, a
-  // guard that looks like it bounces someone does not.
+  // That is also why the canonical above matters: it is what tells a crawler,
+  // which is exactly the client that cannot follow this, which URL is the real
+  // one.
+  if (looksLikeId(id)) {
+    const vod = await getVodBySlugOrId(id);
+    if (vod?.slug) permanentRedirect(`/vod/${vod.slug}`);
+  }
+
   return <VodView />;
 }
