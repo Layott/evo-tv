@@ -8,6 +8,7 @@ import * as schema from "@/db/schema";
 import { isAccountBlocked } from "@/lib/sanctions";
 import { sendEmail } from "@/lib/email/send";
 import { renderOtpEmail } from "@/lib/email/templates";
+import { SESSION_MAX_AGE_SEC, SESSION_UPDATE_AGE_SEC } from "./idle";
 
 /**
  * Origins allowed to drive auth from a browser.
@@ -69,12 +70,17 @@ export const auth = betterAuth({
       : {}),
   },
   session: {
-    // 7-day inactivity window: each authenticated request older than
-    // `updateAge` slides the expiry forward, so active users stay signed in
-    // but anyone idle for 7 days is logged out on next open.
-    expiresIn: 60 * 60 * 24 * 7,
-    updateAge: 60 * 60 * 24,
-    cookieCache: { enabled: true, maxAge: 60 * 5 },
+    // The row lives a week and slides forward as it is used. Browsers get a
+    // much shorter three-hour idle window on top of this, enforced in
+    // `lib/auth/idle.ts`; the app keeps the week and locks behind biometrics
+    // instead. `updateAge` is what makes the idle clock tick, so it has to
+    // stay well under that three hours.
+    expiresIn: SESSION_MAX_AGE_SEC,
+    updateAge: SESSION_UPDATE_AGE_SEC,
+    // Kept at or below `updateAge`: a request served from the cached cookie
+    // never reaches the database, so it neither slides the session nor lets
+    // the idle check see it.
+    cookieCache: { enabled: true, maxAge: SESSION_UPDATE_AGE_SEC },
   },
   rateLimit: {
     enabled: true,

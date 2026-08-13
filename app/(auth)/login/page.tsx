@@ -10,7 +10,6 @@ import { Loader2, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/components/providers";
 import { TextField } from "@/components/auth/form-field";
@@ -19,10 +18,26 @@ import { OAuthButtons } from "@/components/auth/oauth-buttons";
 const loginSchema = z.object({
   email: z.string().email("Enter a valid email"),
   password: z.string().min(8, "Password must be at least 8 characters"),
-  remember: z.boolean().optional(),
 });
 
 type LoginValues = z.infer<typeof loginSchema>;
+
+/**
+ * Says why somebody is looking at a login page they did not ask for.
+ *
+ * The API drops `evotv_signed_out` when it ends a session for inactivity.
+ * Without this the site just forgets you between visits, which reads as a bug
+ * rather than as the thing protecting your account on a shared machine.
+ */
+function useIdleSignOutNotice(): boolean {
+  const [idle, setIdle] = React.useState(false);
+  React.useEffect(() => {
+    if (!document.cookie.split("; ").includes("evotv_signed_out=idle")) return;
+    setIdle(true);
+    document.cookie = "evotv_signed_out=; path=/; max-age=0";
+  }, []);
+  return idle;
+}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -30,19 +45,16 @@ export default function LoginPage() {
   const next = search.get("next");
   const { signIn } = useAuth();
   const [showPassword, setShowPassword] = React.useState(false);
+  const signedOutForIdle = useIdleSignOutNotice();
 
   const {
     register,
     handleSubmit,
-    setValue,
-    watch,
     formState: { errors, isSubmitting },
   } = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "", remember: true },
+    defaultValues: { email: "", password: "" },
   });
-
-  const remember = watch("remember");
 
   const onSubmit = async (values: LoginValues) => {
     const { error } = await signIn(values.email, values.password);
@@ -65,6 +77,17 @@ export default function LoginPage() {
           Sign in to follow your teams, catch lives, and join the chat.
         </p>
       </div>
+
+      {signedOutForIdle ? (
+        <div className="rounded-xl bg-neutral-800/60 px-4 py-3" role="status">
+          <p className="text-sm text-neutral-200">
+            You were signed out after 3 hours without activity.
+          </p>
+          <p className="mt-0.5 text-xs text-neutral-400">
+            This keeps your account closed if you leave a shared computer.
+          </p>
+        </div>
+      ) : null}
 
       <div className="rounded-2xl border border-neutral-800 bg-neutral-900/50 p-6">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
@@ -115,18 +138,6 @@ export default function LoginPage() {
                 {errors.password.message}
               </p>
             ) : null}
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Checkbox
-              id="remember"
-              checked={!!remember}
-              onCheckedChange={(c) => setValue("remember", c === true)}
-              className="data-[state=checked]:border-sky-500 data-[state=checked]:bg-sky-500"
-            />
-            <Label htmlFor="remember" className="text-xs text-neutral-400">
-              Remember me for 30 days
-            </Label>
           </div>
 
           <Button

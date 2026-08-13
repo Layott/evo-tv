@@ -4,11 +4,16 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { and, eq } from "drizzle-orm";
 import { auth, type SessionUser } from "./index";
+import { revokeIdleWebSession } from "./idle";
 import { db, schema } from "@/lib/db";
 import { hasMinRole, type PlatformRole } from "./roles";
 
 export async function getSession() {
-  return auth.api.getSession({ headers: await headers() });
+  const h = await headers();
+  // Browsers idle for three hours are signed out here, before Better-Auth
+  // reads (and thereby refreshes) the same row. See `lib/auth/idle.ts`.
+  await revokeIdleWebSession(h);
+  return auth.api.getSession({ headers: h });
 }
 
 export async function getCurrentUser(): Promise<SessionUser | null> {
