@@ -5,6 +5,7 @@ import { hashStreamKey } from "@/lib/video/stream-key";
 import { emit } from "@/lib/sse/bus";
 import "@/workers/transcode";
 import { rtmpHlsUrlFor } from "@/lib/video/ingest";
+import { slugForStream } from "@/lib/api/slugs";
 
 /**
  * Concurrent-stream cap per publisher. Hardcoded MVP tiers - replace with
@@ -151,6 +152,7 @@ export async function POST(req: NextRequest) {
     await db.insert(schema.streams).values({
       id: streamId,
       title: `${channel.name} live`,
+      slug: await slugForStream(`${channel.name} live`),
       description: "",
       // Null, not Free Fire. This hardcoded a game onto every channel that
       // published, so an anime or lifestyle broadcast carried an esports badge.

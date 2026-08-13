@@ -96,6 +96,7 @@ export async function globalSearch(query: string): Promise<SearchResults> {
   const vods: Vod[] = vodRows.map((r) => ({
     id: r.id,
     streamId: r.streamId,
+    slug: r.slug,
     title: r.title,
     description: r.description,
     gameId: r.gameId,

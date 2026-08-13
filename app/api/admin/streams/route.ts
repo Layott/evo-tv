@@ -10,6 +10,7 @@ import {
   defaultIngestKind,
   provisionIngest,
 } from "@/lib/video/ingest";
+import { slugForStream } from "@/lib/api/slugs";
 
 const listQuerySchema = z.object({
   gameId: z.string().optional(),
@@ -173,6 +174,7 @@ export async function POST(req: NextRequest) {
       ingestKind: details.kind,
       cfLiveInputUid,
       title: parsed.data.title,
+      slug: await slugForStream(parsed.data.title),
       description: parsed.data.description,
       eventId: parsed.data.eventId ?? null,
       gameId: parsed.data.gameId ?? null,

@@ -8,6 +8,12 @@ export const streams = pgTable(
   {
     id: text("id").primaryKey(),
     title: text("title").notNull(),
+    /**
+     * URL slug, generated from the title. Null means "address this row by its
+     * id", which is what every row written before migration 0035 does. Unique
+     * where present; Postgres lets multiple NULLs coexist.
+     */
+    slug: text("slug"),
     description: text("description").notNull().default(""),
     eventId: text("event_id").references(() => events.id, { onDelete: "set null" }),
     // Optional: an anime episode or a podcast has no game. `pillar` is what
@@ -123,6 +129,12 @@ export const vods = pgTable(
     streamId: text("stream_id").references(() => streams.id, { onDelete: "set null" }),
     channelId: text("channel_id"),
     title: text("title").notNull(),
+    /**
+     * URL slug, generated from the title. Null means "address this row by its
+     * id", which is what every row written before migration 0035 does. Unique
+     * where present; Postgres lets multiple NULLs coexist.
+     */
+    slug: text("slug"),
     description: text("description").notNull().default(""),
     // Nullable for the same reason as `streams.gameId`: the recording of an
     // anime episode or a podcast has no game.
@@ -162,6 +174,12 @@ export const clips = pgTable(
     streamId: text("stream_id").references(() => streams.id, { onDelete: "set null" }),
     channelId: text("channel_id"),
     title: text("title").notNull(),
+    /**
+     * URL slug, generated from the title. Null means "address this row by its
+     * id", which is what every row written before migration 0035 does. Unique
+     * where present; Postgres lets multiple NULLs coexist.
+     */
+    slug: text("slug"),
     creatorHandle: text("creator_handle").notNull(),
     creatorAvatarUrl: text("creator_avatar_url").notNull().default(""),
     durationSec: integer("duration_sec").notNull(),

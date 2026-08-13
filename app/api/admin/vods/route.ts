@@ -5,6 +5,7 @@ import { db, schema } from "@/lib/db";
 import { requireMinRole } from "@/lib/auth/guards";
 import { generateId, requireAdminFromRequest } from "@/lib/api/admin";
 import { getVodById } from "@/lib/api/vods";
+import { slugForVod } from "@/lib/api/slugs";
 
 const listQuerySchema = z.object({
   gameId: z.string().optional(),
@@ -132,6 +133,7 @@ export async function POST(req: NextRequest) {
     streamId: null,
     channelId: null,
     title: parsed.data.title,
+    slug: await slugForVod(parsed.data.title),
     description: parsed.data.description,
     gameId: parsed.data.gameId,
     durationSec: parsed.data.durationSec,

@@ -2,11 +2,13 @@ import "server-only";
 import { and, desc, eq, isNull, ne } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import type { Vod, Clip } from "@/lib/types";
+import { looksLikeId } from "@/lib/slug";
 
 function toVod(r: typeof schema.vods.$inferSelect): Vod {
   return {
     id: r.id,
     streamId: r.streamId,
+    slug: r.slug,
     title: r.title,
     description: r.description,
     gameId: r.gameId,
@@ -74,6 +76,25 @@ export async function getVodById(id: string): Promise<Vod | null> {
       .limit(1)
   )[0];
   return r ? toVod(r) : null;
+}
+
+/**
+ * A VOD by whichever form the URL used.
+ *
+ * Slugs never contain an underscore and every id does, so the two cannot be
+ * confused. Both resolve so that links published before slugs existed keep
+ * working; `/vod/[slug]/page.tsx` is what redirects the id form to the slug.
+ */
+export async function getVodBySlugOrId(param: string): Promise<Vod | null> {
+  if (looksLikeId(param)) return getVodById(param);
+  const r = (
+    await db
+      .select()
+      .from(schema.vods)
+      .where(and(eq(schema.vods.slug, param), isNull(schema.vods.deletedAt)))
+      .limit(1)
+  )[0];
+  return r ? toVod(r) : getVodById(param);
 }
 
 export async function listRelatedVods(vodId: string, limit = 6): Promise<Vod[]> {

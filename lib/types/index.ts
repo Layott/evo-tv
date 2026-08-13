@@ -172,6 +172,8 @@ export interface VodChapter {
 export interface Vod {
   id: UUID;
   streamId: UUID | null;
+  /** URL slug. Null on rows created before migration 0035; address those by id. */
+  slug: string | null;
   title: string;
   description: string;
   /** Null for anime, lifestyle and podcast programmes. */

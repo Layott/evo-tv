@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { getVodById } from "@/lib/api/vods";
+import { getVodBySlugOrId } from "@/lib/api/vods";
 
 /**
  * GET /api/vods/[id]
@@ -12,7 +12,8 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  const vod = await getVodById(id);
+  // Accepts either form, because the page can now be reached by slug.
+  const vod = await getVodBySlugOrId(id);
   if (!vod) return new NextResponse("VOD not found", { status: 404 });
   return NextResponse.json(vod);
 }
