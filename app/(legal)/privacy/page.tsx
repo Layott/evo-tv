@@ -165,7 +165,7 @@ export default function PrivacyPage() {
             "Viewing records: 24 months, after which they become counts that identify nobody.",
             "Chat messages: 12 months, or until the stream they belong to is deleted.",
             "Orders and payment records: 7 years, because tax law requires it.",
-            "Sign-in sessions: 7 days from last use, or immediately when you sign out.",
+            "Sign-in sessions: in a browser, 3 hours from last use. In the app, 7 days from last use. Either way, immediately when you sign out.",
           ]}
         />
       </Section>
