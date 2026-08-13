@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Image from "next/image";
+import Link from "next/link";
 import type { ShowArt } from "@/lib/epg/artwork";
 
 interface Props {
@@ -128,11 +129,19 @@ export default function PosterCard({ show, tilt, index }: Props) {
           ) : null}
         </div>
 
-        <h3
-          className="landing-display mt-2 text-[clamp(1.7rem,3.6vw,2.5rem)]"
-          style={{ color: show.accentOnDark }}
-        >
-          {show.title}
+        {/*
+          The title is the link, not the whole card. On a touch screen a tap on
+          the poster already means "play the trailer", and making the card a
+          link would take that away from every phone user to serve a mouse.
+        */}
+        <h3 className="landing-display mt-2 text-[clamp(1.7rem,3.6vw,2.5rem)]">
+          <Link
+            href={`/show/${show.slug}`}
+            className="underline decoration-transparent decoration-2 underline-offset-[6px] transition-colors hover:decoration-current"
+            style={{ color: show.accentOnDark }}
+          >
+            {show.title}
+          </Link>
         </h3>
         <p className="mt-2 text-[0.98rem] text-[var(--paper-dim)]">
           {show.tagline ?? show.handle ?? ""}

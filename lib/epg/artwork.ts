@@ -137,3 +137,15 @@ export function artForTitle(title: string): ShowArt | null {
 export function originalShows(): ShowArt[] {
   return SHOW_ART;
 }
+
+const BY_SLUG = new Map(SHOW_ART.map((art) => [art.slug, art]));
+
+/**
+ * A show by its slug, which is what `/show/[slug]` resolves.
+ *
+ * These slugs are the site's public URLs, so treat them as published: renaming
+ * one breaks every link anybody has shared to that show.
+ */
+export function showArtBySlug(slug: string): ShowArt | null {
+  return BY_SLUG.get(slug) ?? null;
+}

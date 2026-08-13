@@ -20,7 +20,11 @@ export default function Originals({ shows }: Props) {
   if (shows.length === 0) return null;
 
   return (
-    <section className="relative mx-auto max-w-[92rem] px-5 py-20 sm:px-10 sm:py-28">
+    // `#originals` is the anchor a show page links back to, so it has to stay.
+    <section
+      id="originals"
+      className="relative mx-auto max-w-[92rem] px-5 py-20 sm:px-10 sm:py-28"
+    >
       <div className="reveal">
         <h2 className="landing-display text-[clamp(2.4rem,7vw,5rem)]">
           EVO Originals
