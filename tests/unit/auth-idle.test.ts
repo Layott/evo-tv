@@ -45,13 +45,15 @@ vi.mock("@/lib/db", async () => {
   };
 });
 
-const {
+// A plain import is safe here: `vi.mock` is hoisted above it, so the stub is
+// already registered by the time this resolves.
+import {
   SESSION_MAX_AGE_SEC,
   WEB_IDLE_WINDOW_SEC,
   isBearerRequest,
   revokeIdleWebSession,
   sessionTokenFromCookie,
-} = await import("@/lib/auth/idle");
+} from "@/lib/auth/idle";
 
 const MAX_AGE_MS = SESSION_MAX_AGE_SEC * 1000;
 const TOKEN = "bAvvLm7OI7Zq6w8xP38dyXHGHR5b2MDe";
