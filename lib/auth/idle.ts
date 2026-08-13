@@ -45,8 +45,13 @@ export function isBearerRequest(headers: Headers): boolean {
  * Better-Auth writes the session token into `<prefix>.session_token`, and
  * signs it, so the cookie value is `<token>.<signature>`. The token itself
  * carries no dot, so everything before the first one is the token.
+ *
+ * Exported only so a test can hold it to that claim. It is the one assumption
+ * here about somebody else's internals, and if a Better-Auth upgrade changes
+ * the cookie format this stops finding sessions and the idle window silently
+ * never fires again.
  */
-function sessionTokenFromCookie(headers: Headers): string | null {
+export function sessionTokenFromCookie(headers: Headers): string | null {
   const raw = headers.get("cookie");
   if (!raw) return null;
   for (const part of raw.split(";")) {
