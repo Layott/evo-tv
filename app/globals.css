@@ -200,6 +200,36 @@
   transform: rotate(0deg) translateY(-6px) scale(1.012);
 }
 
+/* Opening screen.
+
+   The poster is a background rather than the video's `poster` attribute so the
+   WebP can be offered with a JPEG fallback, which that attribute cannot do, and
+   so the first paint is a complete picture with no video request behind it. The
+   video fades in on top of this once it has actually buffered. */
+.hero-stage {
+  background-image: image-set(
+    url("/hero/evotv-hero-poster.webp") type("image/webp"),
+    url("/hero/evotv-hero-poster.jpg") type("image/jpeg")
+  );
+  background-size: cover;
+  background-position: center;
+}
+
+/* Dark at the head and foot, clear through the middle. The header and the
+   headline get their contrast; the reel keeps the part of the frame its own
+   titles and endcard occupy. */
+.hero-scrim {
+  background-image: linear-gradient(
+    to bottom,
+    rgb(5 25 27 / 0.7) 0%,
+    rgb(5 25 27 / 0.12) 22%,
+    rgb(5 25 27 / 0.16) 46%,
+    rgb(5 25 27 / 0.62) 78%,
+    rgb(5 25 27 / 0.92) 94%,
+    var(--ink) 100%
+  );
+}
+
 .marquee-track {
   animation: landing-marquee 38s linear infinite;
 }

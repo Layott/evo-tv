@@ -1,7 +1,5 @@
-import Link from "next/link";
 import type { ScheduleEntry } from "@/lib/epg/grid";
 import { PILLARS } from "./pillar";
-import TvMark from "./tv-mark";
 
 interface Props {
   onAir: ScheduleEntry | null;
@@ -11,15 +9,17 @@ interface Props {
 }
 
 /**
- * Hero plus the on-air bug.
+ * The on-air bug, and the line that introduces the channel.
  *
- * The headline opens the page with nothing above it. There used to be a
- * "LAGOS · STREAMING 24/7" eyebrow set in tracked-out uppercase mono, which is
- * the single most recognisable generated-landing-page element there is. The
- * facts it carried are already in the subheading and the footer.
+ * The headline, the UHF announcement and the buttons that used to open this
+ * section now live in `video-opening.tsx`, over the reel. What is left is what
+ * the opening screen cannot carry: a sentence of plain description for anyone
+ * who scrolled past the pitch, and the bug itself.
  *
  * The bug is a full-bleed bar carrying the wordmark's own blue-to-mint gradient,
  * the way a broadcast lower-third is a solid field rather than an outlined box.
+ * It sits directly under the opening deliberately, so the first thing below the
+ * fold is the channel stating what is on.
  *
  * When the grid has not been imported the bar collapses rather than rendering a
  * placeholder, so an unseeded environment looks unfinished, not broken.
@@ -27,55 +27,15 @@ interface Props {
 export default function Hero({ onAir, next, upcoming }: Props) {
   return (
     <section className="relative">
-      <div className="mx-auto max-w-[92rem] px-5 pb-16 pt-6 sm:px-10 sm:pb-24 sm:pt-10">
-        <h1 className="wipe landing-display max-w-[16ch] text-[clamp(3.1rem,11.5vw,9.5rem)]">
-          Africa&apos;s home for{" "}
-          <span className="text-[var(--brand)]">esports</span>, anime and
-          lifestyle.
-        </h1>
-
-        <div
-          className="reveal mt-10 flex flex-col gap-10 sm:flex-row sm:items-end sm:justify-between"
-          style={{ animationDelay: "260ms" }}
-        >
-          <div className="max-w-[46ch]">
-            <p className="text-[1.02rem] leading-relaxed text-[var(--paper-dim)]">
-              One channel, always on, out of Lagos. League nights, watch-alongs
-              and the creators around them, running to a schedule you can plan
-              your evening by.
-            </p>
-            {/* An announcement, not furniture. It sits in the flow under the
-                subheading rather than in a bordered box or a second coloured
-                bar, which would compete with the on-air bug directly below. */}
-            <div className="mt-6 flex items-center gap-3.5">
-              <TvMark className="h-11 w-[3.3rem] shrink-0" />
-              <p className="landing-display text-[1.35rem] text-[var(--brand)]">
-                EVO TV is coming soon to UHF.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex shrink-0 items-center gap-3">
-            {/* Anchors the week grid further down this page. There is no
-                `/schedule` route - the spec assumed one, but the app only ships
-                `/api/schedule`, and `/schedule` returns 404. */}
-            <a
-              href="#week"
-              className="landing-display bg-[var(--brand)] px-7 py-3.5 text-[1.15rem] text-[var(--ink)] transition-transform hover:-translate-y-0.5 active:translate-y-0"
-            >
-              See what&apos;s on
-            </a>
-            <Link
-              href="/signup"
-              className="landing-display px-2 py-3.5 text-[1.15rem] text-[var(--paper)] underline decoration-[var(--paper-faint)] decoration-2 underline-offset-[6px] transition-colors hover:decoration-[var(--brand)]"
-            >
-              Create an account
-            </Link>
-          </div>
-        </div>
-      </div>
-
       {onAir ? <OnAirBug onAir={onAir} next={next} upcoming={upcoming} /> : null}
+
+      <div className="mx-auto max-w-[92rem] px-5 pb-4 pt-12 sm:px-10 sm:pt-16">
+        <p className="reveal max-w-[46ch] text-[1.02rem] leading-relaxed text-[var(--paper-dim)]">
+          One channel, always on, out of Lagos. League nights, watch-alongs and
+          the creators around them, running to a schedule you can plan your
+          evening by.
+        </p>
+      </div>
     </section>
   );
 }

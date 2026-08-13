@@ -19,22 +19,24 @@ export default function SiteHeader() {
           </span>
         </Link>
 
-        <nav className="flex items-center gap-6 sm:gap-8">
+        {/* Every target here clears 44px. Set by the type alone, "Sign in" was
+            a 15px-tall strip of text, which is not something a thumb can hit. */}
+        <nav className="flex items-center gap-3 sm:gap-5">
           <a
             href="#week"
-            className="landing-display hidden text-[1.02rem] text-[var(--paper-dim)] transition-colors hover:text-[var(--paper)] sm:block"
+            className="landing-display hidden min-h-11 items-center px-2 text-[1.02rem] text-[var(--paper-dim)] transition-colors hover:text-[var(--paper)] sm:flex"
           >
             Schedule
           </a>
           <Link
             href="/login"
-            className="landing-display text-[1.02rem] text-[var(--paper-dim)] transition-colors hover:text-[var(--paper)]"
+            className="landing-display flex min-h-11 items-center px-2 text-[1.02rem] text-[var(--paper-dim)] transition-colors hover:text-[var(--paper)]"
           >
             Sign in
           </Link>
           <Link
             href="/signup"
-            className="landing-display bg-[var(--paper)] px-4 py-2 text-[0.95rem] text-[var(--ink)] transition-colors hover:bg-[var(--brand)]"
+            className="landing-display flex min-h-11 items-center bg-[var(--paper)] px-4 text-[0.95rem] text-[var(--ink)] transition-colors hover:bg-[var(--brand)]"
           >
             Join free
           </Link>

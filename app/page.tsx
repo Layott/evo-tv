@@ -7,7 +7,7 @@ import Hero from "@/components/landing/hero";
 import Originals from "@/components/landing/originals";
 import PillarsSection from "@/components/landing/pillars-section";
 import SiteFooter from "@/components/landing/site-footer";
-import SiteHeader from "@/components/landing/site-header";
+import VideoOpening from "@/components/landing/video-opening";
 import Week from "@/components/landing/week";
 
 /**
@@ -76,7 +76,7 @@ export default async function LandingPage() {
     <div
       className="landing-root landing-grain relative min-h-screen selection:bg-[var(--brand)] selection:text-[var(--ink)]"
     >
-      <SiteHeader />
+      <VideoOpening onAir={nowNext.now} />
       <main className="relative z-10">
         <Hero onAir={nowNext.now} next={nowNext.next} upcoming={upcoming} />
         <Originals shows={originalShows()} />
