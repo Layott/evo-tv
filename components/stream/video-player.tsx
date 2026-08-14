@@ -38,10 +38,6 @@ import {
   type CaptionLang,
 } from "@/lib/client/player-features";
 import {
-  getAiCommentaryConfig,
-  setAiCommentaryConfig,
-  getCommentaryLines,
-  type AiCommentaryConfig,
 } from "@/lib/client/player-features";
 
 interface VideoPlayerProps {
@@ -56,8 +52,6 @@ interface VideoPlayerProps {
   className?: string;
   /** id used for captions/AI track lookup; uses src if omitted */
   mediaId?: string;
-  /** game id for AI commentary line cycling */
-  gameId?: string;
 }
 
 /**
@@ -106,7 +100,6 @@ export function VideoPlayer({
   onReady,
   className,
   mediaId,
-  gameId,
 }: VideoPlayerProps) {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const videoRef = React.useRef<HTMLVideoElement>(null);
@@ -348,10 +341,6 @@ export function VideoPlayer({
   const [captionLineIndex, setCaptionLineIndex] = React.useState(0);
   const [speed, setSpeed] = React.useState<number>(1);
   const [showControls, setShowControls] = React.useState(true);
-  const [aiCommentaryOn, setAiCommentaryOn] = React.useState(false);
-  const [aiConfig, setAiConfig] = React.useState<AiCommentaryConfig | null>(null);
-  const [aiLineIndex, setAiLineIndex] = React.useState(0);
-  const [aiLineKey, setAiLineKey] = React.useState(0);
 
   const captionLangs = React.useMemo(() => listCaptionLanguages(), []);
   const captionsOn = captionSelection !== "off";
@@ -361,10 +350,6 @@ export function VideoPlayer({
       captionSelection === "auto" ? "en" : (captionSelection as CaptionLang);
     return getCaptionPhrasesSync(lang);
   }, [captionsOn, captionSelection]);
-  const aiLines = React.useMemo(
-    () => getCommentaryLines(gameId ?? "game_freefire"),
-    [gameId],
-  );
 
   // Cycle the on-screen caption strip every ~3s while captions are on.
   React.useEffect(() => {
@@ -374,31 +359,6 @@ export function VideoPlayer({
     }, 3000);
     return () => window.clearInterval(id);
   }, [captionsOn, captionLines.length]);
-
-  // Hydrate AI config (preserves user's voice/language choices from settings).
-  React.useEffect(() => {
-    let cancelled = false;
-    const id = mediaId ?? null;
-    getAiCommentaryConfig(id).then((cfg) => {
-      if (!cancelled) {
-        setAiConfig(cfg);
-        if (cfg.enabled) setAiCommentaryOn(true);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [mediaId]);
-
-  // Cycle AI commentary lines every ~4s when enabled.
-  React.useEffect(() => {
-    if (!aiCommentaryOn || aiLines.length === 0) return;
-    const id = window.setInterval(() => {
-      setAiLineIndex((i) => (i + 1) % aiLines.length);
-      setAiLineKey((k) => k + 1);
-    }, 4000);
-    return () => window.clearInterval(id);
-  }, [aiCommentaryOn, aiLines.length]);
 
   // Apply src changes
   React.useEffect(() => {
@@ -740,12 +700,6 @@ export function VideoPlayer({
               {viewerCount.toLocaleString()} watching
             </div>
           )}
-          {aiCommentaryOn && (
-            <div className="flex items-center gap-1 rounded-md bg-violet-600/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white animate-pulse">
-              <Sparkles className="size-2.5" />
-              AI
-            </div>
-          )}
         </div>
       )}
 
@@ -1029,10 +983,7 @@ export function VideoPlayer({
                 <Button
                   size="icon-sm"
                   variant="ghost"
-                  className={cn(
-                    "text-white hover:bg-white/10",
-                    aiCommentaryOn && "bg-white/10",
-                  )}
+                  className="text-white hover:bg-white/10"
                   aria-label="Settings"
                 >
                   <Settings className="size-4" />
@@ -1104,28 +1055,6 @@ export function VideoPlayer({
                     {s}x
                   </DropdownMenuItem>
                 ))}
-                <DropdownMenuSeparator className="bg-neutral-800" />
-                <DropdownMenuCheckboxItem
-                  checked={aiCommentaryOn}
-                  onSelect={(e) => e.preventDefault()}
-                  onCheckedChange={(checked) => {
-                    const next = Boolean(checked);
-                    setAiCommentaryOn(next);
-                    setAiConfig((prev) => (prev ? { ...prev, enabled: next } : prev));
-                    setAiCommentaryConfig({ enabled: next }, mediaId ?? null).catch(
-                      () => {},
-                    );
-                    toast.message(
-                      next
-                        ? "AI Commentary on (beta) - settings: Settings → Playback"
-                        : "AI Commentary off",
-                    );
-                  }}
-                  className="text-xs"
-                >
-                  <Sparkles className="mr-2 size-3.5 text-violet-400" />
-                  AI Commentary (beta)
-                </DropdownMenuCheckboxItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
@@ -1157,20 +1086,6 @@ export function VideoPlayer({
 
       </div>
     </div>
-      {aiCommentaryOn ? (
-        <div className="flex items-start gap-2 border-x border-b border-violet-500/30 bg-gradient-to-r from-violet-950/50 via-neutral-950 to-violet-950/50 px-3 py-2 text-xs text-neutral-200">
-          <Sparkles className="mt-0.5 size-3.5 shrink-0 text-violet-400 animate-pulse" />
-          <span className="rounded bg-violet-500/20 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-violet-300">
-            AI · {aiConfig?.voicePreset === "hype-male" ? "Hype" : "Analyst"}
-          </span>
-          <span
-            key={aiLineKey}
-            className="min-w-0 flex-1 truncate animate-in fade-in slide-in-from-left-2 duration-500"
-          >
-            {aiLines[aiLineIndex] ?? "Listening to the match…"}
-          </span>
-        </div>
-      ) : null}
     </div>
   );
 }

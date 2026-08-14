@@ -191,7 +191,6 @@ export default function StreamPage() {
                 isLive={stream.isLive}
                 viewerCount={stream.viewerCount}
                 mediaId={stream.id}
-                gameId={stream.gameId ?? undefined}
               />
             ) : requiresAuth ? (
               /*

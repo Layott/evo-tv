@@ -24,7 +24,7 @@ export default function TermsPage() {
   return (
     <LegalDoc
       title="Terms of Service"
-      updated="11 August 2026"
+      updated="14 August 2026"
       summary="These terms are the agreement between you and EVO TV. By creating an account or watching, you accept them. They are written to be read, so they are shorter than you expect."
     >
       <Section heading="Who you are agreeing with">
@@ -150,6 +150,15 @@ export default function TermsPage() {
         <p>
           If we close your account and you have paid for a period you have not
           used, we will refund the unused part, unless it was closed for fraud.
+        </p>
+      </Section>
+
+      <Section heading="How this was built">
+        <p>
+          Parts of EVO TV, the website and the apps, were built with the help of
+          AI coding tools. A person reviewed and approved what shipped. It
+          changes nothing about these terms: the service is ours, and so is the
+          responsibility for it.
         </p>
       </Section>
 

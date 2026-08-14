@@ -28,7 +28,7 @@ export default function PrivacyPage() {
   return (
     <LegalDoc
       title="Privacy Policy"
-      updated="11 August 2026"
+      updated="14 August 2026"
       summary="EVO TV is operated from Lagos, Nigeria. This explains what we collect, why, who we share it with, and how to make us delete it. It covers evotv.co, app.evotv.co and the EVO TV mobile apps."
     >
       <Section heading="Who we are">
@@ -211,6 +211,18 @@ export default function PrivacyPage() {
           collect their data. Some programming carries an age rating and is
           restricted accordingly. If you believe a child has given us their
           information, email us and we will remove it.
+        </p>
+      </Section>
+
+      <Section heading="How this was built">
+        <p>
+          Parts of EVO TV, the website and the apps, were built with the help of
+          AI coding tools. A person reviewed and approved what shipped, and the
+          decisions about what the service does are ours.
+        </p>
+        <p>
+          AI is not used to make decisions about you. Nothing here profiles you,
+          scores you, or decides automatically what you may access.
         </p>
       </Section>
 
