@@ -40,10 +40,10 @@ export default function PrivacyPage() {
         <p>
           Questions, requests or complaints:{" "}
           <a
-            href="mailto:privacy@evotv.co"
+            href="mailto:info@evotv.co"
             className="text-[var(--brand)] underline underline-offset-4"
           >
-            privacy@evotv.co
+            info@evotv.co
           </a>
         </p>
       </Section>
@@ -186,10 +186,10 @@ export default function PrivacyPage() {
           </Link>
           . For anything else, email{" "}
           <a
-            href="mailto:privacy@evotv.co"
+            href="mailto:info@evotv.co"
             className="text-[var(--brand)] underline underline-offset-4"
           >
-            privacy@evotv.co
+            info@evotv.co
           </a>{" "}
           and we will respond within 30 days. If we get it wrong, you can
           complain to the Nigeria Data Protection Commission.
