@@ -55,12 +55,24 @@ export interface ImageSpec {
   label: string;
 }
 
+/**
+ * Every image slot on the platform, with the size to upload.
+ *
+ * Standing rule from the owner: an upload field always says what size the
+ * image should be. Nobody can guess "poster" and be right, and artwork that
+ * arrives at whatever size the designer exported is how a rail ends up with
+ * one card taller than its neighbours.
+ *
+ * `tolerance` is how far off the ratio is still accepted. It is generous for
+ * slots where a crop is applied anyway and tight where the image is shown
+ * whole.
+ */
 export const POSTER_SPEC: ImageSpec = {
   aspect: 2 / 3,
   tolerance: 0.04,
   minWidth: 800,
   minHeight: 1200,
-  label: "portrait 2:3, at least 800 by 1200",
+  label: "portrait 2:3, 1000 by 1500 recommended",
 };
 
 export const HERO_SPEC: ImageSpec = {
@@ -68,7 +80,43 @@ export const HERO_SPEC: ImageSpec = {
   tolerance: 0.04,
   minWidth: 1600,
   minHeight: 900,
-  label: "landscape 16:9, at least 1600 by 900",
+  label: "landscape 16:9, 1920 by 1080 recommended",
+};
+
+/** Video thumbnails: episodes, VODs, clips, streams. */
+export const THUMBNAIL_SPEC: ImageSpec = {
+  aspect: 16 / 9,
+  tolerance: 0.06,
+  minWidth: 640,
+  minHeight: 360,
+  label: "landscape 16:9, 1280 by 720 recommended",
+};
+
+/** Product shots. Square, because the shop grid is a square grid. */
+export const PRODUCT_SPEC: ImageSpec = {
+  aspect: 1,
+  tolerance: 0.05,
+  minWidth: 800,
+  minHeight: 800,
+  label: "square, 1200 by 1200 recommended",
+};
+
+/** Crests, game icons, avatars: anything rendered in a circle or a small square. */
+export const LOGO_SPEC: ImageSpec = {
+  aspect: 1,
+  tolerance: 0.05,
+  minWidth: 256,
+  minHeight: 256,
+  label: "square, 512 by 512 recommended",
+};
+
+/** Ad creative and page banners, which are wider than video. */
+export const BANNER_SPEC: ImageSpec = {
+  aspect: 3,
+  tolerance: 0.12,
+  minWidth: 1200,
+  minHeight: 400,
+  label: "wide 3:1, 1500 by 500 recommended",
 };
 
 /** Two megabytes, for both artwork slots. */

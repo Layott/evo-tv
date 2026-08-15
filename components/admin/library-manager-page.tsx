@@ -56,7 +56,7 @@ import {
 } from "@/components/ui/dialog";
 import { DataTable, type DataColumn } from "./data-table";
 import { PageHeader } from "./page-header";
-import { MediaUpload } from "./media-upload";
+import { MediaUpload, THUMBNAIL_SPEC } from "./media-upload";
 import { formatDate } from "./utils";
 
 /**
@@ -643,6 +643,7 @@ export function LibraryManagerPage() {
                 label="Thumbnail"
                 kind="image"
                 folder="vods"
+                spec={THUMBNAIL_SPEC}
                 value={vodDraft.thumbnailUrl}
                 onChange={(url) => setVodDraft({ ...vodDraft, thumbnailUrl: url })}
               />
@@ -819,6 +820,7 @@ export function LibraryManagerPage() {
                 label="Thumbnail"
                 kind="image"
                 folder="clips"
+                spec={THUMBNAIL_SPEC}
                 value={clipDraft.thumbnailUrl}
                 onChange={(url) => setClipDraft({ ...clipDraft, thumbnailUrl: url })}
               />
