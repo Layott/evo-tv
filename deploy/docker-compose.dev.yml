@@ -1,0 +1,43 @@
+# Postgres for local development.
+#
+# Production runs DigitalOcean Managed Postgres and has done since the move off
+# Vercel. Nothing in this codebase is tied to any particular host: the client is
+# plain `postgres` (postgres-js) over `DATABASE_URL`, and the only mentions of
+# Neon left in the repo are two comments about a driver we no longer use.
+#
+# So a local checkout does not need a hosted database at all. This is one
+# container, no account, no egress, and it works on a plane.
+#
+# 17 to match production's major version. A schema that applies cleanly on 17
+# locally and fails on 16 in production is exactly the kind of surprise this
+# removes.
+#
+#   docker compose -f deploy/docker-compose.dev.yml up -d
+#   pnpm db:migrate
+#
+# Port 55432 rather than 5432: this machine already runs other Postgres and
+# MySQL containers, and a port clash here would look like a connection bug.
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: evotv_dev_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: evotv
+      POSTGRES_PASSWORD: evotv_dev
+      POSTGRES_DB: evotv
+    ports:
+      - "55432:5432"
+    volumes:
+      - evotv_dev_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # `pg_isready` returns before the server accepts connections on first
+      # boot, so the interval is short and the retries are generous.
+      test: ["CMD-SHELL", "pg_isready -U evotv -d evotv"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  evotv_dev_pgdata:

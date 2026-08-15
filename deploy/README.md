@@ -147,3 +147,30 @@ docker compose ps                                 # status, with health
 - **Never delete the `caddy_data` volume.** It holds the certificates.
 - **`valkey` is never published to a host port.** It has no auth and holds a live message bus.
 - The droplet holds no data. `.env` is the only thing on it worth backing up.
+
+## Local development database
+
+Production is DigitalOcean Managed Postgres. A local checkout does not need any
+hosted database at all: nothing in this codebase is tied to a host, the client
+is plain `postgres` (postgres-js) reading `DATABASE_URL`.
+
+```bash
+docker compose -f deploy/docker-compose.dev.yml up -d
+pnpm db:migrate
+```
+
+Postgres 17 to match production's major version, on port 55432 because this
+machine already runs other database containers on 5432. Credentials are in
+`docker-compose.dev.yml` and are deliberately boring: it listens on localhost
+and holds nothing that is not disposable.
+
+To copy the current data into it from another Postgres:
+
+```bash
+docker run --rm postgres:17-alpine pg_dump "$SOURCE_URL" \
+  --no-owner --no-privileges > dump.sql
+docker exec -i evotv_dev_db psql -U evotv -d evotv < dump.sql
+```
+
+Include the `drizzle` schema when you do, or `pnpm db:migrate` will try to
+replay every migration onto a database that already has them.
