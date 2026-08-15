@@ -8,6 +8,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   adminCreateClip,
   adminCreateVod,
+  adminUpdateVod,
   adminDeleteClip,
   adminDeleteVod,
   adminListClips,
@@ -82,6 +83,8 @@ function formatDuration(sec: number): string {
 }
 
 interface VodDraft {
+  /** Null when publishing. Set when configuring one that already exists. */
+  id: string | null;
   title: string;
   description: string;
   gameId: string;
@@ -108,6 +111,7 @@ interface ClipDraft {
 }
 
 const emptyVod: VodDraft = {
+  id: null,
   title: "",
   description: "",
   gameId: "",
@@ -200,8 +204,8 @@ export function LibraryManagerPage() {
   );
 
   const saveVod = useMutation({
-    mutationFn: (input: VodDraft) =>
-      adminCreateVod({
+    mutationFn: (input: VodDraft) => {
+      const payload = {
         title: input.title.trim(),
         description: input.description.trim(),
         gameId: input.gameId,
@@ -212,15 +216,37 @@ export function LibraryManagerPage() {
         pillar: input.pillar,
         maturityRating: input.maturityRating,
         isPremium: input.isPremium,
-      }),
-    onSuccess: async () => {
-      toast.success("Video published");
+      };
+      // Editing sends the same shape. Replacing `mp4Url` swaps what viewers
+      // watch on the next play; the old object stays in the bucket, which is
+      // the safe direction to be wrong in.
+      return input.id ? adminUpdateVod(input.id, payload) : adminCreateVod(payload);
+    },
+    onSuccess: async (_vod, input) => {
+      toast.success(input.id ? "Video saved" : "Video published");
       setVodDraft(null);
       await refresh("vods");
     },
     onError: (err: unknown) =>
-      toast.error(err instanceof Error ? err.message : "Could not publish the video"),
+      toast.error(err instanceof Error ? err.message : "Could not save the video"),
   });
+
+  /** Open an existing video in the same sheet that publishes one. */
+  function configureVod(vod: Vod) {
+    setVodDraft({
+      id: vod.id,
+      title: vod.title,
+      description: vod.description ?? "",
+      gameId: vod.gameId ?? "",
+      mp4Url: vod.mp4Url ?? "",
+      hlsUrl: vod.hlsUrl ?? "",
+      thumbnailUrl: vod.thumbnailUrl ?? "",
+      durationMin: vod.durationSec ? String(Math.round(vod.durationSec / 60)) : "",
+      pillar: (vod.pillar as ShowPillar) ?? "esports",
+      maturityRating: (vod.maturityRating as MaturityRating) ?? "teen",
+      isPremium: Boolean(vod.isPremium),
+    });
+  }
 
   const saveClip = useMutation({
     mutationFn: (input: ClipDraft) => {
@@ -330,7 +356,17 @@ export function LibraryManagerPage() {
         const deleted = Boolean((row as Vod & { deletedAt?: string | null }).deletedAt);
         if (!canPublish) return null;
         return (
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-1">
+            {deleted ? null : (
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => configureVod(row)}
+              >
+                Configure
+              </Button>
+            )}
             {deleted ? (
               <Button
                 type="button"
@@ -694,7 +730,7 @@ export function LibraryManagerPage() {
                   onClick={() => saveVod.mutate(vodDraft)}
                 >
                   {saveVod.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                  Publish video
+                  {vodDraft.id ? "Save video" : "Publish video"}
                 </Button>
               </div>
             </div>

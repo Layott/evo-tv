@@ -7,28 +7,56 @@ import { writeAudit } from "@/lib/api/audit";
 import { requireAdminFromRequest } from "@/lib/api/admin";
 import { getVodById } from "@/lib/api/vods";
 
+/** http(s) URL or an absolute /path. "" clears the field. */
+const urlOrPath = z
+  .string()
+  .trim()
+  .max(2048)
+  .refine((v) => v === "" || /^https?:\/\//i.test(v) || v.startsWith("/"), {
+    message: "must be an http(s) URL or an absolute /path",
+  });
+
+/**
+ * A chapter marker, so a long recording can be navigated.
+ *
+ * `startSec` rather than a timestamp string: the player seeks in seconds, and a
+ * string would have to be parsed by every consumer that wants to compare two.
+ */
+const chapter = z.object({
+  // `label`, matching the column. The player and the VOD page both read that
+  // name; calling it `title` here would only be a rename to undo on the way in.
+  label: z.string().trim().min(1).max(200),
+  startSec: z.number().int().min(0).max(24 * 60 * 60),
+});
+
 const patchSchema = z
   .object({
+    title: z.string().trim().min(3).max(200),
+    description: z.string().max(2000),
+    gameId: z.string().min(1),
+    pillar: z.enum(["esports", "anime", "lifestyle"]),
+    isPremium: z.boolean(),
+    durationSec: z.number().int().positive().max(24 * 60 * 60),
+    hlsUrl: urlOrPath,
+    mp4Url: urlOrPath,
+    thumbnailUrl: urlOrPath,
+    chapters: z.array(chapter).max(100),
     maturityRating: z.enum(["kids", "pg", "teen", "mature"]),
-    contentTags: z.array(z.string()),
-    // http(s) URL or absolute /path, max 1000 chars; "" clears the thumbnail.
-    thumbnailUrl: z
-      .string()
-      .trim()
-      .max(1000)
-      .refine(
-        (v) => v === "" || /^https?:\/\//i.test(v) || v.startsWith("/"),
-        { message: "thumbnailUrl must be an http(s) URL or an absolute /path" },
-      ),
+    contentTags: z.array(z.string().trim().min(1).max(40)).max(30),
   })
   .partial();
 
 /**
  * PATCH /api/admin/vods/[id]
  *
- * Admin update of a VOD's content classification and presentation. Accepts an
- * optional maturityRating, contentTags and/or thumbnailUrl; omitted fields are
- * left unchanged. Returns the updated VOD in the public Vod shape.
+ * Everything about a VOD, not just its classification. This used to accept
+ * three fields - maturity, tags and thumbnail - which meant a video uploaded
+ * with a typo in its title kept the typo forever, and a file uploaded to the
+ * wrong row could never be replaced. Omitted fields are left unchanged.
+ *
+ * `hlsUrl` and `mp4Url` map onto `hlsPath` and `mp4Path` in the table. The
+ * column names are older than the public shape and the mapper already hides
+ * them, so accepting the public names here keeps one vocabulary for callers.
  */
 export async function PATCH(
   req: NextRequest,
@@ -54,8 +82,23 @@ export async function PATCH(
   )[0];
   if (!existing) return new NextResponse("VOD not found", { status: 404 });
 
-  if (Object.keys(parsed.data).length > 0) {
-    await db.update(schema.vods).set(parsed.data).where(eq(schema.vods.id, id));
+  const { hlsUrl, mp4Url, ...columns } = parsed.data;
+  const patch = {
+    ...columns,
+    ...(hlsUrl === undefined ? {} : { hlsPath: hlsUrl }),
+    ...(mp4Url === undefined ? {} : { mp4Path: mp4Url }),
+  };
+
+  if (Object.keys(patch).length > 0) {
+    await db.update(schema.vods).set(patch).where(eq(schema.vods.id, id));
+
+    await writeAudit({
+      actorId: guard.user.id,
+      action: "vod.update",
+      targetType: "vod",
+      targetId: id,
+      meta: { fields: Object.keys(patch), title: existing.title },
+    });
   }
 
   return NextResponse.json(await getVodById(id));
