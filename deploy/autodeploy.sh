@@ -53,6 +53,16 @@ fi
 
 cd "$ROOT/api"
 
+# The clone on the droplet was made single-branch, so its refspec only mapped
+# the branch it was cloned from. Pointing DEPLOY_BRANCH at anything else then
+# fetched into FETCH_HEAD and never created `origin/<branch>`: the rev-parse
+# below failed, `set -e` killed the script before it could log anything, and
+# every two minutes it died in silence while the site sat on an old commit.
+#
+# Widening the refspec is idempotent and costs nothing on a run that is already
+# correct, so it happens here rather than in a runbook nobody reads.
+git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
+
 # Read-only. Nothing here touches the working tree, so a run that finds no
 # change cannot disturb a deploy that is somehow in flight.
 git fetch --quiet --depth 1 origin "$DEPLOY_BRANCH" 2>/dev/null || {
@@ -61,7 +71,13 @@ git fetch --quiet --depth 1 origin "$DEPLOY_BRANCH" 2>/dev/null || {
 }
 
 LOCAL="$(git rev-parse HEAD)"
-REMOTE="$(git rev-parse "origin/$DEPLOY_BRANCH")"
+
+# Explicitly, rather than letting `set -e` end the script: a branch that does
+# not exist on the remote is a typo in the crontab, and that should say so.
+if ! REMOTE="$(git rev-parse --verify --quiet "origin/$DEPLOY_BRANCH")"; then
+  log "no such branch origin/$DEPLOY_BRANCH, check DEPLOY_BRANCH in the crontab"
+  exit 0
+fi
 
 [ "$LOCAL" = "$REMOTE" ] && exit 0
 
