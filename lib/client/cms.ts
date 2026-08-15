@@ -186,6 +186,23 @@ export async function adminCreateSeason(
   return res.season;
 }
 
+export async function adminUpdateSeason(
+  id: string,
+  patch: { seasonNumber?: number; title?: string; releasedAt?: string | null },
+): Promise<AdminSeason> {
+  const res = await apiSend<{ season: AdminSeason }>(
+    "PATCH",
+    `/api/admin/seasons/${encodeURIComponent(id)}`,
+    patch,
+  );
+  return res.season;
+}
+
+/** Refused while the season still holds episodes, because the cascade would take them. */
+export async function adminDeleteSeason(id: string): Promise<void> {
+  await apiSend("DELETE", `/api/admin/seasons/${encodeURIComponent(id)}`);
+}
+
 /* ── Episodes ───────────────────────────────────────────────────────────── */
 
 export interface CreateEpisodeInput {
@@ -316,6 +333,25 @@ export interface CreateVodInput {
 
 export async function adminCreateVod(input: CreateVodInput): Promise<Vod> {
   return apiSend("POST", "/api/admin/vods", input);
+}
+
+/** A marker in a long recording, so it can be navigated rather than scrubbed. */
+export interface VodChapterInput {
+  label: string;
+  startSec: number;
+}
+
+/**
+ * Everything about a VOD, not just its classification.
+ *
+ * The route used to take three fields, which meant a video published with a
+ * typo kept it and a file uploaded to the wrong row could never be replaced.
+ */
+export async function adminUpdateVod(
+  id: string,
+  patch: Partial<CreateVodInput> & { chapters?: VodChapterInput[] },
+): Promise<Vod> {
+  return apiSend("PATCH", `/api/admin/vods/${encodeURIComponent(id)}`, patch);
 }
 
 /**
