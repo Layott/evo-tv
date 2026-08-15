@@ -37,7 +37,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { MediaUpload } from "./media-upload";
+import { MediaUpload, THUMBNAIL_SPEC } from "./media-upload";
 
 /**
  * The inside of a show: its seasons, and the episodes hung off them.
@@ -424,6 +424,7 @@ export function ShowEpisodesPanel({ show }: { show: AdminShow }) {
                 label="Thumbnail"
                 kind="image"
                 folder="episodes"
+                spec={THUMBNAIL_SPEC}
                 value={draft.thumbnailUrl}
                 onChange={(url) => setDraft({ ...draft, thumbnailUrl: url })}
               />

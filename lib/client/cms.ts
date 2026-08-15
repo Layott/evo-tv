@@ -1,4 +1,4 @@
-import type { Clip, Vod } from "@/lib/types";
+import type { Clip, Product, ProductVariant, Vod } from "@/lib/types";
 import type { PriceWindow } from "@/lib/shows/pricing";
 import { apiGet, apiSend } from "./_fetch";
 
@@ -462,6 +462,65 @@ export async function adminExtendSubscription(
     action: "extend",
     days,
   });
+}
+
+/* ── The shop ───────────────────────────────────────────────────────────── */
+
+export interface ProductInput {
+  name: string;
+  description?: string;
+  category: Product["category"];
+  priceNgn: number;
+  images?: string[];
+  variants?: ProductVariant[];
+  featured?: boolean;
+  active?: boolean;
+  teamId?: string | null;
+  inventory?: number;
+}
+
+/**
+ * The admin catalogue, which is not the public one.
+ *
+ * `adminListProducts` in `admin.ts` reads `/api/products`, and that endpoint
+ * only returns what a shopper should see. An operator needs the inactive rows
+ * too, or a product taken off the shop becomes invisible to the person who
+ * took it off.
+ */
+export async function adminListShopProducts(): Promise<Product[]> {
+  const res = await apiGet<{ products: Product[] }>("/api/admin/products");
+  return res?.products ?? [];
+}
+
+export async function adminCreateProduct(input: ProductInput): Promise<Product> {
+  const res = await apiSend<{ product: Product }>("POST", "/api/admin/products", input);
+  return res.product;
+}
+
+export async function adminUpdateProduct(
+  id: string,
+  patch: Partial<ProductInput>,
+): Promise<Product> {
+  const res = await apiSend<{ product: Product }>(
+    "PATCH",
+    `/api/admin/products/${encodeURIComponent(id)}`,
+    patch,
+  );
+  return res.product;
+}
+
+/**
+ * Take a product off the shop.
+ *
+ * Deletes the row outright only when nobody has ever ordered it; otherwise it
+ * is deactivated, because every order stores its line items with the product id
+ * and a deleted row would leave old orders pointing at nothing. The response
+ * says which happened.
+ */
+export async function adminRemoveProduct(
+  id: string,
+): Promise<{ deactivated: boolean; message?: string }> {
+  return apiSend("DELETE", `/api/admin/products/${encodeURIComponent(id)}`);
 }
 
 /* ── Announcements ──────────────────────────────────────────────────────── */
