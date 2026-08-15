@@ -48,6 +48,14 @@ const PILLAR_RULES: Array<[RegExp, "esports" | "anime" | "lifestyle"]> = [
   [/^breakfast show/i, "lifestyle"],
   [/^elysium wave/i, "lifestyle"],
 
+  /**
+   * A talk show, not a match. The compound title reads
+   * `UNCUT AND UNCENSORED \ APEX LEGENDS`, and the game in the second segment
+   * is what it happens to be played on, not what the programme is. Corrected by
+   * the owner, 2026-08-14, after it shipped under Esports.
+   */
+  [/^uncut ?(and|&) ?uncensored/i, "lifestyle"],
+
   [/^lifeofdemax/i, "lifestyle"],
   [/^nobonez/i, "lifestyle"],
   [/^timmyggz/i, "lifestyle"],
@@ -60,7 +68,6 @@ const PILLAR_RULES: Array<[RegExp, "esports" | "anime" | "lifestyle"]> = [
   [/^fist of fury/i, "esports"],
   [/^the motherland gaming/i, "esports"],
   [/^need for speed/i, "esports"],
-  [/^uncut and uncensored/i, "esports"],
 ];
 
 function pillarFor(title: string): "esports" | "anime" | "lifestyle" {

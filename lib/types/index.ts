@@ -238,6 +238,12 @@ export interface Show {
   rating: number;
   releasedAt: ISODate;
   tags: string[];
+  /**
+   * Free or paid, same flag `Stream` and `Vod` carry. Optional because rows
+   * written before the column existed have nothing to report, and a caller
+   * that treats a missing value as free matches the column default.
+   */
+  isPremium?: boolean;
   maturityRating?: MaturityRating;
   contentTags?: string[];
 }
@@ -266,6 +272,8 @@ export interface Episode {
   introEndSec?: number;
   premiereAt: ISODate;
   releasedAt: ISODate;
+  /** Overrides the show's tier for this one episode. See `Show.isPremium`. */
+  isPremium?: boolean;
   maturityRating?: MaturityRating;
   contentTags?: string[];
 }

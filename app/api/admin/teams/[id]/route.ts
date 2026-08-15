@@ -7,6 +7,7 @@ import {
   requireAdminFromRequest,
   writeAudit,
 } from "@/lib/api/admin";
+import { foreignKeyViolationResponse } from "@/lib/api/catalog-guards";
 
 const updateSchema = z
   .object({
@@ -103,7 +104,11 @@ export async function DELETE(
 
   try {
     await db.delete(schema.teams).where(eq(schema.teams.id, id));
-  } catch {
+  } catch (err) {
+    // Rows elsewhere still referencing this one make Postgres refuse. That is
+    // a 409 an operator can act on, not the 500 it used to become.
+    const conflict = foreignKeyViolationResponse(err, "team");
+    if (conflict) return conflict;
     return NextResponse.json({ error: "Failed to delete team" }, { status: 500 });
   }
 
