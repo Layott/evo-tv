@@ -21,3 +21,4 @@ export * from "./ads";
 export * from "./live";
 export * from "./schedule";
 export * from "./admin";
+export * from "./cms";

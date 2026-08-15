@@ -9,10 +9,18 @@ import {
   adminCreateGame,
   adminCreatePlayer,
   adminCreateTeam,
+  adminDeleteEvent,
+  adminDeleteGame,
+  adminDeletePlayer,
+  adminDeleteTeam,
   adminListEvents,
   adminListGames,
   adminListPlayers,
   adminListTeams,
+  adminUpdateEvent,
+  adminUpdateGame,
+  adminUpdatePlayer,
+  adminUpdateTeam,
 } from "@/lib/client";
 import type {
   EsportsEvent,
@@ -54,6 +62,7 @@ import { DataTable, type DataColumn } from "./data-table";
 import { PageHeader } from "./page-header";
 import { StatusBadge } from "./status-badge";
 import { formatDate, formatNgn, formatNumber } from "./utils";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 type ContentTab = "games" | "teams" | "players" | "events";
 
@@ -90,44 +99,90 @@ export function ContentManagerPage() {
   );
 
   /**
-   * Saves persist now. The admin catalogue routes are create-only, so editing an
-   * existing row is not supported by the backend yet and the form reports that
-   * rather than pretending it saved.
+   * Create and edit both persist.
+   *
+   * Editing used to report that the backend did not support it. The backend
+   * always did: PATCH has been on all four catalogue routes since they were
+   * written, and only the screen was missing.
    */
   function makeSave<T extends { id: string }>(
     label: string,
     key: string,
     create: (row: T) => Promise<unknown>,
+    update: (id: string, row: T) => Promise<unknown>,
   ) {
     return async (row: T) => {
-      if (editing?.row) {
-        toast.error(`Editing an existing ${label} is not supported yet`);
-        return;
-      }
+      const existingId = editing?.row?.id;
       try {
-        await create(row);
-        toast.success(`${label[0]!.toUpperCase()}${label.slice(1)} created`);
+        if (existingId) {
+          await update(existingId, row);
+          toast.success(`${label[0]!.toUpperCase()}${label.slice(1)} saved`);
+        } else {
+          await create(row);
+          toast.success(`${label[0]!.toUpperCase()}${label.slice(1)} created`);
+        }
         setEditing(null);
         await refresh(key);
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : `Could not create the ${label}`);
+        toast.error(
+          err instanceof Error
+            ? err.message
+            : `Could not save the ${label}`,
+        );
       }
     };
   }
 
-  const handleSaveGame = makeSave<Game>("game", "games", (r) => adminCreateGame(r));
-  const handleSaveTeam = makeSave<Team>("team", "teams", (r) => adminCreateTeam(r));
-  const handleSavePlayer = makeSave<Player>("player", "players", (r) => adminCreatePlayer(r));
-  const handleSaveEvent = makeSave<EsportsEvent>("event", "events", (r) => adminCreateEvent(r));
+  const handleSaveGame = makeSave<Game>(
+    "game",
+    "games",
+    (r) => adminCreateGame(r),
+    (id, r) => adminUpdateGame(id, r),
+  );
+  const handleSaveTeam = makeSave<Team>(
+    "team",
+    "teams",
+    (r) => adminCreateTeam(r),
+    (id, r) => adminUpdateTeam(id, r),
+  );
+  const handleSavePlayer = makeSave<Player>(
+    "player",
+    "players",
+    (r) => adminCreatePlayer(r),
+    (id, r) => adminUpdatePlayer(id, r),
+  );
+  const handleSaveEvent = makeSave<EsportsEvent>(
+    "event",
+    "events",
+    (r) => adminCreateEvent(r),
+    (id, r) => adminUpdateEvent(id, r),
+  );
 
   /**
-   * There is no delete endpoint for the catalogue. Removing a game or team that
-   * streams and matches point at is a destructive cascade, so it is deliberately
-   * not a button in the CMS.
+   * Deleting is real now, and the API refuses when anything still points at the
+   * row: `vods.game_id` and `clips.game_id` cascade, so a game with recordings
+   * under it would otherwise take them all with it. The 409 names what is in
+   * the way, which is what this toast shows.
    */
-  const handleDelete = () => {
-    toast.error("Deleting catalogue entries is not supported yet");
-    setConfirmDelete(null);
+  const handleDelete = async () => {
+    if (!confirmDelete) return;
+    const { kind, id, label } = confirmDelete;
+    const remove =
+      kind === "games"
+        ? adminDeleteGame
+        : kind === "teams"
+          ? adminDeleteTeam
+          : kind === "players"
+            ? adminDeletePlayer
+            : adminDeleteEvent;
+    try {
+      await remove(id);
+      toast.success(`${label} deleted`);
+      setConfirmDelete(null);
+      await refresh(kind);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : `Could not delete ${label}`);
+    }
   };
 
   const filteredGames = filterByQuery(games, search, (r) => [r.name, r.slug, r.shortName]);
@@ -160,19 +215,19 @@ export function ContentManagerPage() {
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as ContentTab)}>
         <div className="flex flex-wrap items-center gap-3">
-          <TabsList className="bg-neutral-900">
+          <TabsList className="bg-card">
             <TabsTrigger value="games">Games</TabsTrigger>
             <TabsTrigger value="teams">Teams</TabsTrigger>
             <TabsTrigger value="players">Players</TabsTrigger>
             <TabsTrigger value="events">Events</TabsTrigger>
           </TabsList>
           <div className="relative ml-auto w-full max-w-xs">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-neutral-500" />
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={`Search ${tab}…`}
-              className="border-neutral-800 bg-neutral-900 pl-8"
+              className="border-border bg-card pl-8"
             />
           </div>
         </div>
@@ -246,17 +301,17 @@ export function ContentManagerPage() {
       ) : null}
 
       <Dialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
-        <DialogContent className="border-neutral-800 bg-neutral-950 text-neutral-100">
+        <DialogContent className="border-border bg-background text-foreground">
           <DialogHeader>
             <DialogTitle>Delete {confirmDelete?.kind.slice(0, -1)}?</DialogTitle>
-            <DialogDescription className="text-neutral-400">
+            <DialogDescription className="text-muted-foreground">
               This will permanently delete "{confirmDelete?.label}".
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button
               variant="outline"
-              className="border-neutral-700 bg-neutral-900 hover:bg-neutral-800"
+              className="border-input bg-card hover:bg-accent"
               onClick={() => setConfirmDelete(null)}
             >
               Cancel
@@ -296,13 +351,13 @@ function GamesTable({
       accessor: (r) => r.name,
       cell: (row) => (
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 overflow-hidden rounded bg-neutral-800">
+          <div className="h-8 w-8 overflow-hidden rounded bg-muted">
             {}
             <img src={row.iconUrl} alt="" className="h-full w-full object-cover" />
           </div>
           <div>
-            <div className="text-sm font-medium text-neutral-100">{row.name}</div>
-            <div className="text-xs text-neutral-500">/{row.slug}</div>
+            <div className="text-sm font-medium text-foreground">{row.name}</div>
+            <div className="text-xs text-muted-foreground">/{row.slug}</div>
           </div>
         </div>
       ),
@@ -353,13 +408,13 @@ function TeamsTable({
       accessor: (r) => r.name,
       cell: (row) => (
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 overflow-hidden rounded bg-neutral-800">
+          <div className="h-8 w-8 overflow-hidden rounded bg-muted">
             {}
             <img src={row.logoUrl} alt="" className="h-full w-full object-cover" />
           </div>
           <div>
-            <div className="text-sm font-medium text-neutral-100">{row.name}</div>
-            <div className="text-xs text-neutral-500">[{row.tag}]</div>
+            <div className="text-sm font-medium text-foreground">{row.name}</div>
+            <div className="text-xs text-muted-foreground">[{row.tag}]</div>
           </div>
         </div>
       ),
@@ -370,8 +425,8 @@ function TeamsTable({
       sortable: true,
       accessor: (r) => games.find((g) => g.id === r.gameId)?.shortName ?? "",
       cell: (row) => (
-        <span className="text-sm text-neutral-300">
-          {games.find((g) => g.id === row.gameId)?.shortName ?? "—"}
+        <span className="text-sm text-foreground/80">
+          {games.find((g) => g.id === row.gameId)?.shortName ?? "-"}
         </span>
       ),
     },
@@ -380,7 +435,7 @@ function TeamsTable({
       header: "Region",
       sortable: true,
       accessor: (r) => r.region,
-      cell: (row) => <span className="text-sm text-neutral-300">{row.region}</span>,
+      cell: (row) => <span className="text-sm text-foreground/80">{row.region}</span>,
     },
     {
       key: "country",
@@ -427,13 +482,17 @@ function PlayersTable({
       accessor: (r) => r.handle,
       cell: (row) => (
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 overflow-hidden rounded-full bg-neutral-800">
-            {}
-            <img src={row.avatarUrl} alt="" className="h-full w-full object-cover" />
-          </div>
+          <UserAvatar
+            src={row.avatarUrl}
+            name={row.realName}
+            handle={row.handle}
+            seed={row.id}
+            decorative
+            className="h-8 w-8 shrink-0"
+          />
           <div>
-            <div className="text-sm font-medium text-neutral-100">{row.handle}</div>
-            <div className="text-xs text-neutral-500">{row.realName}</div>
+            <div className="text-sm font-medium text-foreground">{row.handle}</div>
+            <div className="text-xs text-muted-foreground">{row.realName}</div>
           </div>
         </div>
       ),
@@ -449,8 +508,8 @@ function PlayersTable({
       key: "team",
       header: "Team",
       cell: (row) => (
-        <span className="text-sm text-neutral-300">
-          {teams.find((t) => t.id === row.teamId)?.name ?? "—"}
+        <span className="text-sm text-foreground/80">
+          {teams.find((t) => t.id === row.teamId)?.name ?? "-"}
         </span>
       ),
     },
@@ -458,8 +517,8 @@ function PlayersTable({
       key: "game",
       header: "Game",
       cell: (row) => (
-        <span className="text-sm text-neutral-300">
-          {games.find((g) => g.id === row.gameId)?.shortName ?? "—"}
+        <span className="text-sm text-foreground/80">
+          {games.find((g) => g.id === row.gameId)?.shortName ?? "-"}
         </span>
       ),
     },
@@ -500,8 +559,8 @@ function EventsTable({
       accessor: (r) => r.title,
       cell: (row) => (
         <div>
-          <div className="text-sm font-medium text-neutral-100">{row.title}</div>
-          <div className="text-xs text-neutral-500">{row.format}</div>
+          <div className="text-sm font-medium text-foreground">{row.title}</div>
+          <div className="text-xs text-muted-foreground">{row.format}</div>
         </div>
       ),
     },
@@ -509,8 +568,8 @@ function EventsTable({
       key: "game",
       header: "Game",
       cell: (row) => (
-        <span className="text-sm text-neutral-300">
-          {games.find((g) => g.id === row.gameId)?.shortName ?? "—"}
+        <span className="text-sm text-foreground/80">
+          {games.find((g) => g.id === row.gameId)?.shortName ?? "-"}
         </span>
       ),
     },
@@ -540,7 +599,7 @@ function EventsTable({
       header: "Starts",
       sortable: true,
       accessor: (r) => new Date(r.startsAt).getTime(),
-      cell: (row) => <span className="text-xs text-neutral-400">{formatDate(row.startsAt)}</span>,
+      cell: (row) => <span className="text-xs text-muted-foreground">{formatDate(row.startsAt)}</span>,
     },
     {
       key: "prize",
@@ -566,7 +625,7 @@ function deleteColumn<T extends { id: string }>(onDelete: (r: T) => void): DataC
           e.stopPropagation();
           onDelete(row);
         }}
-        className="rounded-md p-1.5 text-neutral-400 hover:bg-red-500/10 hover:text-red-400"
+        className="rounded-md p-1.5 text-muted-foreground hover:bg-red-500/10 hover:text-red-400"
         aria-label="Delete"
       >
         <Trash2 className="h-4 w-4" />
@@ -584,12 +643,12 @@ function ImagePreview({ label, url, onChange }: { label: string; url: string; on
     <div className="space-y-1.5">
       <Label>{label}</Label>
       <div className="flex items-center gap-3">
-        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md border border-neutral-800 bg-neutral-900">
+        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md border border-border bg-card">
           {url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={url} alt="" className="h-full w-full object-cover" />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-xs text-neutral-600">No image</div>
+            <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">No image</div>
           )}
         </div>
         <div className="flex-1 space-y-1.5">
@@ -597,13 +656,13 @@ function ImagePreview({ label, url, onChange }: { label: string; url: string; on
             value={url}
             onChange={(e) => onChange(e.target.value)}
             placeholder="/placeholder.svg?..."
-            className="border-neutral-800 bg-neutral-900"
+            className="border-border bg-card"
           />
           <Button
             type="button"
             size="sm"
             variant="outline"
-            className="border-neutral-700 bg-neutral-900 text-neutral-200 hover:bg-neutral-800"
+            className="border-input bg-card text-foreground hover:bg-accent"
             onClick={() => inputRef.current?.click()}
           >
             <Upload className="h-3.5 w-3.5" />
@@ -646,7 +705,7 @@ function FormShell({
 }) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full overflow-y-auto border-neutral-800 bg-neutral-950 text-neutral-100 sm:max-w-xl">
+      <SheetContent className="w-full overflow-y-auto border-border bg-background text-foreground sm:max-w-xl">
         <SheetHeader>
           <SheetTitle>{title}</SheetTitle>
           <SheetDescription>All fields support mock data.</SheetDescription>
@@ -655,7 +714,7 @@ function FormShell({
         <SheetFooter>
           <Button
             variant="outline"
-            className="border-neutral-700 bg-neutral-900 hover:bg-neutral-800"
+            className="border-input bg-card hover:bg-accent"
             onClick={() => onOpenChange(false)}
           >
             Cancel
@@ -709,7 +768,7 @@ function GameForm({
           <Input
             value={form.slug}
             onChange={(e) => setForm({ ...form, slug: e.target.value })}
-            className="border-neutral-800 bg-neutral-900"
+            className="border-border bg-card"
           />
         </div>
         <div className="space-y-1.5">
@@ -717,7 +776,7 @@ function GameForm({
           <Input
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
-            className="border-neutral-800 bg-neutral-900"
+            className="border-border bg-card"
           />
         </div>
       </div>
@@ -726,7 +785,7 @@ function GameForm({
         <Input
           value={form.shortName}
           onChange={(e) => setForm({ ...form, shortName: e.target.value })}
-          className="border-neutral-800 bg-neutral-900"
+          className="border-border bg-card"
         />
       </div>
       <ImagePreview label="Cover image" url={form.coverUrl} onChange={(v) => setForm({ ...form, coverUrl: v })} />
@@ -735,7 +794,7 @@ function GameForm({
         <div className="space-y-1.5">
           <Label>Category</Label>
           <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v as Game["category"] })}>
-            <SelectTrigger className="w-full border-neutral-800 bg-neutral-900">
+            <SelectTrigger className="w-full border-border bg-card">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -750,7 +809,7 @@ function GameForm({
         <div className="space-y-1.5">
           <Label>Platform</Label>
           <Select value={form.platform} onValueChange={(v) => setForm({ ...form, platform: v as Game["platform"] })}>
-            <SelectTrigger className="w-full border-neutral-800 bg-neutral-900">
+            <SelectTrigger className="w-full border-border bg-card">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -769,7 +828,7 @@ function GameForm({
           type="number"
           value={form.activePlayers}
           onChange={(e) => setForm({ ...form, activePlayers: Number(e.target.value) || 0 })}
-          className="border-neutral-800 bg-neutral-900"
+          className="border-border bg-card"
         />
       </div>
     </FormShell>
@@ -818,7 +877,7 @@ function TeamForm({
           <Input
             value={form.slug}
             onChange={(e) => setForm({ ...form, slug: e.target.value })}
-            className="border-neutral-800 bg-neutral-900"
+            className="border-border bg-card"
           />
         </div>
         <div className="space-y-1.5">
@@ -826,7 +885,7 @@ function TeamForm({
           <Input
             value={form.tag}
             onChange={(e) => setForm({ ...form, tag: e.target.value })}
-            className="border-neutral-800 bg-neutral-900"
+            className="border-border bg-card"
           />
         </div>
       </div>
@@ -835,7 +894,7 @@ function TeamForm({
         <Input
           value={form.name}
           onChange={(e) => setForm({ ...form, name: e.target.value })}
-          className="border-neutral-800 bg-neutral-900"
+          className="border-border bg-card"
         />
       </div>
       <ImagePreview label="Logo" url={form.logoUrl} onChange={(v) => setForm({ ...form, logoUrl: v })} />
@@ -843,7 +902,7 @@ function TeamForm({
         <div className="space-y-1.5">
           <Label>Country</Label>
           <Select value={form.country} onValueChange={(v) => setForm({ ...form, country: v })}>
-            <SelectTrigger className="w-full border-neutral-800 bg-neutral-900">
+            <SelectTrigger className="w-full border-border bg-card">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -858,7 +917,7 @@ function TeamForm({
         <div className="space-y-1.5">
           <Label>Region</Label>
           <Select value={form.region} onValueChange={(v) => setForm({ ...form, region: v })}>
-            <SelectTrigger className="w-full border-neutral-800 bg-neutral-900">
+            <SelectTrigger className="w-full border-border bg-card">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -875,7 +934,7 @@ function TeamForm({
         <div className="space-y-1.5">
           <Label>Game</Label>
           <Select value={form.gameId} onValueChange={(v) => setForm({ ...form, gameId: v })}>
-            <SelectTrigger className="w-full border-neutral-800 bg-neutral-900">
+            <SelectTrigger className="w-full border-border bg-card">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -893,7 +952,7 @@ function TeamForm({
             type="number"
             value={form.ranking}
             onChange={(e) => setForm({ ...form, ranking: Number(e.target.value) || 0 })}
-            className="border-neutral-800 bg-neutral-900"
+            className="border-border bg-card"
           />
         </div>
       </div>
@@ -903,7 +962,7 @@ function TeamForm({
           type="number"
           value={form.followers}
           onChange={(e) => setForm({ ...form, followers: Number(e.target.value) || 0 })}
-          className="border-neutral-800 bg-neutral-900"
+          className="border-border bg-card"
         />
       </div>
     </FormShell>
@@ -951,7 +1010,7 @@ function PlayerForm({
           <Input
             value={form.handle}
             onChange={(e) => setForm({ ...form, handle: e.target.value })}
-            className="border-neutral-800 bg-neutral-900"
+            className="border-border bg-card"
           />
         </div>
         <div className="space-y-1.5">
@@ -959,7 +1018,7 @@ function PlayerForm({
           <Input
             value={form.realName}
             onChange={(e) => setForm({ ...form, realName: e.target.value })}
-            className="border-neutral-800 bg-neutral-900"
+            className="border-border bg-card"
           />
         </div>
       </div>
@@ -971,7 +1030,7 @@ function PlayerForm({
             value={form.teamId ?? "none"}
             onValueChange={(v) => setForm({ ...form, teamId: v === "none" ? null : v })}
           >
-            <SelectTrigger className="w-full border-neutral-800 bg-neutral-900">
+            <SelectTrigger className="w-full border-border bg-card">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -987,7 +1046,7 @@ function PlayerForm({
         <div className="space-y-1.5">
           <Label>Game</Label>
           <Select value={form.gameId} onValueChange={(v) => setForm({ ...form, gameId: v })}>
-            <SelectTrigger className="w-full border-neutral-800 bg-neutral-900">
+            <SelectTrigger className="w-full border-border bg-card">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -1004,7 +1063,7 @@ function PlayerForm({
         <div className="space-y-1.5">
           <Label>Role</Label>
           <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v })}>
-            <SelectTrigger className="w-full border-neutral-800 bg-neutral-900">
+            <SelectTrigger className="w-full border-border bg-card">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -1019,7 +1078,7 @@ function PlayerForm({
         <div className="space-y-1.5">
           <Label>Country</Label>
           <Select value={form.country} onValueChange={(v) => setForm({ ...form, country: v })}>
-            <SelectTrigger className="w-full border-neutral-800 bg-neutral-900">
+            <SelectTrigger className="w-full border-border bg-card">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -1090,13 +1149,13 @@ function EventForm({
           <Input
             value={form.slug}
             onChange={(e) => setForm({ ...form, slug: e.target.value })}
-            className="border-neutral-800 bg-neutral-900"
+            className="border-border bg-card"
           />
         </div>
         <div className="space-y-1.5">
           <Label>Region</Label>
           <Select value={form.region} onValueChange={(v) => setForm({ ...form, region: v })}>
-            <SelectTrigger className="w-full border-neutral-800 bg-neutral-900">
+            <SelectTrigger className="w-full border-border bg-card">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -1114,14 +1173,14 @@ function EventForm({
         <Input
           value={form.title}
           onChange={(e) => setForm({ ...form, title: e.target.value })}
-          className="border-neutral-800 bg-neutral-900"
+          className="border-border bg-card"
         />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <Label>Game</Label>
           <Select value={form.gameId} onValueChange={(v) => setForm({ ...form, gameId: v })}>
-            <SelectTrigger className="w-full border-neutral-800 bg-neutral-900">
+            <SelectTrigger className="w-full border-border bg-card">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -1136,7 +1195,7 @@ function EventForm({
         <div className="space-y-1.5">
           <Label>Tier</Label>
           <Select value={form.tier} onValueChange={(v) => setForm({ ...form, tier: v as EventTier })}>
-            <SelectTrigger className="w-full border-neutral-800 bg-neutral-900">
+            <SelectTrigger className="w-full border-border bg-card">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -1156,7 +1215,7 @@ function EventForm({
             type="datetime-local"
             value={toLocalInput(form.startsAt)}
             onChange={(e) => setForm({ ...form, startsAt: new Date(e.target.value).toISOString() })}
-            className="border-neutral-800 bg-neutral-900"
+            className="border-border bg-card"
           />
         </div>
         <div className="space-y-1.5">
@@ -1165,7 +1224,7 @@ function EventForm({
             type="datetime-local"
             value={toLocalInput(form.endsAt)}
             onChange={(e) => setForm({ ...form, endsAt: new Date(e.target.value).toISOString() })}
-            className="border-neutral-800 bg-neutral-900"
+            className="border-border bg-card"
           />
         </div>
       </div>
@@ -1173,7 +1232,7 @@ function EventForm({
         <div className="space-y-1.5">
           <Label>Status</Label>
           <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as EventStatus })}>
-            <SelectTrigger className="w-full border-neutral-800 bg-neutral-900">
+            <SelectTrigger className="w-full border-border bg-card">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -1191,7 +1250,7 @@ function EventForm({
             type="number"
             value={form.prizePoolNgn}
             onChange={(e) => setForm({ ...form, prizePoolNgn: Number(e.target.value) || 0 })}
-            className="border-neutral-800 bg-neutral-900"
+            className="border-border bg-card"
           />
         </div>
       </div>
@@ -1201,7 +1260,7 @@ function EventForm({
           value={form.format}
           onChange={(e) => setForm({ ...form, format: e.target.value })}
           placeholder="Single elimination, Bo3"
-          className="border-neutral-800 bg-neutral-900"
+          className="border-border bg-card"
         />
       </div>
       <div className="space-y-1.5">
@@ -1209,13 +1268,13 @@ function EventForm({
         <Textarea
           value={form.description}
           onChange={(e) => setForm({ ...form, description: e.target.value })}
-          className="min-h-[80px] border-neutral-800 bg-neutral-900"
+          className="min-h-[80px] border-border bg-card"
         />
       </div>
       <ImagePreview label="Banner" url={form.bannerUrl} onChange={(v) => setForm({ ...form, bannerUrl: v })} />
       <div className="space-y-1.5">
         <Label>Participating teams</Label>
-        <div className="flex max-h-48 flex-wrap gap-2 overflow-y-auto rounded-md border border-neutral-800 bg-neutral-900/40 p-2">
+        <div className="flex max-h-48 flex-wrap gap-2 overflow-y-auto rounded-md border border-border bg-card/40 p-2">
           {teams.map((t) => {
             const selected = form.teamIds.includes(t.id);
             return (
@@ -1226,7 +1285,7 @@ function EventForm({
                 className={`rounded-md border px-2 py-1 text-xs transition ${
                   selected
                     ? "border-sky-500/50 bg-sky-500/10 text-sky-200"
-                    : "border-neutral-800 bg-neutral-900 text-neutral-400 hover:text-neutral-200"
+                    : "border-border bg-card text-muted-foreground hover:text-foreground"
                 }`}
               >
                 {t.name}

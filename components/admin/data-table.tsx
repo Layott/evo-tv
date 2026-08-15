@@ -77,21 +77,29 @@ export function DataTable<T>({
   };
 
   return (
-    <div className="overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900/30">
+    // `overflow-x-auto`, not `overflow-hidden`: on a phone an eight-column admin
+    // table is wider than the screen, and hiding the overflow cut the columns off
+    // with no way to reach them. The table scrolls inside its own box so the page
+    // itself never scrolls sideways.
+    <div className="overflow-x-auto rounded-xl border border-border bg-card/30">
       <Table>
-        <TableHeader className="sticky top-0 z-10 bg-neutral-900/80 backdrop-blur">
-          <TableRow className="border-neutral-800 hover:bg-transparent">
+        <TableHeader className="sticky top-0 z-10 bg-card/80 backdrop-blur">
+          <TableRow className="border-border hover:bg-transparent">
             {columns.map((col) => (
               <TableHead
                 key={col.key}
-                className={cn("text-xs font-medium uppercase tracking-wider text-neutral-400", col.className)}
+                // Not `uppercase`: a sortable header renders inside a button and
+                // was not picking the transform up, so a table showed "Video"
+                // next to "ACCESS". Sentence case for all of them agrees with
+                // the rest of the dashboard.
+                className={cn("text-xs font-medium tracking-wide text-muted-foreground", col.className)}
                 style={col.width ? { width: col.width } : undefined}
               >
                 {col.sortable && col.accessor ? (
                   <button
                     type="button"
                     onClick={() => handleSort(col.key)}
-                    className="inline-flex items-center gap-1 hover:text-neutral-100"
+                    className="inline-flex items-center gap-1 hover:text-foreground"
                   >
                     {col.header}
                     {sort?.key === col.key ? (
@@ -114,17 +122,17 @@ export function DataTable<T>({
         <TableBody>
           {loading ? (
             Array.from({ length: 5 }).map((_, i) => (
-              <TableRow key={`skeleton-${i}`} className="border-neutral-800">
+              <TableRow key={`skeleton-${i}`} className="border-border">
                 {columns.map((col) => (
                   <TableCell key={col.key}>
-                    <div className="h-4 w-full animate-pulse rounded bg-neutral-800" />
+                    <div className="h-4 w-full animate-pulse rounded bg-muted" />
                   </TableCell>
                 ))}
               </TableRow>
             ))
           ) : sortedData.length === 0 ? (
-            <TableRow className="border-neutral-800 hover:bg-transparent">
-              <TableCell colSpan={columns.length} className="py-10 text-center text-sm text-neutral-500">
+            <TableRow className="border-border hover:bg-transparent">
+              <TableCell colSpan={columns.length} className="py-10 text-center text-sm text-muted-foreground">
                 {emptyMessage}
               </TableCell>
             </TableRow>
@@ -134,12 +142,12 @@ export function DataTable<T>({
                 key={rowKey(row)}
                 onClick={onRowClick ? () => onRowClick(row) : undefined}
                 className={cn(
-                  "border-neutral-800 hover:bg-neutral-900",
+                  "border-border hover:bg-accent",
                   onRowClick ? "cursor-pointer" : "",
                 )}
               >
                 {columns.map((col) => (
-                  <TableCell key={col.key} className={cn("py-3 text-sm text-neutral-200", col.className)}>
+                  <TableCell key={col.key} className={cn("py-3 text-sm text-foreground", col.className)}>
                     {col.cell(row)}
                   </TableCell>
                 ))}

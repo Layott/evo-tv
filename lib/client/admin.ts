@@ -12,6 +12,7 @@ import type {
   Team,
   Vod,
 } from "@/lib/types";
+import type { PlatformRole } from "@/lib/auth/role-catalog";
 import { apiGet, apiSend } from "./_fetch";
 
 /**
@@ -183,6 +184,59 @@ export async function adminCreatePlayer(
 }
 
 /** As with teams, the admin route is create-only. */
+/**
+ * The catalogue is editable, and deletable when nothing points at the row.
+ *
+ * PATCH and DELETE have existed on all four of these routes since they were
+ * written. The CMS called neither and told the operator that editing "is not
+ * supported yet", which was true of the screen and never of the API. Deleting
+ * is guarded server-side: a game with clips or recordings under it answers 409
+ * naming them rather than cascading them into oblivion.
+ */
+export async function adminUpdateGame(
+  id: string,
+  patch: Partial<Game>,
+): Promise<Game> {
+  return apiSend("PATCH", `/api/admin/games/${encodeURIComponent(id)}`, patch);
+}
+
+export async function adminDeleteGame(id: string): Promise<void> {
+  await apiSend("DELETE", `/api/admin/games/${encodeURIComponent(id)}`);
+}
+
+export async function adminUpdateTeam(
+  id: string,
+  patch: Partial<Team>,
+): Promise<Team> {
+  return apiSend("PATCH", `/api/admin/teams/${encodeURIComponent(id)}`, patch);
+}
+
+export async function adminDeleteTeam(id: string): Promise<void> {
+  await apiSend("DELETE", `/api/admin/teams/${encodeURIComponent(id)}`);
+}
+
+export async function adminUpdatePlayer(
+  id: string,
+  patch: Partial<Player>,
+): Promise<Player> {
+  return apiSend("PATCH", `/api/admin/players/${encodeURIComponent(id)}`, patch);
+}
+
+export async function adminDeletePlayer(id: string): Promise<void> {
+  await apiSend("DELETE", `/api/admin/players/${encodeURIComponent(id)}`);
+}
+
+export async function adminUpdateEvent(
+  id: string,
+  patch: Partial<EsportsEvent>,
+): Promise<EsportsEvent> {
+  return apiSend("PATCH", `/api/admin/events/${encodeURIComponent(id)}`, patch);
+}
+
+export async function adminDeleteEvent(id: string): Promise<void> {
+  await apiSend("DELETE", `/api/admin/events/${encodeURIComponent(id)}`);
+}
+
 export async function adminListEvents(): Promise<EsportsEvent[]> {
   const res = await apiGet<EsportsEvent[]>("/api/events");
   return Array.isArray(res) ? res : [];
@@ -323,10 +377,20 @@ export async function adminOverview(): Promise<Record<string, unknown> | null> {
   return apiGet<Record<string, unknown>>("/api/admin/analytics/overview");
 }
 
-/** Change an account's platform role. The API refuses to demote yourself. */
+/**
+ * Change an account's platform role.
+ *
+ * Takes the whole ladder, not the four roles the roster screen used to offer:
+ * `moderator`, `support_admin` and `finance_admin` are checked by guards all
+ * over the API and were unassignable from the dashboard, which made them
+ * theoretical.
+ *
+ * The API refuses to demote yourself, to grant above your own tier, and to
+ * demote the last account that can administer the platform.
+ */
 export async function adminSetUserRole(
   userId: string,
-  role: "user" | "premium" | "creator" | "admin",
+  role: PlatformRole,
 ): Promise<void> {
   await apiSend("PATCH", "/api/admin/users", { userId, role });
 }
