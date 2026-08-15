@@ -2,7 +2,6 @@ import Link from "next/link";
 
 import type { ScheduleEntry } from "@/lib/epg/grid";
 import HeroVideo from "./hero-video";
-import SiteHeader from "./site-header";
 import TvMark from "./tv-mark";
 
 interface Props {
@@ -29,7 +28,9 @@ export default function VideoOpening({ onAir }: Props) {
     <section className="relative isolate flex min-h-svh flex-col overflow-hidden">
       <HeroVideo />
 
-      <SiteHeader />
+      {/* The header is rendered by the page, outside this section: an ancestor
+          with `overflow-hidden` is a scroll container, and a fixed or sticky
+          bar inside one cannot stay on screen past it. */}
 
       {/*
         The type block is deliberately small for a hero. It is furniture over a
