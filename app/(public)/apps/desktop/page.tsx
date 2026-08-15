@@ -3,8 +3,8 @@ import { ComingSoon } from "@/components/shell/coming-soon";
 export default function Page() {
   return (
     <ComingSoon
-      title="Apps"
-      description="EVO TV on iOS, Android, TV and desktop."
+      title="EVO TV on desktop"
+      description="There is no desktop build, and there may never need to be: everything works in a browser already."
     />
   );
 }

@@ -291,9 +291,24 @@
 @theme {
   --color-sky-50: #eafaf8;
   --color-sky-100: #c9f3ee;
-  --color-sky-200: #9ae9df;
-  --color-sky-300: #6ce0d2;
-  --color-sky-400: #46e3ce;
+  /*
+   * Steps 200 to 400 are the accent *text* steps: `text-sky-400` alone appears
+   * 80 times, `text-sky-300` 49 more. On the dark ground they are mint and they
+   * read beautifully. On a paper ground mint on white is roughly 1.4:1, which
+   * is not a contrast failure so much as an invisible label.
+   *
+   * So these three are the only ones that follow the theme. They point at
+   * variables rather than at literals, and the light block below redefines
+   * those to deep teals of the same family. Every existing `text-sky-400` in
+   * the codebase becomes legible in both themes without being touched.
+   *
+   * The fill steps (500, 600) are deliberately NOT indirected: a brand button
+   * is the same brand button on either ground, and flipping it would make the
+   * primary action change colour with the operating system's setting.
+   */
+  --color-sky-200: var(--evo-accent-soft);
+  --color-sky-300: var(--evo-accent);
+  --color-sky-400: var(--evo-accent-strong);
   --color-sky-500: #2fc9be;
   --color-sky-600: #22a3a4;
   --color-sky-700: #1b7f88;
@@ -313,13 +328,44 @@
   --color-cyan-900: #163c57;
   --color-cyan-950: #0b2434;
 
+  /*
+   * Two colours that never follow the theme, because their whole job is to sit
+   * on something that is already a fixed colour.
+   *
+   * `ink` is the text on a brand fill: a mint button wants near-black type on
+   * both grounds. Those call sites used `text-neutral-950`, which is correct in
+   * dark and correct in light purely by accident, and would have flipped to
+   * white the moment neutrals became theme tokens.
+   */
+  --color-ink: #05191b;
+  --color-paper: #eaf6f5;
+
   --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
 }
 
 /* The app is dark-first (ThemeProvider defaultTheme="dark"), so the dark
    palette is the one that matters. Warm neutral greys are replaced with the
    teal family so surfaces sit in the same world as the wordmark. */
-.dark {
+/*
+ * `:root.dark`, not `.dark`.
+ *
+ * `:root` and `.dark` have identical specificity, so between them the winner is
+ * whichever appears later in the file. The light palette below is later, which
+ * silently made light the only theme: the html element carried `class="dark"`
+ * and still painted paper. Qualifying the selector puts dark a step above the
+ * unqualified root and takes the ordering out of it.
+ *
+ * `.landing-root` further down is unaffected by this. It sets the same custom
+ * properties on a descendant element rather than on html, and a custom property
+ * set closer to the element always wins for that subtree, whatever the
+ * specificity of the rule that set it higher up.
+ */
+:root.dark {
+  /* Mint accents on the dark ground, the way the wordmark reads. */
+  --evo-accent-soft: #9ae9df;
+  --evo-accent: #6ce0d2;
+  --evo-accent-strong: #46e3ce;
+
   --background: #05191b;
   --foreground: #eaf6f5;
   --card: #0a2426;
@@ -354,10 +400,88 @@
   --sidebar-ring: #46e3ce;
 }
 
+/* ── Light theme ──────────────────────────────────────────────────────────
+   The app ships dark-first, but `enableSystem` is on, so anyone whose phone or
+   laptop is set to light has been getting this palette all along. Until now it
+   was the stock shadcn white-and-grey: no brand anywhere, and dark type on a
+   dark card wherever a page had hardcoded a neutral. That is what "the light
+   theme is not a real light theme" meant.
+
+   This is the same wordmark, read the other way up. Paper instead of ink for
+   the ground, ink for the type, and the accents pushed down the ramp until
+   they hold their own against paper. Not a grey theme with a teal button. */
 :root {
+  /* Deep teals, not mint. The ramp indirection above turns every existing
+     `text-sky-400` into this without touching a component. */
+  --evo-accent-soft: #1f7f8c;
+  --evo-accent: #176a75;
+  --evo-accent-strong: #10555e;
+
+  --background: #f2f8f7;
+  --foreground: #05191b;
+  /* Cards are the lighter surface here, the inverse of the dark theme where
+     they are the raised one. Same idea either way: separation by surface
+     weight rather than by drawing a box around everything. */
+  --card: #ffffff;
+  --card-foreground: #05191b;
+  --popover: #ffffff;
+  --popover-foreground: #05191b;
+  --primary: #12666f;
+  --primary-foreground: #f2f8f7;
+  --secondary: #e3f0ee;
+  --secondary-foreground: #05191b;
+  --muted: #e6f1ef;
+  --muted-foreground: #4a6a6a;
+  --accent: #dbecea;
+  --accent-foreground: #05191b;
+  --destructive: #b3241a;
+  --destructive-foreground: #fff1ee;
+
+  --border: #d3e4e1;
+  --input: #bcd7d3;
+  --ring: #12666f;
+
+  --sidebar: #ffffff;
+  --sidebar-foreground: #05191b;
+  --sidebar-primary: #12666f;
+  --sidebar-primary-foreground: #f2f8f7;
+  --sidebar-accent: #e3f0ee;
+  --sidebar-accent-foreground: #05191b;
+  --sidebar-border: #d3e4e1;
+  --sidebar-ring: #12666f;
+
   /* Tighter than the stock 0.625rem. Big soft radii on every element is part of
      the generic look; this keeps corners crisp without going brutalist. */
   --radius: 0.3rem;
+}
+
+/* The landing page is a fixed dark broadcast surface and does not follow the
+   theme: it is the first thing anybody sees and it is art-directed. It sets its
+   own background and colour already, but now that the app's utilities read from
+   tokens, the tokens have to be pinned here too, or a visitor on a light OS
+   would get pale cards floating on the dark stock. */
+.landing-root {
+  --evo-accent-soft: #9ae9df;
+  --evo-accent: #6ce0d2;
+  --evo-accent-strong: #46e3ce;
+
+  --background: #05191b;
+  --foreground: #eaf6f5;
+  --card: #0a2426;
+  --card-foreground: #eaf6f5;
+  --popover: #0a2426;
+  --popover-foreground: #eaf6f5;
+  --primary: #46e3ce;
+  --primary-foreground: #05191b;
+  --secondary: #103133;
+  --secondary-foreground: #eaf6f5;
+  --muted: #103133;
+  --muted-foreground: #9fbdbd;
+  --accent: #103133;
+  --accent-foreground: #eaf6f5;
+  --border: #12383a;
+  --input: #17454a;
+  --ring: #46e3ce;
 }
 
 /* Headings carry the display face everywhere, not only on the landing page.
