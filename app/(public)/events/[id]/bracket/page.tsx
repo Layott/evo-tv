@@ -35,7 +35,7 @@ export default function EventBracketPage() {
         <h1 className="text-2xl font-bold">Event not found</h1>
         <Link
           href="/events"
-          className="mt-6 inline-flex rounded-md bg-sky-500 px-4 py-2 text-sm font-semibold text-neutral-950 hover:bg-sky-400"
+          className="mt-6 inline-flex rounded-md bg-sky-500 px-4 py-2 text-sm font-semibold text-ink hover:bg-sky-400"
         >
           Back to events
         </Link>
@@ -49,14 +49,14 @@ export default function EventBracketPage() {
         <div>
           <Link
             href={event ? `/events/${event.id}` : "/events"}
-            className="inline-flex items-center gap-1 text-xs text-neutral-400 hover:text-neutral-200"
+            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="h-3 w-3" /> Back to event
           </Link>
           <h1 className="mt-2 text-2xl font-bold tracking-tight">
             {event?.title ?? "Bracket"}
           </h1>
-          <p className="mt-1 text-sm text-neutral-400">
+          <p className="mt-1 text-sm text-muted-foreground">
             {event?.format ?? "Single elimination"}
           </p>
         </div>
@@ -65,7 +65,7 @@ export default function EventBracketPage() {
       {matchesQ.isPending || teamsQ.isPending ? (
         <div className="flex gap-6 overflow-x-auto">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-40 w-64 shrink-0 animate-pulse rounded-xl bg-neutral-900" />
+            <div key={i} className="h-40 w-64 shrink-0 animate-pulse rounded-xl bg-card" />
           ))}
         </div>
       ) : (

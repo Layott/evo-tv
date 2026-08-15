@@ -8,7 +8,7 @@ import { writeAudit } from "@/lib/api/audit";
  * POST /api/admin/streams/[id]/restore
  *
  * Reverts a soft-deleted stream (sets deletedAt back to null). Does NOT
- * restart the broadcast — admin can manually go live again, or leave it
+ * restart the broadcast - admin can manually go live again, or leave it
  * as a historical row visible in the admin UI.
  *
  * Requires admin+.

@@ -29,6 +29,7 @@ function toShow(r: typeof schema.shows.$inferSelect): Show {
     rating: r.rating,
     releasedAt: r.releasedAt ?? new Date(0).toISOString(),
     tags: r.tags,
+    isPremium: r.isPremium ?? false,
     maturityRating: (r.maturityRating ?? "teen") as MaturityRating,
     contentTags: r.contentTags ?? [],
   };
@@ -61,6 +62,7 @@ function toEpisode(r: typeof schema.episodes.$inferSelect): Episode {
     introEndSec: r.introEndSec ?? undefined,
     premiereAt: r.premiereAt ?? new Date(0).toISOString(),
     releasedAt: r.releasedAt ?? new Date(0).toISOString(),
+    isPremium: r.isPremium ?? false,
     maturityRating: (r.maturityRating ?? "teen") as MaturityRating,
     contentTags: r.contentTags ?? [],
   };

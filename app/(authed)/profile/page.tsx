@@ -64,7 +64,7 @@ export default function ProfilePage() {
   if (!user) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <Loader2 className="size-6 animate-spin text-neutral-500" />
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -80,19 +80,19 @@ export default function ProfilePage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 sm:py-8">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-xl font-bold text-neutral-50">Your profile</h1>
+        <h1 className="text-xl font-bold text-foreground">Your profile</h1>
         <div className="flex gap-2">
-          <Button asChild variant="outline" size="sm" className="border-neutral-800">
+          <Button asChild variant="outline" size="sm" className="border-border">
             <Link href="/notifications">
               <Bell className="size-4" /> Notifications
             </Link>
           </Button>
-          <Button asChild variant="outline" size="sm" className="border-neutral-800">
+          <Button asChild variant="outline" size="sm" className="border-border">
             <Link href="/profile/orders">
               <ShoppingBag className="size-4" /> Orders
             </Link>
           </Button>
-          <Button asChild variant="outline" size="sm" className="border-neutral-800">
+          <Button asChild variant="outline" size="sm" className="border-border">
             <Link href="/settings">
               <Settings className="size-4" /> Settings
             </Link>
@@ -113,7 +113,7 @@ export default function ProfilePage() {
       </div>
       <div className="mt-6">
         <Tabs defaultValue="overview">
-          <TabsList className="bg-neutral-900/60">
+          <TabsList className="bg-card/60">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="followed">Followed</TabsTrigger>
             <TabsTrigger value="history">Watch history</TabsTrigger>
@@ -121,13 +121,13 @@ export default function ProfilePage() {
           </TabsList>
           <TabsContent value="overview" className="mt-4 space-y-4">
             {user.bio ? (
-              <div className="rounded-xl border border-neutral-800 bg-neutral-900/40 p-4">
-                <h3 className="mb-2 text-sm font-semibold text-neutral-300">About</h3>
-                <p className="text-sm text-neutral-300">{user.bio}</p>
+              <div className="rounded-xl border border-border bg-card/40 p-4">
+                <h3 className="mb-2 text-sm font-semibold text-foreground/80">About</h3>
+                <p className="text-sm text-foreground/80">{user.bio}</p>
               </div>
             ) : null}
             <div>
-              <h3 className="mb-2 text-sm font-semibold text-neutral-300">
+              <h3 className="mb-2 text-sm font-semibold text-foreground/80">
                 Recent activity
               </h3>
               <ActivityFeed />
@@ -135,21 +135,21 @@ export default function ProfilePage() {
           </TabsContent>
           <TabsContent value="followed" className="mt-4">
             {loading ? (
-              <Loader2 className="size-5 animate-spin text-neutral-500" />
+              <Loader2 className="size-5 animate-spin text-muted-foreground" />
             ) : (
               <FollowingGrid teams={teams} players={players} />
             )}
           </TabsContent>
           <TabsContent value="history" className="mt-4">
             {loading ? (
-              <Loader2 className="size-5 animate-spin text-neutral-500" />
+              <Loader2 className="size-5 animate-spin text-muted-foreground" />
             ) : (
               <WatchHistoryList vods={vods} />
             )}
           </TabsContent>
           <TabsContent value="subscription" className="mt-4">
             {loading ? (
-              <Loader2 className="size-5 animate-spin text-neutral-500" />
+              <Loader2 className="size-5 animate-spin text-muted-foreground" />
             ) : (
               <SubscriptionPanel subscription={sub} />
             )}

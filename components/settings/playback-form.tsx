@@ -26,7 +26,7 @@ export function PlaybackForm() {
   return (
     <div className="space-y-4">
       <SectionCard title="Playback" description="Default player behaviour.">
-        <div className="divide-y divide-neutral-800">
+        <div className="divide-y divide-border">
           <SettingRow label="Default quality" description="What we attempt first on every stream">
             <Select
               value={quality}

@@ -4,7 +4,7 @@ import { db, schema } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/guards";
 
 /**
- * GET /api/partner/me — list publishers the caller is a member of, with
+ * GET /api/partner/me - list publishers the caller is a member of, with
  * caller's role on each + the channels each publisher owns.
  *
  * EVO TV admins (`user.role === "admin"`) are implicitly granted "owner" on

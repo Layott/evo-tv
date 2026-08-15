@@ -31,7 +31,7 @@ export function CountdownTimer({ target, className, label }: CountdownTimerProps
 
   return (
     <div className={className}>
-      {label && <p className="mb-2 text-xs uppercase tracking-wider text-neutral-400">{label}</p>}
+      {label && <p className="mb-2 text-xs uppercase tracking-wider text-muted-foreground">{label}</p>}
       <div className="flex gap-2 sm:gap-3">
         {[
           { label: "Days", value: t.days },
@@ -41,12 +41,12 @@ export function CountdownTimer({ target, className, label }: CountdownTimerProps
         ].map((u) => (
           <div
             key={u.label}
-            className="flex min-w-[54px] flex-col items-center rounded-lg border border-neutral-800 bg-neutral-900/60 px-3 py-2"
+            className="flex min-w-[54px] flex-col items-center rounded-lg border border-border bg-card/60 px-3 py-2"
           >
             <span className="text-2xl font-bold tabular-nums text-sky-400">
               {pad(u.value)}
             </span>
-            <span className="text-[10px] uppercase tracking-wider text-neutral-500">
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
               {u.label}
             </span>
           </div>

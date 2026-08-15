@@ -68,15 +68,15 @@ export function PollsManagerPage() {
       accessor: (r) => r.question,
       cell: (row) => (
         <div>
-          <div className="text-sm font-medium text-neutral-100">{row.question}</div>
-          <div className="text-xs text-neutral-500">{row.options.length} options</div>
+          <div className="text-sm font-medium text-foreground">{row.question}</div>
+          <div className="text-xs text-muted-foreground">{row.options.length} options</div>
         </div>
       ),
     },
     {
       key: "stream",
       header: "Stream",
-      cell: (row) => <span className="text-sm text-neutral-300">{streamTitle(streams, row.streamId)}</span>,
+      cell: (row) => <span className="text-sm text-foreground/80">{streamTitle(streams, row.streamId)}</span>,
     },
     {
       key: "status",
@@ -105,7 +105,7 @@ export function PollsManagerPage() {
       header: "Closes",
       sortable: true,
       accessor: (r) => new Date(r.closesAt).getTime(),
-      cell: (row) => <span className="text-xs text-neutral-400">{timeAgo(row.closesAt)}</span>,
+      cell: (row) => <span className="text-xs text-muted-foreground">{timeAgo(row.closesAt)}</span>,
     },
   ];
 
@@ -179,7 +179,7 @@ export function PollsManagerPage() {
       />
 
       <Sheet open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
-        <SheetContent className="w-full overflow-y-auto border-neutral-800 bg-neutral-950 text-neutral-100 sm:max-w-lg">
+        <SheetContent className="w-full overflow-y-auto border-border bg-background text-foreground sm:max-w-lg">
           {selected ? (
             <>
               <SheetHeader>
@@ -191,7 +191,7 @@ export function PollsManagerPage() {
               </SheetHeader>
 
               <div className="px-4">
-                <div className="h-64 rounded-lg border border-neutral-800 bg-neutral-900/40 p-3">
+                <div className="h-64 rounded-lg border border-border bg-card/40 p-3">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={selected.options.map((o) => ({ label: o.label, votes: o.votes }))}>
                       <CartesianGrid stroke="#262626" vertical={false} />
@@ -216,14 +216,14 @@ export function PollsManagerPage() {
                     const pct =
                       selected.totalVotes > 0 ? Math.round((o.votes / selected.totalVotes) * 100) : 0;
                     return (
-                      <li key={o.id} className="rounded-md border border-neutral-800 bg-neutral-900/40 p-3">
+                      <li key={o.id} className="rounded-md border border-border bg-card/40 p-3">
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-neutral-100">{o.label}</span>
-                          <span className="tabular-nums text-neutral-400">
+                          <span className="text-foreground">{o.label}</span>
+                          <span className="tabular-nums text-muted-foreground">
                             {formatNumber(o.votes)} · {pct}%
                           </span>
                         </div>
-                        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-neutral-800">
+                        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
                           <div
                             className="h-full rounded-full bg-sky-500"
                             style={{ width: `${pct}%` }}
@@ -237,7 +237,7 @@ export function PollsManagerPage() {
 
               <SheetFooter>
                 {selected.isClosed ? (
-                  <Button disabled className="bg-neutral-700">
+                  <Button disabled className="bg-muted">
                     Poll closed
                   </Button>
                 ) : (
@@ -299,7 +299,7 @@ function CreatePollDrawer({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full overflow-y-auto border-neutral-800 bg-neutral-950 text-neutral-100 sm:max-w-lg">
+      <SheetContent className="w-full overflow-y-auto border-border bg-background text-foreground sm:max-w-lg">
         <SheetHeader>
           <SheetTitle>New poll</SheetTitle>
           <SheetDescription>Create a live poll attached to a stream. 2-6 options.</SheetDescription>
@@ -308,7 +308,7 @@ function CreatePollDrawer({
           <div className="space-y-1.5">
             <Label>Stream</Label>
             <Select value={streamId} onValueChange={setStreamId}>
-              <SelectTrigger className="w-full border-neutral-800 bg-neutral-900">
+              <SelectTrigger className="w-full border-border bg-card">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -326,7 +326,7 @@ function CreatePollDrawer({
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
               placeholder="Who takes Map 4?"
-              className="border-neutral-800 bg-neutral-900"
+              className="border-border bg-card"
             />
           </div>
           <div className="space-y-1.5">
@@ -341,14 +341,14 @@ function CreatePollDrawer({
                     setOptions(next);
                   }}
                   placeholder={`Option ${i + 1}`}
-                  className="border-neutral-800 bg-neutral-900"
+                  className="border-border bg-card"
                 />
                 {options.length > 2 ? (
                   <Button
                     type="button"
                     variant="outline"
                     size="icon"
-                    className="border-neutral-800 bg-neutral-900 hover:bg-neutral-800"
+                    className="border-border bg-card hover:bg-accent"
                     onClick={() => setOptions((prev) => prev.filter((_, idx) => idx !== i))}
                   >
                     <X className="h-3.5 w-3.5" />
@@ -361,7 +361,7 @@ function CreatePollDrawer({
                 type="button"
                 variant="outline"
                 size="sm"
-                className="border-neutral-800 bg-neutral-900 hover:bg-neutral-800"
+                className="border-border bg-card hover:bg-accent"
                 onClick={() => setOptions((prev) => [...prev, ""])}
               >
                 <Plus className="h-3.5 w-3.5" />
@@ -372,7 +372,7 @@ function CreatePollDrawer({
           <div className="space-y-1.5">
             <Label>Duration</Label>
             <Select value={duration} onValueChange={setDuration}>
-              <SelectTrigger className="w-full border-neutral-800 bg-neutral-900">
+              <SelectTrigger className="w-full border-border bg-card">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -388,7 +388,7 @@ function CreatePollDrawer({
         <SheetFooter>
           <Button
             variant="outline"
-            className="border-neutral-700 bg-neutral-900 hover:bg-neutral-800"
+            className="border-input bg-card hover:bg-accent"
             onClick={() => onOpenChange(false)}
           >
             Cancel

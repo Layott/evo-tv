@@ -49,7 +49,7 @@ export async function POST(
   const stream = await getStreamById(streamId);
   if (!stream) return new NextResponse("Stream not found", { status: 404 });
   if (!stream.channelId) {
-    // Stream not bound to a channel — accept silently. Backfill orphan.
+    // Stream not bound to a channel - accept silently. Backfill orphan.
     return NextResponse.json({ ok: true, accounted: false });
   }
 
@@ -93,7 +93,7 @@ export async function POST(
 }
 
 /**
- * DELETE /api/streams/[id]/heartbeat — viewer is leaving.
+ * DELETE /api/streams/[id]/heartbeat - viewer is leaving.
  *
  * Drops the caller's watch_events rows for this stream within the active
  * read-window (last 90s) so the read-time count tick drops to N-1 right
@@ -116,7 +116,7 @@ export async function DELETE(
       user
         ? eq(schema.watchEvents.userId, user.id)
         : eq(schema.watchEvents.ipHash, ipHash),
-      // Only drop recent rows — never historical analytics.
+      // Only drop recent rows - never historical analytics.
       // (drizzle gte on text-stored timestamps compares lexically; ISO 8601
       // is lex-sortable so this is fine.)
       gte(schema.watchEvents.createdAt, cutoff),

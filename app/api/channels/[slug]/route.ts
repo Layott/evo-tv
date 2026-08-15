@@ -5,7 +5,7 @@ import { getCurrentUser } from "@/lib/auth/guards";
 import { liveViewerCounts } from "@/lib/api/streams";
 
 /**
- * GET /api/channels/[slug] — public channel page payload.
+ * GET /api/channels/[slug] - public channel page payload.
  *   channel, live stream (if any), recent VODs, follower-state-for-caller.
  */
 
@@ -24,7 +24,7 @@ export async function GET(
   )[0];
   if (!channel) return new NextResponse("Channel not found", { status: 404 });
 
-  // Suspended channels are hidden from the public — admins can still reach
+  // Suspended channels are hidden from the public - admins can still reach
   // them via /api/admin/channels.
   if (channel.suspendedAt) {
     return new NextResponse("Channel not found", { status: 404 });

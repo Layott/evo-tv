@@ -32,7 +32,7 @@ function seed(vodId: string): Comment[] {
   const base = [
     { handle: "viper", body: "That rotation at minute 12 is a masterclass.", mins: 10, likes: 48 },
     { handle: "shadow", body: "GOATed commentary. Replay value through the roof.", mins: 120, likes: 22 },
-    { handle: "blaze", body: "Whoever edited the highlight cuts — raise.", mins: 360, likes: 71 },
+    { handle: "blaze", body: "Whoever edited the highlight cuts - raise.", mins: 360, likes: 71 },
     { handle: "havoc", body: "Did anyone else clip the 1v4? I need it.", mins: 720, likes: 14 },
     { handle: "rex", body: "Film Room made me see the meta differently.", mins: 60 * 24, likes: 93 },
     { handle: "nyx", body: "More like this please 🙌", mins: 60 * 24 * 2, likes: 9 },
@@ -75,10 +75,10 @@ export function VodComments({ vodId }: { vodId: string }) {
   return (
     <section>
       <div className="flex items-center gap-2 mb-3">
-        <MessageCircle className="size-4 text-neutral-400" />
-        <h2 className="text-lg font-semibold text-neutral-100">
+        <MessageCircle className="size-4 text-muted-foreground" />
+        <h2 className="text-lg font-semibold text-foreground">
           Comments{" "}
-          <span className="text-sm font-normal text-neutral-500">
+          <span className="text-sm font-normal text-muted-foreground">
             ({comments.length})
           </span>
         </h2>
@@ -96,10 +96,10 @@ export function VodComments({ vodId }: { vodId: string }) {
             placeholder={user ? "Add a comment…" : "Sign in to comment"}
             disabled={!user}
             rows={2}
-            className="bg-neutral-900 border-neutral-800 resize-none"
+            className="bg-card border-border resize-none"
           />
           <div className="flex items-center justify-between">
-            <span className="text-[10px] text-neutral-500">{draft.length} / 500</span>
+            <span className="text-[10px] text-muted-foreground">{draft.length} / 500</span>
             <Button size="sm" onClick={post} disabled={!user || !draft.trim()}>
               Post
             </Button>
@@ -116,13 +116,13 @@ export function VodComments({ vodId }: { vodId: string }) {
             </Avatar>
             <div className="flex-1">
               <div className="flex items-center gap-2 text-xs">
-                <span className="font-semibold text-neutral-100">
+                <span className="font-semibold text-foreground">
                   {c.handle}
                 </span>
-                <span className="text-neutral-500">{relTime(c.createdAt)}</span>
+                <span className="text-muted-foreground">{relTime(c.createdAt)}</span>
               </div>
-              <p className="mt-1 text-sm text-neutral-200 break-words">{c.body}</p>
-              <div className="mt-1 text-[11px] text-neutral-500">{c.likes} likes</div>
+              <p className="mt-1 text-sm text-foreground break-words">{c.body}</p>
+              <div className="mt-1 text-[11px] text-muted-foreground">{c.likes} likes</div>
             </div>
           </li>
         ))}

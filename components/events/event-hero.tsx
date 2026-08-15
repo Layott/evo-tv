@@ -27,7 +27,7 @@ function tierColor(t: string): string {
     case "b":
       return "border-sky-500/40 bg-sky-500/10 text-sky-300";
     default:
-      return "border-neutral-700 bg-neutral-800 text-neutral-300";
+      return "border-input bg-muted text-foreground/80";
   }
 }
 
@@ -35,7 +35,7 @@ export function EventHero({ event, game }: EventHeroProps) {
   const start = new Date(event.startsAt);
   const end = new Date(event.endsAt);
   return (
-    <div className="relative mb-6 overflow-hidden rounded-xl border border-neutral-800">
+    <div className="relative mb-6 overflow-hidden rounded-xl border border-border">
       <div className="relative aspect-[16/9] max-h-72 w-full overflow-hidden sm:aspect-[21/9]">
         <img src={event.bannerUrl} alt={event.title} className="h-full w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-transparent" />
@@ -43,7 +43,7 @@ export function EventHero({ event, game }: EventHeroProps) {
       <div className="absolute inset-x-0 bottom-0 flex flex-col gap-3 p-4 sm:p-6">
         <Link
           href="/events"
-          className="inline-flex w-fit items-center gap-1 text-xs text-neutral-400 hover:text-neutral-200"
+          className="inline-flex w-fit items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-3 w-3" /> All events
         </Link>
@@ -61,7 +61,7 @@ export function EventHero({ event, game }: EventHeroProps) {
             </span>
           )}
           {event.status === "completed" && (
-            <span className="rounded-md border border-neutral-700 bg-neutral-800 px-2 py-0.5 text-[10px] uppercase tracking-wider text-neutral-400">
+            <span className="rounded-md border border-input bg-muted px-2 py-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">
               Concluded
             </span>
           )}
@@ -69,11 +69,11 @@ export function EventHero({ event, game }: EventHeroProps) {
         <h1 className="text-2xl font-bold leading-tight text-white sm:text-4xl">
           {event.title}
         </h1>
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-neutral-300">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-foreground/80">
           {game && <span className="text-sky-400">{game.name}</span>}
           <span className="flex items-center gap-1">
             <Calendar className="h-3 w-3" />
-            {start.toLocaleDateString()} – {end.toLocaleDateString()}
+            {start.toLocaleDateString()} - {end.toLocaleDateString()}
           </span>
           <span className="flex items-center gap-1">
             <MapPin className="h-3 w-3" />

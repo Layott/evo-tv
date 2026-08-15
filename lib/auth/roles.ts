@@ -8,57 +8,39 @@ import "server-only";
  * below them; head_admin is the only role that can mint other admin roles.
  *
  * Publisher-scoped RBAC (owner/admin/editor/viewer) lives in guards.ts
- * and is independent of this ladder — a regular `user` can still be a
+ * and is independent of this ladder - a regular `user` can still be a
  * publisher owner on their own channel.
  */
-export type PlatformRole =
-  | "guest"
-  | "user"
-  | "premium"
-  | "creator"
-  | "support_admin"
-  | "moderator"
-  | "finance_admin"
-  | "admin"
-  | "head_admin";
+/**
+ * The ladder itself lives in `role-catalog.ts`, which is pure, so the browser
+ * can read it too. Re-exported here because every server call site imports
+ * `PlatformRole` and `RANK` from this module.
+ */
+export {
+  RANK,
+  hasMinRole,
+  isPlatformRole,
+  roleRank,
+  type PlatformRole,
+} from "./role-catalog";
 
-export const RANK: Record<PlatformRole, number> = {
-  guest: 0,
-  user: 1,
-  premium: 2,
-  // Creator is a content-producer role, above premium but not an admin tier.
-  creator: 5,
-  support_admin: 10,
-  moderator: 20,
-  finance_admin: 30,
-  admin: 40,
-  head_admin: 100,
-};
-
-const VALID_ROLES = Object.keys(RANK) as PlatformRole[];
-
-export function isPlatformRole(value: unknown): value is PlatformRole {
-  return typeof value === "string" && (VALID_ROLES as readonly string[]).includes(value);
-}
-
-export function roleRank(role: string | null | undefined): number {
-  if (!role || !isPlatformRole(role)) return 0;
-  return RANK[role];
-}
-
-export function hasMinRole(
-  actual: string | null | undefined,
-  min: PlatformRole,
-): boolean {
-  return roleRank(actual) >= RANK[min];
-}
+import type { PlatformRole } from "./role-catalog";
 
 /**
  * Who can grant which role to other users.
  *
  *   head_admin  → any role
- *   admin       → moderator, finance_admin, support_admin, user, premium
+ *   admin       → anything up to and including its own tier, never head_admin
+ *                 and never guest (guest is the signed-out sentinel, granting
+ *                 it would lock an account out rather than demote it)
  *   anyone else → nothing
+ *
+ * An admin granting `admin` is the "admins can add admins" product rule. It is
+ * an equal-rank grant, never an upward one: nobody mints a role above their
+ * own. What keeps that safe is enforced at the route rather than here, because
+ * it needs to count rows: an admin cannot change its own role, and the last
+ * remaining top-level admin cannot be demoted at all. See
+ * `lib/api/admin-roster.ts`.
  */
 export function canGrantRole(
   actor: string | null | undefined,
@@ -66,14 +48,7 @@ export function canGrantRole(
 ): boolean {
   if (actor === "head_admin") return true;
   if (actor === "admin") {
-    return (
-      target === "moderator" ||
-      target === "finance_admin" ||
-      target === "support_admin" ||
-      target === "creator" ||
-      target === "user" ||
-      target === "premium"
-    );
+    return target !== "head_admin" && target !== "guest";
   }
   return false;
 }

@@ -109,7 +109,7 @@ export async function POST(req: NextRequest) {
 
 /**
  * DELETE /api/reminders?targetId=...
- * Removes the reminder for the caller. Idempotent — silently no-ops on miss.
+ * Removes the reminder for the caller. Idempotent - silently no-ops on miss.
  */
 export async function DELETE(req: NextRequest) {
   const user = await getCurrentUser();

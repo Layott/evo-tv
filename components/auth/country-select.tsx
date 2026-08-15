@@ -43,14 +43,14 @@ export function CountrySelect({
       <SelectTrigger
         id={id}
         aria-invalid={ariaInvalid}
-        className="w-full border-neutral-800 bg-neutral-900/50 text-neutral-100"
+        className="w-full border-border bg-card/50 text-foreground"
       >
         <SelectValue placeholder="Select country" />
       </SelectTrigger>
       <SelectContent>
         {AFRICAN_COUNTRIES.map((c) => (
           <SelectItem key={c.code} value={c.code}>
-            <span className="text-xs font-mono text-neutral-400">{c.code}</span>
+            <span className="text-xs font-mono text-muted-foreground">{c.code}</span>
             <span>{c.name}</span>
           </SelectItem>
         ))}

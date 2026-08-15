@@ -21,7 +21,7 @@ const sqlText = readFileSync(
 
 const exists = await sql`SELECT to_regclass('public.creator_applications') AS r`;
 if (exists[0].r) {
-  console.log("creator_applications exists — skipping CREATE block");
+  console.log("creator_applications exists - skipping CREATE block");
 } else {
   console.log("applying 0021_creator_applications.sql…");
   const statements = sqlText

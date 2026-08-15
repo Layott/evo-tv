@@ -2,7 +2,7 @@ import { pgTable, text, integer, timestamp, index } from "drizzle-orm/pg-core";
 import { user } from "./users";
 
 /**
- * Wallet — shared by rewards, tips, and predictions.
+ * Wallet - shared by rewards, tips, and predictions.
  *
  * One row per user. `coins` is the spendable EVO Coin balance; `xp` is the
  * lifetime XP used to derive Bronze / Silver / Gold / Platinum / Diamond tier
@@ -20,7 +20,7 @@ export const coinBalances = pgTable("coin_balances", {
 });
 
 /**
- * Rewards drops — the redeemable catalog. Populated via seed + admin panel.
+ * Rewards drops - the redeemable catalog. Populated via seed + admin panel.
  */
 export const rewardsDrops = pgTable(
   "rewards_drops",
@@ -51,7 +51,7 @@ export const rewardsDrops = pgTable(
 );
 
 /**
- * Rewards redemptions — when a user spends coins on a drop. The `code` is
+ * Rewards redemptions - when a user spends coins on a drop. The `code` is
  * issued at redemption time and used to claim externally.
  */
 export const rewardsRedemptions = pgTable(
@@ -80,7 +80,7 @@ export const rewardsRedemptions = pgTable(
 );
 
 /**
- * XP events — append-only log of XP grants. Used to render the activity
+ * XP events - append-only log of XP grants. Used to render the activity
  * timeline + audit trail. Sum of `points` for a user should match
  * coinBalances.xp (we update both in the same transaction).
  */
@@ -109,7 +109,7 @@ export const xpEvents = pgTable(
 );
 
 /**
- * Daily quest claims — append-only marker. One row per (user, quest, dayKey)
+ * Daily quest claims - append-only marker. One row per (user, quest, dayKey)
  * pair where `dayKey` is `YYYY-MM-DD` in UTC. Used to ensure each daily quest
  * can only be claimed once per UTC day per user. Templates themselves live
  * in code (see `lib/api/rewards.ts::DAILY_QUEST_TEMPLATES`).
@@ -135,7 +135,7 @@ export const dailyQuestClaims = pgTable(
 );
 
 /**
- * Tips — coin transfers from viewer to streamer / creator. Bounded by the
+ * Tips - coin transfers from viewer to streamer / creator. Bounded by the
  * sender's `coin_balances.coins`. Streamer/creator is identified by user id
  * (channels are users in this schema).
  */

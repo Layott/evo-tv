@@ -9,7 +9,7 @@ const bodySchema = z.object({
 });
 
 /**
- * POST /api/admin/fantasy/score — admin only.
+ * POST /api/admin/fantasy/score - admin only.
  *
  * Body: { leagueId?: string }
  *   - With leagueId → score that single league.
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
   try {
     body = await req.json();
   } catch {
-    // Empty body is OK — score all active.
+    // Empty body is OK - score all active.
   }
   const parsed = bodySchema.safeParse(body);
   if (!parsed.success) {

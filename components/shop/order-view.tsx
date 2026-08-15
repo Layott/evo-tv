@@ -33,13 +33,13 @@ const STATUS_LABEL: Record<OrderStatus, string> = {
 };
 
 const STATUS_TONE: Record<OrderStatus, string> = {
-  pending: "border-neutral-700 bg-neutral-800 text-neutral-300",
+  pending: "border-input bg-muted text-foreground/80",
   paid: "border-sky-500/40 bg-sky-500/15 text-sky-300",
   processing: "border-sky-500/40 bg-sky-500/15 text-sky-300",
   shipped: "border-amber-500/40 bg-amber-500/15 text-amber-300",
   delivered: "border-sky-500/40 bg-sky-500/15 text-sky-300",
   cancelled: "border-red-500/40 bg-red-500/15 text-red-400",
-  refunded: "border-neutral-700 bg-neutral-800 text-neutral-300",
+  refunded: "border-input bg-muted text-foreground/80",
 };
 
 function readLocalOrder(id: string): Order | null {
@@ -90,7 +90,7 @@ export function OrderView({ id }: { id: string }) {
   if (loading || !order) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <Loader2 className="size-6 animate-spin text-neutral-500" />
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -124,20 +124,20 @@ export function OrderView({ id }: { id: string }) {
     <div className="mx-auto max-w-4xl px-4 py-6 sm:py-8">
       <Link
         href="/profile/orders"
-        className="mb-4 inline-flex items-center gap-1 text-sm text-neutral-400 hover:text-neutral-200"
+        className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="size-4" />
         Orders
       </Link>
 
-      <div className="rounded-2xl border border-neutral-800 bg-neutral-900/40 p-5">
+      <div className="rounded-2xl border border-border bg-card/40 p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="text-xs uppercase tracking-wide text-neutral-500">Order</p>
-            <h1 className="font-mono text-lg font-bold text-neutral-50">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Order</p>
+            <h1 className="font-mono text-lg font-bold text-foreground">
               #{order.id.slice(-8).toUpperCase()}
             </h1>
-            <p className="mt-1 text-xs text-neutral-500">
+            <p className="mt-1 text-xs text-muted-foreground">
               Placed {new Date(order.createdAt).toLocaleString()}
             </p>
           </div>
@@ -157,21 +157,21 @@ export function OrderView({ id }: { id: string }) {
                   "rounded-xl border p-3",
                   active
                     ? "border-sky-500/40 bg-sky-500/5"
-                    : "border-neutral-800 bg-neutral-900/30"
+                    : "border-border bg-card/30"
                 )}
               >
                 <div className="flex items-center gap-2">
                   <span
                     className={cn(
                       "flex size-7 items-center justify-center rounded-full",
-                      active ? "bg-sky-500 text-black" : "bg-neutral-800 text-neutral-500"
+                      active ? "bg-sky-500 text-black" : "bg-muted text-muted-foreground"
                     )}
                   >
                     <Icon className="size-4" />
                   </span>
-                  <span className="text-sm font-semibold text-neutral-100">{s.label}</span>
+                  <span className="text-sm font-semibold text-foreground">{s.label}</span>
                 </div>
-                <p className="mt-1 text-[11px] text-neutral-500">
+                <p className="mt-1 text-[11px] text-muted-foreground">
                   {active ? s.at : "Pending"}
                 </p>
               </li>
@@ -181,12 +181,12 @@ export function OrderView({ id }: { id: string }) {
       </div>
 
       <div className="mt-6 grid gap-6 md:grid-cols-[1fr_320px]">
-        <div className="rounded-2xl border border-neutral-800 bg-neutral-900/40 p-5">
-          <h2 className="mb-4 text-base font-semibold text-neutral-50">Items</h2>
-          <ul className="divide-y divide-neutral-800">
+        <div className="rounded-2xl border border-border bg-card/40 p-5">
+          <h2 className="mb-4 text-base font-semibold text-foreground">Items</h2>
+          <ul className="divide-y divide-border">
             {order.items.map((item, i) => (
               <li key={`${item.productId}-${i}`} className="flex items-center gap-3 py-3">
-                <div className="relative size-16 shrink-0 overflow-hidden rounded-lg bg-neutral-800">
+                <div className="relative size-16 shrink-0 overflow-hidden rounded-lg bg-muted">
                   <Image
                     src={item.thumbnailUrl}
                     alt={item.productName}
@@ -197,7 +197,7 @@ export function OrderView({ id }: { id: string }) {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="line-clamp-1 text-sm font-semibold">{item.productName}</p>
-                  <p className="text-xs text-neutral-500">
+                  <p className="text-xs text-muted-foreground">
                     {item.variantLabel ? `${item.variantLabel} · ` : ""}Qty {item.qty}
                   </p>
                 </div>
@@ -205,16 +205,16 @@ export function OrderView({ id }: { id: string }) {
               </li>
             ))}
           </ul>
-          <dl className="mt-4 space-y-2 border-t border-neutral-800 pt-4 text-sm">
+          <dl className="mt-4 space-y-2 border-t border-border pt-4 text-sm">
             <div className="flex justify-between">
-              <dt className="text-neutral-400">Subtotal</dt>
+              <dt className="text-muted-foreground">Subtotal</dt>
               <dd>{formatNgn(order.subtotalNgn)}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-neutral-400">Shipping</dt>
+              <dt className="text-muted-foreground">Shipping</dt>
               <dd>{order.shippingNgn === 0 ? "Free" : formatNgn(order.shippingNgn)}</dd>
             </div>
-            <div className="flex justify-between border-t border-neutral-800 pt-2 text-base font-bold">
+            <div className="flex justify-between border-t border-border pt-2 text-base font-bold">
               <dt>Total</dt>
               <dd>{formatNgn(order.totalNgn)}</dd>
             </div>
@@ -222,10 +222,10 @@ export function OrderView({ id }: { id: string }) {
         </div>
 
         <aside className="space-y-4">
-          <div className="rounded-2xl border border-neutral-800 bg-neutral-900/40 p-5">
-            <h2 className="mb-3 text-base font-semibold text-neutral-50">Shipping to</h2>
+          <div className="rounded-2xl border border-border bg-card/40 p-5">
+            <h2 className="mb-3 text-base font-semibold text-foreground">Shipping to</h2>
             {order.shipping.address1 ? (
-              <div className="space-y-0.5 text-sm text-neutral-300">
+              <div className="space-y-0.5 text-sm text-foreground/80">
                 <p className="font-semibold">{order.shipping.fullName}</p>
                 <p>{order.shipping.address1}</p>
                 {order.shipping.address2 ? <p>{order.shipping.address2}</p> : null}
@@ -234,24 +234,24 @@ export function OrderView({ id }: { id: string }) {
                 </p>
                 <p>{order.shipping.country}</p>
                 {order.shipping.phone ? (
-                  <p className="mt-2 text-xs text-neutral-500">{order.shipping.phone}</p>
+                  <p className="mt-2 text-xs text-muted-foreground">{order.shipping.phone}</p>
                 ) : null}
               </div>
             ) : (
-              <p className="text-sm text-neutral-400">Digital order — no shipping.</p>
+              <p className="text-sm text-muted-foreground">Digital order - no shipping.</p>
             )}
           </div>
 
-          <div className="rounded-2xl border border-neutral-800 bg-neutral-900/40 p-5">
-            <h2 className="mb-3 text-base font-semibold text-neutral-50">Payment</h2>
-            <p className="text-sm text-neutral-300">
+          <div className="rounded-2xl border border-border bg-card/40 p-5">
+            <h2 className="mb-3 text-base font-semibold text-foreground">Payment</h2>
+            <p className="text-sm text-foreground/80">
               <span className="text-[#00C3F7]">Paystack</span> · {order.paymentRef}
             </p>
           </div>
 
-          <div className="rounded-2xl border border-neutral-800 bg-neutral-900/40 p-5">
-            <h2 className="mb-3 text-base font-semibold text-neutral-50">Tracking</h2>
-            <p className="font-mono text-sm text-neutral-300">
+          <div className="rounded-2xl border border-border bg-card/40 p-5">
+            <h2 className="mb-3 text-base font-semibold text-foreground">Tracking</h2>
+            <p className="font-mono text-sm text-foreground/80">
               {order.trackingNumber ?? "Available once shipped"}
             </p>
           </div>
@@ -259,7 +259,7 @@ export function OrderView({ id }: { id: string }) {
           <div className="flex flex-wrap gap-2">
             <Button
               variant="outline"
-              className="flex-1 border-neutral-800"
+              className="flex-1 border-border"
               onClick={() => window.print()}
             >
               <Printer className="size-4" /> Receipt

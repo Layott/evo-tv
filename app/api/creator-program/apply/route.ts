@@ -16,7 +16,7 @@ const schema = z.object({
   agreementAccepted: z.boolean(),
 });
 
-/** POST /api/creator-program/apply — submit application. One per user. */
+/** POST /api/creator-program/apply - submit application. One per user. */
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
   if (!user) return new NextResponse("Auth required", { status: 401 });

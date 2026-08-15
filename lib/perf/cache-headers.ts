@@ -1,8 +1,8 @@
 /**
  * Cache-Control helpers for HLS delivery out of /api/uploads/*.
  *
- * - `.ts` segments are content-addressed and immutable — cache for an hour.
- * - `.m3u8` playlists change every few seconds for live — cache briefly.
+ * - `.ts` segments are content-addressed and immutable - cache for an hour.
+ * - `.m3u8` playlists change every few seconds for live - cache briefly.
  *
  * Consumers in the uploads route can choose which to apply based on the
  * requested file extension.

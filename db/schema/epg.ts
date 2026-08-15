@@ -39,6 +39,19 @@ export const epgSlots = pgTable(
     durationMin: integer("duration_min").notNull(),
 
     title: text("title").notNull(),
+    /**
+     * The show being scheduled.
+     *
+     * Programming used to be a typed string, so the grid and the shows catalogue
+     * were two lists of names that only looked related. A slot picks a show now
+     * and `title` is kept in step with it, which keeps every existing reader of
+     * this table working and gives the site a real link from "what is on" to
+     * "what is this".
+     *
+     * Nullable because the 168 imported rows predate it; migration 0038 turns
+     * their titles into shows and fills this in.
+     */
+    showId: text("show_id"),
     pillar: text("pillar", { enum: ["esports", "anime", "lifestyle"] })
       .notNull()
       .default("esports"),

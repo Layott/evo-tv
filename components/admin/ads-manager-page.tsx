@@ -145,13 +145,13 @@ export function AdsManagerPage() {
       header: "Creative",
       cell: (row) => (
         <div className="flex items-center gap-3">
-          <div className="h-10 w-20 overflow-hidden rounded bg-neutral-800">
+          <div className="h-10 w-20 overflow-hidden rounded bg-muted">
             {}
             <img src={row.mediaUrl} alt="" className="h-full w-full object-cover" />
           </div>
           <div>
-            <div className="text-sm font-medium text-neutral-100">{row.advertiser}</div>
-            <div className="text-xs text-neutral-500">{row.clickUrl}</div>
+            <div className="text-sm font-medium text-foreground">{row.advertiser}</div>
+            <div className="text-xs text-muted-foreground">{row.clickUrl}</div>
           </div>
         </div>
       ),
@@ -201,8 +201,8 @@ export function AdsManagerPage() {
       key: "schedule",
       header: "Schedule",
       cell: (row) => (
-        <span className="text-xs text-neutral-400">
-          {formatDate(row.startAt)} — {formatDate(row.endAt)}
+        <span className="text-xs text-muted-foreground">
+          {formatDate(row.startAt)} - {formatDate(row.endAt)}
         </span>
       ),
     },
@@ -225,7 +225,7 @@ export function AdsManagerPage() {
             e.stopPropagation();
             setConfirmDelete(row);
           }}
-          className="rounded-md p-1.5 text-neutral-400 hover:bg-red-500/10 hover:text-red-400"
+          className="rounded-md p-1.5 text-muted-foreground hover:bg-red-500/10 hover:text-red-400"
           aria-label="Delete"
         >
           <Trash2 className="h-4 w-4" />
@@ -267,16 +267,16 @@ export function AdsManagerPage() {
 
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative w-full max-w-sm">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-neutral-500" />
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search advertiser"
-            className="border-neutral-800 bg-neutral-900 pl-8"
+            className="border-border bg-card pl-8"
           />
         </div>
         <Select value={placementFilter} onValueChange={setPlacementFilter}>
-          <SelectTrigger className="w-44 border-neutral-800 bg-neutral-900">
+          <SelectTrigger className="w-44 border-border bg-card">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -288,7 +288,7 @@ export function AdsManagerPage() {
             ))}
           </SelectContent>
         </Select>
-        <div className="ml-auto text-xs text-neutral-500">{filtered.length} campaigns</div>
+        <div className="ml-auto text-xs text-muted-foreground">{filtered.length} campaigns</div>
       </div>
 
       <DataTable<Ad>
@@ -298,28 +298,28 @@ export function AdsManagerPage() {
         onRowClick={(r) => setEditing(r)}
       />
 
-      <section className="rounded-xl border border-neutral-800 bg-neutral-900/40 p-5">
-        <h3 className="text-sm font-semibold text-neutral-100">Performance</h3>
-        <p className="text-xs text-neutral-500">
+      <section className="rounded-xl border border-border bg-card/40 p-5">
+        <h3 className="text-sm font-semibold text-foreground">Performance</h3>
+        <p className="text-xs text-muted-foreground">
           Lifetime totals across every campaign. A daily breakdown needs
           per-day aggregation, which does not exist yet.
         </p>
         <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
           <div>
-            <div className="text-xs uppercase tracking-wider text-neutral-500">Impressions</div>
-            <div className="mt-1 text-2xl font-bold tabular-nums text-neutral-100">
+            <div className="text-xs uppercase tracking-wider text-muted-foreground">Impressions</div>
+            <div className="mt-1 text-2xl font-bold tabular-nums text-foreground">
               {formatNumber(totals.impressions)}
             </div>
           </div>
           <div>
-            <div className="text-xs uppercase tracking-wider text-neutral-500">Clicks</div>
-            <div className="mt-1 text-2xl font-bold tabular-nums text-neutral-100">
+            <div className="text-xs uppercase tracking-wider text-muted-foreground">Clicks</div>
+            <div className="mt-1 text-2xl font-bold tabular-nums text-foreground">
               {formatNumber(totals.clicks)}
             </div>
           </div>
           <div>
-            <div className="text-xs uppercase tracking-wider text-neutral-500">CTR</div>
-            <div className="mt-1 text-2xl font-bold tabular-nums text-neutral-100">
+            <div className="text-xs uppercase tracking-wider text-muted-foreground">CTR</div>
+            <div className="mt-1 text-2xl font-bold tabular-nums text-foreground">
               {totals.impressions > 0
                 ? `${((totals.clicks / totals.impressions) * 100).toFixed(2)}%`
                 : "-"}
@@ -343,17 +343,17 @@ export function AdsManagerPage() {
       )}
 
       <Dialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
-        <DialogContent className="border-neutral-800 bg-neutral-950 text-neutral-100">
+        <DialogContent className="border-border bg-background text-foreground">
           <DialogHeader>
             <DialogTitle>Delete ad?</DialogTitle>
-            <DialogDescription className="text-neutral-400">
+            <DialogDescription className="text-muted-foreground">
               Permanently remove campaign from {confirmDelete?.advertiser}.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button
               variant="outline"
-              className="border-neutral-700 bg-neutral-900 hover:bg-neutral-800"
+              className="border-input bg-card hover:bg-accent"
               onClick={() => setConfirmDelete(null)}
             >
               Cancel
@@ -419,7 +419,7 @@ function AdForm({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full overflow-y-auto border-neutral-800 bg-neutral-950 text-neutral-100 sm:max-w-lg">
+      <SheetContent className="w-full overflow-y-auto border-border bg-background text-foreground sm:max-w-lg">
         <SheetHeader>
           <SheetTitle>{initial ? "Edit ad" : "New ad"}</SheetTitle>
           <SheetDescription>Upload creative, set placement and weight.</SheetDescription>
@@ -427,7 +427,7 @@ function AdForm({
         <div className="space-y-4 px-4 pb-4">
           <div className="space-y-1.5">
             <Label>Creative preview</Label>
-            <div className="overflow-hidden rounded-lg border border-neutral-800 bg-neutral-900">
+            <div className="overflow-hidden rounded-lg border border-border bg-card">
               {}
               <img src={form.mediaUrl} alt="" className="w-full object-cover" />
             </div>
@@ -435,13 +435,13 @@ function AdForm({
               <Input
                 value={form.mediaUrl}
                 onChange={(e) => setForm({ ...form, mediaUrl: e.target.value })}
-                className="border-neutral-800 bg-neutral-900"
+                className="border-border bg-card"
               />
               <Button
                 type="button"
                 variant="outline"
                 size="icon"
-                className="border-neutral-700 bg-neutral-900 hover:bg-neutral-800"
+                className="border-input bg-card hover:bg-accent"
                 onClick={() => mediaInput.current?.click()}
               >
                 <Upload className="h-4 w-4" />
@@ -469,7 +469,7 @@ function AdForm({
               <Input
                 value={form.advertiser}
                 onChange={(e) => setForm({ ...form, advertiser: e.target.value })}
-                className="border-neutral-800 bg-neutral-900"
+                className="border-border bg-card"
               />
             </div>
             <div className="space-y-1.5">
@@ -478,7 +478,7 @@ function AdForm({
                 value={form.placement}
                 onValueChange={(v) => setForm({ ...form, placement: v as AdPlacement })}
               >
-                <SelectTrigger className="w-full border-neutral-800 bg-neutral-900">
+                <SelectTrigger className="w-full border-border bg-card">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -497,7 +497,7 @@ function AdForm({
             <Input
               value={form.clickUrl}
               onChange={(e) => setForm({ ...form, clickUrl: e.target.value })}
-              className="border-neutral-800 bg-neutral-900"
+              className="border-border bg-card"
             />
           </div>
 
@@ -508,7 +508,7 @@ function AdForm({
                 type="date"
                 value={form.startAt.slice(0, 10)}
                 onChange={(e) => setForm({ ...form, startAt: new Date(e.target.value).toISOString() })}
-                className="border-neutral-800 bg-neutral-900"
+                className="border-border bg-card"
               />
             </div>
             <div className="space-y-1.5">
@@ -517,7 +517,7 @@ function AdForm({
                 type="date"
                 value={form.endAt.slice(0, 10)}
                 onChange={(e) => setForm({ ...form, endAt: new Date(e.target.value).toISOString() })}
-                className="border-neutral-800 bg-neutral-900"
+                className="border-border bg-card"
               />
             </div>
           </div>
@@ -525,7 +525,7 @@ function AdForm({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label>Weight</Label>
-              <span className="tabular-nums text-sm text-neutral-300">{form.weight}</span>
+              <span className="tabular-nums text-sm text-foreground/80">{form.weight}</span>
             </div>
             <Slider
               value={[form.weight]}
@@ -536,10 +536,10 @@ function AdForm({
             />
           </div>
 
-          <div className="flex items-center justify-between rounded-lg border border-neutral-800 bg-neutral-900/40 p-3">
+          <div className="flex items-center justify-between rounded-lg border border-border bg-card/40 p-3">
             <div>
-              <div className="text-sm font-medium text-neutral-100">Active</div>
-              <div className="text-xs text-neutral-400">Campaign is eligible to serve.</div>
+              <div className="text-sm font-medium text-foreground">Active</div>
+              <div className="text-xs text-muted-foreground">Campaign is eligible to serve.</div>
             </div>
             <Switch checked={form.active} onCheckedChange={(v) => setForm({ ...form, active: v })} />
           </div>
@@ -547,7 +547,7 @@ function AdForm({
         <SheetFooter>
           <Button
             variant="outline"
-            className="border-neutral-700 bg-neutral-900 hover:bg-neutral-800"
+            className="border-input bg-card hover:bg-accent"
             onClick={() => onOpenChange(false)}
           >
             Cancel

@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getLeagueById } from "@/lib/api/fantasy";
 
-/** GET /api/fantasy/leagues/[id] — league detail. 404 when missing. */
+/** GET /api/fantasy/leagues/[id] - league detail. 404 when missing. */
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> },

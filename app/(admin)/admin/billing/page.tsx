@@ -12,7 +12,7 @@ import { ComingSoon } from "@/components/shell/coming-soon";
 export default function AdminBillingRoute() {
   return (
     <div className="p-6 lg:p-8">
-      <AdminGuard>
+      <AdminGuard minRole="finance_admin">
         <ComingSoon
           title="Billing and USSD"
           description="USSD payments are not integrated yet. Paystack orders are under Orders."

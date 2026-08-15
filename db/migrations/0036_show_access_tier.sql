@@ -1,0 +1,24 @@
+-- Free or paid, on a show and on an episode.
+--
+-- `streams` and `vods` have carried `is_premium` since the paywall was built,
+-- and every entitlement check in the app already branches on that name. Shows
+-- and episodes never had one, so an EVO Original could only ever be free. This
+-- reuses the same column name and the same type rather than introducing an
+-- `access_tier` enum, because a second spelling of one idea would force every
+-- consumer to know which table it is reading before it can ask the question.
+--
+-- The show flag is the default a new episode inherits, not a ceiling over it:
+-- an episode carries its own flag so a series can put its pilot in front of the
+-- paywall and charge for the rest.
+--
+-- Defaults to false on both. Every row that exists today was published as free
+-- and a migration must not paywall content retroactively.
+--
+-- Free-form tags are deliberately absent here: `shows.tags` (jsonb string[])
+-- already exists and is the column the CMS writes.
+--
+-- `IF NOT EXISTS` because these three tables are not created by this migration
+-- chain at all. `shows`, `seasons` and `episodes` were pushed straight to the
+-- database, so a column added by hand there would otherwise collide.
+ALTER TABLE "shows" ADD COLUMN IF NOT EXISTS "is_premium" boolean DEFAULT false NOT NULL;--> statement-breakpoint
+ALTER TABLE "episodes" ADD COLUMN IF NOT EXISTS "is_premium" boolean DEFAULT false NOT NULL;

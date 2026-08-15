@@ -64,7 +64,7 @@ export const pushSubscriptions = pgTable(
 /**
  * Expo push tokens for native (iOS / Android) clients. Distinct from
  * `push_subscriptions` which holds Web Push (browser PushManager) payloads
- * — Expo gives a single opaque string per device, no key pair.
+ * - Expo gives a single opaque string per device, no key pair.
  *
  * Token is unique globally (one device → one row, latest wins). A user can
  * have multiple tokens (phone + tablet). `lastSeenAt` lets the cron prune
@@ -103,7 +103,7 @@ export const reminders = pgTable(
  * INSERT ... ON CONFLICT DO NOTHING / DELETE pair.
  *
  * targetId mirrors the EpgRow.id shape: "ep_<id>" | "stream_<id>" | "match_<id>".
- * The cron does not need to dereference the target — airsAt is the source of
+ * The cron does not need to dereference the target - airsAt is the source of
  * truth for when to fire. If the target moves or is cancelled, a future
  * housekeeping cron can prune.
  */

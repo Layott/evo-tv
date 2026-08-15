@@ -8,13 +8,13 @@ import { hasMinRole } from "@/lib/auth/roles";
 import { log } from "@/lib/log";
 
 /**
- * POST /api/admin/db/sync-migrations — one-shot drift repair.
+ * POST /api/admin/db/sync-migrations - one-shot drift repair.
  *
  * Admin-only. Idempotent. Creates `daily_quest_claims` if it doesn't exist
  * yet (migration 0017's journal is out of sync due to earlier `party_messages`
  * drift, so `pnpm db:migrate` can't be run from the build pipeline).
  *
- * Reports what it did. Safe to call multiple times — every statement uses
+ * Reports what it did. Safe to call multiple times - every statement uses
  * IF NOT EXISTS so re-runs are no-ops.
  *
  * After the daily_quest_claims table is verified live, this route should be
@@ -76,7 +76,7 @@ export async function POST() {
     `);
     actions.push("ensured daily_quest_claims_unique_per_day");
 
-    // ── Phase 9a — pillar columns ─────────────────────────────────────
+    // ── Phase 9a - pillar columns ─────────────────────────────────────
     // Add `pillar` to channels, streams, vods, clips. NOT NULL with default
     // 'esports' so existing rows backfill safely.
     for (const table of ["channels", "streams", "vods", "clips"]) {
@@ -88,7 +88,7 @@ export async function POST() {
       actions.push(`ensured ${table}.pillar`);
     }
 
-    // ── Phase 9b — Shows / Seasons / Episodes ─────────────────────────
+    // ── Phase 9b - Shows / Seasons / Episodes ─────────────────────────
     await db.execute(sql`
       CREATE TABLE IF NOT EXISTS "shows" (
         "id" text PRIMARY KEY,

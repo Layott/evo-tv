@@ -17,7 +17,7 @@ function periodBounds(period: Period): { from?: string; to?: string } {
   if (period === "all") return {};
   const days = period === "7d" ? 7 : period === "30d" ? 30 : 90;
   const to = new Date();
-  to.setUTCDate(to.getUTCDate() - 1); // yesterday — most-recent rolled-up day
+  to.setUTCDate(to.getUTCDate() - 1); // yesterday - most-recent rolled-up day
   const from = new Date(to);
   from.setUTCDate(from.getUTCDate() - (days - 1));
   return {

@@ -21,8 +21,8 @@ function formatDuration(sec: number): string {
 function SkeletonCard() {
   return (
     <div className="space-y-2">
-      <div className="aspect-video animate-pulse rounded-xl bg-neutral-900" />
-      <div className="h-3 w-3/4 animate-pulse rounded bg-neutral-900" />
+      <div className="aspect-video animate-pulse rounded-xl bg-card" />
+      <div className="h-3 w-3/4 animate-pulse rounded bg-card" />
     </div>
   );
 }
@@ -51,7 +51,7 @@ export function Recommendations({ vods, games, loading }: RecommendationsProps) 
           ))}
         </div>
       ) : vods.length === 0 ? (
-        <div className="rounded-xl border border-neutral-800 bg-neutral-900/60 p-6 text-center text-sm text-neutral-500">
+        <div className="rounded-xl border border-border bg-card/60 p-6 text-center text-sm text-muted-foreground">
           We'll tailor recommendations as you watch more.
         </div>
       ) : (
@@ -62,7 +62,7 @@ export function Recommendations({ vods, games, loading }: RecommendationsProps) 
               <Link
                 key={v.id}
                 href={`/vod/${v.id}`}
-                className="group overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900/60 transition-colors hover:border-neutral-700"
+                className="group overflow-hidden rounded-xl border border-border bg-card/60 transition-colors hover:border-input"
               >
                 <div className="relative aspect-video overflow-hidden">
                   <MediaImage
@@ -71,7 +71,7 @@ export function Recommendations({ vods, games, loading }: RecommendationsProps) 
                     seed={v.id}
                     className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
-                  <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] text-neutral-200">
+                  <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] text-foreground">
                     <Clock className="h-3 w-3" /> {formatDuration(v.durationSec)}
                   </div>
                 </div>

@@ -5,7 +5,7 @@ import { listRecentXpEvents } from "@/lib/api/rewards";
 export const dynamic = "force-dynamic";
 
 /**
- * GET /api/rewards/xp-events?limit=20 — recent XP grants for the current user.
+ * GET /api/rewards/xp-events?limit=20 - recent XP grants for the current user.
  *
  * Used to render the activity timeline on the rewards screen ("+80 XP · Watch
  * 30 minutes · 2h ago"). Limit clamped to 50.

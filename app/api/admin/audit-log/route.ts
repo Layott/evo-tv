@@ -34,13 +34,13 @@ function buildFilters(parsed: z.infer<typeof querySchema>): SQL[] {
  * GET /api/admin/audit-log
  *
  * Filters:
- *   ?actorId=<userId>         — only actions by this admin
- *   ?action=<prefix>          — action namespace (e.g. "stream.")
- *   ?targetType=<type>        — only this target type
- *   ?targetId=<id>            — only this exact target row
- *   ?fromDate=<iso>           — created on/after
- *   ?toDate=<iso>             — created on/before
- *   ?limit=<n>&offset=<n>     — paging
+ *   ?actorId=<userId>         - only actions by this admin
+ *   ?action=<prefix>          - action namespace (e.g. "stream.")
+ *   ?targetType=<type>        - only this target type
+ *   ?targetId=<id>            - only this exact target row
+ *   ?fromDate=<iso>           - created on/after
+ *   ?toDate=<iso>             - created on/before
+ *   ?limit=<n>&offset=<n>     - paging
  */
 export async function GET(req: NextRequest) {
   const guard = await requireAdminFromRequest();

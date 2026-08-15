@@ -15,6 +15,7 @@ import {
 } from "@/lib/client";
 import { MediaImage } from "@/components/ui/media-image";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 type ContentType = "all" | "streams" | "vods" | "teams" | "players";
 
@@ -102,9 +103,9 @@ export default function DiscoverPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6">
-      <div className="sticky top-14 z-30 -mx-4 mb-6 border-b border-neutral-900 bg-neutral-950/95 px-4 py-3 backdrop-blur">
+      <div className="sticky top-14 z-30 -mx-4 mb-6 border-b border-border bg-background/95 px-4 py-3 backdrop-blur">
         <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
             value={query}
@@ -115,19 +116,19 @@ export default function DiscoverPage() {
             onFocus={() => setShowSuggest(true)}
             onBlur={() => setTimeout(() => setShowSuggest(false), 150)}
             placeholder="Search streams, events, teams, players…"
-            className="w-full rounded-xl border border-neutral-800 bg-neutral-900/60 py-3 pl-10 pr-10 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-sky-500/50 focus:outline-none"
+            className="w-full rounded-xl border border-border bg-card/60 py-3 pl-10 pr-10 text-sm text-foreground placeholder:text-muted-foreground focus:border-sky-500/50 focus:outline-none"
           />
           {query && (
             <button
               type="button"
               onClick={() => setQuery("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-300"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             >
               <X className="h-4 w-4" />
             </button>
           )}
           {showSuggest && debounced && (suggestionsQ.data ?? []).length > 0 && (
-            <div className="absolute inset-x-0 top-full mt-2 overflow-hidden rounded-xl border border-neutral-800 bg-neutral-950 shadow-xl">
+            <div className="absolute inset-x-0 top-full mt-2 overflow-hidden rounded-xl border border-border bg-background shadow-xl">
               {suggestionsQ.data!.map((s, i) => (
                 <button
                   key={`${s}-${i}`}
@@ -137,9 +138,9 @@ export default function DiscoverPage() {
                     setQuery(s);
                     setShowSuggest(false);
                   }}
-                  className="flex w-full items-center gap-2 border-b border-neutral-900 px-3 py-2 text-left text-sm text-neutral-200 hover:bg-neutral-900 last:border-0"
+                  className="flex w-full items-center gap-2 border-b border-border px-3 py-2 text-left text-sm text-foreground hover:bg-accent last:border-0"
                 >
-                  <Search className="h-3.5 w-3.5 text-neutral-500" />
+                  <Search className="h-3.5 w-3.5 text-muted-foreground" />
                   {s}
                 </button>
               ))}
@@ -154,7 +155,7 @@ export default function DiscoverPage() {
             className={`shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
               gameFilter === null
                 ? "border-sky-500/50 bg-sky-500/10 text-sky-300"
-                : "border-neutral-800 bg-neutral-900/60 text-neutral-400 hover:border-neutral-700"
+                : "border-border bg-card/60 text-muted-foreground hover:border-input"
             }`}
           >
             All games
@@ -167,13 +168,13 @@ export default function DiscoverPage() {
               className={`shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
                 gameFilter === g.id
                   ? "border-sky-500/50 bg-sky-500/10 text-sky-300"
-                  : "border-neutral-800 bg-neutral-900/60 text-neutral-400 hover:border-neutral-700"
+                  : "border-border bg-card/60 text-muted-foreground hover:border-input"
               }`}
             >
               {g.shortName}
             </button>
           ))}
-          <div className="mx-2 h-6 w-px self-center bg-neutral-800" />
+          <div className="mx-2 h-6 w-px self-center bg-muted" />
           {(["all", "streams", "vods", "teams", "players"] as ContentType[]).map((c) => (
             <button
               key={c}
@@ -182,7 +183,7 @@ export default function DiscoverPage() {
               className={`shrink-0 rounded-full border px-3 py-1 text-xs font-medium capitalize transition-colors ${
                 contentFilter === c
                   ? "border-sky-500/50 bg-sky-500/10 text-sky-300"
-                  : "border-neutral-800 bg-neutral-900/60 text-neutral-400 hover:border-neutral-700"
+                  : "border-border bg-card/60 text-muted-foreground hover:border-input"
               }`}
             >
               {c}
@@ -192,9 +193,9 @@ export default function DiscoverPage() {
       </div>
 
       {debounced && totalResults === 0 && !resultsQ.isPending ? (
-        <div className="rounded-xl border border-neutral-800 bg-neutral-900/60 p-8 text-center">
-          <p className="text-sm text-neutral-300">No results for "{debounced}".</p>
-          <p className="mt-2 text-xs text-neutral-500">
+        <div className="rounded-xl border border-border bg-card/60 p-8 text-center">
+          <p className="text-sm text-foreground/80">No results for "{debounced}".</p>
+          <p className="mt-2 text-xs text-muted-foreground">
             Try searching for a game, team tag (e.g., ALPHA), player handle, or event.
           </p>
         </div>
@@ -218,7 +219,7 @@ export default function DiscoverPage() {
                     <Link
                       key={s.id}
                       href={`/stream/${s.id}`}
-                      className="group overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900/60 transition-colors hover:border-neutral-700"
+                      className="group overflow-hidden rounded-xl border border-border bg-card/60 transition-colors hover:border-input"
                     >
                       <div className="relative aspect-video overflow-hidden">
                         <MediaImage
@@ -232,13 +233,13 @@ export default function DiscoverPage() {
                             <LiveBadge />
                           </div>
                         )}
-                        <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] text-neutral-200">
+                        <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] text-foreground">
                           <Eye className="h-3 w-3" /> {formatViewers(s.viewerCount)}
                         </div>
                       </div>
                       <div className="space-y-1 p-3">
                         <h3 className="line-clamp-2 text-sm font-semibold">{s.title}</h3>
-                        <p className="text-xs text-neutral-400">{s.streamerName}</p>
+                        <p className="text-xs text-muted-foreground">{s.streamerName}</p>
                         {game && <p className="text-[11px] text-sky-400">{game.shortName}</p>}
                       </div>
                     </Link>
@@ -258,7 +259,7 @@ export default function DiscoverPage() {
                     <Link
                       key={v.id}
                       href={`/vod/${v.id}`}
-                      className="group overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900/60 transition-colors hover:border-neutral-700"
+                      className="group overflow-hidden rounded-xl border border-border bg-card/60 transition-colors hover:border-input"
                     >
                       <div className="relative aspect-video overflow-hidden">
                         <MediaImage
@@ -267,7 +268,7 @@ export default function DiscoverPage() {
                           seed={v.id}
                           className="h-full w-full object-cover"
                         />
-                        <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] text-neutral-200">
+                        <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] text-foreground">
                           <Clock className="h-3 w-3" /> {formatDuration(v.durationSec)}
                         </div>
                       </div>
@@ -292,19 +293,19 @@ export default function DiscoverPage() {
                     <Link
                       key={t.id}
                       href={`/team/${t.slug}`}
-                      className="flex items-center gap-3 rounded-xl border border-neutral-800 bg-neutral-900/60 p-3 transition-colors hover:border-neutral-700"
+                      className="flex items-center gap-3 rounded-xl border border-border bg-card/60 p-3 transition-colors hover:border-input"
                     >
                       <img
                         src={t.logoUrl}
                         alt={t.name}
-                        className="h-12 w-12 shrink-0 rounded-md border border-neutral-800 object-cover"
+                        className="h-12 w-12 shrink-0 rounded-md border border-border object-cover"
                       />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-semibold">{t.name}</p>
-                        <p className="text-[11px] text-neutral-400">
+                        <p className="text-[11px] text-muted-foreground">
                           {t.tag} · {game?.shortName}
                         </p>
-                        <p className="text-[11px] text-neutral-500">
+                        <p className="text-[11px] text-muted-foreground">
                           <Users className="mr-1 inline h-3 w-3" />
                           {formatViewers(t.followers)} followers
                         </p>
@@ -325,19 +326,22 @@ export default function DiscoverPage() {
                   return (
                     <div
                       key={p.id}
-                      className="flex items-center gap-3 rounded-xl border border-neutral-800 bg-neutral-900/60 p-3"
+                      className="flex items-center gap-3 rounded-xl border border-border bg-card/60 p-3"
                     >
-                      <img
+                      <UserAvatar
                         src={p.avatarUrl}
-                        alt={p.handle}
-                        className="h-12 w-12 shrink-0 rounded-full border border-neutral-800 object-cover"
+                        handle={p.handle}
+                        seed={p.id}
+                        decorative
+                        className="h-12 w-12 shrink-0"
+                        textClassName="text-sm"
                       />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-semibold">{p.handle}</p>
-                        <p className="truncate text-[11px] text-neutral-400">
+                        <p className="truncate text-[11px] text-muted-foreground">
                           {p.role} · {game?.shortName}
                         </p>
-                        <p className="text-[11px] text-neutral-500">
+                        <p className="text-[11px] text-muted-foreground">
                           <UserRound className="mr-1 inline h-3 w-3" />
                           KDA {p.kda.toFixed(2)}
                         </p>

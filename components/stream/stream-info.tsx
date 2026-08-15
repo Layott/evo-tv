@@ -130,24 +130,24 @@ export function StreamInfo({ stream, game }: StreamInfoProps) {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl md:text-2xl font-bold text-neutral-50 leading-tight">
+        <h1 className="text-xl md:text-2xl font-bold text-foreground leading-tight">
           {stream.title}
         </h1>
         {activeTrack ? (
-          <p className="mt-1 flex items-center gap-1.5 text-xs text-neutral-400">
+          <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
             <Headphones className="size-3 text-sky-400" />
             <span>
               Audio:{" "}
-              <span className="font-medium text-neutral-100">
+              <span className="font-medium text-foreground">
                 {activeTrack.languageLabel}
               </span>
-              <span className="ml-1 text-neutral-500">
+              <span className="ml-1 text-muted-foreground">
                 · @{activeTrack.casterHandle}
               </span>
             </span>
           </p>
         ) : null}
-        <p className="mt-1 text-sm text-neutral-400 line-clamp-2">
+        <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
           {stream.description}
         </p>
       </div>
@@ -162,10 +162,10 @@ export function StreamInfo({ stream, game }: StreamInfoProps) {
             <AvatarFallback>{stream.streamerName.slice(0, 2)}</AvatarFallback>
           </Avatar>
           <div>
-            <div className="text-sm font-semibold text-neutral-100">
+            <div className="text-sm font-semibold text-foreground">
               {stream.streamerName}
             </div>
-            <div className="text-[11px] uppercase tracking-wider text-neutral-500">
+            <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
               {stream.streamerType} streamer
             </div>
           </div>
@@ -201,7 +201,7 @@ export function StreamInfo({ stream, game }: StreamInfoProps) {
 
       <div className="flex flex-wrap items-center gap-2">
         {game && (
-          <Badge variant="secondary" className="bg-neutral-800 text-neutral-100">
+          <Badge variant="secondary" className="bg-muted text-foreground">
             {game.shortName}
           </Badge>
         )}
@@ -225,10 +225,10 @@ export function StreamInfo({ stream, game }: StreamInfoProps) {
       {/* Last resort. Reached only when the share sheet and the clipboard both
           refused, which is rare but leaves the button doing nothing otherwise. */}
       <Dialog open={!!shareUrl} onOpenChange={(o) => !o && setShareUrl(null)}>
-        <DialogContent className="border-neutral-800 bg-neutral-950 text-neutral-100">
+        <DialogContent className="border-border bg-background text-foreground">
           <DialogHeader>
             <DialogTitle>Share this stream</DialogTitle>
-            <DialogDescription className="text-neutral-400">
+            <DialogDescription className="text-muted-foreground">
               Your browser blocked the copy. Select the link and copy it.
             </DialogDescription>
           </DialogHeader>
@@ -236,7 +236,7 @@ export function StreamInfo({ stream, game }: StreamInfoProps) {
             readOnly
             value={shareUrl ?? ""}
             onFocus={(e) => e.currentTarget.select()}
-            className="w-full rounded-md border border-neutral-800 bg-neutral-900 px-3 py-2 font-mono text-sm text-neutral-200"
+            className="w-full rounded-md border border-border bg-card px-3 py-2 font-mono text-sm text-foreground"
           />
         </DialogContent>
       </Dialog>

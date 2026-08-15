@@ -21,7 +21,7 @@ function fmtTime(iso: string) {
 function roleColor(role: ChatMessage["userRole"]) {
   if (role === "admin") return "text-sky-300";
   if (role === "premium") return "text-amber-300";
-  return "text-neutral-200";
+  return "text-foreground";
 }
 
 /**
@@ -96,7 +96,7 @@ export function MessageItem({
 
   if (deleted) {
     return (
-      <div className="px-3 py-1.5 text-xs italic text-neutral-500">
+      <div className="px-3 py-1.5 text-xs italic text-muted-foreground">
         {banned ? `[${displayHandle(msg.userHandle)} banned · message removed]` : "[message removed]"}
       </div>
     );
@@ -104,7 +104,7 @@ export function MessageItem({
   return (
     <div
       className={cn(
-        "group flex gap-2 px-3 py-1.5 hover:bg-neutral-900/60 rounded-md transition-colors",
+        "group flex gap-2 px-3 py-1.5 hover:bg-accent/60 rounded-md transition-colors",
         pinned && "bg-amber-500/10 border-l-2 border-amber-400"
       )}
       title={fmtTime(msg.createdAt)}
@@ -128,9 +128,9 @@ export function MessageItem({
               admin
             </span>
           )}
-          <span className="text-neutral-500 font-normal">:</span>
+          <span className="text-muted-foreground font-normal">:</span>
         </span>
-        <span className="text-sm text-neutral-100 break-words">{msg.body}</span>
+        <span className="text-sm text-foreground break-words">{msg.body}</span>
       </div>
       {isAdmin && (
         <div className="flex-shrink-0 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">

@@ -3,7 +3,7 @@ import { and, eq, gte, lte, inArray } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 
 /**
- * Fantasy scoring engine — v2 (per-player stats with team-proxy fallback).
+ * Fantasy scoring engine - v2 (per-player stats with team-proxy fallback).
  *
  * For each pick:
  *   1. Look up every `match_player_stats` row for that playerId, scoped to
@@ -17,7 +17,7 @@ import { db, schema } from "@/lib/db";
  *        pointsScored = (team_wins_in_window) * 10
  *      where team is the player's current team_id from the players catalog.
  *
- * Idempotent — overwrites lineup_picks.pointsScored and lineups.totalPoints
+ * Idempotent - overwrites lineup_picks.pointsScored and lineups.totalPoints
  * on every run. Safe to re-run after each match completes.
  */
 

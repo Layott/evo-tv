@@ -30,15 +30,15 @@ export function VodRelated({ vods }: { vods: Vod[] }) {
   if (!vods || vods.length === 0) return null;
   return (
     <section>
-      <h2 className="text-lg font-semibold text-neutral-100 mb-3">Related VODs</h2>
+      <h2 className="text-lg font-semibold text-foreground mb-3">Related VODs</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {vods.map((v) => (
           <Link
             key={v.id}
             href={`/vod/${v.id}`}
-            className="group rounded-lg overflow-hidden border border-neutral-800 bg-neutral-950 hover:border-neutral-700 transition"
+            className="group rounded-lg overflow-hidden border border-border bg-background hover:border-input transition"
           >
-            <div className="relative aspect-video bg-neutral-900">
+            <div className="relative aspect-video bg-card">
               <Image
                 src={v.thumbnailUrl}
                 alt={v.title}
@@ -56,10 +56,10 @@ export function VodRelated({ vods }: { vods: Vod[] }) {
               )}
             </div>
             <div className="p-2.5">
-              <h3 className="text-sm font-medium text-neutral-100 line-clamp-2">
+              <h3 className="text-sm font-medium text-foreground line-clamp-2">
                 {v.title}
               </h3>
-              <p className="mt-1 text-[11px] text-neutral-500">
+              <p className="mt-1 text-[11px] text-muted-foreground">
                 {v.viewCount.toLocaleString()} views · {relTime(v.publishedAt)}
               </p>
             </div>

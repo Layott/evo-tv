@@ -17,9 +17,9 @@ const submitSchema = z.object({
 });
 
 /**
- * GET — caller's submission for this event (or 404 if not submitted).
- * POST — upsert submission. Locks once any match in the bracket starts.
- *        Phase 1 doesn't enforce the lock — admin verifies bracket state
+ * GET - caller's submission for this event (or 404 if not submitted).
+ * POST - upsert submission. Locks once any match in the bracket starts.
+ *        Phase 1 doesn't enforce the lock - admin verifies bracket state
  *        before allowing entries via the event status field.
  */
 export async function GET(

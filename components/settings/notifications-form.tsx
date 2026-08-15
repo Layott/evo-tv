@@ -33,7 +33,7 @@ export function NotificationsForm() {
       title="Notifications"
       description="Choose what lands in your EVO TV inbox and email."
     >
-      <div className="divide-y divide-neutral-800">
+      <div className="divide-y divide-border">
         <SettingRow label="Stream goes live" description="Teams & streamers you follow">
           <Switch checked={state.goLive} onCheckedChange={(v) => set("goLive", v)} />
         </SettingRow>

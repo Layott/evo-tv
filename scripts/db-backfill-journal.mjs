@@ -52,7 +52,7 @@ console.log("DB journal rows to insert:", dbInserts.length);
 for (const r of dbInserts) console.log("  +", r.tag, r.hash.slice(0, 12), new Date(r.createdAt).toISOString());
 
 if (DRY) {
-  console.log("\n(dry run — no writes)");
+  console.log("\n(dry run - no writes)");
   process.exit(0);
 }
 

@@ -2,6 +2,7 @@ import "server-only";
 import { NextResponse } from "next/server";
 import { db, schema } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/guards";
+import { hasMinRole } from "@/lib/auth/roles";
 import type { SessionUser } from "@/lib/auth";
 
 export type AdminGuardOk = { ok: true; user: SessionUser };
@@ -11,11 +12,17 @@ export type AdminGuardResult = AdminGuardOk | AdminGuardFail;
 /**
  * Ensure the current request is from a logged-in admin. On failure, returns a
  * 403 NextResponse wrapped in the result so the caller can return it directly.
+ *
+ * Compares on the ladder, not with `role !== "admin"`. That equality check was
+ * false for a **head_admin**, so the highest role on the platform was refused
+ * by every write route that uses this guard: creating a show, uploading a file,
+ * editing the catalogue, publishing a VOD. The role could hand out roles and
+ * could not publish anything.
  */
 export async function requireAdminFromRequest(): Promise<AdminGuardResult> {
   const user = await getCurrentUser();
   const role = (user as { role?: string } | null)?.role;
-  if (!user || role !== "admin") {
+  if (!user || !hasMinRole(role, "admin")) {
     return {
       ok: false,
       response: new NextResponse("Admin required", { status: 403 }),

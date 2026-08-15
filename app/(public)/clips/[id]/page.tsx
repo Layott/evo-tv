@@ -151,7 +151,7 @@ export default function ClipDetailPage() {
   if (clip === undefined) {
     return (
       <div className="flex h-[calc(100vh-4rem)] items-center justify-center bg-black">
-        <div className="h-full aspect-[9/16] rounded-xl bg-neutral-900 animate-pulse" />
+        <div className="h-full aspect-[9/16] rounded-xl bg-card animate-pulse" />
       </div>
     );
   }
@@ -159,8 +159,8 @@ export default function ClipDetailPage() {
   if (clip === null) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-16 text-center">
-        <h1 className="text-2xl font-bold text-neutral-100">Clip not found</h1>
-        <p className="mt-2 text-sm text-neutral-400">
+        <h1 className="text-2xl font-bold text-foreground">Clip not found</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
           This clip may have been removed.
         </p>
         <div className="mt-6 flex items-center justify-center gap-3">
@@ -249,7 +249,7 @@ export default function ClipDetailPage() {
       </div>
 
       {/* Video stage */}
-      <div className="relative aspect-[9/16] h-[calc(100vh-5rem)] max-h-[920px] w-auto max-w-[100vw] overflow-hidden rounded-xl border border-neutral-800 bg-black">
+      <div className="relative aspect-[9/16] h-[calc(100vh-5rem)] max-h-[920px] w-auto max-w-[100vw] overflow-hidden rounded-xl border border-border bg-black">
         <video
           ref={videoRef}
           src={clip.mp4Url}
@@ -341,7 +341,7 @@ export default function ClipDetailPage() {
                   <div className="text-sm font-semibold text-white truncate">
                     @{clip.creatorHandle}
                   </div>
-                  <div className="text-[11px] text-neutral-300">
+                  <div className="text-[11px] text-foreground/80">
                     {relTime(clip.createdAt)}
                   </div>
                 </div>

@@ -14,6 +14,7 @@ import {
 } from "@/lib/client";
 import { useAuth } from "@/components/providers";
 import type { Match } from "@/lib/types";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 function formatFollowers(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -67,7 +68,7 @@ export default function TeamDetailPage() {
         <h1 className="text-2xl font-bold">Team not found</h1>
         <Link
           href="/team"
-          className="mt-6 inline-flex rounded-md bg-sky-500 px-4 py-2 text-sm font-semibold text-neutral-950 hover:bg-sky-400"
+          className="mt-6 inline-flex rounded-md bg-sky-500 px-4 py-2 text-sm font-semibold text-ink hover:bg-sky-400"
         >
           Back to teams
         </Link>
@@ -78,7 +79,7 @@ export default function TeamDetailPage() {
   if (!team) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-6">
-        <div className="h-56 animate-pulse rounded-xl bg-neutral-900" />
+        <div className="h-56 animate-pulse rounded-xl bg-card" />
       </div>
     );
   }
@@ -97,15 +98,15 @@ export default function TeamDetailPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6">
-      <div className="relative mb-6 overflow-hidden rounded-xl border border-neutral-800">
-        <div className="relative h-48 w-full overflow-hidden bg-gradient-to-br from-sky-500/20 via-neutral-900 to-neutral-950">
+      <div className="relative mb-6 overflow-hidden rounded-xl border border-border">
+        <div className="relative h-48 w-full overflow-hidden bg-gradient-to-br from-sky-500/20 via-card to-background">
           <img src={team.logoUrl} alt="" className="h-full w-full object-contain opacity-10" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
         </div>
         <div className="absolute inset-x-0 bottom-0 p-4 sm:p-6">
           <Link
             href="/team"
-            className="mb-2 inline-flex w-fit items-center gap-1 text-xs text-neutral-400 hover:text-neutral-200"
+            className="mb-2 inline-flex w-fit items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="h-3 w-3" /> All teams
           </Link>
@@ -113,16 +114,16 @@ export default function TeamDetailPage() {
             <img
               src={team.logoUrl}
               alt={team.name}
-              className="h-20 w-20 rounded-xl border-2 border-neutral-900 bg-neutral-900 object-cover sm:h-24 sm:w-24"
+              className="h-20 w-20 rounded-xl border-2 border-border bg-card object-cover sm:h-24 sm:w-24"
             />
             <div className="flex-1">
               <div className="flex items-center gap-2">
                 <h1 className="text-2xl font-bold sm:text-3xl">{team.name}</h1>
-                <span className="rounded bg-neutral-800 px-2 py-0.5 text-xs font-semibold text-sky-300">
+                <span className="rounded bg-muted px-2 py-0.5 text-xs font-semibold text-sky-300">
                   {team.tag}
                 </span>
               </div>
-              <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-neutral-400">
+              <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1">
                   <MapPin className="h-3 w-3" /> {team.country} · {team.region}
                 </span>
@@ -135,7 +136,7 @@ export default function TeamDetailPage() {
               className={`inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-semibold transition-colors ${
                 following
                   ? "border-sky-500/50 bg-sky-500/10 text-sky-300"
-                  : "border-transparent bg-sky-500 text-neutral-950 hover:bg-sky-400"
+                  : "border-transparent bg-sky-500 text-ink hover:bg-sky-400"
               }`}
             >
               {following ? <Bell className="h-4 w-4 fill-sky-300" /> : <BellOff className="h-4 w-4" />}
@@ -146,27 +147,27 @@ export default function TeamDetailPage() {
       </div>
 
       <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div className="rounded-xl border border-neutral-800 bg-neutral-900/60 p-4">
-          <p className="text-[11px] uppercase tracking-wider text-neutral-500">Rank</p>
+        <div className="rounded-xl border border-border bg-card/60 p-4">
+          <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Rank</p>
           <p className="mt-1 flex items-center gap-1 text-lg font-bold text-amber-300">
             <Trophy className="h-4 w-4" /> #{team.ranking}
           </p>
         </div>
-        <div className="rounded-xl border border-neutral-800 bg-neutral-900/60 p-4">
-          <p className="text-[11px] uppercase tracking-wider text-neutral-500">W-L</p>
+        <div className="rounded-xl border border-border bg-card/60 p-4">
+          <p className="text-[11px] uppercase tracking-wider text-muted-foreground">W-L</p>
           <p className="mt-1 text-lg font-bold text-sky-400">
             {team.wins}-{team.losses}
           </p>
-          <p className="text-[11px] text-neutral-500">{winRate}% win rate</p>
+          <p className="text-[11px] text-muted-foreground">{winRate}% win rate</p>
         </div>
-        <div className="rounded-xl border border-neutral-800 bg-neutral-900/60 p-4">
-          <p className="text-[11px] uppercase tracking-wider text-neutral-500">Followers</p>
+        <div className="rounded-xl border border-border bg-card/60 p-4">
+          <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Followers</p>
           <p className="mt-1 flex items-center gap-1 text-lg font-bold">
             <Users className="h-4 w-4" /> {formatFollowers(team.followers)}
           </p>
         </div>
-        <div className="rounded-xl border border-neutral-800 bg-neutral-900/60 p-4">
-          <p className="text-[11px] uppercase tracking-wider text-neutral-500">Active roster</p>
+        <div className="rounded-xl border border-border bg-card/60 p-4">
+          <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Active roster</p>
           <p className="mt-1 text-lg font-bold">{roster.length}</p>
         </div>
       </div>
@@ -176,21 +177,29 @@ export default function TeamDetailPage() {
         {rosterQ.isPending ? (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="h-20 animate-pulse rounded-xl bg-neutral-900" />
+              <div key={i} className="h-20 animate-pulse rounded-xl bg-card" />
             ))}
           </div>
         ) : roster.length === 0 ? (
-          <div className="rounded-xl border border-neutral-800 bg-neutral-900/60 p-6 text-center text-sm text-neutral-500">
+          <div className="rounded-xl border border-border bg-card/60 p-6 text-center text-sm text-muted-foreground">
             Roster not yet announced.
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {roster.map((p) => (
-              <div key={p.id} className="flex items-center gap-3 rounded-xl border border-neutral-800 bg-neutral-900/60 p-3">
-                <img src={p.avatarUrl} alt={p.handle} className="h-12 w-12 rounded-full border border-neutral-800" />
+              <div key={p.id} className="flex items-center gap-3 rounded-xl border border-border bg-card/60 p-3">
+                <UserAvatar
+                  src={p.avatarUrl}
+                  name={p.realName}
+                  handle={p.handle}
+                  seed={p.id}
+                  decorative
+                  className="h-12 w-12 shrink-0"
+                  textClassName="text-sm"
+                />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold">{p.handle}</p>
-                  <p className="truncate text-[11px] text-neutral-400">{p.realName}</p>
+                  <p className="truncate text-[11px] text-muted-foreground">{p.realName}</p>
                   <p className="mt-0.5 text-[11px] text-sky-400">
                     {p.role} · KDA {p.kda.toFixed(2)}
                   </p>
@@ -204,7 +213,7 @@ export default function TeamDetailPage() {
       <section className="mb-8 space-y-3">
         <h2 className="text-xl font-semibold tracking-tight">Upcoming matches</h2>
         {upcoming.length === 0 ? (
-          <div className="rounded-xl border border-neutral-800 bg-neutral-900/60 p-6 text-center text-sm text-neutral-500">
+          <div className="rounded-xl border border-border bg-card/60 p-6 text-center text-sm text-muted-foreground">
             No scheduled matches.
           </div>
         ) : (
@@ -212,12 +221,12 @@ export default function TeamDetailPage() {
             {upcoming.map((m) => (
               <div
                 key={m.id}
-                className="flex items-center gap-3 rounded-xl border border-neutral-800 bg-neutral-900/60 p-3 text-sm"
+                className="flex items-center gap-3 rounded-xl border border-border bg-card/60 p-3 text-sm"
               >
                 <Calendar className="h-4 w-4 text-sky-400" />
                 <span className="font-medium">{m.round}</span>
-                <span className="text-neutral-500">Bo{m.bestOf}</span>
-                <span className="ml-auto text-xs text-neutral-400">
+                <span className="text-muted-foreground">Bo{m.bestOf}</span>
+                <span className="ml-auto text-xs text-muted-foreground">
                   {new Date(m.scheduledAt).toLocaleString([], {
                     month: "short",
                     day: "numeric",
@@ -234,7 +243,7 @@ export default function TeamDetailPage() {
       <section className="space-y-3">
         <h2 className="text-xl font-semibold tracking-tight">Past matches</h2>
         {past.length === 0 ? (
-          <div className="rounded-xl border border-neutral-800 bg-neutral-900/60 p-6 text-center text-sm text-neutral-500">
+          <div className="rounded-xl border border-border bg-card/60 p-6 text-center text-sm text-muted-foreground">
             No past matches recorded.
           </div>
         ) : (
@@ -247,7 +256,7 @@ export default function TeamDetailPage() {
               return (
                 <div
                   key={m.id}
-                  className="flex items-center gap-3 rounded-xl border border-neutral-800 bg-neutral-900/60 p-3 text-sm"
+                  className="flex items-center gap-3 rounded-xl border border-border bg-card/60 p-3 text-sm"
                 >
                   <span
                     className={`rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
@@ -258,7 +267,7 @@ export default function TeamDetailPage() {
                   </span>
                   <span className="font-medium">{m.round}</span>
                   <span className="ml-auto tabular-nums">
-                    {ourScore} – {theirScore}
+                    {ourScore} - {theirScore}
                   </span>
                 </div>
               );

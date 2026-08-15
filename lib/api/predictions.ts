@@ -44,7 +44,7 @@ export async function placePick(input: PlacePickInput) {
   if (!Number.isInteger(coinsStaked) || coinsStaked < MIN_STAKE || coinsStaked > MAX_STAKE) {
     throw new PredictionError(
       "invalid_amount",
-      `Stake must be ${MIN_STAKE}–${MAX_STAKE} coins`,
+      `Stake must be ${MIN_STAKE}-${MAX_STAKE} coins`,
     );
   }
 

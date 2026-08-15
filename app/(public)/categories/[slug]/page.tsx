@@ -14,6 +14,7 @@ import {
   listVods,
 } from "@/lib/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 function formatViewers(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -85,12 +86,12 @@ export default function CategoryDetailPage() {
     return (
       <div className="mx-auto max-w-3xl px-4 py-20 text-center">
         <h1 className="text-2xl font-bold">Category not found</h1>
-        <p className="mt-2 text-sm text-neutral-400">
+        <p className="mt-2 text-sm text-muted-foreground">
           The game you're looking for doesn't exist or was removed.
         </p>
         <Link
           href="/categories"
-          className="mt-6 inline-flex items-center gap-2 rounded-md bg-sky-500 px-4 py-2 text-sm font-semibold text-neutral-950 hover:bg-sky-400"
+          className="mt-6 inline-flex items-center gap-2 rounded-md bg-sky-500 px-4 py-2 text-sm font-semibold text-ink hover:bg-sky-400"
         >
           <ArrowLeft className="h-4 w-4" /> Back to categories
         </Link>
@@ -101,7 +102,7 @@ export default function CategoryDetailPage() {
   if (!game) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-6">
-        <div className="h-56 animate-pulse rounded-xl bg-neutral-900" />
+        <div className="h-56 animate-pulse rounded-xl bg-card" />
       </div>
     );
   }
@@ -114,7 +115,7 @@ export default function CategoryDetailPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6">
-      <div className="relative mb-6 overflow-hidden rounded-xl border border-neutral-800">
+      <div className="relative mb-6 overflow-hidden rounded-xl border border-border">
         <div className="relative aspect-[16/9] max-h-64 w-full overflow-hidden sm:aspect-[21/9]">
           <img src={game.coverUrl} alt={game.name} className="h-full w-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
@@ -122,7 +123,7 @@ export default function CategoryDetailPage() {
         <div className="absolute inset-x-0 bottom-0 flex flex-col gap-2 p-4 sm:p-6">
           <Link
             href="/categories"
-            className="mb-1 inline-flex w-fit items-center gap-1 text-xs text-neutral-400 hover:text-neutral-200"
+            className="mb-1 inline-flex w-fit items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="h-3 w-3" /> All categories
           </Link>
@@ -130,16 +131,16 @@ export default function CategoryDetailPage() {
             <img
               src={game.iconUrl}
               alt=""
-              className="h-12 w-12 rounded-md border border-neutral-700 object-cover"
+              className="h-12 w-12 rounded-md border border-input object-cover"
             />
             <div>
               <h1 className="text-2xl font-bold sm:text-3xl">{game.name}</h1>
-              <p className="text-xs text-neutral-300">
+              <p className="text-xs text-foreground/80">
                 {game.shortName} · <span className="capitalize">{game.platform}</span>
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-3 text-[11px] text-neutral-300">
+          <div className="flex items-center gap-3 text-[11px] text-foreground/80">
             <span className="flex items-center gap-1">
               <Users className="h-3 w-3" />
               {formatViewers(game.activePlayers)} active players
@@ -149,7 +150,7 @@ export default function CategoryDetailPage() {
       </div>
 
       <Tabs defaultValue="live">
-        <TabsList className="w-full justify-start overflow-x-auto bg-neutral-900/60">
+        <TabsList className="w-full justify-start overflow-x-auto bg-card/60">
           <TabsTrigger value="live">Live ({live.length})</TabsTrigger>
           <TabsTrigger value="events">Events ({upcoming.length})</TabsTrigger>
           <TabsTrigger value="teams">Teams ({teams.length})</TabsTrigger>
@@ -161,11 +162,11 @@ export default function CategoryDetailPage() {
           {liveQ.isPending ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="aspect-video animate-pulse rounded-xl bg-neutral-900" />
+                <div key={i} className="aspect-video animate-pulse rounded-xl bg-card" />
               ))}
             </div>
           ) : live.length === 0 ? (
-            <div className="rounded-xl border border-neutral-800 bg-neutral-900/60 p-6 text-center text-sm text-neutral-500">
+            <div className="rounded-xl border border-border bg-card/60 p-6 text-center text-sm text-muted-foreground">
               No streams live for this game right now.
             </div>
           ) : (
@@ -174,20 +175,20 @@ export default function CategoryDetailPage() {
                 <Link
                   key={s.id}
                   href={`/stream/${s.id}`}
-                  className="group overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900/60 transition-colors hover:border-neutral-700"
+                  className="group overflow-hidden rounded-xl border border-border bg-card/60 transition-colors hover:border-input"
                 >
                   <div className="relative aspect-video overflow-hidden">
                     <img src={s.thumbnailUrl} alt={s.title} className="h-full w-full object-cover" />
                     <div className="absolute left-2 top-2">
                       <LiveBadge />
                     </div>
-                    <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] text-neutral-200">
+                    <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] text-foreground">
                       <Eye className="h-3 w-3" /> {formatViewers(s.viewerCount)}
                     </div>
                   </div>
                   <div className="p-3">
                     <h3 className="line-clamp-2 text-sm font-semibold">{s.title}</h3>
-                    <p className="mt-1 text-xs text-neutral-400">{s.streamerName}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{s.streamerName}</p>
                   </div>
                 </Link>
               ))}
@@ -199,11 +200,11 @@ export default function CategoryDetailPage() {
           {upcomingQ.isPending ? (
             <div className="space-y-3">
               {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="h-24 animate-pulse rounded-xl bg-neutral-900" />
+                <div key={i} className="h-24 animate-pulse rounded-xl bg-card" />
               ))}
             </div>
           ) : upcoming.length === 0 ? (
-            <div className="rounded-xl border border-neutral-800 bg-neutral-900/60 p-6 text-center text-sm text-neutral-500">
+            <div className="rounded-xl border border-border bg-card/60 p-6 text-center text-sm text-muted-foreground">
               No upcoming events scheduled for {game.shortName}.
             </div>
           ) : (
@@ -212,12 +213,12 @@ export default function CategoryDetailPage() {
                 <Link
                   key={ev.id}
                   href={`/events/${ev.id}`}
-                  className="flex gap-3 rounded-xl border border-neutral-800 bg-neutral-900/60 p-3 transition-colors hover:border-neutral-700"
+                  className="flex gap-3 rounded-xl border border-border bg-card/60 p-3 transition-colors hover:border-input"
                 >
                   <img src={ev.thumbnailUrl} alt={ev.title} className="h-20 w-32 shrink-0 rounded-md object-cover" />
                   <div className="min-w-0 flex-1">
                     <h3 className="line-clamp-1 text-sm font-semibold">{ev.title}</h3>
-                    <p className="mt-1 flex items-center gap-1 text-xs text-neutral-400">
+                    <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
                       <Calendar className="h-3 w-3" />
                       {new Date(ev.startsAt).toLocaleDateString()}
                     </p>
@@ -235,11 +236,11 @@ export default function CategoryDetailPage() {
           {teamsQ.isPending ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="h-20 animate-pulse rounded-xl bg-neutral-900" />
+                <div key={i} className="h-20 animate-pulse rounded-xl bg-card" />
               ))}
             </div>
           ) : teams.length === 0 ? (
-            <div className="rounded-xl border border-neutral-800 bg-neutral-900/60 p-6 text-center text-sm text-neutral-500">
+            <div className="rounded-xl border border-border bg-card/60 p-6 text-center text-sm text-muted-foreground">
               No teams for {game.shortName}.
             </div>
           ) : (
@@ -248,12 +249,12 @@ export default function CategoryDetailPage() {
                 <Link
                   key={t.id}
                   href={`/team/${t.slug}`}
-                  className="flex items-center gap-3 rounded-xl border border-neutral-800 bg-neutral-900/60 p-3 transition-colors hover:border-neutral-700"
+                  className="flex items-center gap-3 rounded-xl border border-border bg-card/60 p-3 transition-colors hover:border-input"
                 >
-                  <img src={t.logoUrl} alt={t.name} className="h-12 w-12 rounded-md border border-neutral-800" />
+                  <img src={t.logoUrl} alt={t.name} className="h-12 w-12 rounded-md border border-border" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold">{t.name}</p>
-                    <p className="text-[11px] text-neutral-400">
+                    <p className="text-[11px] text-muted-foreground">
                       #{t.ranking} · {t.wins}-{t.losses}
                     </p>
                   </div>
@@ -267,11 +268,11 @@ export default function CategoryDetailPage() {
           {playersQ.isPending ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="h-20 animate-pulse rounded-xl bg-neutral-900" />
+                <div key={i} className="h-20 animate-pulse rounded-xl bg-card" />
               ))}
             </div>
           ) : players.length === 0 ? (
-            <div className="rounded-xl border border-neutral-800 bg-neutral-900/60 p-6 text-center text-sm text-neutral-500">
+            <div className="rounded-xl border border-border bg-card/60 p-6 text-center text-sm text-muted-foreground">
               No players for {game.shortName}.
             </div>
           ) : (
@@ -279,12 +280,19 @@ export default function CategoryDetailPage() {
               {players.map((p) => (
                 <div
                   key={p.id}
-                  className="flex items-center gap-3 rounded-xl border border-neutral-800 bg-neutral-900/60 p-3"
+                  className="flex items-center gap-3 rounded-xl border border-border bg-card/60 p-3"
                 >
-                  <img src={p.avatarUrl} alt={p.handle} className="h-12 w-12 rounded-full border border-neutral-800" />
+                  <UserAvatar
+                    src={p.avatarUrl}
+                    handle={p.handle}
+                    seed={p.id}
+                    decorative
+                    className="h-12 w-12 shrink-0"
+                    textClassName="text-sm"
+                  />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold">{p.handle}</p>
-                    <p className="text-[11px] text-neutral-400">
+                    <p className="text-[11px] text-muted-foreground">
                       {p.role} · KDA {p.kda.toFixed(2)}
                     </p>
                   </div>
@@ -298,11 +306,11 @@ export default function CategoryDetailPage() {
           {vodsQ.isPending ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="aspect-video animate-pulse rounded-xl bg-neutral-900" />
+                <div key={i} className="aspect-video animate-pulse rounded-xl bg-card" />
               ))}
             </div>
           ) : vods.length === 0 ? (
-            <div className="rounded-xl border border-neutral-800 bg-neutral-900/60 p-6 text-center text-sm text-neutral-500">
+            <div className="rounded-xl border border-border bg-card/60 p-6 text-center text-sm text-muted-foreground">
               No VODs for {game.shortName} yet.
             </div>
           ) : (
@@ -311,11 +319,11 @@ export default function CategoryDetailPage() {
                 <Link
                   key={v.id}
                   href={`/vod/${v.id}`}
-                  className="group overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900/60 transition-colors hover:border-neutral-700"
+                  className="group overflow-hidden rounded-xl border border-border bg-card/60 transition-colors hover:border-input"
                 >
                   <div className="relative aspect-video overflow-hidden">
                     <img src={v.thumbnailUrl} alt={v.title} className="h-full w-full object-cover" />
-                    <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] text-neutral-200">
+                    <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] text-foreground">
                       <Clock className="h-3 w-3" /> {formatDuration(v.durationSec)}
                     </div>
                   </div>

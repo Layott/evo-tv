@@ -2,11 +2,32 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ExternalLink, Search } from "lucide-react";
+import { ExternalLink, Loader2, Search, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { adminListUsers, adminSetUserRole, adminSuspendUser } from "@/lib/client";
+import {
+  adminGrantRoleByEmail,
+  adminListUsers,
+  adminSetUserRole,
+  adminSuspendUser,
+} from "@/lib/client";
+import {
+  ASSIGNABLE_ROLES,
+  hasMinRole,
+  roleInfo,
+  roleLabel,
+  type PlatformRole,
+} from "@/lib/auth/role-catalog";
+import { useAuth } from "@/components/providers";
 import type { Profile, Role } from "@/lib/types";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,14 +51,15 @@ import { DataTable, type DataColumn } from "./data-table";
 import { PageHeader } from "./page-header";
 import { StatusBadge } from "./status-badge";
 import { formatDate, timeAgo } from "./utils";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 interface AdminProfile extends Profile {
   lastActive: string;
   suspended: boolean;
 }
 
-function roleTone(role: Role): "emerald" | "amber" | "blue" | "neutral" {
-  if (role === "admin") return "emerald";
+function roleTone(role: string): "emerald" | "amber" | "blue" | "neutral" {
+  if (role === "admin" || role === "head_admin") return "emerald";
   if (role === "premium") return "amber";
   if (role === "user") return "blue";
   return "neutral";
@@ -45,6 +67,10 @@ function roleTone(role: Role): "emerald" | "amber" | "blue" | "neutral" {
 
 export function UsersRolesPage() {
   const queryClient = useQueryClient();
+  // Support can find an account and read it. Granting roles and suspending are
+  // admin verbs on the API, so they are not offered below that.
+  const { role: viewerRole } = useAuth();
+  const canManage = hasMinRole(viewerRole, "admin");
 
   const usersQ = useQuery({
     queryKey: ["admin", "users"],
@@ -91,13 +117,17 @@ export function UsersRolesPage() {
       accessor: (r) => r.handle,
       cell: (row) => (
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 overflow-hidden rounded-full bg-neutral-800">
-            {}
-            <img src={row.avatarUrl} alt="" className="h-full w-full object-cover" />
-          </div>
+          <UserAvatar
+            src={row.avatarUrl}
+            name={row.displayName}
+            handle={row.handle}
+            seed={row.id}
+            decorative
+            className="h-8 w-8 shrink-0"
+          />
           <div>
-            <div className="text-sm font-medium text-neutral-100">{row.displayName}</div>
-            <div className="text-xs text-neutral-500">@{row.handle}</div>
+            <div className="text-sm font-medium text-foreground">{row.displayName}</div>
+            <div className="text-xs text-muted-foreground">@{row.handle}</div>
           </div>
         </div>
       ),
@@ -107,7 +137,9 @@ export function UsersRolesPage() {
       header: "Role",
       sortable: true,
       accessor: (r) => r.role,
-      cell: (row) => <StatusBadge tone={roleTone(row.role)}>{row.role}</StatusBadge>,
+      cell: (row) => (
+        <StatusBadge tone={roleTone(row.role)}>{roleLabel(row.role)}</StatusBadge>
+      ),
     },
     {
       key: "country",
@@ -119,14 +151,14 @@ export function UsersRolesPage() {
       header: "Created",
       sortable: true,
       accessor: (r) => new Date(r.createdAt).getTime(),
-      cell: (row) => <span className="text-xs text-neutral-400">{formatDate(row.createdAt)}</span>,
+      cell: (row) => <span className="text-xs text-muted-foreground">{formatDate(row.createdAt)}</span>,
     },
     {
       key: "lastActive",
       header: "Last active",
       sortable: true,
       accessor: (r) => new Date(r.lastActive).getTime(),
-      cell: (row) => <span className="text-xs text-neutral-400">{timeAgo(row.lastActive)}</span>,
+      cell: (row) => <span className="text-xs text-muted-foreground">{timeAgo(row.lastActive)}</span>,
     },
     {
       key: "status",
@@ -145,14 +177,40 @@ export function UsersRolesPage() {
   ];
 
   const roleMut = useMutation({
-    mutationFn: ({ id, role }: { id: string; role: Role }) =>
-      adminSetUserRole(id, role as "user" | "premium" | "creator" | "admin"),
+    mutationFn: ({ id, role }: { id: string; role: PlatformRole }) =>
+      adminSetUserRole(id, role),
     onSuccess: async (_r, v) => {
-      setSelected((prev) => (prev && prev.id === v.id ? { ...prev, role: v.role } : prev));
-      toast.success(`Role changed to ${v.role}`);
+      setSelected((prev) =>
+        prev && prev.id === v.id ? { ...prev, role: v.role as Role } : prev,
+      );
+      toast.success(`Role changed to ${roleLabel(v.role)}`);
       await refresh();
     },
     onError: (e: Error) => toast.error(e.message || "Could not change the role"),
+  });
+
+  /**
+   * Granting a role to somebody who is not on this page.
+   *
+   * Adding an admin starts from an email address, not from a row in a list of
+   * every account on the platform. The endpoint refuses to create an account,
+   * so the person has to have signed up: an admin account minted with no
+   * password and no verified email would be a worse door than the one this
+   * opens.
+   */
+  const [grantOpen, setGrantOpen] = React.useState(false);
+  const [grantEmail, setGrantEmail] = React.useState("");
+  const [grantRole, setGrantRole] = React.useState<PlatformRole>("admin");
+
+  const grantMut = useMutation({
+    mutationFn: () => adminGrantRoleByEmail(grantEmail.trim(), grantRole),
+    onSuccess: async (result) => {
+      toast.success(`${result.email} is now ${roleLabel(result.role)}`);
+      setGrantOpen(false);
+      setGrantEmail("");
+      await refresh();
+    },
+    onError: (e: Error) => toast.error(e.message || "Could not grant the role"),
   });
 
   const suspendMut = useMutation({
@@ -164,7 +222,7 @@ export function UsersRolesPage() {
     onError: (e: Error) => toast.error(e.message || "Could not suspend the user"),
   });
 
-  function handleRoleChange(id: string, role: Role) {
+  function handleRoleChange(id: string, role: PlatformRole) {
     roleMut.mutate({ id, role });
   }
 
@@ -183,30 +241,43 @@ export function UsersRolesPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Users & roles" description="Search accounts, manage roles and suspensions." />
+      <PageHeader
+        title="Users & roles"
+        description="Search accounts, manage roles and suspensions."
+        actions={
+          canManage ? (
+            <Button type="button" onClick={() => setGrantOpen(true)}>
+              <UserPlus className="h-4 w-4" />
+              Grant a role
+            </Button>
+          ) : null
+        }
+      />
 
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative w-full max-w-sm">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-neutral-500" />
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by handle or name"
-            className="border-neutral-800 bg-neutral-900 pl-8"
+            className="border-border bg-card pl-8"
           />
         </div>
         <Select value={roleFilter} onValueChange={setRoleFilter}>
-          <SelectTrigger className="w-44 border-neutral-800 bg-neutral-900">
+          <SelectTrigger className="w-44 border-border bg-card">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All roles</SelectItem>
-            <SelectItem value="user">Users</SelectItem>
-            <SelectItem value="premium">Premium</SelectItem>
-            <SelectItem value="admin">Admins</SelectItem>
+            {ASSIGNABLE_ROLES.map((role) => (
+              <SelectItem key={role.value} value={role.value}>
+                {role.label}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
-        <div className="ml-auto text-xs text-neutral-500">{filtered.length} accounts</div>
+        <div className="ml-auto text-xs text-muted-foreground">{filtered.length} accounts</div>
       </div>
 
       <DataTable<AdminProfile>
@@ -217,7 +288,7 @@ export function UsersRolesPage() {
       />
 
       <Sheet open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
-        <SheetContent className="w-full overflow-y-auto border-neutral-800 bg-neutral-950 text-neutral-100 sm:max-w-md">
+        <SheetContent className="w-full overflow-y-auto border-border bg-background text-foreground sm:max-w-md">
           {selected ? (
             <>
               <SheetHeader>
@@ -226,14 +297,19 @@ export function UsersRolesPage() {
               </SheetHeader>
               <div className="space-y-5 px-4 pb-4">
                 <div className="flex items-center gap-3">
-                  <div className="h-16 w-16 overflow-hidden rounded-full bg-neutral-800">
-                    {}
-                    <img src={selected.avatarUrl} alt="" className="h-full w-full object-cover" />
-                  </div>
+                  <UserAvatar
+                    src={selected.avatarUrl}
+                    name={selected.displayName}
+                    handle={selected.handle}
+                    seed={selected.id}
+                    decorative
+                    className="h-16 w-16 shrink-0"
+                    textClassName="text-lg"
+                  />
                   <div className="flex-1">
-                    <div className="text-sm text-neutral-200">{selected.displayName}</div>
-                    <div className="text-xs text-neutral-500">@{selected.handle}</div>
-                    <div className="mt-1 text-xs text-neutral-500">{selected.bio || "No bio yet."}</div>
+                    <div className="text-sm text-foreground">{selected.displayName}</div>
+                    <div className="text-xs text-muted-foreground">@{selected.handle}</div>
+                    <div className="mt-1 text-xs text-muted-foreground">{selected.bio || "No bio yet."}</div>
                   </div>
                 </div>
 
@@ -246,31 +322,45 @@ export function UsersRolesPage() {
 
                 <div className="space-y-1.5">
                   <Label>Role</Label>
-                  <Select value={selected.role} onValueChange={(v) => handleRoleChange(selected.id, v as Role)}>
-                    <SelectTrigger className="w-full border-neutral-800 bg-neutral-900">
+                  <Select
+                    value={selected.role}
+                    disabled={!canManage}
+                    onValueChange={(v) => handleRoleChange(selected.id, v as PlatformRole)}
+                  >
+                    <SelectTrigger className="w-full border-border bg-card">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="user">User</SelectItem>
-                      <SelectItem value="premium">Premium</SelectItem>
-                      <SelectItem value="admin">Admin</SelectItem>
+                      {ASSIGNABLE_ROLES.map((role) => (
+                        <SelectItem key={role.value} value={role.value}>
+                          {role.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
+                  {/* What the role actually reaches, next to the control that
+                      grants it. Nine roles is more than anybody holds in their
+                      head, and the difference between Support and Moderator is
+                      exactly the kind of thing that gets guessed wrong. */}
+                  <p className="text-xs text-muted-foreground">
+                    {roleInfo(selected.role)?.summary ?? ""}
+                  </p>
                 </div>
 
-                <div className="flex items-center justify-between rounded-lg border border-neutral-800 bg-neutral-900/40 p-3">
+                <div className="flex items-center justify-between rounded-lg border border-border bg-card/40 p-3">
                   <div>
-                    <div className="text-sm font-medium text-neutral-100">Suspend account</div>
-                    <div className="text-xs text-neutral-400">Prevents login and posting.</div>
+                    <div className="text-sm font-medium text-foreground">Suspend account</div>
+                    <div className="text-xs text-muted-foreground">Prevents login and posting.</div>
                   </div>
                   <Switch
                     checked={selected.suspended}
+                    disabled={!canManage}
                     onCheckedChange={(v) => handleSuspendToggle(selected.id, v)}
                   />
                 </div>
               </div>
               <SheetFooter>
-                <Button asChild variant="outline" className="border-neutral-700 bg-neutral-900 hover:bg-neutral-800">
+                <Button asChild variant="outline" className="border-input bg-card hover:bg-accent">
                   <Link href={`/profile/${selected.handle}`}>
                     <ExternalLink className="h-4 w-4" />
                     View profile
@@ -281,6 +371,68 @@ export function UsersRolesPage() {
           ) : null}
         </SheetContent>
       </Sheet>
+
+      <Dialog open={grantOpen} onOpenChange={setGrantOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Grant a role</DialogTitle>
+            <DialogDescription>
+              The person must already have an EVO TV account. This changes their
+              role, it does not create one or send an invitation.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="grant-email">Email</Label>
+              <Input
+                id="grant-email"
+                type="email"
+                value={grantEmail}
+                onChange={(e) => setGrantEmail(e.target.value)}
+                placeholder="name@evotv.co"
+                className="border-border bg-card"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="grant-role">Role</Label>
+              <Select
+                value={grantRole}
+                onValueChange={(v) => setGrantRole(v as PlatformRole)}
+              >
+                <SelectTrigger id="grant-role" className="border-border bg-card">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ASSIGNABLE_ROLES.map((role) => (
+                    <SelectItem key={role.value} value={role.value}>
+                      {role.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {roleInfo(grantRole)?.summary ?? ""}
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="ghost" onClick={() => setGrantOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              disabled={!grantEmail.trim() || grantMut.isPending}
+              onClick={() => grantMut.mutate()}
+            >
+              {grantMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              Grant role
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -288,8 +440,8 @@ export function UsersRolesPage() {
 function Info({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <dt className="text-[10px] uppercase tracking-wider text-neutral-500">{label}</dt>
-      <dd className="text-neutral-200">{children}</dd>
+      <dt className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</dt>
+      <dd className="text-foreground">{children}</dd>
     </div>
   );
 }

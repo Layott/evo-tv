@@ -75,10 +75,10 @@ export default function ForgotPasswordPage() {
             <KeyRound className="size-6 text-sky-400" />
           )}
         </div>
-        <h1 className="text-2xl font-bold tracking-tight text-neutral-50">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">
           {sent ? "Check your inbox" : "Reset your password"}
         </h1>
-        <p className="text-sm text-neutral-400">
+        <p className="text-sm text-muted-foreground">
           {sent
             ? "We sent a six digit code to your inbox. Taking you to the next step…"
             : "Enter your email and we'll send you a six digit code to reset your password."}
@@ -88,7 +88,7 @@ export default function ForgotPasswordPage() {
       {!sent ? (
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className="space-y-4 rounded-2xl border border-neutral-800 bg-neutral-900/50 p-6"
+          className="space-y-4 rounded-2xl border border-border bg-card/50 p-6"
           noValidate
         >
           <TextField
@@ -104,7 +104,7 @@ export default function ForgotPasswordPage() {
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="h-11 w-full bg-sky-500 font-semibold text-neutral-950 hover:bg-sky-400"
+            className="h-11 w-full bg-sky-500 font-semibold text-ink hover:bg-sky-400"
           >
             {isSubmitting ? (
               <>
@@ -118,7 +118,7 @@ export default function ForgotPasswordPage() {
         </form>
       ) : null}
 
-      <p className="text-center text-sm text-neutral-400">
+      <p className="text-center text-sm text-muted-foreground">
         Remembered it?{" "}
         <Link href="/login" className="font-semibold text-sky-400 hover:text-sky-300">
           Back to sign in

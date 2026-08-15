@@ -5,7 +5,7 @@ import { claimDailyQuest, QuestClaimError } from "@/lib/api/rewards";
 export const dynamic = "force-dynamic";
 
 /**
- * POST /api/rewards/quests/[id]/claim — claim a completed daily quest.
+ * POST /api/rewards/quests/[id]/claim - claim a completed daily quest.
  *
  * Validates that progress meets the target and the quest hasn't already been
  * claimed today (per UTC day). Grants coins + XP atomically and inserts the

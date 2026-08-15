@@ -10,7 +10,7 @@
  * uploads the day's playlist to ffplayout (POST /api/playlist/{channel}/).
  *
  * One source of truth: the same /api/schedule that drives the app's TV guide
- * also drives what actually airs — they cannot drift.
+ * also drives what actually airs - they cannot drift.
  *
  * Requires Node 18+ (uses global fetch). No build step, no npm deps.
  *
@@ -120,7 +120,7 @@ function resolveSource(row, map) {
 function pushFiller(program, gapSec) {
   if (gapSec <= 0) return;
   if (!FILLER_SOURCE) {
-    console.warn(`  gap of ${gapSec}s with no FILLER_SOURCE set — ffplayout's own filler will cover it`);
+    console.warn(`  gap of ${gapSec}s with no FILLER_SOURCE set - ffplayout's own filler will cover it`);
     return;
   }
   let remaining = gapSec;
@@ -159,7 +159,7 @@ async function main() {
     const source = resolveSource(row, map);
     const durationSec = Math.max(1, Math.round((row.durationMin ?? 60) * 60));
     if (!source) {
-      console.warn(`  no media for ${row.id} "${row.title}" — leaving its slot to filler`);
+      console.warn(`  no media for ${row.id} "${row.title}" - leaving its slot to filler`);
       skipped++;
       continue;
     }

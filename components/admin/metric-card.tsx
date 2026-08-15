@@ -17,16 +17,16 @@ export function MetricCard({ title, value, delta, deltaLabel, icon: Icon, hint }
   const showDelta = typeof delta === "number";
 
   return (
-    <div className="rounded-xl border border-neutral-800 bg-neutral-900/50 p-4">
+    <div className="rounded-xl border border-border bg-card/50 p-4">
       <div className="flex items-start justify-between">
-        <div className="text-xs font-medium uppercase tracking-wider text-neutral-400">{title}</div>
+        <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{title}</div>
         {Icon ? (
-          <div className="rounded-md bg-neutral-800/50 p-1.5 text-neutral-400">
+          <div className="rounded-md bg-muted/50 p-1.5 text-muted-foreground">
             <Icon className="h-3.5 w-3.5" />
           </div>
         ) : null}
       </div>
-      <div className="mt-2 text-2xl font-semibold text-neutral-100 tabular-nums">{value}</div>
+      <div className="mt-2 text-2xl font-semibold text-foreground tabular-nums">{value}</div>
       <div className="mt-1 flex items-center gap-1.5 text-xs">
         {showDelta ? (
           <span
@@ -39,8 +39,8 @@ export function MetricCard({ title, value, delta, deltaLabel, icon: Icon, hint }
             {Math.abs(delta!).toFixed(1)}%
           </span>
         ) : null}
-        {deltaLabel ? <span className="text-neutral-500">{deltaLabel}</span> : null}
-        {hint && !deltaLabel ? <span className="text-neutral-500">{hint}</span> : null}
+        {deltaLabel ? <span className="text-muted-foreground">{deltaLabel}</span> : null}
+        {hint && !deltaLabel ? <span className="text-muted-foreground">{hint}</span> : null}
       </div>
     </div>
   );

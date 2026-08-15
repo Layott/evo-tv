@@ -17,7 +17,7 @@ const schema = z.object({
  * Body: { status, note? }
  * Sets the application status + writes an audit row. moderator+.
  *
- * NOTE: approving an application doesn't promote the user's role here —
+ * NOTE: approving an application doesn't promote the user's role here -
  * that's a separate admin action so the partner-creator promotion + Stripe
  * onboarding + Paystack subaccount creation can be batched together.
  */

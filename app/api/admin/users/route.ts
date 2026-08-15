@@ -4,8 +4,9 @@ import { and, count, desc, eq, ilike, or } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { requireAdminFromRequest } from "@/lib/api/admin";
 import { requireMinRole } from "@/lib/auth/guards";
-import { canGrantRole, type PlatformRole } from "@/lib/auth/roles";
+import { canGrantRole, roleRank, type PlatformRole } from "@/lib/auth/roles";
 import { writeAudit } from "@/lib/api/audit";
+import { LAST_ADMIN_MESSAGE, wouldEmptyAdminRoster } from "@/lib/api/admin-roster";
 
 const PLATFORM_ROLES: [PlatformRole, ...PlatformRole[]] = [
   "guest",
@@ -33,7 +34,10 @@ const querySchema = z.object({
  *   - search matches email or handle (case-insensitive)
  */
 export async function GET(req: NextRequest) {
-  const guard = await requireAdminFromRequest();
+  // Reading the account list is a support action: finding the person who wrote
+  // in is the first step of every ticket. Changing a role is not, and PATCH
+  // below still requires admin.
+  const guard = await requireMinRole("support_admin");
   if (!guard.ok) return guard.response;
 
   const url = new URL(req.url);
@@ -95,15 +99,18 @@ const patchSchema = z.object({
 /**
  * PATCH /api/admin/users
  *
- * Body: { userId, role } — promote/demote a user.
+ * Body: { userId, role } - promote/demote a user.
  *
  * Auth: requires `admin` or higher. `canGrantRole(actor, target)` further
- * restricts: head_admin can grant any role; admin can grant
- * moderator/finance_admin/support_admin/user/premium (NOT admin/head_admin).
- * Cannot demote a higher- or equal-ranked role (no admin removing another
- * admin's privileges except head_admin).
+ * restricts: head_admin can grant any role; an admin can grant anything up to
+ * its own tier, which now includes `admin` itself, but never head_admin and
+ * never guest.
  *
- * Self-edit blocked. Every successful change writes an audit row.
+ * Self-edit blocked, and the last top-level admin cannot be demoted: with no
+ * admins left nobody can promote anybody, and the only way back is a hand-
+ * written UPDATE against production Postgres.
+ *
+ * Every successful change writes an audit row.
  */
 export async function PATCH(req: NextRequest) {
   const guard = await requireMinRole("admin");
@@ -155,6 +162,14 @@ export async function PATCH(req: NextRequest) {
   }
   if (currentRole === targetRole) {
     return NextResponse.json({ ok: true, id: userId, role: targetRole });
+  }
+
+  // Self-edit is already blocked above, so an admin demoting someone else
+  // always leaves themselves. A head_admin demoting the last `admin` does not,
+  // and neither does an admin acting on an account the head_admin has since
+  // deleted. Counted rather than reasoned about.
+  if (await wouldEmptyAdminRoster(userId, currentRole, targetRole)) {
+    return NextResponse.json({ error: LAST_ADMIN_MESSAGE }, { status: 409 });
   }
 
   const result = await db

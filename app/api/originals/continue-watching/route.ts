@@ -5,7 +5,7 @@ import { listContinueWatching } from "@/lib/api/shows";
 
 export const dynamic = "force-dynamic";
 
-/** GET /api/originals/continue-watching?limit=6 — auth required. */
+/** GET /api/originals/continue-watching?limit=6 - auth required. */
 export async function GET(req: NextRequest) {
   const user = await getCurrentUser();
   if (!user) return new NextResponse("Auth required", { status: 401 });

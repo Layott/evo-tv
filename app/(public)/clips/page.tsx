@@ -36,11 +36,11 @@ export default function ClipsFeedPage() {
     <div className="mx-auto max-w-7xl px-4 py-6">
       <header className="mb-5 flex items-end justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-50 flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Flame className="size-6 text-amber-400" />
             Trending Clips
           </h1>
-          <p className="mt-1 text-sm text-neutral-400">
+          <p className="mt-1 text-sm text-muted-foreground">
             Bite-sized highlights from tonight's biggest matches.
           </p>
         </div>
@@ -54,12 +54,12 @@ export default function ClipsFeedPage() {
           {Array.from({ length: 10 }).map((_, i) => (
             <div
               key={i}
-              className="aspect-[9/16] rounded-lg bg-neutral-900 animate-pulse"
+              className="aspect-[9/16] rounded-lg bg-card animate-pulse"
             />
           ))}
         </div>
       ) : clips.length === 0 ? (
-        <div className="py-16 text-center text-sm text-neutral-500">
+        <div className="py-16 text-center text-sm text-muted-foreground">
           No clips right now. Check back after tonight's matches.
         </div>
       ) : (
@@ -78,7 +78,7 @@ function ClipCard({ clip }: { clip: Clip }) {
   return (
     <Link
       href={`/clips/${clip.id}`}
-      className="group relative overflow-hidden rounded-lg border border-neutral-800 bg-neutral-900 aspect-[9/16] block"
+      className="group relative overflow-hidden rounded-lg border border-border bg-card aspect-[9/16] block"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
@@ -89,7 +89,7 @@ function ClipCard({ clip }: { clip: Clip }) {
         className="object-cover transition-transform duration-300 group-hover:scale-105"
         sizes="(max-width:640px) 50vw, 20vw"
       />
-      {/* Hover pulse — "preview frame" cosmetic */}
+      {/* Hover pulse - "preview frame" cosmetic */}
       {hovered && (
         <div className="absolute inset-0 ring-2 ring-sky-400/70 animate-pulse pointer-events-none" />
       )}
@@ -97,7 +97,7 @@ function ClipCard({ clip }: { clip: Clip }) {
         <p className="text-xs font-semibold text-white line-clamp-2">
           {clip.title}
         </p>
-        <div className="mt-1 flex items-center justify-between text-[10px] text-neutral-300">
+        <div className="mt-1 flex items-center justify-between text-[10px] text-foreground/80">
           <span>@{clip.creatorHandle}</span>
           <span>{relTime(clip.createdAt)}</span>
         </div>

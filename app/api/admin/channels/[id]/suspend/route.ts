@@ -94,7 +94,7 @@ export async function POST(
 }
 
 /**
- * DELETE /api/admin/channels/[id]/suspend — unsuspend (clears suspendedAt).
+ * DELETE /api/admin/channels/[id]/suspend - unsuspend (clears suspendedAt).
  */
 export async function DELETE(
   _req: NextRequest,

@@ -17,7 +17,7 @@ interface FieldWrapperProps {
 export function FieldWrapper({ id, label, error, hint, className, children }: FieldWrapperProps) {
   return (
     <div className={cn("space-y-1.5", className)}>
-      <Label htmlFor={id} className="text-neutral-200 font-semibold">
+      <Label htmlFor={id} className="text-foreground font-semibold">
         {label}
       </Label>
       {children}
@@ -26,7 +26,7 @@ export function FieldWrapper({ id, label, error, hint, className, children }: Fi
           {error}
         </p>
       ) : hint ? (
-        <p className="text-xs text-neutral-500">{hint}</p>
+        <p className="text-xs text-muted-foreground">{hint}</p>
       ) : null}
     </div>
   );
@@ -51,7 +51,7 @@ export const TextField = React.forwardRef<HTMLInputElement, TextFieldProps>(func
         ref={ref}
         aria-invalid={!!error || undefined}
         className={cn(
-          "h-11 border-neutral-800 bg-neutral-900/50 text-neutral-100 placeholder:text-neutral-600",
+          "h-11 border-border bg-card/50 text-foreground placeholder:text-muted-foreground",
           "focus-visible:border-sky-500 focus-visible:ring-sky-500/30",
           className,
         )}

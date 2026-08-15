@@ -9,7 +9,7 @@ import {
 } from "@/lib/api/watch-later";
 
 /**
- * GET /api/users/me/watch-later/[vodId] — `{ bookmarked: boolean }` so the
+ * GET /api/users/me/watch-later/[vodId] - `{ bookmarked: boolean }` so the
  * VOD detail page can render the right button state without listing the
  * whole bookmarks set.
  */
@@ -24,7 +24,7 @@ export async function GET(
 }
 
 /**
- * POST /api/users/me/watch-later/[vodId] — add to watch-later. Idempotent
+ * POST /api/users/me/watch-later/[vodId] - add to watch-later. Idempotent
  * (ON CONFLICT DO NOTHING). Returns `{ bookmarked: true }`.
  *
  * Verifies the VOD exists + isn't soft-deleted before inserting.
@@ -53,7 +53,7 @@ export async function POST(
 }
 
 /**
- * DELETE /api/users/me/watch-later/[vodId] — remove from watch-later.
+ * DELETE /api/users/me/watch-later/[vodId] - remove from watch-later.
  * Idempotent (no-op if missing). Returns `{ bookmarked: false }`.
  */
 export async function DELETE(

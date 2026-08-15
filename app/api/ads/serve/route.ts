@@ -13,7 +13,7 @@ const querySchema = z.object({
  * GET /api/ads/serve?placement=<slot>
  *
  * Returns ONE active, in-window ad for the requested placement. Weights
- * bias selection toward higher-weight rows. Public — no auth.
+ * bias selection toward higher-weight rows. Public - no auth.
  *
  * Round-trip with the admin ads-manager: admin creates / activates a row,
  * this endpoint surfaces it on the client, and /api/ads/impression bumps

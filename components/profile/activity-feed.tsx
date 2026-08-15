@@ -110,7 +110,7 @@ export function ActivityFeed() {
     return (
       <div className="space-y-2">
         {[0, 1, 2].map((i) => (
-          <div key={i} className="h-14 animate-pulse rounded-xl bg-neutral-900" />
+          <div key={i} className="h-14 animate-pulse rounded-xl bg-card" />
         ))}
       </div>
     );
@@ -118,26 +118,26 @@ export function ActivityFeed() {
 
   if (entries.length === 0) {
     return (
-      <p className="rounded-xl bg-neutral-900/40 px-4 py-6 text-sm text-neutral-500">
+      <p className="rounded-xl bg-card/40 px-4 py-6 text-sm text-muted-foreground">
         Nothing here yet. What you watch and order will show up in this list.
       </p>
     );
   }
 
   return (
-    <ul className="divide-y divide-neutral-800 rounded-xl bg-neutral-900/40">
+    <ul className="divide-y divide-border rounded-xl bg-card/40">
       {entries.map((e) => {
         const row = (
           <div className="flex items-center gap-3 p-3">
-            <div className="rounded-full bg-neutral-800 p-2">{e.icon}</div>
-            <p className="flex-1 truncate text-sm text-neutral-200">{e.label}</p>
-            <p className="shrink-0 text-xs text-neutral-500">{relTime(e.at)}</p>
+            <div className="rounded-full bg-muted p-2">{e.icon}</div>
+            <p className="flex-1 truncate text-sm text-foreground">{e.label}</p>
+            <p className="shrink-0 text-xs text-muted-foreground">{relTime(e.at)}</p>
           </div>
         );
         return (
           <li key={e.key}>
             {e.href ? (
-              <Link href={e.href} className="block hover:bg-neutral-900/60">
+              <Link href={e.href} className="block hover:bg-accent/60">
                 {row}
               </Link>
             ) : (

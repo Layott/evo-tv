@@ -253,6 +253,27 @@
       "when": 1780900000000,
       "tag": "0035_content_slugs",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1781000000000,
+      "tag": "0036_show_access_tier",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1781100000000,
+      "tag": "0037_clip_links",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1781200000000,
+      "tag": "0038_shows_spec",
+      "breakpoints": true
     }
   ]
 }

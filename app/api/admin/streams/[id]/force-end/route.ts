@@ -10,7 +10,7 @@ import { emit } from "@/lib/sse/bus";
  *
  * Admin "kill switch" for any live stream. Marks the row isLive=false,
  * stamps endedAt, broadcasts offline SSE events (so all viewers' players
- * drop), and writes an audit entry. Does NOT delete the row — it survives
+ * drop), and writes an audit entry. Does NOT delete the row - it survives
  * for VOD packaging + audit trail.
  *
  * Requires `moderator` or higher.

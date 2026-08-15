@@ -18,7 +18,7 @@ export function BrandMark({ size = 28, withWordmark = true, className = "" }: Pr
         className="object-contain"
       />
       {withWordmark && (
-        <span className="text-sm font-semibold tracking-tight text-neutral-100">
+        <span className="text-sm font-semibold tracking-tight text-foreground">
           EVO TV
         </span>
       )}

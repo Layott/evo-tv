@@ -74,7 +74,7 @@ export async function GET(req: NextRequest) {
       body:
         minutesUntil <= 1
           ? "Tap to watch."
-          : `Starting in ${minutesUntil} min — tap to open the schedule.`,
+          : `Starting in ${minutesUntil} min - tap to open the schedule.`,
       data: {
         kind: "epg_reminder",
         targetId: r.targetId,

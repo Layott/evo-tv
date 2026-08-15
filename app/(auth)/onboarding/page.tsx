@@ -195,12 +195,12 @@ export default function OnboardingPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-3">
-        <span className="text-xs font-semibold uppercase tracking-widest text-neutral-500">
+        <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
           Step {step} of 4
         </span>
         <Link
           href="/home"
-          className="text-xs font-medium text-neutral-400 hover:text-neutral-100"
+          className="text-xs font-medium text-muted-foreground hover:text-foreground"
           onClick={() => completeOnboarding()}
         >
           Skip for now
@@ -209,18 +209,18 @@ export default function OnboardingPage() {
 
       <Progress
         value={progressPct}
-        className="h-1.5 bg-neutral-900 [&>[data-slot=progress-indicator]]:bg-sky-500"
+        className="h-1.5 bg-card [&>[data-slot=progress-indicator]]:bg-sky-500"
       />
 
       <div className="space-y-1">
         <div className="flex items-center gap-2">
           <Icon className="size-5 text-sky-400" />
-          <h1 className="text-2xl font-bold tracking-tight text-neutral-50">{current.title}</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">{current.title}</h1>
         </div>
-        <p className="text-sm text-neutral-400">{current.subtitle}</p>
+        <p className="text-sm text-muted-foreground">{current.subtitle}</p>
       </div>
 
-      <div className="rounded-2xl border border-neutral-800 bg-neutral-900/50 p-6">
+      <div className="rounded-2xl border border-border bg-card/50 p-6">
         {step === 1 ? (
           <StepGames
             games={games}
@@ -256,7 +256,7 @@ export default function OnboardingPage() {
           variant="outline"
           onClick={handleBack}
           disabled={step === 1 || submitting}
-          className="h-11 border-neutral-800 bg-neutral-900/50 text-neutral-200 hover:bg-neutral-800"
+          className="h-11 border-border bg-card/50 text-foreground hover:bg-accent"
         >
           <ArrowLeft className="size-4" />
           Back
@@ -265,7 +265,7 @@ export default function OnboardingPage() {
           type="button"
           onClick={handleNext}
           disabled={!canProceed || submitting}
-          className="h-11 bg-sky-500 font-semibold text-neutral-950 hover:bg-sky-400"
+          className="h-11 bg-sky-500 font-semibold text-ink hover:bg-sky-400"
         >
           {submitting ? (
             <>
@@ -306,7 +306,7 @@ function StepGames({
     return (
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-36 animate-pulse rounded-xl bg-neutral-900" />
+          <div key={i} className="h-36 animate-pulse rounded-xl bg-card" />
         ))}
       </div>
     );
@@ -322,10 +322,10 @@ function StepGames({
             onClick={() => onToggle(g.id)}
             aria-pressed={isSelected}
             className={cn(
-              "group relative overflow-hidden rounded-xl border bg-neutral-950 text-left transition",
+              "group relative overflow-hidden rounded-xl border bg-background text-left transition",
               isSelected
                 ? "border-sky-500 ring-2 ring-sky-500/30"
-                : "border-neutral-800 hover:border-neutral-700",
+                : "border-border hover:border-input",
             )}
           >
             <div className="relative aspect-[16/9] w-full">
@@ -336,21 +336,21 @@ function StepGames({
                 sizes="(max-width: 640px) 100vw, 240px"
                 className="object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/70 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
               {isSelected ? (
-                <div className="absolute right-2 top-2 flex size-6 items-center justify-center rounded-full bg-sky-500 text-neutral-950">
+                <div className="absolute right-2 top-2 flex size-6 items-center justify-center rounded-full bg-sky-500 text-ink">
                   <Check className="size-3.5" />
                 </div>
               ) : null}
             </div>
             <div className="space-y-1 p-3">
               <div className="flex items-center gap-2">
-                <h3 className="truncate text-sm font-semibold text-neutral-50">{g.shortName}</h3>
-                <span className="rounded bg-neutral-800 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-neutral-400">
+                <h3 className="truncate text-sm font-semibold text-foreground">{g.shortName}</h3>
+                <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
                   {g.platform}
                 </span>
               </div>
-              <p className="text-[11px] text-neutral-500">
+              <p className="text-[11px] text-muted-foreground">
                 {new Intl.NumberFormat("en", { notation: "compact" }).format(g.activePlayers)} active players
               </p>
             </div>
@@ -380,14 +380,14 @@ function StepTeams({
     return (
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="h-16 animate-pulse rounded-lg bg-neutral-900" />
+          <div key={i} className="h-16 animate-pulse rounded-lg bg-card" />
         ))}
       </div>
     );
   }
   if (teams.length === 0) {
     return (
-      <p className="text-sm text-neutral-400">No teams available for your selected games.</p>
+      <p className="text-sm text-muted-foreground">No teams available for your selected games.</p>
     );
   }
   return (
@@ -402,13 +402,13 @@ function StepTeams({
             onClick={() => onToggle(t.id)}
             aria-pressed={isSelected}
             className={cn(
-              "flex items-center gap-3 rounded-lg border bg-neutral-950 p-3 text-left transition",
+              "flex items-center gap-3 rounded-lg border bg-background p-3 text-left transition",
               isSelected
                 ? "border-sky-500 ring-2 ring-sky-500/30"
-                : "border-neutral-800 hover:border-neutral-700",
+                : "border-border hover:border-input",
             )}
           >
-            <div className="relative size-10 shrink-0 overflow-hidden rounded-md bg-neutral-800">
+            <div className="relative size-10 shrink-0 overflow-hidden rounded-md bg-muted">
               <Image
                 src={t.logoUrl}
                 alt={t.name}
@@ -419,12 +419,12 @@ function StepTeams({
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <span className="truncate text-sm font-semibold text-neutral-50">{t.name}</span>
-                <span className="rounded bg-neutral-800 px-1.5 py-0.5 text-[10px] font-mono font-semibold text-neutral-400">
+                <span className="truncate text-sm font-semibold text-foreground">{t.name}</span>
+                <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-mono font-semibold text-muted-foreground">
                   {t.tag}
                 </span>
               </div>
-              <p className="truncate text-[11px] text-neutral-500">
+              <p className="truncate text-[11px] text-muted-foreground">
                 {game?.shortName ?? "Unknown"} · {t.country} · #{t.ranking}
               </p>
             </div>
@@ -432,8 +432,8 @@ function StepTeams({
               className={cn(
                 "flex size-5 shrink-0 items-center justify-center rounded-full border",
                 isSelected
-                  ? "border-sky-500 bg-sky-500 text-neutral-950"
-                  : "border-neutral-700",
+                  ? "border-sky-500 bg-sky-500 text-ink"
+                  : "border-input",
               )}
             >
               {isSelected ? <Check className="size-3" /> : null}
@@ -461,13 +461,13 @@ function StepNotifications({
         return (
           <div
             key={n.key}
-            className="flex items-start gap-4 rounded-lg border border-neutral-800 bg-neutral-950 p-4"
+            className="flex items-start gap-4 rounded-lg border border-border bg-background p-4"
           >
             <div className="min-w-0 flex-1">
-              <Label htmlFor={`notif-${n.key}`} className="text-sm font-semibold text-neutral-100">
+              <Label htmlFor={`notif-${n.key}`} className="text-sm font-semibold text-foreground">
                 {n.title}
               </Label>
-              <p className="mt-1 text-xs text-neutral-500">{n.body}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{n.body}</p>
             </div>
             <Switch
               id={`notif-${n.key}`}
@@ -502,7 +502,7 @@ function StepPreferences({
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <Label className="text-neutral-200 font-semibold">Theme</Label>
+        <Label className="text-foreground font-semibold">Theme</Label>
         <RadioGroup
           value={theme}
           onValueChange={(v) => onThemeChange(v as UserPrefs["theme"])}
@@ -515,16 +515,16 @@ function StepPreferences({
                 key={opt}
                 htmlFor={`theme-${opt}`}
                 className={cn(
-                  "flex cursor-pointer items-center justify-center gap-2 rounded-lg border bg-neutral-950 px-3 py-2.5 text-sm capitalize transition",
+                  "flex cursor-pointer items-center justify-center gap-2 rounded-lg border bg-background px-3 py-2.5 text-sm capitalize transition",
                   active
                     ? "border-sky-500 text-sky-400 ring-2 ring-sky-500/30"
-                    : "border-neutral-800 text-neutral-300 hover:border-neutral-700",
+                    : "border-border text-foreground/80 hover:border-input",
                 )}
               >
                 <RadioGroupItem
                   id={`theme-${opt}`}
                   value={opt}
-                  className="border-neutral-700 data-[state=checked]:border-sky-500 data-[state=checked]:text-sky-500"
+                  className="border-input data-[state=checked]:border-sky-500 data-[state=checked]:text-sky-500"
                 />
                 {opt}
               </label>
@@ -534,20 +534,20 @@ function StepPreferences({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="language" className="text-neutral-200 font-semibold">
+        <Label htmlFor="language" className="text-foreground font-semibold">
           Language
         </Label>
         <Select value={language} onValueChange={(v) => onLanguageChange(v as UserPrefs["language"])}>
           <SelectTrigger
             id="language"
-            className="w-full border-neutral-800 bg-neutral-900/50 text-neutral-100"
+            className="w-full border-border bg-card/50 text-foreground"
           >
             <SelectValue placeholder="Select language" />
           </SelectTrigger>
           <SelectContent>
             {LANGUAGES.map((l) => (
               <SelectItem key={l.code} value={l.code}>
-                <span className="text-xs font-mono text-neutral-400">{l.code}</span>
+                <span className="text-xs font-mono text-muted-foreground">{l.code}</span>
                 <span>{l.label}</span>
               </SelectItem>
             ))}
@@ -556,7 +556,7 @@ function StepPreferences({
       </div>
 
       <div className="space-y-2">
-        <Label className="text-neutral-200 font-semibold">Default playback quality</Label>
+        <Label className="text-foreground font-semibold">Default playback quality</Label>
         <div className="grid grid-cols-5 gap-2">
           {QUALITIES.map((q) => {
             const active = quality === q;
@@ -566,10 +566,10 @@ function StepPreferences({
                 type="button"
                 onClick={() => onQualityChange(q)}
                 className={cn(
-                  "rounded-lg border bg-neutral-950 px-2 py-2 text-xs font-semibold transition",
+                  "rounded-lg border bg-background px-2 py-2 text-xs font-semibold transition",
                   active
                     ? "border-sky-500 text-sky-400 ring-2 ring-sky-500/30"
-                    : "border-neutral-800 text-neutral-400 hover:border-neutral-700",
+                    : "border-border text-muted-foreground hover:border-input",
                 )}
               >
                 {q}
@@ -580,8 +580,8 @@ function StepPreferences({
       </div>
 
       <div className="flex items-start gap-2 rounded-lg border border-sky-500/20 bg-sky-500/5 p-3">
-        <Checkbox checked disabled className="mt-0.5 border-sky-500 bg-sky-500 text-neutral-950 opacity-100 disabled:opacity-100" />
-        <p className="text-xs text-neutral-300">
+        <Checkbox checked disabled className="mt-0.5 border-sky-500 bg-sky-500 text-ink opacity-100 disabled:opacity-100" />
+        <p className="text-xs text-foreground/80">
           Your preferences save to this device. Sign in anywhere to sync them across EVO TV.
         </p>
       </div>

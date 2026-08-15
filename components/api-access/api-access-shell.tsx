@@ -22,15 +22,15 @@ export function ApiAccessShell({ children }: { children: React.ReactNode }) {
           <Sparkles className="size-3" />
           Premium feature
         </span>
-        <h1 className="mt-3 text-2xl font-bold tracking-tight text-neutral-50">
+        <h1 className="mt-3 text-2xl font-bold tracking-tight text-foreground">
           EVO TV Public API
         </h1>
-        <p className="mt-1 text-sm text-neutral-400">
+        <p className="mt-1 text-sm text-muted-foreground">
           Build apps, dashboards, and automations on top of African esports data.
         </p>
       </header>
 
-      <nav className="mb-6 flex gap-1 overflow-x-auto rounded-xl border border-neutral-800 bg-neutral-900/40 p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <nav className="mb-6 flex gap-1 overflow-x-auto rounded-xl border border-border bg-card/40 p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {TABS.map((t) => {
           const active = t.exact ? pathname === t.href : pathname.startsWith(t.href);
           const Icon = t.Icon;
@@ -41,8 +41,8 @@ export function ApiAccessShell({ children }: { children: React.ReactNode }) {
               className={cn(
                 "flex shrink-0 items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition",
                 active
-                  ? "bg-neutral-950 text-sky-300 shadow-sm"
-                  : "text-neutral-400 hover:bg-neutral-900 hover:text-neutral-100",
+                  ? "bg-background text-sky-300 shadow-sm"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground",
               )}
             >
               <Icon className="size-3.5" />

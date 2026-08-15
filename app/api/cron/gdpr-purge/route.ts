@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
 
   const cutoffIso = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
-  // user.deletedAt is timestamptz, mode "date" — pass a Date directly.
+  // user.deletedAt is timestamptz, mode "date" - pass a Date directly.
   const candidates = await db
     .select({
       id: schema.user.id,
@@ -55,7 +55,7 @@ export async function GET(req: NextRequest) {
     try {
       // Hard-delete personal-data rows. chat_messages, vod_progress,
       // pickem_entries, prediction_picks, party_members, party_messages,
-      // api_keys, watch_events all have FK onDelete cascade or no constraint —
+      // api_keys, watch_events all have FK onDelete cascade or no constraint -
       // but we explicitly DELETE to avoid relying on cascade behavior.
       await db.delete(schema.watchEvents).where(eq(schema.watchEvents.userId, u.id));
       await db.delete(schema.predictionPicks).where(eq(schema.predictionPicks.userId, u.id));
@@ -67,7 +67,7 @@ export async function GET(req: NextRequest) {
       await db.delete(schema.chatMessages).where(eq(schema.chatMessages.userId, u.id));
 
       // Anonymize the user row. We DON'T hard-delete because audit_log /
-      // tips / orders reference user.id — losing FK integrity is worse than
+      // tips / orders reference user.id - losing FK integrity is worse than
       // keeping a tombstone row.
       const anonymizedEmail = `deleted-${u.id}@deleted.local`;
       await db

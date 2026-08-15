@@ -52,7 +52,7 @@ export default function UpgradePage() {
         <div className="mb-4">
           <BackButton fallbackHref="/home" />
         </div>
-        <p className="text-sm text-neutral-400">Loading plans…</p>
+        <p className="text-sm text-muted-foreground">Loading plans…</p>
       </div>
     );
   }
@@ -66,11 +66,11 @@ export default function UpgradePage() {
         <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-amber-300">
           <Sparkles className="size-3" /> EVO TV Premium
         </span>
-        <h1 className="mt-4 text-3xl font-bold text-neutral-50 sm:text-4xl">
+        <h1 className="mt-4 text-3xl font-bold text-foreground sm:text-4xl">
           Never miss a play. No ads. 1080p.
         </h1>
-        <p className="mt-3 text-sm text-neutral-400 sm:text-base">
-          Upgrade once, watch every tournament across Africa in full fidelity — and grab exclusive film-room
+        <p className="mt-3 text-sm text-muted-foreground sm:text-base">
+          Upgrade once, watch every tournament across Africa in full fidelity - and grab exclusive film-room
           analysis from the casters you already trust.
         </p>
       </header>
@@ -80,12 +80,12 @@ export default function UpgradePage() {
         <TierCard tier={premium} highlight />
       </div>
 
-      <div className="mx-auto mt-6 max-w-4xl text-center text-xs text-neutral-500">
+      <div className="mx-auto mt-6 max-w-4xl text-center text-xs text-muted-foreground">
         Secure checkout via <PaystackMark className="align-middle" /> · Cancel anytime
       </div>
 
       <section className="mx-auto mt-12 max-w-4xl">
-        <h2 className="mb-4 text-center text-lg font-semibold text-neutral-50">
+        <h2 className="mb-4 text-center text-lg font-semibold text-foreground">
           Choose how you want to pay
         </h2>
         <div className="grid gap-3 sm:grid-cols-3">
@@ -118,12 +118,12 @@ export default function UpgradePage() {
       </section>
 
       <section className="mx-auto mt-14 max-w-3xl">
-        <h2 className="mb-4 text-center text-lg font-semibold text-neutral-50">Frequently asked</h2>
-        <Accordion type="single" collapsible className="rounded-2xl border border-neutral-800 bg-neutral-900/40 px-4">
+        <h2 className="mb-4 text-center text-lg font-semibold text-foreground">Frequently asked</h2>
+        <Accordion type="single" collapsible className="rounded-2xl border border-border bg-card/40 px-4">
           {FAQ.map((f, i) => (
-            <AccordionItem key={f.q} value={`q-${i}`} className="border-neutral-800 last:border-b-0">
+            <AccordionItem key={f.q} value={`q-${i}`} className="border-border last:border-b-0">
               <AccordionTrigger className="text-left">{f.q}</AccordionTrigger>
-              <AccordionContent className="text-sm text-neutral-400">{f.a}</AccordionContent>
+              <AccordionContent className="text-sm text-muted-foreground">{f.a}</AccordionContent>
             </AccordionItem>
           ))}
         </Accordion>
@@ -152,8 +152,8 @@ function PaymentMethodCard({
   return (
     <Link
       href={href}
-      className={`group flex flex-col gap-3 rounded-2xl border bg-neutral-900/40 p-5 transition hover:border-sky-500/60 ${
-        primary ? "border-sky-500/40" : "border-neutral-800"
+      className={`group flex flex-col gap-3 rounded-2xl border bg-card/40 p-5 transition hover:border-sky-500/60 ${
+        primary ? "border-sky-500/40" : "border-border"
       }`}
     >
       <div className="flex items-start gap-3">
@@ -163,15 +163,15 @@ function PaymentMethodCard({
           <Icon className="size-5" />
         </div>
         <div className="min-w-0 flex-1">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             {badge}
           </span>
-          <p className="text-sm font-semibold text-neutral-50">{title}</p>
-          <p className="mt-0.5 line-clamp-2 text-xs text-neutral-400">{subtitle}</p>
+          <p className="text-sm font-semibold text-foreground">{title}</p>
+          <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{subtitle}</p>
         </div>
       </div>
       <div className="mt-auto flex items-center justify-between text-xs">
-        <span className="text-neutral-500">Premium · {formatNgn(4_500)}/mo</span>
+        <span className="text-muted-foreground">Premium · {formatNgn(4_500)}/mo</span>
         <span className="font-semibold text-sky-300 transition group-hover:translate-x-0.5">
           Continue →
         </span>
@@ -193,8 +193,8 @@ function TierCard({
     <div
       className={`relative flex h-full flex-col rounded-2xl border p-6 ${
         highlight
-          ? "border-sky-500/60 bg-gradient-to-br from-sky-500/10 via-neutral-900/60 to-amber-500/10"
-          : "border-neutral-800 bg-neutral-900/40"
+          ? "border-sky-500/60 bg-gradient-to-br from-sky-500/10 via-card/60 to-amber-500/10"
+          : "border-border bg-card/40"
       }`}
     >
       {highlight ? (
@@ -206,24 +206,24 @@ function TierCard({
         {highlight ? (
           <Crown className="size-5 text-amber-400" />
         ) : (
-          <Star className="size-5 text-neutral-500" />
+          <Star className="size-5 text-muted-foreground" />
         )}
-        <h3 className="text-xl font-bold text-neutral-50">{tier.name}</h3>
+        <h3 className="text-xl font-bold text-foreground">{tier.name}</h3>
       </div>
-      <p className="mt-1 text-sm text-neutral-400">{tier.tagline}</p>
+      <p className="mt-1 text-sm text-muted-foreground">{tier.tagline}</p>
       <div className="mt-4">
-        <span className="text-3xl font-extrabold text-neutral-50">
+        <span className="text-3xl font-extrabold text-foreground">
           {tier.priceNgn === 0 ? "Free" : formatNgn(tier.priceNgn)}
         </span>
         {tier.priceNgn > 0 ? (
-          <span className="ml-1 text-sm text-neutral-400">/month</span>
+          <span className="ml-1 text-sm text-muted-foreground">/month</span>
         ) : null}
       </div>
       <ul className="mt-5 flex-1 space-y-2">
         {tier.features.map((f: string) => (
-          <li key={f} className="flex items-start gap-2 text-sm text-neutral-200">
+          <li key={f} className="flex items-start gap-2 text-sm text-foreground">
             <Check
-              className={`mt-0.5 size-4 shrink-0 ${highlight ? "text-sky-400" : "text-neutral-500"}`}
+              className={`mt-0.5 size-4 shrink-0 ${highlight ? "text-sky-400" : "text-muted-foreground"}`}
             />
             <span>{f}</span>
           </li>
@@ -231,7 +231,7 @@ function TierCard({
       </ul>
       <div className="mt-6">
         {current ? (
-          <Button variant="outline" className="w-full border-neutral-800" disabled>
+          <Button variant="outline" className="w-full border-border" disabled>
             <X className="size-4" /> {tier.cta}
           </Button>
         ) : (
@@ -240,7 +240,7 @@ function TierCard({
             className="w-full bg-amber-500 text-black hover:bg-amber-500/90"
           >
             <Link href="/checkout?plan=premium">
-              {tier.cta} — {formatNgn(tier.priceNgn)}/mo
+              {tier.cta} - {formatNgn(tier.priceNgn)}/mo
             </Link>
           </Button>
         )}

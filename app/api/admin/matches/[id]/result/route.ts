@@ -13,7 +13,7 @@ const bodySchema = z.object({
 });
 
 /**
- * POST /api/admin/matches/[id]/result — admin only.
+ * POST /api/admin/matches/[id]/result - admin only.
  *
  * Sets a match's scoreA/scoreB/state. If state="completed" (default),
  * automatically re-runs pickem scoring for the parent event so the

@@ -12,9 +12,9 @@ export function ProductCard({ product }: { product: Product }) {
   return (
     <Link
       href={`/shop/${product.id}`}
-      className="group flex flex-col overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900/60 transition hover:border-sky-500/40"
+      className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-card/60 transition hover:border-sky-500/40"
     >
-      <div className="relative aspect-square bg-neutral-800">
+      <div className="relative aspect-square bg-muted">
         <Image
           src={image}
           alt={product.name}
@@ -22,7 +22,7 @@ export function ProductCard({ product }: { product: Product }) {
           className="object-cover transition group-hover:scale-[1.02]"
           sizes="(max-width: 768px) 50vw, 25vw"
         />
-        <Badge className="absolute left-2 top-2 border-neutral-700 bg-neutral-950/70 text-neutral-300 capitalize">
+        <Badge className="absolute left-2 top-2 border-input bg-background/70 text-foreground/80 capitalize">
           {product.category}
         </Badge>
         {product.featured ? (
@@ -35,7 +35,7 @@ export function ProductCard({ product }: { product: Product }) {
         </span>
       </div>
       <div className="flex flex-1 flex-col p-3">
-        <p className="line-clamp-2 text-sm font-semibold text-neutral-100">
+        <p className="line-clamp-2 text-sm font-semibold text-foreground">
           {product.name}
         </p>
         <div className="mt-auto pt-2 text-base font-bold text-sky-400">

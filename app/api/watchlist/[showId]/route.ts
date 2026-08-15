@@ -21,7 +21,7 @@ const bodySchema = z.object({
   ]),
 });
 
-/** GET /api/watchlist/[showId] — current viewer's status for a show, or null. */
+/** GET /api/watchlist/[showId] - current viewer's status for a show, or null. */
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ showId: string }> },
@@ -35,7 +35,7 @@ export async function GET(
   return NextResponse.json({ entry });
 }
 
-/** PUT /api/watchlist/[showId] — upsert status. */
+/** PUT /api/watchlist/[showId] - upsert status. */
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ showId: string }> },
@@ -59,7 +59,7 @@ export async function PUT(
   return NextResponse.json({ ok: true, status: parsed.data.status });
 }
 
-/** DELETE /api/watchlist/[showId] — remove from watchlist. */
+/** DELETE /api/watchlist/[showId] - remove from watchlist. */
 export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ showId: string }> },

@@ -93,7 +93,7 @@ export default function CartPage() {
   function applyPromo() {
     if (promo.trim().toUpperCase() === "EVO10") {
       setDiscount(0.1);
-      toast.success("Promo EVO10 applied — 10% off");
+      toast.success("Promo EVO10 applied - 10% off");
     } else {
       setDiscount(0);
       toast.error("Invalid promo code");
@@ -103,7 +103,7 @@ export default function CartPage() {
   if (loading && lines.length > 0) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <Loader2 className="size-6 animate-spin text-neutral-500" />
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -111,9 +111,9 @@ export default function CartPage() {
   if (resolved.length === 0) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-12 text-center">
-        <ShoppingBag className="mx-auto size-12 text-neutral-600" />
-        <h1 className="mt-4 text-xl font-bold text-neutral-50">Your cart is empty</h1>
-        <p className="mt-1 text-sm text-neutral-400">
+        <ShoppingBag className="mx-auto size-12 text-muted-foreground" />
+        <h1 className="mt-4 text-xl font-bold text-foreground">Your cart is empty</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           Find jerseys, apparel, and digital gifts in the shop.
         </p>
         <Button
@@ -131,15 +131,15 @@ export default function CartPage() {
       <div className="mb-4">
         <BackButton fallbackHref="/shop" />
       </div>
-      <h1 className="mb-4 text-xl font-bold text-neutral-50">Your cart</h1>
+      <h1 className="mb-4 text-xl font-bold text-foreground">Your cart</h1>
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
-        <div className="overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900/40">
+        <div className="overflow-hidden rounded-2xl border border-border bg-card/40">
           {resolved.map((line, i) => (
             <div
               key={`${line.productId}-${line.variantId ?? ""}`}
-              className={`flex flex-wrap items-start gap-4 p-4 ${i > 0 ? "border-t border-neutral-800" : ""}`}
+              className={`flex flex-wrap items-start gap-4 p-4 ${i > 0 ? "border-t border-border" : ""}`}
             >
-              <div className="relative size-20 shrink-0 overflow-hidden rounded-lg bg-neutral-800">
+              <div className="relative size-20 shrink-0 overflow-hidden rounded-lg bg-muted">
                 <Image
                   src={line.product.images[0] ?? "/placeholder.svg"}
                   alt={line.product.name}
@@ -151,14 +151,14 @@ export default function CartPage() {
               <div className="min-w-0 flex-1">
                 <Link
                   href={`/shop/${line.product.id}`}
-                  className="line-clamp-2 text-sm font-semibold text-neutral-100 hover:text-sky-300"
+                  className="line-clamp-2 text-sm font-semibold text-foreground hover:text-sky-300"
                 >
                   {line.product.name}
                 </Link>
                 {line.variantLabel ? (
-                  <p className="text-xs text-neutral-500">Size: {line.variantLabel}</p>
+                  <p className="text-xs text-muted-foreground">Size: {line.variantLabel}</p>
                 ) : null}
-                <p className="mt-1 text-xs text-neutral-500">
+                <p className="mt-1 text-xs text-muted-foreground">
                   {formatNgn(line.unit)} each
                 </p>
               </div>
@@ -167,7 +167,7 @@ export default function CartPage() {
                   value={line.qty}
                   onChange={(n) => updateQty(line.productId, line.variantId, n)}
                 />
-                <div className="min-w-[88px] text-right text-sm font-semibold text-neutral-100">
+                <div className="min-w-[88px] text-right text-sm font-semibold text-foreground">
                   {formatNgn(line.subtotal)}
                 </div>
                 <Button
@@ -187,11 +187,11 @@ export default function CartPage() {
         </div>
 
         <aside className="space-y-4">
-          <div className="rounded-2xl border border-neutral-800 bg-neutral-900/40 p-5">
-            <h2 className="text-base font-semibold text-neutral-50">Order summary</h2>
+          <div className="rounded-2xl border border-border bg-card/40 p-5">
+            <h2 className="text-base font-semibold text-foreground">Order summary</h2>
             <dl className="mt-4 space-y-2 text-sm">
               <div className="flex justify-between">
-                <dt className="text-neutral-400">Subtotal</dt>
+                <dt className="text-muted-foreground">Subtotal</dt>
                 <dd>{formatNgn(subtotal)}</dd>
               </div>
               {promoAmount > 0 ? (
@@ -201,7 +201,7 @@ export default function CartPage() {
                 </div>
               ) : null}
               <div className="flex justify-between">
-                <dt className="text-neutral-400">Shipping</dt>
+                <dt className="text-muted-foreground">Shipping</dt>
                 <dd>
                   {shipping === 0 && subtotal >= FREE_SHIPPING_MIN ? (
                     <span className="text-sky-400">Free</span>
@@ -210,14 +210,14 @@ export default function CartPage() {
                   )}
                 </dd>
               </div>
-              <div className="flex justify-between border-t border-neutral-800 pt-3 text-base font-bold">
+              <div className="flex justify-between border-t border-border pt-3 text-base font-bold">
                 <dt>Total</dt>
                 <dd>{formatNgn(total)}</dd>
               </div>
             </dl>
             <div className="mt-4 flex gap-2">
               <div className="relative flex-1">
-                <Tag className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-neutral-500" />
+                <Tag className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder="Promo code"
                   value={promo}
@@ -225,7 +225,7 @@ export default function CartPage() {
                   className="pl-9"
                 />
               </div>
-              <Button variant="outline" className="border-neutral-800" onClick={applyPromo}>
+              <Button variant="outline" className="border-border" onClick={applyPromo}>
                 Apply
               </Button>
             </div>
@@ -235,7 +235,7 @@ export default function CartPage() {
             >
               Checkout with Paystack
             </PaystackButton>
-            <p className="mt-2 text-center text-[11px] text-neutral-500">
+            <p className="mt-2 text-center text-[11px] text-muted-foreground">
               Payments secured by <PaystackMark className="align-middle" />
             </p>
           </div>

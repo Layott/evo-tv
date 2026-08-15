@@ -142,7 +142,7 @@ runOrSkip("role-grant policy", () => {
         role: "moderator",
       }),
     });
-    // Either 404 (not found) or 403 (cannot modify self/higher) — both OK.
+    // Either 404 (not found) or 403 (cannot modify self/higher) - both OK.
     expect([403, 404]).toContain(res.status);
   });
 });

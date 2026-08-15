@@ -8,7 +8,7 @@ import { getProvider } from "@/lib/payments/provider";
 import { checkIdempotency, recordIdempotency } from "@/lib/http/idempotency";
 
 /**
- * GET /api/orders — current user's orders, newest first.
+ * GET /api/orders - current user's orders, newest first.
  */
 export async function GET() {
   const user = await getCurrentUser();

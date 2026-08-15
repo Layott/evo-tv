@@ -93,9 +93,16 @@ describe("canGrantRole policy", () => {
     expect(canGrantRole("admin", "premium")).toBe(true);
   });
 
-  it("admin CANNOT grant admin or head_admin", () => {
-    expect(canGrantRole("admin", "admin")).toBe(false);
+  // "Admins can add admins" is the product rule. It is an equal-rank grant, so
+  // it does not breach "never grant above your own tier". The floor that keeps
+  // it safe (no self-demotion, never zero top-level admins) lives on the route.
+  it("admin CAN grant admin, its own tier", () => {
+    expect(canGrantRole("admin", "admin")).toBe(true);
+  });
+
+  it("admin CANNOT grant head_admin or guest", () => {
     expect(canGrantRole("admin", "head_admin")).toBe(false);
+    expect(canGrantRole("admin", "guest")).toBe(false);
   });
 
   it("moderator cannot grant any role", () => {

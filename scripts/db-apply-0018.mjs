@@ -12,7 +12,7 @@ const sql = neon(URL);
 
 const exists = await sql`SELECT to_regclass('public.vod_bookmarks') AS r`;
 if (exists[0].r) {
-  console.log("vod_bookmarks already exists — skipping CREATE");
+  console.log("vod_bookmarks already exists - skipping CREATE");
 } else {
   console.log("creating vod_bookmarks…");
   await sql`CREATE TABLE "vod_bookmarks" (

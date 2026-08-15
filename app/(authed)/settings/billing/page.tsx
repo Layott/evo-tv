@@ -48,7 +48,7 @@ export default function BillingPage() {
   if (loading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <Loader2 className="size-6 animate-spin text-neutral-500" />
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -65,20 +65,20 @@ export default function BillingPage() {
     <div className="mx-auto max-w-4xl px-4 py-6 sm:py-8">
       <Link
         href="/settings"
-        className="mb-4 inline-flex items-center gap-1 text-sm text-neutral-400 hover:text-neutral-200"
+        className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="size-4" /> Back to settings
       </Link>
-      <h1 className="text-xl font-bold text-neutral-50">Billing</h1>
-      <p className="text-sm text-neutral-400">Subscription, payment method, and receipts.</p>
+      <h1 className="text-xl font-bold text-foreground">Billing</h1>
+      <p className="text-sm text-muted-foreground">Subscription, payment method, and receipts.</p>
 
       <div className="mt-6 grid gap-4 md:grid-cols-2">
-        <div className="rounded-2xl border border-neutral-800 bg-neutral-900/40 p-5">
+        <div className="rounded-2xl border border-border bg-card/40 p-5">
           <div className="flex items-start gap-3">
-            <Crown className={sub ? "size-6 text-amber-400" : "size-6 text-neutral-600"} />
+            <Crown className={sub ? "size-6 text-amber-400" : "size-6 text-muted-foreground"} />
             <div className="flex-1">
               <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-base font-semibold text-neutral-50">
+                <h2 className="text-base font-semibold text-foreground">
                   {sub ? "Premium" : "Free plan"}
                 </h2>
                 {sub ? (
@@ -89,15 +89,15 @@ export default function BillingPage() {
               </div>
               {sub ? (
                 <>
-                  <p className="mt-1 text-sm text-neutral-300">
+                  <p className="mt-1 text-sm text-foreground/80">
                     {formatNgn(sub.priceNgn)}/mo
                   </p>
-                  <p className="text-xs text-neutral-500">
+                  <p className="text-xs text-muted-foreground">
                     Next charge {new Date(sub.currentPeriodEnd).toLocaleDateString()}
                   </p>
                 </>
               ) : (
-                <p className="mt-1 text-sm text-neutral-300">
+                <p className="mt-1 text-sm text-foreground/80">
                   Upgrade for ad-free, 1080p and early VOD access.
                 </p>
               )}
@@ -108,7 +108,7 @@ export default function BillingPage() {
                 {sub ? (
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="outline" className="border-neutral-800">
+                      <Button variant="outline" className="border-border">
                         Cancel subscription
                       </Button>
                     </AlertDialogTrigger>
@@ -137,21 +137,21 @@ export default function BillingPage() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-neutral-800 bg-neutral-900/40 p-5">
-          <h2 className="text-base font-semibold text-neutral-50">Payment method</h2>
-          <p className="text-sm text-neutral-400">Managed securely via Paystack.</p>
-          <div className="mt-4 flex items-center gap-3 rounded-xl border border-neutral-800 bg-neutral-950 p-4">
+        <div className="rounded-2xl border border-border bg-card/40 p-5">
+          <h2 className="text-base font-semibold text-foreground">Payment method</h2>
+          <p className="text-sm text-muted-foreground">Managed securely via Paystack.</p>
+          <div className="mt-4 flex items-center gap-3 rounded-xl border border-border bg-background p-4">
             <CreditCard className="size-6 text-[#00C3F7]" />
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-neutral-100">
+              <p className="text-sm font-semibold text-foreground">
                 <span className="text-[#00C3F7]">Paystack</span> &middot; Visa
                 &bull;&bull;&bull;&bull; 4242
               </p>
-              <p className="text-xs text-neutral-500">Expires 09 / 27</p>
+              <p className="text-xs text-muted-foreground">Expires 09 / 27</p>
             </div>
             <Button
               variant="outline"
-              className="border-neutral-800"
+              className="border-border"
               onClick={() => toast.info("Paystack portal coming soon")}
             >
               Update
@@ -160,8 +160,8 @@ export default function BillingPage() {
         </div>
       </div>
 
-      <div className="mt-6 rounded-2xl border border-neutral-800 bg-neutral-900/40 p-5">
-        <h2 className="text-base font-semibold text-neutral-50">Payment history</h2>
+      <div className="mt-6 rounded-2xl border border-border bg-card/40 p-5">
+        <h2 className="text-base font-semibold text-foreground">Payment history</h2>
         <Table className="mt-3">
           <TableHeader>
             <TableRow>
@@ -174,7 +174,7 @@ export default function BillingPage() {
           <TableBody>
             {history.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-sm text-neutral-500">
+                <TableCell colSpan={4} className="text-sm text-muted-foreground">
                   No payments yet.
                 </TableCell>
               </TableRow>
@@ -182,7 +182,7 @@ export default function BillingPage() {
               history.map((h) => (
                 <TableRow key={h.ref}>
                   <TableCell>{h.date}</TableCell>
-                  <TableCell className="font-mono text-xs text-neutral-400">{h.ref}</TableCell>
+                  <TableCell className="font-mono text-xs text-muted-foreground">{h.ref}</TableCell>
                   <TableCell>{formatNgn(h.amount)}</TableCell>
                   <TableCell className="text-right">
                     <Badge className="border-sky-500/40 bg-sky-500/15 text-sky-300">

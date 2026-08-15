@@ -87,7 +87,7 @@ export interface ViewsPoint {
 /**
  * Returns per-day view-count proxy using `vod_progress.updatedAt` bucketed
  * by day for the last N days. We also fold in a small baseline from
- * vods.viewCount so empty days still trend plausibly — but the main signal
+ * vods.viewCount so empty days still trend plausibly - but the main signal
  * is progress upserts.
  */
 export async function viewsOverTime(days = 30): Promise<ViewsPoint[]> {

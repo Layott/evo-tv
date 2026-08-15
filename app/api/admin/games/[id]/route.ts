@@ -7,6 +7,11 @@ import {
   requireAdminFromRequest,
   writeAudit,
 } from "@/lib/api/admin";
+import {
+  blockedByDependents,
+  foreignKeyViolationResponse,
+  gameDependents,
+} from "@/lib/api/catalog-guards";
 
 const updateSchema = z
   .object({
@@ -101,9 +106,16 @@ export async function DELETE(
   )[0];
   if (!existing) return new NextResponse("Game not found", { status: 404 });
 
+  // `vods.game_id` and `clips.game_id` are ON DELETE CASCADE, so without this
+  // deleting a game silently destroys every recording and clip filed under it.
+  const blocked = blockedByDependents("game", await gameDependents(id));
+  if (blocked) return blocked;
+
   try {
     await db.delete(schema.games).where(eq(schema.games.id, id));
-  } catch {
+  } catch (err) {
+    const conflict = foreignKeyViolationResponse(err, "game");
+    if (conflict) return conflict;
     return NextResponse.json({ error: "Failed to delete game" }, { status: 500 });
   }
 

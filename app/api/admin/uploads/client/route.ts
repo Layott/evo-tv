@@ -57,6 +57,31 @@ function suffixed(pathname: string): string {
  *
  * On any validation failure: 400 with `{ error }`.
  */
+/**
+ * GET /api/admin/uploads/client - which upload backend this deployment runs.
+ *
+ * The two POST legs below take different request bodies and answer with
+ * different shapes, so a browser has to know which one it is talking to before
+ * it sends anything. Without this it would have to send a Spaces-shaped body
+ * and read a 400 as "must be Blob then", which is indistinguishable from a
+ * genuine validation failure.
+ *
+ * `configured` is false when neither backend has credentials, which is the
+ * ordinary state of a local checkout. The upload field then says so and falls
+ * back to pasting a URL, rather than offering a picker that cannot work.
+ */
+export async function GET() {
+  const guard = await requireAdminFromRequest();
+  if (!guard.ok) return guard.response;
+
+  return NextResponse.json({
+    backend: usingSpaces ? "spaces" : "blob",
+    configured: usingSpaces || Boolean(process.env.BLOB_READ_WRITE_TOKEN),
+    maxBytes: MAX_BYTES,
+    allowedContentTypes: ALLOWED_CONTENT_TYPES,
+  });
+}
+
 export async function POST(req: NextRequest) {
   let body: unknown;
   try {

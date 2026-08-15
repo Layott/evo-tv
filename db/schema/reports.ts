@@ -13,7 +13,7 @@ export const contentReports = pgTable(
   "content_reports",
   {
     id: text("id").primaryKey(),
-    /** Null if anonymous report (rare — most are authed). */
+    /** Null if anonymous report (rare - most are authed). */
     reporterUserId: text("reporter_user_id").references(() => user.id, {
       onDelete: "set null",
     }),

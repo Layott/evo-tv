@@ -172,6 +172,19 @@ export const clips = pgTable(
     id: text("id").primaryKey(),
     vodId: text("vod_id").references(() => vods.id, { onDelete: "set null" }),
     streamId: text("stream_id").references(() => streams.id, { onDelete: "set null" }),
+    /**
+     * The show, and optionally the episode, this clip was cut from.
+     *
+     * Untyped `text` rather than a Drizzle `references()` because `shows` and
+     * `episodes` live in another schema module that this one does not import,
+     * and the real constraints are added by migration 0037. The relation is in
+     * Postgres either way; what is missing here is only the type-level link.
+     *
+     * Setting an episode sets the show too, so "clips for this show" never has
+     * to join through episodes to find them.
+     */
+    showId: text("show_id"),
+    episodeId: text("episode_id"),
     channelId: text("channel_id"),
     title: text("title").notNull(),
     /**

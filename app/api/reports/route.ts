@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
 }
 
 /**
- * GET /api/reports — list MINE (reporter view). Auth required.
+ * GET /api/reports - list MINE (reporter view). Auth required.
  */
 export async function GET() {
   const user = await getCurrentUser();

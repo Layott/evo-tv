@@ -6,12 +6,12 @@ import { writeAudit } from "@/lib/api/audit";
 import { generateStreamKey, hashStreamKey } from "@/lib/video/stream-key";
 
 /**
- * GET — Reveal whether the channel has an active stream key (boolean only;
+ * GET - Reveal whether the channel has an active stream key (boolean only;
  *       plaintext key is NEVER returned after creation).
- * POST — Rotate. Generate a fresh key, mark all existing rows for this
+ * POST - Rotate. Generate a fresh key, mark all existing rows for this
  *        channel inactive, insert the new row, and return the plaintext
  *        key in the response body. THIS IS THE ONLY TIME plaintext is
- *        sent across the wire — clients must show "copy now or never".
+ *        sent across the wire - clients must show "copy now or never".
  *
  * Auth: requires publisher_members.role >= editor on the publisher that
  * owns this channel, OR EVO admin.

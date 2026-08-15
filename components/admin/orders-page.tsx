@@ -90,8 +90,8 @@ export function OrdersPage() {
       accessor: (r) => r.id,
       cell: (row) => (
         <div>
-          <div className="font-mono text-xs text-neutral-100">{row.id}</div>
-          <div className="text-[11px] text-neutral-500">{row.paymentRef}</div>
+          <div className="font-mono text-xs text-foreground">{row.id}</div>
+          <div className="text-[11px] text-muted-foreground">{row.paymentRef}</div>
         </div>
       ),
     },
@@ -100,13 +100,13 @@ export function OrdersPage() {
       header: "Customer",
       sortable: true,
       accessor: (r) => handleForUser(r.userId),
-      cell: (row) => <span className="text-sm text-neutral-200">@{handleForUser(row.userId)}</span>,
+      cell: (row) => <span className="text-sm text-foreground">@{handleForUser(row.userId)}</span>,
     },
     {
       key: "items",
       header: "Items",
       cell: (row) => (
-        <span className="text-sm text-neutral-300">
+        <span className="text-sm text-foreground/80">
           {row.items.reduce((acc, i) => acc + i.qty, 0)} item{row.items.reduce((acc, i) => acc + i.qty, 0) > 1 ? "s" : ""}
         </span>
       ),
@@ -131,7 +131,7 @@ export function OrdersPage() {
       header: "Created",
       sortable: true,
       accessor: (r) => new Date(r.createdAt).getTime(),
-      cell: (row) => <span className="text-xs text-neutral-400">{formatDateTime(row.createdAt)}</span>,
+      cell: (row) => <span className="text-xs text-muted-foreground">{formatDateTime(row.createdAt)}</span>,
     },
   ];
 
@@ -162,16 +162,16 @@ export function OrdersPage() {
 
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative w-full max-w-sm">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-neutral-500" />
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search order, customer or payment ref"
-            className="border-neutral-800 bg-neutral-900 pl-8"
+            className="border-border bg-card pl-8"
           />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-44 border-neutral-800 bg-neutral-900">
+          <SelectTrigger className="w-44 border-border bg-card">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -183,7 +183,7 @@ export function OrdersPage() {
             ))}
           </SelectContent>
         </Select>
-        <div className="ml-auto text-xs text-neutral-500">{filtered.length} orders</div>
+        <div className="ml-auto text-xs text-muted-foreground">{filtered.length} orders</div>
       </div>
 
       <DataTable<Order>
@@ -194,7 +194,7 @@ export function OrdersPage() {
       />
 
       <Sheet open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
-        <SheetContent className="w-full overflow-y-auto border-neutral-800 bg-neutral-950 text-neutral-100 sm:max-w-lg">
+        <SheetContent className="w-full overflow-y-auto border-border bg-background text-foreground sm:max-w-lg">
           {selected ? (
             <>
               <SheetHeader>
@@ -206,24 +206,24 @@ export function OrdersPage() {
               <div className="space-y-5 px-4 pb-4">
                 <div className="flex items-center justify-between">
                   <StatusBadge tone={orderTone(selected.status)}>{selected.status}</StatusBadge>
-                  <span className="font-mono text-xs text-neutral-500">{selected.paymentRef}</span>
+                  <span className="font-mono text-xs text-muted-foreground">{selected.paymentRef}</span>
                 </div>
 
                 <div>
-                  <div className="mb-2 text-xs uppercase tracking-wider text-neutral-500">Items</div>
+                  <div className="mb-2 text-xs uppercase tracking-wider text-muted-foreground">Items</div>
                   <ul className="space-y-2">
                     {selected.items.map((item, idx) => (
                       <li
                         key={`${item.productId}-${idx}`}
-                        className="flex items-center gap-3 rounded-lg border border-neutral-800 bg-neutral-900/40 p-2"
+                        className="flex items-center gap-3 rounded-lg border border-border bg-card/40 p-2"
                       >
-                        <div className="h-10 w-10 shrink-0 overflow-hidden rounded bg-neutral-800">
+                        <div className="h-10 w-10 shrink-0 overflow-hidden rounded bg-muted">
                           {}
                           <img src={item.thumbnailUrl} alt="" className="h-full w-full object-cover" />
                         </div>
                         <div className="flex-1 text-sm">
-                          <div className="text-neutral-100">{item.productName}</div>
-                          <div className="text-xs text-neutral-500">
+                          <div className="text-foreground">{item.productName}</div>
+                          <div className="text-xs text-muted-foreground">
                             {item.variantLabel ? `Size ${item.variantLabel} · ` : ""}Qty {item.qty}
                           </div>
                         </div>
@@ -233,25 +233,25 @@ export function OrdersPage() {
                   </ul>
                 </div>
 
-                <div className="space-y-1 rounded-lg border border-neutral-800 bg-neutral-900/40 p-3 text-sm">
+                <div className="space-y-1 rounded-lg border border-border bg-card/40 p-3 text-sm">
                   <Row label="Subtotal" value={formatNgn(selected.subtotalNgn)} />
                   <Row label="Shipping" value={formatNgn(selected.shippingNgn)} />
-                  <div className="my-1 border-t border-neutral-800" />
+                  <div className="my-1 border-t border-border" />
                   <Row label="Total" value={formatNgn(selected.totalNgn)} strong />
                 </div>
 
                 <div>
-                  <div className="mb-2 text-xs uppercase tracking-wider text-neutral-500">Ship to</div>
-                  <div className="rounded-lg border border-neutral-800 bg-neutral-900/40 p-3 text-sm text-neutral-200">
+                  <div className="mb-2 text-xs uppercase tracking-wider text-muted-foreground">Ship to</div>
+                  <div className="rounded-lg border border-border bg-card/40 p-3 text-sm text-foreground">
                     {selected.shipping.fullName}
-                    <div className="text-xs text-neutral-400">
+                    <div className="text-xs text-muted-foreground">
                       {selected.shipping.address1}
                       {selected.shipping.address2 ? `, ${selected.shipping.address2}` : ""}
                     </div>
-                    <div className="text-xs text-neutral-400">
+                    <div className="text-xs text-muted-foreground">
                       {selected.shipping.city}, {selected.shipping.state}, {selected.shipping.country}
                     </div>
-                    <div className="text-xs text-neutral-400">{selected.shipping.phone}</div>
+                    <div className="text-xs text-muted-foreground">{selected.shipping.phone}</div>
                     {selected.trackingNumber ? (
                       <div className="mt-2 text-xs text-sky-300">Tracking: {selected.trackingNumber}</div>
                     ) : null}
@@ -274,10 +274,10 @@ export function OrdersPage() {
       </Sheet>
 
       <Dialog open={!!refundConfirm} onOpenChange={(o) => !o && setRefundConfirm(null)}>
-        <DialogContent className="border-neutral-800 bg-neutral-950 text-neutral-100">
+        <DialogContent className="border-border bg-background text-foreground">
           <DialogHeader>
             <DialogTitle>Issue refund?</DialogTitle>
-            <DialogDescription className="text-neutral-400">
+            <DialogDescription className="text-muted-foreground">
               This will mark order {refundConfirm?.id} as refunded and trigger a refund via{" "}
               {refundConfirm?.paymentProvider}.
             </DialogDescription>
@@ -285,7 +285,7 @@ export function OrdersPage() {
           <DialogFooter>
             <Button
               variant="outline"
-              className="border-neutral-700 bg-neutral-900 hover:bg-neutral-800"
+              className="border-input bg-card hover:bg-accent"
               onClick={() => setRefundConfirm(null)}
             >
               Cancel
@@ -303,8 +303,8 @@ export function OrdersPage() {
 function Row({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
   return (
     <div className="flex items-center justify-between">
-      <span className={strong ? "text-neutral-100" : "text-neutral-400"}>{label}</span>
-      <span className={`tabular-nums ${strong ? "text-neutral-100 font-semibold" : "text-neutral-200"}`}>
+      <span className={strong ? "text-foreground" : "text-muted-foreground"}>{label}</span>
+      <span className={`tabular-nums ${strong ? "text-foreground font-semibold" : "text-foreground"}`}>
         {value}
       </span>
     </div>

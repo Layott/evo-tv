@@ -17,6 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "./page-header";
 import { StatusBadge } from "./status-badge";
 import { formatDate, timeAgo } from "./utils";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 interface Report {
   id: string;
@@ -126,7 +127,7 @@ export function ModerationPage() {
       />
 
       <Tabs defaultValue="reports">
-        <TabsList className="bg-neutral-900">
+        <TabsList className="bg-card">
           <TabsTrigger value="reports">
             Reports
             <span className="ml-2 rounded-full bg-red-500/20 px-1.5 py-0.5 text-[10px] text-red-300">
@@ -149,11 +150,11 @@ export function ModerationPage() {
               return (
                 <div
                   key={r.id}
-                  className="rounded-xl border border-neutral-800 bg-neutral-900/40 p-4"
+                  className="rounded-xl border border-border bg-card/40 p-4"
                 >
                   <div className="flex flex-wrap items-center gap-2">
                     <StatusBadge tone={reasonTone as "red" | "amber" | "blue"}>{r.reason}</StatusBadge>
-                    <div className="text-xs text-neutral-400">
+                    <div className="text-xs text-muted-foreground">
                       Reported by @{r.reportedBy} · {timeAgo(r.reportedAt)}
                     </div>
                     {r.state !== "open" ? (
@@ -161,7 +162,7 @@ export function ModerationPage() {
                         {r.state}
                       </StatusBadge>
                     ) : (
-                      <span className="ml-auto text-xs text-neutral-500">
+                      <span className="ml-auto text-xs text-muted-foreground">
                         {/* Was a hardcoded "stream_lagos_final", a stream that
                             has not existed for months, printed next to every
                             report that had no state. */}
@@ -170,16 +171,16 @@ export function ModerationPage() {
                     )}
                   </div>
                   <div className="mt-3 flex items-start gap-3">
-                    <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-neutral-800">
+                    <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-muted">
                       {}
                       <img src={r.message.userAvatarUrl} alt="" className="h-full w-full object-cover" />
                     </div>
                     <div className="flex-1">
-                      <div className="text-xs text-neutral-400">
+                      <div className="text-xs text-muted-foreground">
                         @{r.message.userHandle} · {timeAgo(r.message.createdAt)}
                       </div>
-                      <div className="mt-1 rounded-md border border-neutral-800 bg-neutral-950 p-2 text-sm text-neutral-200">
-                        <MessageSquare className="mr-1 inline h-3 w-3 text-neutral-500" />
+                      <div className="mt-1 rounded-md border border-border bg-background p-2 text-sm text-foreground">
+                        <MessageSquare className="mr-1 inline h-3 w-3 text-muted-foreground" />
                         {r.message.body}
                       </div>
                     </div>
@@ -231,18 +232,22 @@ export function ModerationPage() {
             {banned.map((b) => (
               <div
                 key={b.id}
-                className="flex items-center gap-3 rounded-xl border border-neutral-800 bg-neutral-900/40 p-4"
+                className="flex items-center gap-3 rounded-xl border border-border bg-card/40 p-4"
               >
-                <div className="h-10 w-10 overflow-hidden rounded-full bg-neutral-800">
-                  {}
-                  <img src={b.profile.avatarUrl} alt="" className="h-full w-full object-cover" />
-                </div>
+                <UserAvatar
+                  src={b.profile.avatarUrl}
+                  name={b.profile.displayName}
+                  handle={b.profile.handle}
+                  seed={b.profile.id}
+                  decorative
+                  className="h-10 w-10 shrink-0"
+                />
                 <div className="flex-1">
-                  <div className="text-sm font-medium text-neutral-100">
+                  <div className="text-sm font-medium text-foreground">
                     {b.profile.displayName}{" "}
-                    <span className="text-xs font-normal text-neutral-500">@{b.profile.handle}</span>
+                    <span className="text-xs font-normal text-muted-foreground">@{b.profile.handle}</span>
                   </div>
-                  <div className="text-xs text-neutral-400">
+                  <div className="text-xs text-muted-foreground">
                     Reason: {b.reason} · {b.durationDays} days · Since {formatDate(b.bannedAt)}
                   </div>
                 </div>
@@ -257,7 +262,7 @@ export function ModerationPage() {
               </div>
             ))}
             {banned.length === 0 ? (
-              <div className="rounded-xl border border-neutral-800 bg-neutral-900/40 p-6 text-center text-sm text-neutral-500">
+              <div className="rounded-xl border border-border bg-card/40 p-6 text-center text-sm text-muted-foreground">
                 No active bans.
               </div>
             ) : null}
@@ -269,24 +274,28 @@ export function ModerationPage() {
             {appeals.map((a) => (
               <div
                 key={a.id}
-                className="rounded-xl border border-neutral-800 bg-neutral-900/40 p-4"
+                className="rounded-xl border border-border bg-card/40 p-4"
               >
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 overflow-hidden rounded-full bg-neutral-800">
-                    {}
-                    <img src={a.profile.avatarUrl} alt="" className="h-full w-full object-cover" />
-                  </div>
+                  <UserAvatar
+                    src={a.profile.avatarUrl}
+                    name={a.profile.displayName}
+                    handle={a.profile.handle}
+                    seed={a.profile.id}
+                    decorative
+                    className="h-10 w-10 shrink-0"
+                  />
                   <div className="flex-1">
-                    <div className="text-sm font-medium text-neutral-100">
+                    <div className="text-sm font-medium text-foreground">
                       {a.profile.displayName}{" "}
-                      <span className="text-xs font-normal text-neutral-500">@{a.profile.handle}</span>
+                      <span className="text-xs font-normal text-muted-foreground">@{a.profile.handle}</span>
                     </div>
-                    <div className="text-xs text-neutral-400">
+                    <div className="text-xs text-muted-foreground">
                       Original reason: {a.banReason} · submitted {timeAgo(a.submittedAt)}
                     </div>
                   </div>
                 </div>
-                <blockquote className="mt-3 rounded-md border border-neutral-800 bg-neutral-950 p-3 text-sm text-neutral-300">
+                <blockquote className="mt-3 rounded-md border border-border bg-background p-3 text-sm text-foreground/80">
                   “{a.message}”
                 </blockquote>
                 <div className="mt-3 flex gap-2">
@@ -309,7 +318,7 @@ export function ModerationPage() {
               </div>
             ))}
             {appeals.length === 0 ? (
-              <div className="rounded-xl border border-neutral-800 bg-neutral-900/40 p-6 text-center text-sm text-neutral-500">
+              <div className="rounded-xl border border-border bg-card/40 p-6 text-center text-sm text-muted-foreground">
                 No outstanding appeals.
               </div>
             ) : null}

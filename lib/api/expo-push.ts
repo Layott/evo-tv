@@ -76,7 +76,7 @@ interface ExpoPushTicket {
  * Returns the number of tickets returned with status === "ok".
  *
  * On `DeviceNotRegistered` errors, prunes the token so the next run skips it.
- * Other transient errors are ignored — the cron will retry next tick.
+ * Other transient errors are ignored - the cron will retry next tick.
  */
 export async function sendExpoPushToUser(
   userId: string,

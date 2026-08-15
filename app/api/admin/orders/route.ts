@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { and, count, desc, eq, gte, lte, sql } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
-import { requireAdminFromRequest } from "@/lib/api/admin";
+import { requireMinRole } from "@/lib/auth/guards";
 
 const querySchema = z.object({
   status: z
@@ -29,7 +29,9 @@ const querySchema = z.object({
  * Returns { orders, total } so the admin UI can paginate.
  */
 export async function GET(req: NextRequest) {
-  const guard = await requireAdminFromRequest();
+  // Support reads orders to answer "where is my order". Fulfilment and refunds
+  // are higher up; this is the read that makes the support role worth having.
+  const guard = await requireMinRole("support_admin");
   if (!guard.ok) return guard.response;
 
   const url = new URL(req.url);

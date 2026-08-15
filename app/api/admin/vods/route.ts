@@ -16,7 +16,7 @@ const listQuerySchema = z.object({
 });
 
 /**
- * GET /api/admin/vods — admin list of all VODs (active + optional deleted).
+ * GET /api/admin/vods - admin list of all VODs (active + optional deleted).
  *
  *   ?deleted=only     → only soft-deleted rows
  *   ?deleted=include  → both
@@ -104,7 +104,7 @@ const createSchema = z.object({
 });
 
 /**
- * POST /api/admin/vods — create a VOD row (uploaded media, not a stream
+ * POST /api/admin/vods - create a VOD row (uploaded media, not a stream
  * recording: streamId/channelId are null, counters start at zero).
  *
  * Admin only. Returns 201 with the created VOD in the public Vod shape

@@ -27,10 +27,10 @@ export function ComingSoon({
       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-400">
         Coming soon
       </p>
-      <h1 className="mt-3 text-2xl font-bold tracking-tight text-neutral-50">
+      <h1 className="mt-3 text-2xl font-bold tracking-tight text-foreground">
         {title}
       </h1>
-      <p className="mt-3 text-sm leading-relaxed text-neutral-400">
+      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
         {description ??
           "This part of EVO TV is not ready yet. We would rather show you nothing than show you numbers we made up."}
       </p>
@@ -41,7 +41,7 @@ export function ComingSoon({
         <Button
           asChild
           variant="outline"
-          className="border-neutral-700 bg-neutral-900 text-neutral-200 hover:bg-neutral-800"
+          className="border-input bg-card text-foreground hover:bg-accent"
         >
           <Link href="/schedule">See the schedule</Link>
         </Button>

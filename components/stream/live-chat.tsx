@@ -138,21 +138,21 @@ export function LiveChat({ streamId }: { streamId: string }) {
     : messages;
 
   return (
-    <div className="flex h-full flex-col bg-neutral-950">
+    <div className="flex h-full flex-col bg-background">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-neutral-800">
-        <div className="flex items-center gap-2 text-sm font-semibold text-neutral-200">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-border">
+        <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
           <Users className="size-4" />
           Stream Chat
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1 text-[10px] text-neutral-500">
+          <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
             <Gauge className="size-3" />
             Slow: 3s
           </div>
           {canToggleSubs && (
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] text-neutral-400">Subs only</span>
+              <span className="text-[10px] text-muted-foreground">Subs only</span>
               <Switch
                 checked={subsOnly}
                 onCheckedChange={(v) => {
@@ -172,7 +172,7 @@ export function LiveChat({ streamId }: { streamId: string }) {
         className="flex-1 overflow-y-auto py-1 min-h-0"
       >
         {visibleMessages.length === 0 ? (
-          <div className="flex h-full items-center justify-center text-xs text-neutral-500">
+          <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
             Chat is warming up…
           </div>
         ) : (
@@ -183,7 +183,7 @@ export function LiveChat({ streamId }: { streamId: string }) {
       </div>
 
       {/* Input */}
-      <div className="border-t border-neutral-800 p-2">
+      <div className="border-t border-border p-2">
         <div className="flex items-center gap-1">
           <Input
             value={input}
@@ -196,7 +196,7 @@ export function LiveChat({ streamId }: { streamId: string }) {
             }}
             placeholder={user ? "Send a message" : "Sign in to chat"}
             disabled={!user}
-            className="h-9 bg-neutral-900 border-neutral-800 text-sm"
+            className="h-9 bg-card border-border text-sm"
           />
           <EmojiPicker onPick={insertEmoji} />
           <Button
@@ -211,7 +211,7 @@ export function LiveChat({ streamId }: { streamId: string }) {
         <div
           className={cn(
             "mt-1 text-right text-[10px]",
-            input.length > CHAR_LIMIT * 0.9 ? "text-amber-400" : "text-neutral-500"
+            input.length > CHAR_LIMIT * 0.9 ? "text-amber-400" : "text-muted-foreground"
           )}
         >
           {input.length} / {CHAR_LIMIT}

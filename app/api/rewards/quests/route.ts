@@ -5,7 +5,7 @@ import { listDailyQuests } from "@/lib/api/rewards";
 export const dynamic = "force-dynamic";
 
 /**
- * GET /api/rewards/quests — daily quests for the current user.
+ * GET /api/rewards/quests - daily quests for the current user.
  *
  * Returns the 6 templated daily quests with live progress (computed from
  * watchEvents / likes / tips / predictions / xp_events) and per-quest claimed

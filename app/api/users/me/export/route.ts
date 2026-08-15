@@ -4,10 +4,10 @@ import { db, schema } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/guards";
 
 /**
- * GET /api/users/me/export — GDPR / NDPR data export.
+ * GET /api/users/me/export - GDPR / NDPR data export.
  *
  * Returns a JSON dump of everything we hold on the calling user across the
- * tables they have rows in. Streams data in one shot — fine for typical
+ * tables they have rows in. Streams data in one shot - fine for typical
  * users with a few hundred rows total; would chunk if we ever cross
  * tens-of-thousands.
  *

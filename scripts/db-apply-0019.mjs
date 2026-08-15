@@ -12,7 +12,7 @@ const sql = neon(URL);
 
 const exists = await sql`SELECT to_regclass('public.expo_push_tokens') AS r`;
 if (exists[0].r) {
-  console.log("expo_push_tokens already exists — skipping CREATE");
+  console.log("expo_push_tokens already exists - skipping CREATE");
 } else {
   console.log("creating expo_push_tokens…");
   await sql`CREATE TABLE "expo_push_tokens" (

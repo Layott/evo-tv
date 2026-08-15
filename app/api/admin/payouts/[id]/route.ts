@@ -6,8 +6,8 @@ import { requireAdminFromRequest } from "@/lib/api/admin";
 import { writeAudit } from "@/lib/api/audit";
 
 /**
- * GET — view a payout.
- * POST — approve. Marks status=approved + kicks Paystack Transfer (stub
+ * GET - view a payout.
+ * POST - approve. Marks status=approved + kicks Paystack Transfer (stub
  *        in this phase; real transfer call lives behind a config flag
  *        until production-ready).
  */
@@ -64,7 +64,7 @@ export async function POST(
   }
 
   // Phase 3.9 stub: mark approved + record audit. Real Paystack Transfer
-  // wiring lives behind a feature flag — flip once payout volume justifies
+  // wiring lives behind a feature flag - flip once payout volume justifies
   // the live integration.
   await db
     .update(schema.payouts)

@@ -4,7 +4,7 @@ import { db, schema } from "@/lib/db";
 import { requireMinRole } from "@/lib/auth/guards";
 
 /**
- * GET /api/admin/email-templates — admin+. List all templates.
+ * GET /api/admin/email-templates - admin+. List all templates.
  */
 export async function GET() {
   const guard = await requireMinRole("admin");

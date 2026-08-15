@@ -8,13 +8,13 @@ import {
 } from "@/lib/api/subscriptions";
 
 /**
- * PATCH /api/admin/subscriptions/[id] — admin+.
+ * PATCH /api/admin/subscriptions/[id] - admin+.
  *
  * Body:
- *   { "action": "cancel" }                 — cancel + demote user if no other active sub
- *   { "action": "extend", "days": 30 }     — extend currentPeriodEnd by N days (1-365, default 30)
+ *   { "action": "cancel" }                 - cancel + demote user if no other active sub
+ *   { "action": "extend", "days": 30 }     - extend currentPeriodEnd by N days (1-365, default 30)
  *
- * No refunds — billing here manages access periods only; money movement stays
+ * No refunds - billing here manages access periods only; money movement stays
  * with the payment provider.
  */
 export async function PATCH(
@@ -36,7 +36,7 @@ export async function PATCH(
   if (body.action === "cancel") {
     const sub = await cancelSubscriptionById(id);
     if (!sub) return new NextResponse("Subscription not found", { status: 404 });
-    // Best-effort audit — never fail a committed state change on a log write.
+    // Best-effort audit - never fail a committed state change on a log write.
     await writeAudit({
       actorId: guard.user.id,
       action: "subscription.cancel",

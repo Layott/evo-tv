@@ -16,7 +16,7 @@ export function QtyStepper({
   max?: number;
 }) {
   return (
-    <div className="inline-flex items-center rounded-lg border border-neutral-800 bg-neutral-900">
+    <div className="inline-flex items-center rounded-lg border border-border bg-card">
       <Button
         type="button"
         size="icon-sm"

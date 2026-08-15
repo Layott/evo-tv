@@ -9,7 +9,7 @@ const tones: Record<Tone, string> = {
   amber: "bg-amber-500/10 text-amber-300 ring-amber-500/30",
   red: "bg-red-500/10 text-red-300 ring-red-500/30",
   blue: "bg-blue-500/10 text-blue-300 ring-blue-500/30",
-  neutral: "bg-neutral-700/40 text-neutral-300 ring-neutral-600/50",
+  neutral: "bg-muted/40 text-foreground/80 ring-ring/50",
   violet: "bg-violet-500/10 text-violet-300 ring-violet-500/30",
 };
 
@@ -40,7 +40,7 @@ export function StatusBadge({
             tone === "amber" && "bg-amber-400",
             tone === "red" && "bg-red-400",
             tone === "blue" && "bg-blue-400",
-            tone === "neutral" && "bg-neutral-400",
+            tone === "neutral" && "bg-muted-foreground",
             tone === "violet" && "bg-violet-400",
           )}
         />

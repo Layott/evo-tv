@@ -75,8 +75,8 @@ export function LivePolls({ streamId }: { streamId: string }) {
   if (loading) {
     return (
       <div className="p-4 space-y-3">
-        <div className="h-6 w-32 rounded bg-neutral-800 animate-pulse" />
-        <div className="h-20 rounded bg-neutral-800 animate-pulse" />
+        <div className="h-6 w-32 rounded bg-muted animate-pulse" />
+        <div className="h-20 rounded bg-muted animate-pulse" />
       </div>
     );
   }
@@ -84,9 +84,9 @@ export function LivePolls({ streamId }: { streamId: string }) {
   if (activePolls.length === 0 && closedPolls.length === 0) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center">
-        <Vote className="size-8 text-neutral-600" />
-        <p className="text-sm font-medium text-neutral-300">No active polls</p>
-        <p className="text-xs text-neutral-500">
+        <Vote className="size-8 text-muted-foreground" />
+        <p className="text-sm font-medium text-foreground/80">No active polls</p>
+        <p className="text-xs text-muted-foreground">
           Casters will open polls during key moments.
         </p>
       </div>
@@ -104,8 +104,8 @@ export function LivePolls({ streamId }: { streamId: string }) {
         />
       ))}
       {closedPolls.length > 0 && (
-        <div className="pt-2 border-t border-neutral-800">
-          <h4 className="text-xs uppercase tracking-wider text-neutral-500 mb-2 px-1">
+        <div className="pt-2 border-t border-border">
+          <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-2 px-1">
             Recent polls
           </h4>
           <div className="space-y-3">
@@ -132,9 +132,9 @@ function PollCard({
   const showResults = poll.isClosed || Boolean(votedOption);
 
   return (
-    <div className="rounded-lg border border-neutral-800 bg-neutral-900/60 p-3">
+    <div className="rounded-lg border border-border bg-card/60 p-3">
       <div className="flex items-start justify-between gap-2">
-        <h3 className="text-sm font-semibold text-neutral-100">{poll.question}</h3>
+        <h3 className="text-sm font-semibold text-foreground">{poll.question}</h3>
         {poll.isClosed ? (
           <Badge variant="secondary" className="text-[10px]">
             Closed
@@ -154,18 +154,18 @@ function PollCard({
               {showResults ? (
                 <div
                   className={cn(
-                    "rounded-md border border-neutral-800 px-2.5 py-1.5",
+                    "rounded-md border border-border px-2.5 py-1.5",
                     selected && "border-sky-500/50 bg-sky-500/5"
                   )}
                 >
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-neutral-200 flex items-center gap-1">
+                    <span className="text-foreground flex items-center gap-1">
                       {selected && (
                         <CheckCircle2 className="size-3 text-sky-400" />
                       )}
                       {opt.label}
                     </span>
-                    <span className="font-mono text-neutral-400">
+                    <span className="font-mono text-muted-foreground">
                       {pct}% · {opt.votes.toLocaleString()}
                     </span>
                   </div>
@@ -175,18 +175,18 @@ function PollCard({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="w-full justify-between border-neutral-700 hover:border-sky-500/50 hover:bg-sky-500/5"
+                  className="w-full justify-between border-input hover:border-sky-500/50 hover:bg-sky-500/5"
                   onClick={() => onVote(poll, opt.id)}
                 >
                   <span>{opt.label}</span>
-                  <span className="text-xs text-neutral-500">Vote</span>
+                  <span className="text-xs text-muted-foreground">Vote</span>
                 </Button>
               )}
             </div>
           );
         })}
       </div>
-      <div className="mt-2 text-[10px] text-neutral-500">
+      <div className="mt-2 text-[10px] text-muted-foreground">
         {poll.totalVotes.toLocaleString()} votes
       </div>
     </div>
