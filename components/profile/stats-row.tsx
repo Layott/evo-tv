@@ -32,13 +32,13 @@ export function StatsRow({ followingCount, watchHours, subSince }: Props) {
       {items.map((it) => (
         <div
           key={it.label}
-          className="rounded-xl border border-neutral-800 bg-neutral-900/60 p-4"
+          className="rounded-xl border border-border bg-card/60 p-4"
         >
-          <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-neutral-400">
+          <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
             {it.icon}
             {it.label}
           </div>
-          <div className="mt-2 text-xl font-semibold text-neutral-50">
+          <div className="mt-2 text-xl font-semibold text-foreground">
             {it.value}
           </div>
         </div>

@@ -53,7 +53,7 @@ function Row({
       type="button"
       onClick={onClick}
       className={cn(
-        "flex w-full items-start gap-3 border-b border-neutral-800 p-4 text-left transition hover:bg-neutral-900",
+        "flex w-full items-start gap-3 border-b border-border p-4 text-left transition hover:bg-accent",
         unread ? "bg-sky-500/5" : ""
       )}
     >
@@ -64,23 +64,23 @@ function Row({
             alt=""
             width={48}
             height={48}
-            className="size-12 rounded-lg bg-neutral-800 object-cover"
+            className="size-12 rounded-lg bg-muted object-cover"
           />
         ) : (
-          <div className="flex size-12 items-center justify-center rounded-lg bg-neutral-800">
+          <div className="flex size-12 items-center justify-center rounded-lg bg-muted">
             <Icon className="size-5 text-sky-400" />
           </div>
         )}
         {unread ? (
-          <span className="absolute -right-1 -top-1 size-3 rounded-full border-2 border-neutral-950 bg-sky-500" />
+          <span className="absolute -right-1 -top-1 size-3 rounded-full border-2 border-border bg-sky-500" />
         ) : null}
       </div>
       <div className="min-w-0 flex-1">
-        <p className={cn("truncate text-sm", unread ? "font-semibold text-neutral-50" : "text-neutral-200")}>
+        <p className={cn("truncate text-sm", unread ? "font-semibold text-foreground" : "text-foreground")}>
           {n.title}
         </p>
-        <p className="mt-0.5 line-clamp-2 text-xs text-neutral-400">{n.body}</p>
-        <p className="mt-1 text-[11px] uppercase tracking-wide text-neutral-500">
+        <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{n.body}</p>
+        <p className="mt-1 text-[11px] uppercase tracking-wide text-muted-foreground">
           {relativeTime(n.createdAt)}
         </p>
       </div>
@@ -129,7 +129,7 @@ export default function NotificationsPage() {
   if (loading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <Loader2 className="size-6 animate-spin text-neutral-500" />
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -138,15 +138,15 @@ export default function NotificationsPage() {
     <div className="mx-auto max-w-3xl px-4 py-6 sm:py-8">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-neutral-50">Notifications</h1>
-          <p className="text-sm text-neutral-400">
+          <h1 className="text-xl font-bold text-foreground">Notifications</h1>
+          <p className="text-sm text-muted-foreground">
             {unread.length} unread &middot; {items.length} total
           </p>
         </div>
         <Button
           onClick={handleMarkAll}
           variant="outline"
-          className="border-neutral-800"
+          className="border-border"
           disabled={unread.length === 0}
         >
           <CheckCheck className="size-4" />
@@ -155,13 +155,13 @@ export default function NotificationsPage() {
       </div>
 
       <Tabs defaultValue="all">
-        <TabsList className="bg-neutral-900/60">
+        <TabsList className="bg-card/60">
           <TabsTrigger value="all">All</TabsTrigger>
           <TabsTrigger value="unread">Unread ({unread.length})</TabsTrigger>
           <TabsTrigger value="read">Read</TabsTrigger>
         </TabsList>
         <TabsContent value="all" className="mt-4">
-          <div className="overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900/40">
+          <div className="overflow-hidden rounded-2xl border border-border bg-card/40">
             {items.length === 0 ? (
               <EmptyState />
             ) : (
@@ -170,7 +170,7 @@ export default function NotificationsPage() {
           </div>
         </TabsContent>
         <TabsContent value="unread" className="mt-4">
-          <div className="overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900/40">
+          <div className="overflow-hidden rounded-2xl border border-border bg-card/40">
             {unread.length === 0 ? (
               <EmptyState label="You&apos;re all caught up." />
             ) : (
@@ -179,7 +179,7 @@ export default function NotificationsPage() {
           </div>
         </TabsContent>
         <TabsContent value="read" className="mt-4">
-          <div className="overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900/40">
+          <div className="overflow-hidden rounded-2xl border border-border bg-card/40">
             {read.length === 0 ? (
               <EmptyState />
             ) : (
@@ -195,8 +195,8 @@ export default function NotificationsPage() {
 function EmptyState({ label = "Nothing here yet." }: { label?: string }) {
   return (
     <div className="p-10 text-center">
-      <Bell className="mx-auto size-10 text-neutral-600" />
-      <p className="mt-3 text-sm font-semibold text-neutral-300">{label}</p>
+      <Bell className="mx-auto size-10 text-muted-foreground" />
+      <p className="mt-3 text-sm font-semibold text-foreground/80">{label}</p>
     </div>
   );
 }

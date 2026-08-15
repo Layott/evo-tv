@@ -113,10 +113,10 @@ export default function SchedulePage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 sm:py-8">
       <header>
-        <h1 className="text-2xl font-bold tracking-tight text-neutral-50">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">
           Schedule
         </h1>
-        <p className="mt-1 text-sm text-neutral-400">
+        <p className="mt-1 text-sm text-muted-foreground">
           All times West Africa Time.
         </p>
       </header>
@@ -143,12 +143,12 @@ export default function SchedulePage() {
                     "block text-lg font-semibold transition-colors sm:text-xl",
                     active
                       ? "text-sky-400"
-                      : "text-neutral-500 group-hover:text-neutral-200",
+                      : "text-muted-foreground group-hover:text-foreground",
                   ].join(" ")}
                 >
                   {d.offset === 0 ? "Today" : DAY_NAMES[d.dow]}
                 </span>
-                <span className="mt-0.5 block font-mono text-[0.68rem] tabular-nums text-neutral-600">
+                <span className="mt-0.5 block font-mono text-[0.68rem] tabular-nums text-muted-foreground">
                   {d.key.slice(8)}.{d.key.slice(5, 7)}
                 </span>
                 <span
@@ -157,7 +157,7 @@ export default function SchedulePage() {
                     "mt-2 block h-[3px] origin-left transition-transform duration-200",
                     active
                       ? "scale-x-100 bg-sky-400"
-                      : "scale-x-0 bg-neutral-600 group-hover:scale-x-100",
+                      : "scale-x-0 bg-muted-foreground group-hover:scale-x-100",
                   ].join(" ")}
                 />
               </button>
@@ -177,8 +177,8 @@ export default function SchedulePage() {
             className={[
               "text-[0.95rem] underline-offset-[6px] transition-colors",
               pillar === p.id
-                ? "text-neutral-50 underline decoration-sky-400 decoration-2"
-                : "text-neutral-500 hover:text-neutral-300",
+                ? "text-foreground underline decoration-sky-400 decoration-2"
+                : "text-muted-foreground hover:text-foreground",
             ].join(" ")}
           >
             {p.label}
@@ -191,14 +191,14 @@ export default function SchedulePage() {
           <ul className="space-y-4">
             {Array.from({ length: 8 }, (_, i) => (
               <li key={i} className="flex items-baseline gap-4">
-                <span className="h-4 w-12 shrink-0 animate-pulse rounded bg-neutral-800" />
-                <span className="h-4 flex-1 animate-pulse rounded bg-neutral-900" />
+                <span className="h-4 w-12 shrink-0 animate-pulse rounded bg-muted" />
+                <span className="h-4 flex-1 animate-pulse rounded bg-card" />
               </li>
             ))}
           </ul>
         ) : isError ? (
           <div className="py-10">
-            <p className="text-sm text-neutral-400">
+            <p className="text-sm text-muted-foreground">
               The schedule could not be loaded.
             </p>
             <button
@@ -210,7 +210,7 @@ export default function SchedulePage() {
             </button>
           </div>
         ) : rows.length === 0 ? (
-          <p className="py-10 text-neutral-500">
+          <p className="py-10 text-muted-foreground">
             {pillar === "all"
               ? "Nothing scheduled for this day yet."
               : "Nothing on this day in that pillar."}
@@ -231,15 +231,15 @@ function SlotRow({ row, onAir }: { row: EpgRow; onAir: boolean }) {
   const body = (
     <div
       className={[
-        "flex items-baseline gap-4 border-b border-neutral-900 py-3.5 transition-colors sm:gap-6",
-        onAir ? "text-neutral-50" : "text-neutral-300",
-        row.watchUrl ? "group-hover:border-neutral-700" : "",
+        "flex items-baseline gap-4 border-b border-border py-3.5 transition-colors sm:gap-6",
+        onAir ? "text-foreground" : "text-foreground/80",
+        row.watchUrl ? "group-hover:border-input" : "",
       ].join(" ")}
     >
       <span
         className={[
           "w-12 shrink-0 font-mono text-sm tabular-nums",
-          onAir ? "text-sky-400" : "text-neutral-500",
+          onAir ? "text-sky-400" : "text-muted-foreground",
         ].join(" ")}
       >
         {clockLabel(row.airsAt)}
@@ -262,13 +262,13 @@ function SlotRow({ row, onAir }: { row: EpgRow; onAir: boolean }) {
           ) : null}
         </span>
         {row.subtitle ? (
-          <span className="mt-0.5 block truncate text-sm text-neutral-500">
+          <span className="mt-0.5 block truncate text-sm text-muted-foreground">
             {row.subtitle}
           </span>
         ) : null}
       </span>
 
-      <span className="shrink-0 font-mono text-xs tabular-nums text-neutral-600">
+      <span className="shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
         {durationLabel(row.durationMin)}
       </span>
     </div>

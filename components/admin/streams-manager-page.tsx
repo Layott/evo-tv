@@ -150,13 +150,13 @@ export function StreamsManagerPage() {
       header: "Stream",
       cell: (row) => (
         <div className="flex items-center gap-3">
-          <div className="h-10 w-16 shrink-0 overflow-hidden rounded bg-neutral-800">
+          <div className="h-10 w-16 shrink-0 overflow-hidden rounded bg-muted">
             {}
             <img src={row.thumbnailUrl} alt="" className="h-full w-full object-cover" />
           </div>
           <div className="min-w-0">
-            <div className="truncate text-sm font-medium text-neutral-100">{row.title}</div>
-            <div className="truncate text-xs text-neutral-500">{row.streamerName}</div>
+            <div className="truncate text-sm font-medium text-foreground">{row.title}</div>
+            <div className="truncate text-xs text-muted-foreground">{row.streamerName}</div>
           </div>
         </div>
       ),
@@ -166,7 +166,7 @@ export function StreamsManagerPage() {
       header: "Game",
       sortable: true,
       accessor: (r) => resolveGameName(games, r.gameId ?? undefined),
-      cell: (row) => <span className="text-sm text-neutral-300">{resolveGameName(games, row.gameId ?? undefined)}</span>,
+      cell: (row) => <span className="text-sm text-foreground/80">{resolveGameName(games, row.gameId ?? undefined)}</span>,
     },
     {
       key: "status",
@@ -191,7 +191,7 @@ export function StreamsManagerPage() {
         row.isPremium ? (
           <StatusBadge tone="amber">Premium</StatusBadge>
         ) : (
-          <span className="text-xs text-neutral-500">Free</span>
+          <span className="text-xs text-muted-foreground">Free</span>
         ),
     },
     {
@@ -200,7 +200,7 @@ export function StreamsManagerPage() {
       sortable: true,
       accessor: (r) => r.viewerCount,
       cell: (row) => (
-        <span className="tabular-nums text-sm text-neutral-300">{formatCompact(row.viewerCount)}</span>
+        <span className="tabular-nums text-sm text-foreground/80">{formatCompact(row.viewerCount)}</span>
       ),
       className: "text-right",
     },
@@ -209,7 +209,7 @@ export function StreamsManagerPage() {
       header: "Started",
       sortable: true,
       accessor: (r) => (r.startedAt ? new Date(r.startedAt).getTime() : 0),
-      cell: (row) => <span className="text-xs text-neutral-400">{timeAgo(row.startedAt)}</span>,
+      cell: (row) => <span className="text-xs text-muted-foreground">{timeAgo(row.startedAt)}</span>,
     },
     {
       key: "actions",
@@ -221,7 +221,7 @@ export function StreamsManagerPage() {
             e.stopPropagation();
             setConfirmDelete(row);
           }}
-          className="rounded-md p-1.5 text-neutral-400 hover:bg-red-500/10 hover:text-red-400"
+          className="rounded-md p-1.5 text-muted-foreground hover:bg-red-500/10 hover:text-red-400"
           aria-label="Delete"
         >
           <Trash2 className="h-4 w-4" />
@@ -367,17 +367,17 @@ export function StreamsManagerPage() {
 
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative w-full max-w-sm">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-neutral-500" />
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search title or streamer"
-            className="border-neutral-800 bg-neutral-900 pl-8 text-sm"
+            className="border-border bg-card pl-8 text-sm"
           />
         </div>
 
         <Select value={gameFilter} onValueChange={setGameFilter}>
-          <SelectTrigger className="w-40 border-neutral-800 bg-neutral-900">
+          <SelectTrigger className="w-40 border-border bg-card">
             <SelectValue placeholder="All games" />
           </SelectTrigger>
           <SelectContent>
@@ -391,7 +391,7 @@ export function StreamsManagerPage() {
         </Select>
 
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-36 border-neutral-800 bg-neutral-900">
+          <SelectTrigger className="w-36 border-border bg-card">
             <SelectValue placeholder="All status" />
           </SelectTrigger>
           <SelectContent>
@@ -401,7 +401,7 @@ export function StreamsManagerPage() {
           </SelectContent>
         </Select>
 
-        <div className="ml-auto text-xs text-neutral-500">{filtered.length} streams</div>
+        <div className="ml-auto text-xs text-muted-foreground">{filtered.length} streams</div>
       </div>
 
       <DataTable<Stream>
@@ -415,7 +415,7 @@ export function StreamsManagerPage() {
 
       {/* Detail sheet */}
       <Sheet open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
-        <SheetContent className="w-full overflow-y-auto border-neutral-800 bg-neutral-950 text-neutral-100 sm:max-w-lg">
+        <SheetContent className="w-full overflow-y-auto border-border bg-background text-foreground sm:max-w-lg">
           {selected ? (
             <>
               <SheetHeader>
@@ -425,7 +425,7 @@ export function StreamsManagerPage() {
                 </SheetDescription>
               </SheetHeader>
               <div className="space-y-5 px-4 pb-4">
-                <div className="overflow-hidden rounded-lg border border-neutral-800">
+                <div className="overflow-hidden rounded-lg border border-border">
                   {}
                   <img src={selected.thumbnailUrl} alt="" className="w-full object-cover" />
                 </div>
@@ -463,14 +463,14 @@ export function StreamsManagerPage() {
                 </div>
 
                 <div>
-                  <div className="mb-1 text-xs uppercase tracking-wider text-neutral-500">Description</div>
-                  <p className="text-sm text-neutral-300">{selected.description}</p>
+                  <div className="mb-1 text-xs uppercase tracking-wider text-muted-foreground">Description</div>
+                  <p className="text-sm text-foreground/80">{selected.description}</p>
                 </div>
 
-                <div className="rounded-lg border border-neutral-800 bg-neutral-900/40 p-4">
+                <div className="rounded-lg border border-border bg-card/40 p-4">
                   <div className="mb-3 flex items-center gap-2">
                     <Key className="h-4 w-4 text-sky-400" />
-                    <h4 className="text-sm font-semibold text-neutral-100">OBS / RTMP settings</h4>
+                    <h4 className="text-sm font-semibold text-foreground">OBS / RTMP settings</h4>
                   </div>
                   <div className="space-y-2 text-xs">
                     {/* Read from the server, not written here.
@@ -481,11 +481,11 @@ export function StreamsManagerPage() {
                         like a bad key and is not. */}
                     <Row label="Server">
                       {selectedIngest?.server ? (
-                        <code className="rounded bg-neutral-950 px-2 py-1 font-mono text-neutral-300">
+                        <code className="rounded bg-background px-2 py-1 font-mono text-foreground/80">
                           {selectedIngest.server}
                         </code>
                       ) : (
-                        <span className="text-neutral-500">
+                        <span className="text-muted-foreground">
                           {selectedIngest ? "No ingest configured" : "Loading…"}
                         </span>
                       )}
@@ -495,7 +495,7 @@ export function StreamsManagerPage() {
                         stream id, which looked real and was not: pasting it into
                         OBS would have failed to authenticate. */}
                     <Row label="Stream key">
-                      <span className="text-neutral-400">
+                      <span className="text-muted-foreground">
                         Shown once on creation. Regenerate to get a new one.
                       </span>
                     </Row>
@@ -523,7 +523,7 @@ export function StreamsManagerPage() {
                         (selected as Stream & { isMainChannel?: boolean })
                           .isMainChannel
                           ? "border-sky-500/60 bg-sky-500/10 text-sky-200 hover:bg-sky-500/20"
-                          : "border-neutral-700 bg-neutral-900 text-neutral-200 hover:bg-neutral-800"
+                          : "border-input bg-card text-foreground hover:bg-accent"
                       }
                       onClick={() =>
                         mainChannelMut.mutate({
@@ -542,7 +542,7 @@ export function StreamsManagerPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="border-neutral-700 bg-neutral-900 text-neutral-200 hover:bg-neutral-800"
+                      className="border-input bg-card text-foreground hover:bg-accent"
                       onClick={() => handleShowIngest(selected)}
                     >
                       <Radio className="h-3.5 w-3.5" />
@@ -551,7 +551,7 @@ export function StreamsManagerPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="border-neutral-700 bg-neutral-900 text-neutral-200 hover:bg-neutral-800"
+                      className="border-input bg-card text-foreground hover:bg-accent"
                       onClick={() => handleRegenerate(selected)}
                     >
                       <RefreshCw className="h-3.5 w-3.5" />
@@ -590,18 +590,18 @@ export function StreamsManagerPage() {
         open={!!ingestReveal}
         onOpenChange={(o) => !o && setIngestReveal(null)}
       >
-        <DialogContent className="border-neutral-800 bg-neutral-950 text-neutral-100">
+        <DialogContent className="border-border bg-background text-foreground">
           <DialogHeader>
             <DialogTitle>Broadcast settings</DialogTitle>
-            <DialogDescription className="text-neutral-400">
+            <DialogDescription className="text-muted-foreground">
               In OBS: Settings, Stream, Service{" "}
-              <span className="text-neutral-200">Custom</span>, then paste these
+              <span className="text-foreground">Custom</span>, then paste these
               two fields.
             </DialogDescription>
           </DialogHeader>
 
           {ingestReveal?.kind === "manual" ? (
-            <div className="rounded-lg border border-neutral-800 bg-neutral-900/60 p-3 text-xs text-neutral-300">
+            <div className="rounded-lg border border-border bg-card/60 p-3 text-xs text-foreground/80">
               No ingest is provisioned for this stream. Set a playback URL by
               hand, or configure an ingest and create the stream again.
             </div>
@@ -632,9 +632,9 @@ export function StreamsManagerPage() {
             </div>
           ) : null}
 
-          <div className="rounded-lg border border-neutral-800 bg-neutral-900/40 p-3 text-xs text-neutral-400">
+          <div className="rounded-lg border border-border bg-card/40 p-3 text-xs text-muted-foreground">
             Recommended output: 1280x720, 30fps, CBR 2500 kbps, and a{" "}
-            <span className="text-neutral-200">keyframe interval of 2</span>.
+            <span className="text-foreground">keyframe interval of 2</span>.
             Segments can only be cut on a keyframe, so leaving it on auto gives
             long segments and a slow start.
           </div>
@@ -652,17 +652,17 @@ export function StreamsManagerPage() {
 
       {/* Delete confirm */}
       <Dialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
-        <DialogContent className="border-neutral-800 bg-neutral-950 text-neutral-100">
+        <DialogContent className="border-border bg-background text-foreground">
           <DialogHeader>
             <DialogTitle>Delete stream?</DialogTitle>
-            <DialogDescription className="text-neutral-400">
+            <DialogDescription className="text-muted-foreground">
               This will permanently remove "{confirmDelete?.title}". This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button
               variant="outline"
-              className="border-neutral-700 bg-neutral-900 hover:bg-neutral-800"
+              className="border-input bg-card hover:bg-accent"
               onClick={() => setConfirmDelete(null)}
             >
               Cancel
@@ -680,8 +680,8 @@ export function StreamsManagerPage() {
 function Info({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <div className="mb-0.5 text-[10px] uppercase tracking-wider text-neutral-500">{label}</div>
-      <div className="text-neutral-200">{children}</div>
+      <div className="mb-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className="text-foreground">{children}</div>
     </div>
   );
 }
@@ -689,8 +689,8 @@ function Info({ label, children }: { label: string; children: React.ReactNode })
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <span className="text-neutral-500">{label}</span>
-      <span className="truncate text-neutral-300">{children}</span>
+      <span className="text-muted-foreground">{label}</span>
+      <span className="truncate text-foreground/80">{children}</span>
     </div>
   );
 }
@@ -748,7 +748,7 @@ function CreateStreamDrawer({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full overflow-y-auto border-neutral-800 bg-neutral-950 text-neutral-100 sm:max-w-lg">
+      <SheetContent className="w-full overflow-y-auto border-border bg-background text-foreground sm:max-w-lg">
         <SheetHeader>
           <SheetTitle>New stream</SheetTitle>
           <SheetDescription>Configure an official broadcast. A stream key will be generated.</SheetDescription>
@@ -761,7 +761,7 @@ function CreateStreamDrawer({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="EVO Finals - Grand Final LIVE"
-              className="border-neutral-800 bg-neutral-900"
+              className="border-border bg-card"
             />
           </div>
           <div className="space-y-1.5">
@@ -771,14 +771,14 @@ function CreateStreamDrawer({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="What is this stream about?"
-              className="min-h-[80px] border-neutral-800 bg-neutral-900"
+              className="min-h-[80px] border-border bg-card"
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Game (optional)</Label>
               <Select value={gameId} onValueChange={setGameId}>
-                <SelectTrigger className="w-full border-neutral-800 bg-neutral-900">
+                <SelectTrigger className="w-full border-border bg-card">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -794,7 +794,7 @@ function CreateStreamDrawer({
             <div className="space-y-1.5">
               <Label>Event (optional)</Label>
               <Select value={eventId} onValueChange={setEventId}>
-                <SelectTrigger className="w-full border-neutral-800 bg-neutral-900">
+                <SelectTrigger className="w-full border-border bg-card">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -814,7 +814,7 @@ function CreateStreamDrawer({
               value={pillar}
               onValueChange={(v) => setPillar(v as NewStreamPayload["pillar"])}
             >
-              <SelectTrigger className="w-full border-neutral-800 bg-neutral-900">
+              <SelectTrigger className="w-full border-border bg-card">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -823,7 +823,7 @@ function CreateStreamDrawer({
                 <SelectItem value="lifestyle">Lifestyle</SelectItem>
               </SelectContent>
             </Select>
-            <p className="text-xs text-neutral-500">
+            <p className="text-xs text-muted-foreground">
               What the programme is. Drives the filters on the schedule and the
               week grid.
             </p>
@@ -834,13 +834,13 @@ function CreateStreamDrawer({
               id="streamer"
               value={streamerName}
               onChange={(e) => setStreamerName(e.target.value)}
-              className="border-neutral-800 bg-neutral-900"
+              className="border-border bg-card"
             />
           </div>
-          <div className="flex items-center justify-between rounded-lg border border-neutral-800 bg-neutral-900/40 p-3">
+          <div className="flex items-center justify-between rounded-lg border border-border bg-card/40 p-3">
             <div>
-              <div className="text-sm font-medium text-neutral-100">Premium only</div>
-              <div className="text-xs text-neutral-400">Restrict access to premium subscribers.</div>
+              <div className="text-sm font-medium text-foreground">Premium only</div>
+              <div className="text-xs text-muted-foreground">Restrict access to premium subscribers.</div>
             </div>
             <Switch checked={isPremium} onCheckedChange={setIsPremium} />
           </div>
@@ -848,7 +848,7 @@ function CreateStreamDrawer({
         <SheetFooter>
           <Button
             variant="outline"
-            className="border-neutral-700 bg-neutral-900 hover:bg-neutral-800"
+            className="border-input bg-card hover:bg-accent"
             onClick={() => onOpenChange(false)}
           >
             Cancel
@@ -896,12 +896,12 @@ function CopyField({
 }) {
   return (
     <div>
-      <div className="mb-1 text-xs font-medium text-neutral-400">{label}</div>
+      <div className="mb-1 text-xs font-medium text-muted-foreground">{label}</div>
       {value ? (
-        <div className="flex items-center gap-2 rounded-md border border-neutral-800 bg-neutral-900 p-2">
+        <div className="flex items-center gap-2 rounded-md border border-border bg-card p-2">
           <code
             className={`flex-1 truncate font-mono text-sm ${
-              secret ? "text-sky-300" : "text-neutral-200"
+              secret ? "text-sky-300" : "text-foreground"
             }`}
           >
             {value}
@@ -909,7 +909,7 @@ function CopyField({
           <Button
             size="sm"
             variant="outline"
-            className="border-neutral-700 bg-neutral-900 text-neutral-200 hover:bg-neutral-800"
+            className="border-input bg-card text-foreground hover:bg-accent"
             onClick={() => {
               navigator.clipboard?.writeText(value).catch(() => {});
               toast.success(`${label} copied`);
@@ -920,7 +920,7 @@ function CopyField({
           </Button>
         </div>
       ) : (
-        <div className="rounded-md border border-neutral-800 bg-neutral-900/50 p-2 text-xs text-neutral-500">
+        <div className="rounded-md border border-border bg-card/50 p-2 text-xs text-muted-foreground">
           {empty ?? "Not available"}
         </div>
       )}

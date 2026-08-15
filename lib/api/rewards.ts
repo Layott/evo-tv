@@ -306,7 +306,7 @@ export interface XpEvent {
 
 /**
  * Static quest definitions. Daily reset is per-UTC-day. Adding/removing quests
- * is a code change — admin-editable templates would be a later phase. Tuple
+ * is a code change - admin-editable templates would be a later phase. Tuple
  * structure keeps each quest's "how to count progress" colocated with the
  * template itself.
  */
@@ -491,7 +491,7 @@ async function computeProgressFor(
 
 export async function listDailyQuests(userId: string): Promise<DailyQuest[]> {
   const dayKey = utcDayKey();
-  // Guard against the daily_quest_claims migration (0017) not yet applied —
+  // Guard against the daily_quest_claims migration (0017) not yet applied -
   // if the table is missing, treat every quest as unclaimed instead of 500.
   let claimedSet = new Set<string>();
   try {
@@ -508,7 +508,7 @@ export async function listDailyQuests(userId: string): Promise<DailyQuest[]> {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     if (!/daily_quest_claims/.test(msg)) throw err;
-    // Migration drift — list quests without claim state.
+    // Migration drift - list quests without claim state.
   }
 
   const out: DailyQuest[] = [];

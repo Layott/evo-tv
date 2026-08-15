@@ -28,13 +28,13 @@ function tierColor(t: string): string {
     case "b":
       return "border-sky-500/40 bg-sky-500/10 text-sky-300";
     default:
-      return "border-neutral-700 bg-neutral-800 text-neutral-300";
+      return "border-input bg-muted text-foreground/80";
   }
 }
 
 function SkeletonCard() {
   return (
-    <div className="h-48 w-72 shrink-0 animate-pulse rounded-xl bg-neutral-900" />
+    <div className="h-48 w-72 shrink-0 animate-pulse rounded-xl bg-card" />
   );
 }
 
@@ -59,7 +59,7 @@ export function UpcomingEvents({ events, games, loading }: UpcomingEventsProps) 
           ))}
         </div>
       ) : events.length === 0 ? (
-        <div className="rounded-xl border border-neutral-800 bg-neutral-900/60 p-6 text-center text-sm text-neutral-500">
+        <div className="rounded-xl border border-border bg-card/60 p-6 text-center text-sm text-muted-foreground">
           No upcoming events scheduled.
         </div>
       ) : (
@@ -71,7 +71,7 @@ export function UpcomingEvents({ events, games, loading }: UpcomingEventsProps) 
               <Link
                 key={ev.id}
                 href={`/events/${ev.id}`}
-                className="group flex w-72 shrink-0 snap-start flex-col overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900/60 transition-colors hover:border-neutral-700"
+                className="group flex w-72 shrink-0 snap-start flex-col overflow-hidden rounded-xl border border-border bg-card/60 transition-colors hover:border-input"
               >
                 <div className="relative aspect-[16/9] overflow-hidden">
                   <img
@@ -89,10 +89,10 @@ export function UpcomingEvents({ events, games, loading }: UpcomingEventsProps) 
                   </span>
                 </div>
                 <div className="flex flex-1 flex-col gap-2 p-3">
-                  <h3 className="line-clamp-2 text-sm font-semibold text-neutral-100">
+                  <h3 className="line-clamp-2 text-sm font-semibold text-foreground">
                     {ev.title}
                   </h3>
-                  <div className="flex items-center gap-2 text-[11px] text-neutral-400">
+                  <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
                     <Calendar className="h-3 w-3" />
                     {date.toLocaleDateString(undefined, {
                       month: "short",

@@ -3,9 +3,9 @@ import { requireAdminFromRequest, writeAudit } from "@/lib/api/admin";
 import { scorePickemForEvent } from "@/lib/pickem/score";
 
 /**
- * POST /api/admin/pickem/[eventId]/score — admin only.
+ * POST /api/admin/pickem/[eventId]/score - admin only.
  *
- * Idempotent — walks completed matches for the event, recomputes
+ * Idempotent - walks completed matches for the event, recomputes
  * pickem_entries.score for every entry, returns counts.
  *
  * Wire this into the admin matches-result UI: after marking a match

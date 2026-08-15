@@ -3,6 +3,7 @@ import { and, count, desc, eq, isNull, or, like } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import type { Profile, UserPrefs, Role } from "@/lib/types";
 import { getCurrentUser as sessionUser } from "@/lib/auth/guards";
+import { firstNonEmpty, resolveAvatarUrl } from "@/lib/avatar";
 
 type UserRow = typeof schema.user.$inferSelect;
 type ProfileRow = typeof schema.profiles.$inferSelect;
@@ -13,9 +14,21 @@ function toProfile(u: UserRow, p: ProfileRow | null | undefined): Profile {
     typeof u.createdAt === "string" ? u.createdAt : new Date(u.createdAt).toISOString();
   return {
     id: u.id,
-    handle: u.handle ?? u.email.split("@")[0] ?? u.id,
-    displayName: u.name || p?.displayName || u.email,
-    avatarUrl: p?.avatarUrl ?? u.image ?? "",
+    handle: firstNonEmpty(u.handle, u.email.split("@")[0]) ?? u.id,
+    /**
+     * The email is the last resort and it is a poor one: it puts an address on
+     * screen next to a public handle. It is still better than a blank where a
+     * name should be, which is the "some names are missing" report.
+     */
+    displayName:
+      firstNonEmpty(u.name, p?.displayName, u.handle) ?? u.email,
+    /**
+     * `??` here was the bug. Four code paths insert a `profiles` row with
+     * `avatar_url: ""` when there is nothing to write, and `??` only falls
+     * through on null, so an empty string won over a perfectly good
+     * `user.image` and the UI got "" to put in `<img src>`. See lib/avatar.ts.
+     */
+    avatarUrl: resolveAvatarUrl(p?.avatarUrl, u.image) ?? "",
     bio: p?.bio ?? "",
     role,
     country: p?.country ?? "NG",
@@ -193,7 +206,7 @@ export interface PublicProfile {
  * email or other private fields. Pulls follower count + recent creator clips
  * + owned channels for surfaces like `/u/[handle]`.
  *
- * `viewerId` (optional) — when present, hydrates `isFollowing` so signed-in
+ * `viewerId` (optional) - when present, hydrates `isFollowing` so signed-in
  * callers don't need a second round-trip.
  */
 export async function getPublicProfileByHandle(

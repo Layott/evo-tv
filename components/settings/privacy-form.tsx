@@ -40,7 +40,7 @@ export function PrivacyForm() {
 
   return (
     <SectionCard title="Privacy" description="Control what others can see about you.">
-      <div className="divide-y divide-neutral-800">
+      <div className="divide-y divide-border">
         <SettingRow
           label="Profile visibility"
           description="Who can view your profile page"
@@ -80,7 +80,7 @@ export function PrivacyForm() {
         >
           <Button
             variant="outline"
-            className="border-neutral-800"
+            className="border-border"
             onClick={handleExport}
             disabled={exporting}
           >

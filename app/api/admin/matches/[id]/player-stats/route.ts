@@ -23,7 +23,7 @@ const bodySchema = z.object({
 });
 
 /**
- * POST /api/admin/matches/[id]/player-stats — admin only.
+ * POST /api/admin/matches/[id]/player-stats - admin only.
  *
  * Body: { stats: [{playerId, kills, deaths, assists, objectives}], rescore? }
  *

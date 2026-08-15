@@ -16,8 +16,8 @@ const querySchema = z.object({
  *
  * Recent sign-in events platform-wide. JOINs user for handle/email.
  * Optional filters:
- *   ?ipHash=<hash>      — find every account that signed in from this IP
- *   ?deviceFp=<id>      — find every account on this device
+ *   ?ipHash=<hash>      - find every account that signed in from this IP
+ *   ?deviceFp=<id>      - find every account on this device
  *
  * Used by the forensic admin screen to detect ban-evasion.
  * Moderator+.

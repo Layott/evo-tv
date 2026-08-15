@@ -118,8 +118,8 @@ export default function StreamPage() {
   if (stream === undefined) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-6">
-        <div className="aspect-video w-full rounded-lg bg-neutral-900 animate-pulse" />
-        <div className="mt-4 h-6 w-1/2 bg-neutral-900 rounded animate-pulse" />
+        <div className="aspect-video w-full rounded-lg bg-card animate-pulse" />
+        <div className="mt-4 h-6 w-1/2 bg-card rounded animate-pulse" />
       </div>
     );
   }
@@ -128,8 +128,8 @@ export default function StreamPage() {
   if (stream === null) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-16 text-center">
-        <h1 className="text-2xl font-bold text-neutral-100">Stream not found</h1>
-        <p className="mt-2 text-sm text-neutral-400">
+        <h1 className="text-2xl font-bold text-foreground">Stream not found</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
           This stream may have ended or the link is invalid.
         </p>
         <div className="mt-6 flex items-center justify-center gap-3">
@@ -149,7 +149,7 @@ export default function StreamPage() {
   const showAd = !showPaywall && ad && !adDone;
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-neutral-950">
+    <div className="min-h-[calc(100vh-4rem)] bg-background">
       <PremiumPaywallModal
         open={showPaywall}
         kind="stream"
@@ -162,7 +162,7 @@ export default function StreamPage() {
           <div className="flex items-center justify-between">
             <BackButton fallbackHref="/discover" />
           </div>
-          <div className="relative overflow-hidden rounded-xl border border-neutral-800 bg-black">
+          <div className="relative overflow-hidden rounded-xl border border-border bg-black">
             {showPaywall ? (
               <PaywallOverlay
                 thumb={stream.thumbnailUrl}
@@ -202,7 +202,7 @@ export default function StreamPage() {
                * schedule are all still on the page, because the point is to ask
                * someone to sign in, not to hide that anything exists.
                */
-              <div className="relative flex aspect-video w-full items-center justify-center bg-neutral-950">
+              <div className="relative flex aspect-video w-full items-center justify-center bg-background">
                 {stream.thumbnailUrl ? (
                   <MediaImage
                     src={stream.thumbnailUrl}
@@ -212,11 +212,11 @@ export default function StreamPage() {
                   />
                 ) : null}
                 <div className="relative flex flex-col items-center gap-3 px-6 text-center">
-                  <Lock className="size-6 text-neutral-400" />
-                  <p className="text-base font-semibold text-neutral-100">
+                  <Lock className="size-6 text-muted-foreground" />
+                  <p className="text-base font-semibold text-foreground">
                     Sign in to watch
                   </p>
-                  <p className="max-w-sm text-sm text-neutral-400">
+                  <p className="max-w-sm text-sm text-muted-foreground">
                     {stream.isLive
                       ? "This broadcast is live now. Free to watch with an account."
                       : "Create a free account to watch when this goes live."}
@@ -228,7 +228,7 @@ export default function StreamPage() {
                     <Button
                       asChild
                       variant="outline"
-                      className="border-neutral-700 bg-neutral-900 text-neutral-200 hover:bg-neutral-800"
+                      className="border-input bg-card text-foreground hover:bg-accent"
                     >
                       <Link href={`/signup?next=/stream/${streamId}`}>
                         Create an account
@@ -238,11 +238,11 @@ export default function StreamPage() {
                 </div>
               </div>
             ) : (
-              <div className="flex aspect-video w-full flex-col items-center justify-center gap-2 bg-neutral-950 text-center">
-                <p className="text-sm font-semibold text-neutral-200">
+              <div className="flex aspect-video w-full flex-col items-center justify-center gap-2 bg-background text-center">
+                <p className="text-sm font-semibold text-foreground">
                   {stream.isLive ? "This stream has no video source yet" : "Not currently live"}
                 </p>
-                <p className="max-w-sm text-xs text-neutral-500">
+                <p className="max-w-sm text-xs text-muted-foreground">
                   {stream.isLive
                     ? "An admin needs to set the playback URL on this stream."
                     : "Check the schedule for what is on next."}
@@ -260,7 +260,7 @@ export default function StreamPage() {
         </div>
 
         {/* Right column - desktop social panel */}
-        <aside className="hidden lg:block h-[calc(100vh-5rem)] sticky top-16 rounded-xl border border-neutral-800 bg-neutral-950 overflow-hidden">
+        <aside className="hidden lg:block h-[calc(100vh-5rem)] sticky top-16 rounded-xl border border-border bg-background overflow-hidden">
           <SocialTabs streamId={streamId} fill />
         </aside>
       </div>
@@ -280,8 +280,8 @@ function SocialTabs({
       defaultValue="chat"
       className={fill ? "flex h-full flex-col" : "flex flex-col"}
     >
-      <div className="border-b border-neutral-800 px-2 py-2">
-        <TabsList className="bg-neutral-900">
+      <div className="border-b border-border px-2 py-2">
+        <TabsList className="bg-card">
           <TabsTrigger value="chat">Chat</TabsTrigger>
           <TabsTrigger value="polls">Polls</TabsTrigger>
           <TabsTrigger value="shop">Shop</TabsTrigger>
@@ -330,7 +330,7 @@ function PaywallOverlay({
           Premium content
         </Badge>
         <h2 className="text-xl font-bold text-white max-w-md">{title}</h2>
-        <p className="text-sm text-neutral-300 max-w-md">
+        <p className="text-sm text-foreground/80 max-w-md">
           Upgrade to EVO Premium to unlock film rooms, ad-free streams, and
           exclusive analysis.
         </p>

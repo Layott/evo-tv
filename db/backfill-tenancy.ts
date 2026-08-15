@@ -1,11 +1,11 @@
 /**
- * Phase 3.2 backfill — populate publishers, channels, and channel_id FKs
+ * Phase 3.2 backfill - populate publishers, channels, and channel_id FKs
  * for pre-multi-tenant data.
  *
  *   1. Create the EVO TV-owned publisher (`pub_evotv`).
  *   2. Create one channel per distinct `streams.streamer_name`. EVO-owned
  *      streamers (streamer_type=official) attach to pub_evotv. Creator
- *      streamers will get their own publisher row later — for now they
+ *      streamers will get their own publisher row later - for now they
  *      also attach to pub_evotv with a note so they don't dangle.
  *   3. Populate `streams.channel_id`, `vods.channel_id`, `clips.channel_id`,
  *      `tips.channel_id`.
@@ -130,8 +130,8 @@ async function ensureChannels(
         slug,
         name: s.streamerName,
         description: s.isOfficial
-          ? `${s.streamerName} — official EVO TV channel.`
-          : `${s.streamerName} — creator channel.`,
+          ? `${s.streamerName} - official EVO TV channel.`
+          : `${s.streamerName} - creator channel.`,
         logoUrl: s.streamerAvatarUrl,
         category: "esports",
         isVerified: s.isOfficial,
@@ -220,7 +220,7 @@ async function backfillTipChannelIds(): Promise<void> {
     .from(schema.tips)
     .where(isNull(schema.tips.channelId));
   console.log(
-    `[backfill]   tips backfilled. ${orphans[0]?.count ?? 0} orphans remain (tips not bound to a stream — channel attribution left null).`,
+    `[backfill]   tips backfilled. ${orphans[0]?.count ?? 0} orphans remain (tips not bound to a stream - channel attribution left null).`,
   );
 }
 

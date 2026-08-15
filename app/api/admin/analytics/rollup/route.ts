@@ -6,7 +6,7 @@ import { rollupDay, yesterdayYmd } from "@/lib/analytics/rollup";
  * POST /api/admin/analytics/rollup  body={ date?: "YYYY-MM-DD" }
  *   Run the analytics_daily rollup for a date (defaults to yesterday UTC).
  *
- * Also used by the Vercel Cron entry at /api/cron/analytics — that route
+ * Also used by the Vercel Cron entry at /api/cron/analytics - that route
  * just calls into this handler.
  */
 export async function POST(req: NextRequest) {

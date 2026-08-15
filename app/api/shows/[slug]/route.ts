@@ -4,7 +4,7 @@ import { getShowBySlug, listSeasonsForShow } from "@/lib/api/shows";
 
 export const dynamic = "force-dynamic";
 
-/** GET /api/shows/[slug] — show landing payload (show + seasons rolled up). */
+/** GET /api/shows/[slug] - show landing payload (show + seasons rolled up). */
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ slug: string }> },

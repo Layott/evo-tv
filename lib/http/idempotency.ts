@@ -17,7 +17,7 @@ import { db, schema } from "@/lib/db";
  *
  * - Header is required: 422 if missing.
  * - Replay window: 24h. After that the key can be re-used.
- * - Key + user_id uniqueness — different users can use the same key string.
+ * - Key + user_id uniqueness - different users can use the same key string.
  */
 
 const REPLAY_WINDOW_HOURS = 24;

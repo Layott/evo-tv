@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { GetTheAppLink } from "@/components/apps/get-the-app-link";
+
 /**
  * The legal line that has to be reachable from every page, not only the
  * landing page.
@@ -22,14 +24,14 @@ const LINKS: Array<{ label: string; href: string }> = [
 
 export function AppFooter() {
   return (
-    <footer className="px-5 pb-8 pt-12 text-[11px] text-neutral-500 sm:px-8">
+    <footer className="px-5 pb-8 pt-12 text-[11px] text-muted-foreground sm:px-8">
       <div className="mx-auto flex max-w-[92rem] flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <nav aria-label="Legal and site links" className="flex flex-wrap gap-x-6 gap-y-2">
           {LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="transition-colors hover:text-neutral-200"
+              className="transition-colors hover:text-foreground"
             >
               {link.label}
             </Link>

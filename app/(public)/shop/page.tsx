@@ -67,12 +67,12 @@ export default function ShopPage() {
     <div className="mx-auto max-w-6xl px-4 py-6 sm:py-8">
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-50">Shop</h1>
-          <p className="text-sm text-neutral-400">
+          <h1 className="text-2xl font-bold text-foreground">Shop</h1>
+          <p className="text-sm text-muted-foreground">
             Official merch, collectibles & digital goods. Pay in Naira.
           </p>
         </div>
-        <Button asChild variant="outline" className="border-neutral-800">
+        <Button asChild variant="outline" className="border-border">
           <Link href="/cart">
             <ShoppingCart className="size-4" />
             Cart
@@ -90,7 +90,7 @@ export default function ShopPage() {
                 "rounded-full border px-3 py-1.5 text-xs font-semibold transition",
                 c.v === cat
                   ? "border-sky-500/60 bg-sky-500/15 text-sky-200"
-                  : "border-neutral-800 bg-neutral-900/60 text-neutral-300 hover:border-neutral-600"
+                  : "border-border bg-card/60 text-foreground/80 hover:border-input"
               )}
             >
               {c.label}
@@ -105,17 +105,17 @@ export default function ShopPage() {
             <SelectItem value="featured">Sort: Featured</SelectItem>
             <SelectItem value="price-asc">Price: Low to high</SelectItem>
             <SelectItem value="price-desc">Price: High to low</SelectItem>
-            <SelectItem value="name">Name A–Z</SelectItem>
+            <SelectItem value="name">Name A-Z</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       {loading ? (
         <div className="flex min-h-[40vh] items-center justify-center">
-          <Loader2 className="size-6 animate-spin text-neutral-500" />
+          <Loader2 className="size-6 animate-spin text-muted-foreground" />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-neutral-800 p-12 text-center text-neutral-400">
+        <div className="rounded-2xl border border-dashed border-border p-12 text-center text-muted-foreground">
           No products match your filters.
         </div>
       ) : (

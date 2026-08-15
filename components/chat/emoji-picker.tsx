@@ -29,7 +29,7 @@ export function EmojiPicker({ onPick }: { onPick: (emoji: string) => void }) {
       <PopoverContent
         align="end"
         side="top"
-        className="w-56 p-2 bg-neutral-900 border-neutral-800"
+        className="w-56 p-2 bg-card border-border"
       >
         <div className="grid grid-cols-8 gap-1">
           {GAMING_EMOJIS.map((e) => (
@@ -40,7 +40,7 @@ export function EmojiPicker({ onPick }: { onPick: (emoji: string) => void }) {
                 onPick(e);
                 setOpen(false);
               }}
-              className="text-lg h-8 w-8 flex items-center justify-center rounded hover:bg-neutral-800"
+              className="text-lg h-8 w-8 flex items-center justify-center rounded hover:bg-accent"
               aria-label={`Insert ${e}`}
             >
               {e}

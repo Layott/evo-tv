@@ -27,7 +27,7 @@ function tierColor(t: string): string {
     case "b":
       return "border-sky-500/40 bg-sky-500/10 text-sky-300";
     default:
-      return "border-neutral-700 bg-neutral-800 text-neutral-300";
+      return "border-input bg-muted text-foreground/80";
   }
 }
 
@@ -44,7 +44,7 @@ function EventCard({ event, gameName }: { event: EsportsEvent; gameName?: string
   return (
     <Link
       href={`/events/${event.id}`}
-      className="group flex overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900/60 transition-colors hover:border-neutral-700"
+      className="group flex overflow-hidden rounded-xl border border-border bg-card/60 transition-colors hover:border-input"
     >
       <div className="relative aspect-square w-32 shrink-0 overflow-hidden sm:w-48">
         <img src={event.bannerUrl} alt={event.title} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
@@ -60,11 +60,11 @@ function EventCard({ event, gameName }: { event: EsportsEvent; gameName?: string
         )}
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-1 p-3 sm:p-4">
-        <h3 className="line-clamp-2 text-sm font-semibold text-neutral-100 sm:text-base">
+        <h3 className="line-clamp-2 text-sm font-semibold text-foreground sm:text-base">
           {event.title}
         </h3>
         <p className="text-xs text-sky-400">{gameName}</p>
-        <div className="flex items-center gap-3 text-[11px] text-neutral-400">
+        <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
           <span className="flex items-center gap-1">
             <Calendar className="h-3 w-3" />
             {new Date(event.startsAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
@@ -82,7 +82,7 @@ function EventCard({ event, gameName }: { event: EsportsEvent; gameName?: string
 }
 
 function SkeletonCard() {
-  return <div className="h-28 animate-pulse rounded-xl bg-neutral-900 sm:h-36" />;
+  return <div className="h-28 animate-pulse rounded-xl bg-card sm:h-36" />;
 }
 
 export default function EventsPage() {
@@ -122,7 +122,7 @@ export default function EventsPage() {
     <div className="mx-auto max-w-7xl px-4 py-6">
       <header className="mb-6">
         <h1 className="text-2xl font-bold tracking-tight">Events</h1>
-        <p className="mt-1 text-sm text-neutral-400">
+        <p className="mt-1 text-sm text-muted-foreground">
           Tournaments and invitationals across African esports.
         </p>
       </header>
@@ -135,7 +135,7 @@ export default function EventsPage() {
             className={`shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
               gameFilter === null
                 ? "border-sky-500/50 bg-sky-500/10 text-sky-300"
-                : "border-neutral-800 bg-neutral-900/60 text-neutral-400 hover:border-neutral-700"
+                : "border-border bg-card/60 text-muted-foreground hover:border-input"
             }`}
           >
             All games
@@ -148,7 +148,7 @@ export default function EventsPage() {
               className={`shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
                 gameFilter === g.id
                   ? "border-sky-500/50 bg-sky-500/10 text-sky-300"
-                  : "border-neutral-800 bg-neutral-900/60 text-neutral-400 hover:border-neutral-700"
+                  : "border-border bg-card/60 text-muted-foreground hover:border-input"
               }`}
             >
               {g.shortName}
@@ -157,7 +157,7 @@ export default function EventsPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs text-neutral-500">Tier:</span>
+          <span className="text-xs text-muted-foreground">Tier:</span>
           {(["s", "a", "b", "c"] as EventTier[]).map((t) => (
             <button
               key={t}
@@ -166,18 +166,18 @@ export default function EventsPage() {
               className={`rounded-full border px-2.5 py-0.5 text-[11px] font-semibold uppercase transition-colors ${
                 tierFilter === t
                   ? tierColor(t)
-                  : "border-neutral-800 bg-neutral-900/60 text-neutral-400 hover:border-neutral-700"
+                  : "border-border bg-card/60 text-muted-foreground hover:border-input"
               }`}
             >
               {t}
             </button>
           ))}
 
-          <span className="ml-auto text-xs text-neutral-500">Sort:</span>
+          <span className="ml-auto text-xs text-muted-foreground">Sort:</span>
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value as SortKey)}
-            className="rounded-md border border-neutral-800 bg-neutral-900/60 px-2 py-1 text-xs text-neutral-200 focus:border-sky-500/50 focus:outline-none"
+            className="rounded-md border border-border bg-card/60 px-2 py-1 text-xs text-foreground focus:border-sky-500/50 focus:outline-none"
           >
             <option value="soonest">Soonest</option>
             <option value="prize">Prize pool</option>
@@ -192,7 +192,7 @@ export default function EventsPage() {
           ))}
         </div>
       ) : all.length === 0 ? (
-        <div className="rounded-xl border border-neutral-800 bg-neutral-900/60 p-8 text-center text-sm text-neutral-500">
+        <div className="rounded-xl border border-border bg-card/60 p-8 text-center text-sm text-muted-foreground">
           No events match your filters.
         </div>
       ) : (

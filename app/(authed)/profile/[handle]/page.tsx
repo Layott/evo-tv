@@ -63,7 +63,7 @@ export default function PublicProfilePage() {
   if (loading || !profile) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <Loader2 className="size-6 animate-spin text-neutral-500" />
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -76,19 +76,19 @@ export default function PublicProfilePage() {
       <ProfileHeader profile={profile} canEdit={false} />
       <div className="mt-6">
         <Tabs defaultValue="overview">
-          <TabsList className="bg-neutral-900/60">
+          <TabsList className="bg-card/60">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="followed">Followed</TabsTrigger>
           </TabsList>
           <TabsContent value="overview" className="mt-4 space-y-4">
             {profile.bio ? (
-              <div className="rounded-xl border border-neutral-800 bg-neutral-900/40 p-4">
-                <h3 className="mb-2 text-sm font-semibold text-neutral-300">About</h3>
-                <p className="text-sm text-neutral-300">{profile.bio}</p>
+              <div className="rounded-xl border border-border bg-card/40 p-4">
+                <h3 className="mb-2 text-sm font-semibold text-foreground/80">About</h3>
+                <p className="text-sm text-foreground/80">{profile.bio}</p>
               </div>
             ) : null}
             <div>
-              <h3 className="mb-2 text-sm font-semibold text-neutral-300">
+              <h3 className="mb-2 text-sm font-semibold text-foreground/80">
                 Recent activity
               </h3>
               <ActivityFeed />

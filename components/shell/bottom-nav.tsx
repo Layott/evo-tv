@@ -21,7 +21,7 @@ export function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="sticky bottom-0 z-40 border-t border-neutral-900 bg-neutral-950/95 backdrop-blur md:hidden">
+    <nav className="sticky bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur md:hidden">
       <div className="flex items-stretch">
         {items.map(({ href, label, Icon }) => {
           const active = pathname === href || pathname?.startsWith(href + "/");
@@ -30,7 +30,7 @@ export function BottomNav() {
               key={href}
               href={href}
               className={`flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[10px] transition-colors ${
-                active ? "text-sky-400" : "text-neutral-500 hover:text-neutral-300"
+                active ? "text-sky-400" : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <Icon className="h-5 w-5" />

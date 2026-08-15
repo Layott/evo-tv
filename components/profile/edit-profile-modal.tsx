@@ -162,7 +162,7 @@ export function EditProfileModal({ open, onOpenChange, profile, onSave }: Props)
           <div className="space-y-1.5">
             <Label htmlFor="handle">Handle</Label>
             <div className="flex items-center gap-2">
-              <span className="text-neutral-500">@</span>
+              <span className="text-muted-foreground">@</span>
               <Input id="handle" {...register("handle")} />
             </div>
             {errors.handle ? (
@@ -176,7 +176,7 @@ export function EditProfileModal({ open, onOpenChange, profile, onSave }: Props)
           <div className="space-y-1.5">
             <Label>Profile picture</Label>
             <div className="flex items-center gap-3">
-              <span className="relative flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-neutral-800">
+              <span className="relative flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted">
                 {avatarPreview ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -185,11 +185,11 @@ export function EditProfileModal({ open, onOpenChange, profile, onSave }: Props)
                     className="size-full object-cover"
                   />
                 ) : (
-                  <ImageIcon className="size-5 text-neutral-500" />
+                  <ImageIcon className="size-5 text-muted-foreground" />
                 )}
                 {uploading ? (
                   <span className="absolute inset-0 flex items-center justify-center bg-black/60">
-                    <Loader2 className="size-4 animate-spin text-neutral-200" />
+                    <Loader2 className="size-4 animate-spin text-foreground" />
                   </span>
                 ) : null}
               </span>
@@ -211,7 +211,7 @@ export function EditProfileModal({ open, onOpenChange, profile, onSave }: Props)
                 >
                   {avatarPreview ? "Change picture" : "Choose a picture"}
                 </Button>
-                <p className="mt-1.5 text-xs text-neutral-500">
+                <p className="mt-1.5 text-xs text-muted-foreground">
                   JPG, PNG or WebP, up to 3.5 MB.
                 </p>
               </div>

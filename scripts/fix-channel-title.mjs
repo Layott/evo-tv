@@ -24,12 +24,12 @@ const sql = neon(URL);
 const before = await sql`SELECT id, title FROM streams WHERE id = 'channel_main'`;
 console.log("before:", before[0]?.title ?? "(row missing)");
 
-if (!before[0] || !before[0].title.includes("—")) {
+if (!before[0] || !before[0].title.includes("-")) {
   console.log("no em dash present, nothing to do.");
   process.exit(0);
 }
 
-const newTitle = before[0].title.replace(/\s*—\s*/g, ": ");
+const newTitle = before[0].title.replace(/\s*-\s*/g, ": ");
 const updated = await sql`
   UPDATE streams SET title = ${newTitle} WHERE id = 'channel_main' RETURNING id, title`;
 console.log("after: ", updated[0]?.title);

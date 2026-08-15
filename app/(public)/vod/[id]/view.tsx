@@ -75,8 +75,8 @@ export default function VodPage() {
   if (vod === undefined) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-6">
-        <div className="aspect-video w-full rounded-lg bg-neutral-900 animate-pulse" />
-        <div className="mt-4 h-6 w-1/2 bg-neutral-900 rounded animate-pulse" />
+        <div className="aspect-video w-full rounded-lg bg-card animate-pulse" />
+        <div className="mt-4 h-6 w-1/2 bg-card rounded animate-pulse" />
       </div>
     );
   }
@@ -84,8 +84,8 @@ export default function VodPage() {
   if (vod === null) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-16 text-center">
-        <h1 className="text-2xl font-bold text-neutral-100">VOD not found</h1>
-        <p className="mt-2 text-sm text-neutral-400">
+        <h1 className="text-2xl font-bold text-foreground">VOD not found</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
           This video may have been removed.
         </p>
         <div className="mt-6 flex items-center justify-center gap-3">
@@ -156,7 +156,7 @@ export default function VodPage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-neutral-950">
+    <div className="min-h-[calc(100vh-4rem)] bg-background">
       <PremiumPaywallModal
         open={paywalled}
         kind="vod"
@@ -168,7 +168,7 @@ export default function VodPage() {
           <div className="flex items-center justify-between">
             <BackButton fallbackHref="/library" />
           </div>
-          <div className="overflow-hidden rounded-xl border border-neutral-800 bg-black">
+          <div className="overflow-hidden rounded-xl border border-border bg-black">
             {paywalled ? (
               <PaywallOverlay
                 thumb={vod.thumbnailUrl}
@@ -186,10 +186,10 @@ export default function VodPage() {
 
           {/* Title + meta */}
           <div>
-            <h1 className="text-xl md:text-2xl font-bold text-neutral-50 leading-tight">
+            <h1 className="text-xl md:text-2xl font-bold text-foreground leading-tight">
               {vod.title}
             </h1>
-            <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-neutral-400">
+            <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
                 <Eye className="size-3.5" />
                 {vod.viewCount.toLocaleString()} views
@@ -204,7 +204,7 @@ export default function VodPage() {
 
           {/* Actions */}
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center rounded-full bg-neutral-900 border border-neutral-800">
+            <div className="flex items-center rounded-full bg-card border border-border">
               <Button
                 variant="ghost"
                 size="sm"
@@ -216,7 +216,7 @@ export default function VodPage() {
                 />
                 {likes.toLocaleString()}
               </Button>
-              <Separator orientation="vertical" className="h-5 bg-neutral-800" />
+              <Separator orientation="vertical" className="h-5 bg-muted" />
               <Button
                 variant="ghost"
                 size="sm"
@@ -245,7 +245,7 @@ export default function VodPage() {
 
           {/* Description */}
           {vod.description && (
-            <div className="rounded-lg border border-neutral-800 bg-neutral-900/50 p-3 text-sm text-neutral-300">
+            <div className="rounded-lg border border-border bg-card/50 p-3 text-sm text-foreground/80">
               {vod.description}
             </div>
           )}
@@ -261,7 +261,7 @@ export default function VodPage() {
 
           <VodRelated vods={related} />
 
-          <Separator className="bg-neutral-800" />
+          <Separator className="bg-muted" />
 
           <VodComments vodId={vod.id} />
         </div>
@@ -303,7 +303,7 @@ function PaywallOverlay({
           Premium VOD
         </Badge>
         <h2 className="text-xl font-bold text-white max-w-md">{title}</h2>
-        <p className="text-sm text-neutral-300 max-w-md">
+        <p className="text-sm text-foreground/80 max-w-md">
           Unlock archives and deep-dive VODs with EVO Premium.
         </p>
         <Button

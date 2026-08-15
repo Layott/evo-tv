@@ -12,7 +12,7 @@ import {
  * GET /api/fantasy/leagues?ownerId=&memberId=&status=&gameId=
  *
  * Returns the leagues matching the filter. `memberId=me` resolves to the
- * caller's userId. Public list — auth optional, but `memberId=me` requires
+ * caller's userId. Public list - auth optional, but `memberId=me` requires
  * auth (401).
  */
 export async function GET(req: NextRequest) {
@@ -51,7 +51,7 @@ const createSchema = z.object({
   bannerSeed: z.string().optional(),
 });
 
-/** POST /api/fantasy/leagues — create a league. Owner auto-joins. */
+/** POST /api/fantasy/leagues - create a league. Owner auto-joins. */
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
   if (!user) return new NextResponse("Auth required", { status: 401 });

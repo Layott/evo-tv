@@ -103,15 +103,15 @@ function ResetPasswordForm() {
         <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-sky-500/10 ring-1 ring-sky-500/30">
           <ShieldCheck className="size-6 text-sky-400" />
         </div>
-        <h1 className="text-2xl font-bold tracking-tight text-neutral-50">Set a new password</h1>
-        <p className="text-sm text-neutral-400">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Set a new password</h1>
+        <p className="text-sm text-muted-foreground">
           Pick something strong. You'll use it for every sign-in.
         </p>
       </div>
 
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="space-y-4 rounded-2xl border border-neutral-800 bg-neutral-900/50 p-6"
+        className="space-y-4 rounded-2xl border border-border bg-card/50 p-6"
         noValidate
       >
         {/* The code proves ownership of the address, so both are collected
@@ -138,7 +138,7 @@ function ResetPasswordForm() {
         />
 
         <div className="space-y-1.5">
-          <Label htmlFor="password" className="text-neutral-200 font-semibold">
+          <Label htmlFor="password" className="text-foreground font-semibold">
             New password
           </Label>
           <input
@@ -147,7 +147,7 @@ function ResetPasswordForm() {
             autoComplete="new-password"
             placeholder="••••••••"
             aria-invalid={!!errors.password || undefined}
-            className="flex h-11 w-full rounded-md border border-neutral-800 bg-neutral-900/50 px-3 text-sm text-neutral-100 placeholder:text-neutral-600 outline-none transition focus-visible:border-sky-500 focus-visible:ring-[3px] focus-visible:ring-sky-500/30 aria-invalid:border-destructive"
+            className="flex h-11 w-full rounded-md border border-border bg-card/50 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition focus-visible:border-sky-500 focus-visible:ring-[3px] focus-visible:ring-sky-500/30 aria-invalid:border-destructive"
             {...register("password")}
           />
           {errors.password ? (
@@ -159,7 +159,7 @@ function ResetPasswordForm() {
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="confirmPassword" className="text-neutral-200 font-semibold">
+          <Label htmlFor="confirmPassword" className="text-foreground font-semibold">
             Confirm new password
           </Label>
           <input
@@ -168,7 +168,7 @@ function ResetPasswordForm() {
             autoComplete="new-password"
             placeholder="••••••••"
             aria-invalid={!!errors.confirmPassword || undefined}
-            className="flex h-11 w-full rounded-md border border-neutral-800 bg-neutral-900/50 px-3 text-sm text-neutral-100 placeholder:text-neutral-600 outline-none transition focus-visible:border-sky-500 focus-visible:ring-[3px] focus-visible:ring-sky-500/30 aria-invalid:border-destructive"
+            className="flex h-11 w-full rounded-md border border-border bg-card/50 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition focus-visible:border-sky-500 focus-visible:ring-[3px] focus-visible:ring-sky-500/30 aria-invalid:border-destructive"
             {...register("confirmPassword")}
           />
           {errors.confirmPassword ? (
@@ -181,7 +181,7 @@ function ResetPasswordForm() {
         <Button
           type="submit"
           disabled={isSubmitting}
-          className="h-11 w-full bg-sky-500 font-semibold text-neutral-950 hover:bg-sky-400"
+          className="h-11 w-full bg-sky-500 font-semibold text-ink hover:bg-sky-400"
         >
           {isSubmitting ? (
             <>
@@ -194,7 +194,7 @@ function ResetPasswordForm() {
         </Button>
       </form>
 
-      <p className="text-center text-sm text-neutral-400">
+      <p className="text-center text-sm text-muted-foreground">
         <Link href="/login" className="font-semibold text-sky-400 hover:text-sky-300">
           Back to sign in
         </Link>

@@ -50,7 +50,7 @@ export const auth = betterAuth({
     autoSignIn: true,
   },
   // Phase 8.1 SSO providers. Each block activates only when both env vars
-  // are present — keeps the auth instance bootable without creds in dev.
+  // are present - keeps the auth instance bootable without creds in dev.
   socialProviders: {
     ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
       ? {
@@ -184,7 +184,7 @@ export const auth = betterAuth({
           return { data: session };
         },
         after: async (session) => {
-          // Forensic login event — best-effort, never blocks sign-in.
+          // Forensic login event - best-effort, never blocks sign-in.
           try {
             const { recordLoginEvent } = await import("./login-events");
             await recordLoginEvent(session as { userId: string });

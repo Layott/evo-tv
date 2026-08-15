@@ -97,12 +97,12 @@ export default function VerifyEmailPage() {
         <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-sky-500/10 ring-1 ring-sky-500/30">
           <Mail className="size-6 text-sky-400" />
         </div>
-        <h1 className="text-2xl font-bold tracking-tight text-neutral-50">Verify your email</h1>
-        <p className="text-sm text-neutral-400">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Verify your email</h1>
+        <p className="text-sm text-muted-foreground">
           {email ? (
             <>
               We sent a 6-digit code to{" "}
-              <span className="font-mono font-semibold text-neutral-200">
+              <span className="font-mono font-semibold text-foreground">
                 {maskEmail(email)}
               </span>
             </>
@@ -114,7 +114,7 @@ export default function VerifyEmailPage() {
 
       <form
         onSubmit={handleSubmit}
-        className="space-y-6 rounded-2xl border border-neutral-800 bg-neutral-900/50 p-6"
+        className="space-y-6 rounded-2xl border border-border bg-card/50 p-6"
         noValidate
       >
         <div className="flex flex-col items-center gap-3">
@@ -132,7 +132,7 @@ export default function VerifyEmailPage() {
                 <InputOTPSlot
                   key={i}
                   index={i}
-                  className="size-12 rounded-md border border-neutral-800 bg-neutral-950 text-lg font-semibold text-neutral-100 data-[active=true]:border-sky-500 data-[active=true]:ring-sky-500/30"
+                  className="size-12 rounded-md border border-border bg-background text-lg font-semibold text-foreground data-[active=true]:border-sky-500 data-[active=true]:ring-sky-500/30"
                 />
               ))}
             </InputOTPGroup>
@@ -147,7 +147,7 @@ export default function VerifyEmailPage() {
         <Button
           type="submit"
           disabled={isSubmitting || code.length !== 6}
-          className="h-11 w-full bg-sky-500 font-semibold text-neutral-950 hover:bg-sky-400"
+          className="h-11 w-full bg-sky-500 font-semibold text-ink hover:bg-sky-400"
         >
           {isSubmitting ? (
             <>
@@ -160,9 +160,9 @@ export default function VerifyEmailPage() {
         </Button>
 
         <div className="text-center text-sm">
-          <span className="text-neutral-500">Didn't get it? </span>
+          <span className="text-muted-foreground">Didn't get it? </span>
           {cooldown > 0 ? (
-            <span className="text-neutral-500">Resend in {cooldown}s</span>
+            <span className="text-muted-foreground">Resend in {cooldown}s</span>
           ) : (
             <button
               type="button"
@@ -175,7 +175,7 @@ export default function VerifyEmailPage() {
         </div>
       </form>
 
-      <p className="text-center text-xs text-neutral-500">
+      <p className="text-center text-xs text-muted-foreground">
         Tip: in local mode any 6-digit code will verify.
       </p>
     </div>

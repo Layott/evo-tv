@@ -11,7 +11,7 @@ const querySchema = z.object({
   targetId: z.string().optional(),
   fromDate: z.string().optional(),
   toDate: z.string().optional(),
-  /** Cap at 10k rows per export — anything larger requires paginated pulls. */
+  /** Cap at 10k rows per export - anything larger requires paginated pulls. */
   limit: z.coerce.number().int().min(1).max(10_000).default(5_000),
 });
 

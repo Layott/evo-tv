@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 const FEATURES = [
   {
     title: "All v1 endpoints",
-    body: "Streams, events, teams, players, VODs, clips, odds — same shape as the EVO TV app.",
+    body: "Streams, events, teams, players, VODs, clips, odds - same shape as the EVO TV app.",
     icon: Layers,
   },
   {
@@ -46,13 +46,13 @@ export default function ApiAccessLandingPage() {
 
   return (
     <ApiAccessShell>
-      <section className="rounded-2xl border border-neutral-800 bg-gradient-to-br from-neutral-900 via-neutral-950 to-neutral-900 p-8">
+      <section className="rounded-2xl border border-border bg-gradient-to-br from-card via-background to-card p-8">
         <div className="grid items-center gap-8 lg:grid-cols-[1.1fr_1fr]">
           <div>
-            <h2 className="text-2xl font-semibold text-neutral-50 sm:text-3xl">
+            <h2 className="text-2xl font-semibold text-foreground sm:text-3xl">
               Build on Africa's biggest esports dataset.
             </h2>
-            <p className="mt-3 text-sm text-neutral-400">
+            <p className="mt-3 text-sm text-muted-foreground">
               The same data feeding the EVO TV app, exposed as a clean REST + SSE API.
               Track 50+ teams across Free Fire, CoD Mobile, PUBG Mobile and EA FC Mobile.
             </p>
@@ -82,7 +82,7 @@ export default function ApiAccessLandingPage() {
               )}
             </div>
           </div>
-          <pre className="overflow-x-auto rounded-xl border border-neutral-800 bg-neutral-950 p-4 text-[12px] leading-relaxed text-neutral-300">
+          <pre className="overflow-x-auto rounded-xl border border-border bg-background p-4 text-[12px] leading-relaxed text-foreground/80">
             <code>
               {`curl https://api.evo.tv/v1/streams \\
   -H "Authorization: Bearer evo_live_***"
@@ -91,7 +91,7 @@ export default function ApiAccessLandingPage() {
 [
   {
     "id": "stream_lagos_final",
-    "title": "EVO Lagos Invitational — Semi 1",
+    "title": "EVO Lagos Invitational - Semi 1",
     "viewerCount": 18420,
     "isLive": true
   }
@@ -102,7 +102,7 @@ export default function ApiAccessLandingPage() {
       </section>
 
       <section className="mt-8">
-        <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-neutral-400">
+        <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
           What you get
         </h3>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -111,13 +111,13 @@ export default function ApiAccessLandingPage() {
             return (
               <div
                 key={f.title}
-                className="rounded-xl border border-neutral-800 bg-neutral-900/40 p-4"
+                className="rounded-xl border border-border bg-card/40 p-4"
               >
                 <div className="mb-2 flex items-center gap-2 text-sky-300">
                   <Icon className="size-4" />
                   <span className="text-xs font-semibold uppercase tracking-wider">{f.title}</span>
                 </div>
-                <p className="text-sm text-neutral-300">{f.body}</p>
+                <p className="text-sm text-foreground/80">{f.body}</p>
               </div>
             );
           })}
@@ -129,12 +129,12 @@ export default function ApiAccessLandingPage() {
           <ApiPaywallCard />
         </div>
       ) : (
-        <section className="mt-10 rounded-2xl border border-neutral-800 bg-neutral-900/40 p-6">
+        <section className="mt-10 rounded-2xl border border-border bg-card/40 p-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h3 className="text-lg font-semibold text-neutral-50">You're all set.</h3>
-              <p className="mt-1 text-sm text-neutral-400">
-                Premium is active. Generate your first key and start hitting <code className="rounded bg-neutral-800 px-1 py-0.5 text-xs">/v1/streams</code>.
+              <h3 className="text-lg font-semibold text-foreground">You're all set.</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Premium is active. Generate your first key and start hitting <code className="rounded bg-muted px-1 py-0.5 text-xs">/v1/streams</code>.
               </p>
             </div>
             <div className="flex items-center gap-2">

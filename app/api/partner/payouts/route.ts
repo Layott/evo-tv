@@ -4,7 +4,7 @@ import { db, schema } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/guards";
 
 /**
- * GET /api/partner/payouts — list payouts the caller can see, scoped to
+ * GET /api/partner/payouts - list payouts the caller can see, scoped to
  * publishers they're a member of. EVO admins see all.
  */
 export async function GET() {

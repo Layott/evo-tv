@@ -11,7 +11,7 @@ import { user } from "./users";
 import { streams } from "./streaming";
 
 /**
- * Watch parties — synced playback rooms anchored to a live stream.
+ * Watch parties - synced playback rooms anchored to a live stream.
  * Host controls play/pause/seek; members see same playhead.
  * SSE topic `party:<id>:sync` broadcasts host actions.
  */

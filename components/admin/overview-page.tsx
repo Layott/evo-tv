@@ -30,6 +30,7 @@ import { MetricCard } from "./metric-card";
 import { PageHeader } from "./page-header";
 import { StatusBadge } from "./status-badge";
 import { formatCompact, formatNgn, formatNumber, timeAgo } from "./utils";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 export function OverviewPage() {
   /**
@@ -104,11 +105,11 @@ export function OverviewPage() {
         <MetricCard title="MRR" value={formatNgn(mrr)} icon={CircleDollarSign} />
       </section>
 
-      <section className="rounded-xl border border-neutral-800 bg-neutral-900/40 p-5">
+      <section className="rounded-xl border border-border bg-card/40 p-5">
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-semibold text-neutral-100">Views (last 30 days)</h3>
-            <p className="text-xs text-neutral-500">
+            <h3 className="text-sm font-semibold text-foreground">Views (last 30 days)</h3>
+            <p className="text-xs text-muted-foreground">
               {formatNumber(totalViewers)} viewers watching right now across {liveCount} live streams
             </p>
           </div>
@@ -156,28 +157,28 @@ export function OverviewPage() {
       </section>
 
       <section className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="rounded-xl border border-neutral-800 bg-neutral-900/40 lg:col-span-2">
-          <div className="flex items-center justify-between border-b border-neutral-800 p-4">
-            <h3 className="text-sm font-semibold text-neutral-100">Top streams right now</h3>
+        <div className="rounded-xl border border-border bg-card/40 lg:col-span-2">
+          <div className="flex items-center justify-between border-b border-border p-4">
+            <h3 className="text-sm font-semibold text-foreground">Top streams right now</h3>
             <Link href="/admin/streams" className="text-xs text-sky-400 hover:text-sky-300">
               View all
             </Link>
           </div>
-          <ul className="divide-y divide-neutral-800">
+          <ul className="divide-y divide-border">
             {topStreams.map((s) => (
-              <li key={s.id} className="flex items-center gap-3 p-3 hover:bg-neutral-900">
-                <div className="h-10 w-16 overflow-hidden rounded bg-neutral-800">
+              <li key={s.id} className="flex items-center gap-3 p-3 hover:bg-accent">
+                <div className="h-10 w-16 overflow-hidden rounded bg-muted">
                   {}
                   <img src={s.thumbnailUrl} alt="" className="h-full w-full object-cover" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-medium text-neutral-100">{s.title}</div>
-                  <div className="text-xs text-neutral-500">{s.streamerName}</div>
+                  <div className="truncate text-sm font-medium text-foreground">{s.title}</div>
+                  <div className="text-xs text-muted-foreground">{s.streamerName}</div>
                 </div>
                 <StatusBadge tone="red" dot>
                   LIVE
                 </StatusBadge>
-                <div className="w-20 text-right text-sm tabular-nums text-neutral-300">
+                <div className="w-20 text-right text-sm tabular-nums text-foreground/80">
                   {formatCompact(s.viewerCount)}
                 </div>
               </li>
@@ -185,10 +186,10 @@ export function OverviewPage() {
             {streamsQ.isLoading
               ? Array.from({ length: 5 }).map((_, i) => (
                   <li key={`sk-${i}`} className="flex items-center gap-3 p-3">
-                    <div className="h-10 w-16 animate-pulse rounded bg-neutral-800" />
+                    <div className="h-10 w-16 animate-pulse rounded bg-muted" />
                     <div className="flex-1">
-                      <div className="h-3 w-3/4 animate-pulse rounded bg-neutral-800" />
-                      <div className="mt-1.5 h-2.5 w-1/3 animate-pulse rounded bg-neutral-800" />
+                      <div className="h-3 w-3/4 animate-pulse rounded bg-muted" />
+                      <div className="mt-1.5 h-2.5 w-1/3 animate-pulse rounded bg-muted" />
                     </div>
                   </li>
                 ))
@@ -197,44 +198,48 @@ export function OverviewPage() {
         </div>
 
         <div className="space-y-6">
-          <div className="rounded-xl border border-neutral-800 bg-neutral-900/40">
-            <div className="flex items-center justify-between border-b border-neutral-800 p-4">
-              <h3 className="text-sm font-semibold text-neutral-100">Recent signups</h3>
+          <div className="rounded-xl border border-border bg-card/40">
+            <div className="flex items-center justify-between border-b border-border p-4">
+              <h3 className="text-sm font-semibold text-foreground">Recent signups</h3>
               <Link href="/admin/users" className="text-xs text-sky-400 hover:text-sky-300">
                 Users
               </Link>
             </div>
-            <ul className="divide-y divide-neutral-800">
+            <ul className="divide-y divide-border">
               {recentSignups.map((u) => (
                 <li key={u.id} className="flex items-center gap-3 p-3">
-                  <div className="h-8 w-8 overflow-hidden rounded-full bg-neutral-800">
-                    {}
-                    <img src={u.avatarUrl} alt="" className="h-full w-full object-cover" />
-                  </div>
+                  <UserAvatar
+                    src={u.avatarUrl}
+                    name={u.displayName}
+                    handle={u.handle}
+                    seed={u.id}
+                    decorative
+                    className="h-8 w-8 shrink-0"
+                  />
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm text-neutral-100">@{u.handle}</div>
-                    <div className="text-xs text-neutral-500">{timeAgo(u.createdAt)}</div>
+                    <div className="truncate text-sm text-foreground">@{u.handle}</div>
+                    <div className="text-xs text-muted-foreground">{timeAgo(u.createdAt)}</div>
                   </div>
                 </li>
               ))}
             </ul>
           </div>
 
-          <div className="rounded-xl border border-neutral-800 bg-neutral-900/40">
-            <div className="flex items-center gap-2 border-b border-neutral-800 p-4">
+          <div className="rounded-xl border border-border bg-card/40">
+            <div className="flex items-center gap-2 border-b border-border p-4">
               <AlertTriangle className="h-4 w-4 text-amber-400" />
-              <h3 className="text-sm font-semibold text-neutral-100">Alerts</h3>
+              <h3 className="text-sm font-semibold text-foreground">Alerts</h3>
             </div>
-            <ul className="divide-y divide-neutral-800">
+            <ul className="divide-y divide-border">
               {alerts.map((a) => (
                 <li key={a.id} className="p-3">
                   <div className="flex items-center gap-2">
                     <StatusBadge tone={a.tone} dot>
                       {a.tone === "red" ? "Action" : a.tone === "amber" ? "Warn" : "Info"}
                     </StatusBadge>
-                    <span className="text-sm font-medium text-neutral-100">{a.title}</span>
+                    <span className="text-sm font-medium text-foreground">{a.title}</span>
                   </div>
-                  <p className="mt-1 pl-[3.75rem] text-xs text-neutral-400">{a.body}</p>
+                  <p className="mt-1 pl-[3.75rem] text-xs text-muted-foreground">{a.body}</p>
                 </li>
               ))}
             </ul>
@@ -242,20 +247,20 @@ export function OverviewPage() {
         </div>
       </section>
 
-      <section className="rounded-xl border border-neutral-800 bg-neutral-900/40 p-4">
-        <div className="flex items-center gap-2 text-sm text-neutral-300">
+      <section className="rounded-xl border border-border bg-card/40 p-4">
+        <div className="flex items-center gap-2 text-sm text-foreground/80">
           <Sparkles className="h-4 w-4 text-sky-400" />
           Quick actions:
-          <Link href="/admin/streams" className="rounded-md border border-neutral-800 px-2 py-1 text-xs hover:bg-neutral-900">
+          <Link href="/admin/streams" className="rounded-md border border-border px-2 py-1 text-xs hover:bg-accent">
             New stream
           </Link>
-          <Link href="/admin/polls" className="rounded-md border border-neutral-800 px-2 py-1 text-xs hover:bg-neutral-900">
+          <Link href="/admin/polls" className="rounded-md border border-border px-2 py-1 text-xs hover:bg-accent">
             New poll
           </Link>
-          <Link href="/admin/ads" className="rounded-md border border-neutral-800 px-2 py-1 text-xs hover:bg-neutral-900">
+          <Link href="/admin/ads" className="rounded-md border border-border px-2 py-1 text-xs hover:bg-accent">
             New ad
           </Link>
-          <Link href="/admin/content" className="rounded-md border border-neutral-800 px-2 py-1 text-xs hover:bg-neutral-900">
+          <Link href="/admin/content" className="rounded-md border border-border px-2 py-1 text-xs hover:bg-accent">
             New event
           </Link>
         </div>

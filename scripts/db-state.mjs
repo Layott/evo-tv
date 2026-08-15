@@ -14,7 +14,7 @@ const migTables = await sql`
   FROM information_schema.tables
   WHERE table_name = '__drizzle_migrations'`;
 console.log("=== __drizzle_migrations location ===");
-console.log(migTables.length ? migTables : "(none — fresh / never tracked)");
+console.log(migTables.length ? migTables : "(none - fresh / never tracked)");
 
 const journal = await sql`SELECT id, hash, created_at FROM drizzle.__drizzle_migrations ORDER BY created_at`;
 console.log("\n=== journal rows (" + journal.length + ") ===");

@@ -78,7 +78,7 @@ export function PremiumPaywallModal({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="absolute right-3 top-3 rounded-full border border-neutral-800 bg-neutral-900/60 p-1.5 text-neutral-400 transition-colors hover:border-sky-500/60 hover:text-sky-300"
+            className="absolute right-3 top-3 rounded-full border border-border bg-card/60 p-1.5 text-muted-foreground transition-colors hover:border-sky-500/60 hover:text-sky-300"
           >
             <X className="h-3.5 w-3.5" />
           </button>
@@ -93,37 +93,37 @@ export function PremiumPaywallModal({
             <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-amber-300">
               Premium · ₦4,500/mo
             </div>
-            <h2 id="paywall-heading" className="text-xl font-semibold tracking-tight text-neutral-50">
+            <h2 id="paywall-heading" className="text-xl font-semibold tracking-tight text-foreground">
               {heading}
             </h2>
-            <p className="mt-2 text-sm leading-relaxed text-neutral-400">{line}</p>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{line}</p>
           </div>
         </div>
 
         <ul className="space-y-2 px-6 pb-5 text-sm">
           {PERKS.map((p) => (
-            <li key={p} className="flex items-start gap-2 text-neutral-300">
+            <li key={p} className="flex items-start gap-2 text-foreground/80">
               <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-sky-400" />
               <span>{p}</span>
             </li>
           ))}
         </ul>
 
-        <div className="flex flex-col gap-2 border-t border-neutral-900/60 bg-neutral-950/60 p-5 sm:flex-row">
+        <div className="flex flex-col gap-2 border-t border-border/60 bg-background/60 p-5 sm:flex-row">
           <button
             type="button"
             onClick={() => {
               onClose?.();
               router.push("/upgrade");
             }}
-            className="flex flex-1 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-sky-500 to-cyan-400 px-4 py-2.5 text-sm font-semibold text-neutral-950 transition-opacity hover:opacity-90"
+            className="flex flex-1 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-sky-500 to-cyan-400 px-4 py-2.5 text-sm font-semibold text-ink transition-opacity hover:opacity-90"
           >
             Upgrade with Paystack
           </button>
           <Link
             href="/discover"
             onClick={onClose}
-            className="flex flex-1 items-center justify-center rounded-full border border-neutral-700 px-4 py-2.5 text-sm text-neutral-300 transition-colors hover:border-neutral-500 hover:text-neutral-100"
+            className="flex flex-1 items-center justify-center rounded-full border border-input px-4 py-2.5 text-sm text-foreground/80 transition-colors hover:border-input hover:text-foreground"
           >
             Browse free content
           </Link>

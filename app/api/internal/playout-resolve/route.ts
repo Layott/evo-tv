@@ -5,7 +5,7 @@ import { db, schema } from "@/lib/db";
 import { readPlayoutConfig } from "@/lib/playout-config";
 
 /**
- * GET /api/internal/playout-resolve?date=YYYY-MM-DD — Bearer ${PLAYOUT_SECRET}.
+ * GET /api/internal/playout-resolve?date=YYYY-MM-DD - Bearer ${PLAYOUT_SECRET}.
  *
  * Server-authoritative program -> file map for the playout adapter. Returns the
  * admin-chosen media file for each scheduled stream airing on the given UTC day

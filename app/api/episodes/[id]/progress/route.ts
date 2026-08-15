@@ -15,7 +15,7 @@ const bodySchema = z.object({
   completed: z.boolean().optional(),
 });
 
-/** GET /api/episodes/[id]/progress — current user's saved position on this
+/** GET /api/episodes/[id]/progress - current user's saved position on this
  *  episode, or `null` if they've never watched it. */
 export async function GET(
   _req: NextRequest,
@@ -27,7 +27,7 @@ export async function GET(
   return NextResponse.json(await getEpisodeProgress(user.id, id));
 }
 
-/** POST /api/episodes/[id]/progress — upsert watch progress. Auth required. */
+/** POST /api/episodes/[id]/progress - upsert watch progress. Auth required. */
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },

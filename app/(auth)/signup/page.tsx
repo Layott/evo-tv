@@ -83,13 +83,13 @@ export default function SignupPage() {
   return (
     <div className="space-y-6">
       <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-bold tracking-tight text-neutral-50">Join EVO TV</h1>
-        <p className="text-sm text-neutral-400">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Join EVO TV</h1>
+        <p className="text-sm text-muted-foreground">
           Create your account and start watching African esports live.
         </p>
       </div>
 
-      <div className="rounded-2xl border border-neutral-800 bg-neutral-900/50 p-6">
+      <div className="rounded-2xl border border-border bg-card/50 p-6">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
           <TextField
             id="email"
@@ -106,13 +106,13 @@ export default function SignupPage() {
             label="Handle"
             autoComplete="username"
             placeholder="evopro"
-            hint="3–20 characters, letters, numbers, underscores."
+            hint="3-20 characters, letters, numbers, underscores."
             error={errors.handle?.message}
             {...register("handle")}
           />
 
           <div className="space-y-1.5">
-            <Label htmlFor="password" className="text-neutral-200 font-semibold">
+            <Label htmlFor="password" className="text-foreground font-semibold">
               Password
             </Label>
             <input
@@ -121,7 +121,7 @@ export default function SignupPage() {
               autoComplete="new-password"
               placeholder="••••••••"
               aria-invalid={!!errors.password || undefined}
-              className="flex h-11 w-full rounded-md border border-neutral-800 bg-neutral-900/50 px-3 text-sm text-neutral-100 placeholder:text-neutral-600 outline-none transition focus-visible:border-sky-500 focus-visible:ring-[3px] focus-visible:ring-sky-500/30 aria-invalid:border-destructive"
+              className="flex h-11 w-full rounded-md border border-border bg-card/50 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition focus-visible:border-sky-500 focus-visible:ring-[3px] focus-visible:ring-sky-500/30 aria-invalid:border-destructive"
               {...register("password")}
             />
             {errors.password ? (
@@ -161,7 +161,7 @@ export default function SignupPage() {
               className="mt-0.5 data-[state=checked]:border-sky-500 data-[state=checked]:bg-sky-500"
               aria-invalid={!!errors.acceptTerms || undefined}
             />
-            <Label htmlFor="acceptTerms" className="text-xs leading-snug text-neutral-400">
+            <Label htmlFor="acceptTerms" className="text-xs leading-snug text-muted-foreground">
               I agree to the{" "}
               <Link href="#" className="text-sky-400 hover:text-sky-300">
                 Terms
@@ -182,7 +182,7 @@ export default function SignupPage() {
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="h-11 w-full bg-sky-500 font-semibold text-neutral-950 hover:bg-sky-400"
+            className="h-11 w-full bg-sky-500 font-semibold text-ink hover:bg-sky-400"
           >
             {isSubmitting ? (
               <>
@@ -197,10 +197,10 @@ export default function SignupPage() {
 
         <div className="relative my-6">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-neutral-800" />
+            <div className="w-full border-t border-border" />
           </div>
           <div className="relative flex justify-center">
-            <span className="bg-neutral-900/50 px-2 text-[11px] uppercase tracking-widest text-neutral-500">
+            <span className="bg-card/50 px-2 text-[11px] uppercase tracking-widest text-muted-foreground">
               or
             </span>
           </div>
@@ -209,7 +209,7 @@ export default function SignupPage() {
         <OAuthButtons />
       </div>
 
-      <p className="text-center text-sm text-neutral-400">
+      <p className="text-center text-sm text-muted-foreground">
         Already have an account?{" "}
         <Link href="/login" className="font-semibold text-sky-400 hover:text-sky-300">
           Sign in

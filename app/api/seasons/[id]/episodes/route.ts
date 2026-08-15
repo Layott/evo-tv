@@ -4,7 +4,7 @@ import { listEpisodesForSeason } from "@/lib/api/shows";
 
 export const dynamic = "force-dynamic";
 
-/** GET /api/seasons/[id]/episodes — episodes in a single season, ordered. */
+/** GET /api/seasons/[id]/episodes - episodes in a single season, ordered. */
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> },

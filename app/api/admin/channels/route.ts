@@ -13,10 +13,10 @@ const querySchema = z.object({
 /**
  * GET /api/admin/channels
  *
- * List ALL channels including suspended (admin-only — public listings hide
+ * List ALL channels including suspended (admin-only - public listings hide
  * suspended). Filter via ?suspended=only / ?suspended=include.
  *
- * Moderator+ — admins suspend, mods view.
+ * Moderator+ - admins suspend, mods view.
  */
 export async function GET(req: NextRequest) {
   const guard = await requireMinRole("moderator");

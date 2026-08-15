@@ -12,7 +12,7 @@ const registerSchema = z.object({
 });
 
 /**
- * POST /api/push/expo-token — auth required. Idempotent upsert; same token
+ * POST /api/push/expo-token - auth required. Idempotent upsert; same token
  * may be re-registered on every app start. ON CONFLICT updates lastSeenAt.
  *
  * Returns `{ok: true}`. Tokens older than 6 months without a refresh are
@@ -37,7 +37,7 @@ const unregisterSchema = z.object({
 });
 
 /**
- * DELETE /api/push/expo-token — auth required. Drops the device token from
+ * DELETE /api/push/expo-token - auth required. Drops the device token from
  * the user's push list. Idempotent (no-op if the row isn't there).
  */
 export async function DELETE(req: NextRequest) {

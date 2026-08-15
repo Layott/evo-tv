@@ -12,7 +12,7 @@ const upsertSchema = z.object({
 });
 
 /**
- * GET /api/admin/email-templates/[key] — admin+. Read one.
+ * GET /api/admin/email-templates/[key] - admin+. Read one.
  */
 export async function GET(
   _req: NextRequest,
@@ -37,7 +37,7 @@ export async function GET(
 }
 
 /**
- * PATCH /api/admin/email-templates/[key] — admin+. Create-or-update with
+ * PATCH /api/admin/email-templates/[key] - admin+. Create-or-update with
  * version bump + audit row.
  */
 export async function PATCH(

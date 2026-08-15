@@ -68,7 +68,7 @@ export default function ProductDetailPage() {
   if (loading || !product) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <Loader2 className="size-6 animate-spin text-neutral-500" />
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -93,14 +93,14 @@ export default function ProductDetailPage() {
     <div className="mx-auto max-w-6xl px-4 py-6 sm:py-8">
       <Link
         href="/shop"
-        className="mb-4 inline-flex items-center gap-1 text-sm text-neutral-400 hover:text-neutral-200"
+        className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="size-4" /> Back to shop
       </Link>
 
       <div className="grid gap-8 md:grid-cols-2">
         <div>
-          <div className="relative aspect-square overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900">
+          <div className="relative aspect-square overflow-hidden rounded-2xl border border-border bg-card">
             <Image
               src={product.images[activeImage] ?? product.images[0] ?? "/placeholder.svg"}
               alt={product.name}
@@ -120,7 +120,7 @@ export default function ProductDetailPage() {
                     "relative aspect-square w-20 overflow-hidden rounded-lg border",
                     i === activeImage
                       ? "border-sky-500/60"
-                      : "border-neutral-800 hover:border-neutral-600"
+                      : "border-border hover:border-input"
                   )}
                 >
                   <Image src={img} alt="" fill className="object-cover" />
@@ -131,16 +131,16 @@ export default function ProductDetailPage() {
         </div>
 
         <div>
-          <Badge className="border-neutral-700 bg-neutral-900 capitalize text-neutral-300">
+          <Badge className="border-input bg-card capitalize text-foreground/80">
             {product.category}
           </Badge>
-          <h1 className="mt-2 text-2xl font-bold text-neutral-50 sm:text-3xl">
+          <h1 className="mt-2 text-2xl font-bold text-foreground sm:text-3xl">
             {product.name}
           </h1>
           <div className="mt-3 text-3xl font-bold text-sky-400">
             {formatNgn(price)}
           </div>
-          <p className="mt-4 text-sm leading-relaxed text-neutral-300">
+          <p className="mt-4 text-sm leading-relaxed text-foreground/80">
             {product.description}
           </p>
           <div className="mt-6 space-y-4">
@@ -152,7 +152,7 @@ export default function ProductDetailPage() {
               />
             ) : null}
             <div>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-400">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Quantity
               </p>
               <QtyStepper value={qty} onChange={setQty} max={inStock ? 10 : 0} />
@@ -166,13 +166,13 @@ export default function ProductDetailPage() {
                 <ShoppingCart className="size-4" />
                 {inStock ? "Add to cart" : "Out of stock"}
               </Button>
-              <Button asChild variant="outline" className="border-neutral-800">
+              <Button asChild variant="outline" className="border-border">
                 <Link href="/cart">View cart</Link>
               </Button>
             </div>
-            <ul className="mt-4 space-y-1 text-xs text-neutral-500">
+            <ul className="mt-4 space-y-1 text-xs text-muted-foreground">
               <li className="flex items-center gap-1">
-                <Check className="size-3 text-sky-400" /> Ships NG-wide &middot; 3–5 business days
+                <Check className="size-3 text-sky-400" /> Ships NG-wide &middot; 3-5 business days
               </li>
               <li className="flex items-center gap-1">
                 <Check className="size-3 text-sky-400" /> Paystack secured checkout
@@ -187,7 +187,7 @@ export default function ProductDetailPage() {
 
       {related.length > 0 ? (
         <section className="mt-12">
-          <h2 className="mb-4 text-base font-semibold text-neutral-100">You might also like</h2>
+          <h2 className="mb-4 text-base font-semibold text-foreground">You might also like</h2>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
             {related.map((r) => (
               <ProductCard key={r.id} product={r} />

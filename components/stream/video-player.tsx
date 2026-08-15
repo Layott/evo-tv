@@ -658,8 +658,8 @@ export function VideoPlayer({
           that simply has not started. */}
       {hlsError && (
         <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-2 bg-black/90 px-6 text-center">
-          <p className="text-sm font-medium text-neutral-200">{hlsError}</p>
-          <p className="text-xs text-neutral-500">
+          <p className="text-sm font-medium text-foreground">{hlsError}</p>
+          <p className="text-xs text-muted-foreground">
             Try reloading the page in a moment.
           </p>
         </div>
@@ -734,7 +734,7 @@ export function VideoPlayer({
           <div className="text-sm font-semibold text-white">
             Demo video unavailable
           </div>
-          <p className="text-xs text-neutral-400 max-w-xs">
+          <p className="text-xs text-muted-foreground max-w-xs">
             The sample file could not be loaded. Controls remain interactive for
             preview.
           </p>
@@ -875,9 +875,9 @@ export function VideoPlayer({
                     e.stopPropagation();
                     goLive();
                   }}
-                  className="flex items-center gap-1.5 text-neutral-300 transition-colors hover:text-white"
+                  className="flex items-center gap-1.5 text-foreground/80 transition-colors hover:text-white"
                 >
-                  <span className="size-1.5 rounded-full bg-neutral-500" />
+                  <span className="size-1.5 rounded-full bg-muted-foreground" />
                   {formatTime(behindLiveSec)} behind
                   <span className="ml-1 underline underline-offset-2">
                     Go live
@@ -912,7 +912,7 @@ export function VideoPlayer({
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="end"
-                className="bg-neutral-900 text-neutral-100 border-neutral-800 w-52"
+                className="bg-card text-foreground border-border w-52"
               >
                 <DropdownMenuLabel className="text-xs">Subtitles / CC</DropdownMenuLabel>
                 <DropdownMenuItem
@@ -949,7 +949,7 @@ export function VideoPlayer({
                   </span>
                   Auto-translate (beta)
                 </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-neutral-800" />
+                <DropdownMenuSeparator className="bg-muted" />
                 <DropdownMenuLabel className="text-xs">Languages</DropdownMenuLabel>
                 {captionLangs.map((l) => (
                   <DropdownMenuItem
@@ -969,7 +969,7 @@ export function VideoPlayer({
                       •
                     </span>
                     {l.label}{" "}
-                    <span className="ml-auto text-[10px] text-neutral-500">
+                    <span className="ml-auto text-[10px] text-muted-foreground">
                       {l.native}
                     </span>
                   </DropdownMenuItem>
@@ -991,7 +991,7 @@ export function VideoPlayer({
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="end"
-                className="bg-neutral-900 text-neutral-100 border-neutral-800 w-52"
+                className="bg-card text-foreground border-border w-52"
               >
                 {/* Only shown when there is a real choice. One rendition is
                     not a quality setting. */}
@@ -1014,7 +1014,7 @@ export function VideoPlayer({
                       </span>
                       Auto
                       {selectedLevel === -1 && activeLevel >= 0 ? (
-                        <span className="ml-1 text-neutral-500">
+                        <span className="ml-1 text-muted-foreground">
                           ({renditions[activeLevel]?.label})
                         </span>
                       ) : null}
@@ -1039,7 +1039,7 @@ export function VideoPlayer({
                         {r.label}
                       </DropdownMenuItem>
                     ))}
-                    <DropdownMenuSeparator className="bg-neutral-800" />
+                    <DropdownMenuSeparator className="bg-muted" />
                   </>
                 )}
                 <DropdownMenuLabel className="text-xs">Speed</DropdownMenuLabel>

@@ -5,7 +5,7 @@ import { requireMinRole } from "@/lib/auth/guards";
 import { writeAudit } from "@/lib/api/audit";
 
 /**
- * POST /api/admin/vods/[id]/restore — admin+. Un-soft-delete a VOD.
+ * POST /api/admin/vods/[id]/restore - admin+. Un-soft-delete a VOD.
  */
 export async function POST(
   _req: NextRequest,

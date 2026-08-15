@@ -85,7 +85,7 @@ export function AnalyticsPage() {
         description="Audience, retention and revenue signals for the platform."
         actions={
           <Tabs value={range} onValueChange={setRange}>
-            <TabsList className="bg-neutral-900">
+            <TabsList className="bg-card">
               {DATE_RANGES.map((r) => (
                 <TabsTrigger key={r.value} value={r.value}>
                   {r.label}
@@ -128,9 +128,9 @@ export function AnalyticsPage() {
       </section>
 
       <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="rounded-xl border border-neutral-800 bg-neutral-900/40 p-5">
-          <h3 className="text-sm font-semibold text-neutral-100">Views over time</h3>
-          <p className="text-xs text-neutral-500">{DATE_RANGES.find((r) => r.value === range)?.label}</p>
+        <div className="rounded-xl border border-border bg-card/40 p-5">
+          <h3 className="text-sm font-semibold text-foreground">Views over time</h3>
+          <p className="text-xs text-muted-foreground">{DATE_RANGES.find((r) => r.value === range)?.label}</p>
           <div className="mt-3 h-64">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={viewsSeries}>
@@ -163,9 +163,9 @@ export function AnalyticsPage() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-neutral-800 bg-neutral-900/40 p-5">
-          <h3 className="text-sm font-semibold text-neutral-100">Revenue by month</h3>
-          <p className="text-xs text-neutral-500">Last 6 months, premium subs</p>
+        <div className="rounded-xl border border-border bg-card/40 p-5">
+          <h3 className="text-sm font-semibold text-foreground">Revenue by month</h3>
+          <p className="text-xs text-muted-foreground">Last 6 months, premium subs</p>
           <div className="mt-3 h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={revenueByMonth}>
@@ -196,16 +196,16 @@ export function AnalyticsPage() {
       </section>
 
       <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="rounded-xl border border-neutral-800 bg-neutral-900/40 p-5">
-          <h3 className="text-sm font-semibold text-neutral-100">Retention cohort</h3>
-          <p className="text-xs text-neutral-500">Week retention over 8 cohorts</p>
+        <div className="rounded-xl border border-border bg-card/40 p-5">
+          <h3 className="text-sm font-semibold text-foreground">Retention cohort</h3>
+          <p className="text-xs text-muted-foreground">Week retention over 8 cohorts</p>
           <div className="mt-4 overflow-x-auto">
             <table className="min-w-full text-center text-xs">
               <thead>
                 <tr>
-                  <th className="p-1 text-left text-neutral-500">Cohort</th>
+                  <th className="p-1 text-left text-muted-foreground">Cohort</th>
                   {Array.from({ length: 8 }, (_, i) => (
-                    <th key={i} className="p-1 font-normal text-neutral-500">
+                    <th key={i} className="p-1 font-normal text-muted-foreground">
                       W{i}
                     </th>
                   ))}
@@ -214,7 +214,7 @@ export function AnalyticsPage() {
               <tbody>
                 {retention.map((row, r) => (
                   <tr key={r}>
-                    <td className="p-1 text-left text-xs text-neutral-400">W{r + 1}</td>
+                    <td className="p-1 text-left text-xs text-muted-foreground">W{r + 1}</td>
                     {row.map((v, c) => (
                       <td
                         key={c}
@@ -228,7 +228,7 @@ export function AnalyticsPage() {
                               }
                         }
                       >
-                        {v == null ? "—" : `${v}%`}
+                        {v == null ? "-" : `${v}%`}
                       </td>
                     ))}
                   </tr>
@@ -238,9 +238,9 @@ export function AnalyticsPage() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-neutral-800 bg-neutral-900/40 p-5">
-          <h3 className="text-sm font-semibold text-neutral-100">Top 10 VODs</h3>
-          <p className="text-xs text-neutral-500">By views in current range</p>
+        <div className="rounded-xl border border-border bg-card/40 p-5">
+          <h3 className="text-sm font-semibold text-foreground">Top 10 VODs</h3>
+          <p className="text-xs text-muted-foreground">By views in current range</p>
           <ul className="mt-4 space-y-2">
             {topTitles.map((t) => {
               const max = topTitles[0]?.views ?? 1;
@@ -248,10 +248,10 @@ export function AnalyticsPage() {
               return (
                 <li key={t.title}>
                   <div className="flex items-center justify-between text-xs">
-                    <span className="truncate text-neutral-200">{t.title}</span>
-                    <span className="tabular-nums text-neutral-400">{formatNumber(t.views)}</span>
+                    <span className="truncate text-foreground">{t.title}</span>
+                    <span className="tabular-nums text-muted-foreground">{formatNumber(t.views)}</span>
                   </div>
-                  <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-neutral-800">
+                  <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted">
                     <div className="h-full rounded-full bg-sky-500" style={{ width: `${pct}%` }} />
                   </div>
                 </li>

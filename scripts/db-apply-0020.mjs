@@ -21,7 +21,7 @@ const sqlText = readFileSync(
 
 const exists = await sql`SELECT to_regclass('public.fantasy_leagues') AS r`;
 if (exists[0].r) {
-  console.log("fantasy_leagues exists — skipping CREATE block");
+  console.log("fantasy_leagues exists - skipping CREATE block");
 } else {
   console.log("applying 0020_fantasy.sql…");
   // Split on the drizzle breakpoint marker.

@@ -147,7 +147,7 @@ export default function CheckoutPage() {
       ? [
           {
             productId: "sub_premium",
-            productName: "Premium Subscription — Monthly",
+            productName: "Premium Subscription - Monthly",
             variantId: null,
             variantLabel: "Monthly",
             qty: 1,
@@ -223,8 +223,8 @@ export default function CheckoutPage() {
   if (!isSubscription && !loading && resolved.length === 0) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-12 text-center">
-        <h1 className="text-xl font-bold text-neutral-50">Your cart is empty</h1>
-        <p className="mt-1 text-sm text-neutral-400">Add items before checking out.</p>
+        <h1 className="text-xl font-bold text-foreground">Your cart is empty</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Add items before checking out.</p>
         <Button asChild className="mt-5 bg-sky-500 text-black hover:bg-sky-500/90">
           <Link href="/shop">Go to shop</Link>
         </Button>
@@ -236,20 +236,20 @@ export default function CheckoutPage() {
     <div className="mx-auto max-w-6xl px-4 py-6 sm:py-8">
       <Link
         href={isSubscription ? "/upgrade" : "/cart"}
-        className="mb-4 inline-flex items-center gap-1 text-sm text-neutral-400 hover:text-neutral-200"
+        className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="size-4" />
         {isSubscription ? "Back to upgrade" : "Back to cart"}
       </Link>
-      <h1 className="mb-6 text-xl font-bold text-neutral-50">
+      <h1 className="mb-6 text-xl font-bold text-foreground">
         {isSubscription ? "Confirm Premium" : "Checkout"}
       </h1>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
         <div className="space-y-6">
           {!isSubscription ? (
-            <section className="rounded-2xl border border-neutral-800 bg-neutral-900/40 p-5">
-              <h2 className="mb-4 text-base font-semibold text-neutral-50">
+            <section className="rounded-2xl border border-border bg-card/40 p-5">
+              <h2 className="mb-4 text-base font-semibold text-foreground">
                 Shipping address
               </h2>
               <form
@@ -318,14 +318,14 @@ export default function CheckoutPage() {
             </section>
           ) : null}
 
-          <section className="rounded-2xl border border-neutral-800 bg-neutral-900/40 p-5">
-            <h2 className="mb-4 text-base font-semibold text-neutral-50">Payment</h2>
-            <div className="rounded-xl border border-neutral-800 bg-neutral-950 p-4">
+          <section className="rounded-2xl border border-border bg-card/40 p-5">
+            <h2 className="mb-4 text-base font-semibold text-foreground">Payment</h2>
+            <div className="rounded-xl border border-border bg-background p-4">
               <div className="flex items-center gap-3">
                 <PaystackMark />
                 <div>
                   <p className="text-sm font-semibold">Pay with Paystack</p>
-                  <p className="text-xs text-neutral-400">Cards, bank transfer, USSD, Opay.</p>
+                  <p className="text-xs text-muted-foreground">Cards, bank transfer, USSD, Opay.</p>
                 </div>
               </div>
             </div>
@@ -345,7 +345,7 @@ export default function CheckoutPage() {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full border-neutral-800"
+                className="w-full border-border"
                 disabled={processing}
                 onClick={mockSimulate}
               >
@@ -353,16 +353,16 @@ export default function CheckoutPage() {
                 Mock simulate
               </Button>
             </div>
-            <p className="mt-3 flex items-center justify-center gap-1 text-[11px] text-neutral-500">
+            <p className="mt-3 flex items-center justify-center gap-1 text-[11px] text-muted-foreground">
               <ShieldCheck className="size-3 text-sky-400" />
               256-bit secure. No card data leaves Paystack.
             </p>
           </section>
         </div>
 
-        <aside className="rounded-2xl border border-neutral-800 bg-neutral-900/40 p-5">
-          <h2 className="text-base font-semibold text-neutral-50">Order summary</h2>
-          <div className="mt-3 divide-y divide-neutral-800">
+        <aside className="rounded-2xl border border-border bg-card/40 p-5">
+          <h2 className="text-base font-semibold text-foreground">Order summary</h2>
+          <div className="mt-3 divide-y divide-border">
             {isSubscription ? (
               <div className="flex items-center gap-3 py-3">
                 <div className="relative size-14 overflow-hidden rounded-lg bg-amber-500/20">
@@ -370,7 +370,7 @@ export default function CheckoutPage() {
                 </div>
                 <div className="flex-1">
                   <p className="text-sm font-semibold">EVO TV Premium</p>
-                  <p className="text-xs text-neutral-400">Billed monthly</p>
+                  <p className="text-xs text-muted-foreground">Billed monthly</p>
                 </div>
                 <div className="text-sm font-semibold">{formatNgn(4500)}</div>
               </div>
@@ -380,7 +380,7 @@ export default function CheckoutPage() {
                   key={`${r.productId}-${r.variantId ?? ""}`}
                   className="flex items-center gap-3 py-3"
                 >
-                  <div className="relative size-14 shrink-0 overflow-hidden rounded-lg bg-neutral-800">
+                  <div className="relative size-14 shrink-0 overflow-hidden rounded-lg bg-muted">
                     <Image
                       src={r.product.images[0] ?? "/placeholder.svg"}
                       alt=""
@@ -391,7 +391,7 @@ export default function CheckoutPage() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="line-clamp-1 text-sm font-semibold">{r.product.name}</p>
-                    <p className="text-xs text-neutral-500">
+                    <p className="text-xs text-muted-foreground">
                       {r.variantLabel ? `${r.variantLabel} · ` : ""}Qty {r.qty}
                     </p>
                   </div>
@@ -400,18 +400,18 @@ export default function CheckoutPage() {
               ))
             )}
           </div>
-          <dl className="mt-3 space-y-2 border-t border-neutral-800 pt-3 text-sm">
+          <dl className="mt-3 space-y-2 border-t border-border pt-3 text-sm">
             <div className="flex justify-between">
-              <dt className="text-neutral-400">Subtotal</dt>
+              <dt className="text-muted-foreground">Subtotal</dt>
               <dd>{formatNgn(subtotal)}</dd>
             </div>
             {!isSubscription ? (
               <div className="flex justify-between">
-                <dt className="text-neutral-400">Shipping</dt>
+                <dt className="text-muted-foreground">Shipping</dt>
                 <dd>{shipping === 0 ? <span className="text-sky-400">Free</span> : formatNgn(shipping)}</dd>
               </div>
             ) : null}
-            <div className="flex justify-between border-t border-neutral-800 pt-3 text-base font-bold">
+            <div className="flex justify-between border-t border-border pt-3 text-base font-bold">
               <dt>Total</dt>
               <dd>{formatNgn(total)}</dd>
             </div>

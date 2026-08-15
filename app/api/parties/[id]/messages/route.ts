@@ -20,7 +20,7 @@ function genId(): string {
 }
 
 /**
- * GET /api/parties/[id]/messages — list last 100 messages.
+ * GET /api/parties/[id]/messages - list last 100 messages.
  *
  * Requires the caller to be an active member of the party.
  */
@@ -71,7 +71,7 @@ export async function GET(
 }
 
 /**
- * POST /api/parties/[id]/messages — append a message + broadcast SSE.
+ * POST /api/parties/[id]/messages - append a message + broadcast SSE.
  *
  * Caller must be an active member. 500-char limit. Emits to topic
  * `party:<id>:chat`.

@@ -6,7 +6,7 @@ import { getPublicProfileByHandle } from "@/lib/api/users";
 export const dynamic = "force-dynamic";
 
 /**
- * GET /api/users/[handle] — public profile lookup.
+ * GET /api/users/[handle] - public profile lookup.
  *
  * Returns safe profile fields + follower count + recent clips + owned channels.
  * Soft-deleted users return 404. Email is never included. When called with a

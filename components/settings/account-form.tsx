@@ -79,8 +79,8 @@ export function AccountForm({ email }: { email: string }) {
       <div className="space-y-4">
         <div className="space-y-1.5">
           <Label>Email</Label>
-          <Input readOnly value={email} className="bg-neutral-950/60" />
-          <p className="text-xs text-neutral-500">Contact support to change your email.</p>
+          <Input readOnly value={email} className="bg-background/60" />
+          <p className="text-xs text-muted-foreground">Contact support to change your email.</p>
         </div>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-3" noValidate>
           <div className="space-y-1.5">
@@ -117,7 +117,7 @@ export function AccountForm({ email }: { email: string }) {
         </form>
         <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-4">
           <h3 className="text-sm font-semibold text-red-400">Danger zone</h3>
-          <p className="mt-1 text-xs text-neutral-400">
+          <p className="mt-1 text-xs text-muted-foreground">
             This permanently removes your EVO TV account, watch history, and subscriptions.
           </p>
           <AlertDialog>

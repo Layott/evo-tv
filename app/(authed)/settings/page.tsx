@@ -50,10 +50,10 @@ export default function SettingsPage() {
     <div className="mx-auto max-w-4xl px-4 py-6 sm:py-8">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-neutral-50">Settings</h1>
-          <p className="text-sm text-neutral-400">Manage your EVO TV experience.</p>
+          <h1 className="text-xl font-bold text-foreground">Settings</h1>
+          <p className="text-sm text-muted-foreground">Manage your EVO TV experience.</p>
         </div>
-        <Button asChild variant="outline" className="border-neutral-800">
+        <Button asChild variant="outline" className="border-border">
           <Link href="/settings/billing">
             <CreditCard className="size-4" />
             Billing
@@ -61,7 +61,7 @@ export default function SettingsPage() {
         </Button>
       </div>
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="flex h-auto w-full flex-wrap bg-neutral-900/60 p-1">
+        <TabsList className="flex h-auto w-full flex-wrap bg-card/60 p-1">
           {TABS.map((t) => {
             const Icon = t.icon;
             return (

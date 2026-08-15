@@ -34,7 +34,7 @@ export function InStreamShop() {
     return (
       <div className="p-3 grid grid-cols-2 gap-3">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-40 rounded bg-neutral-800 animate-pulse" />
+          <div key={i} className="h-40 rounded bg-muted animate-pulse" />
         ))}
       </div>
     );
@@ -42,7 +42,7 @@ export function InStreamShop() {
 
   if (products.length === 0) {
     return (
-      <div className="p-6 text-center text-sm text-neutral-500">
+      <div className="p-6 text-center text-sm text-muted-foreground">
         No products featured right now.
       </div>
     );
@@ -50,9 +50,9 @@ export function InStreamShop() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="px-3 py-2 border-b border-neutral-800 flex items-center gap-2">
-        <ShoppingBag className="size-4 text-neutral-300" />
-        <span className="text-sm font-semibold text-neutral-200">Featured Shop</span>
+      <div className="px-3 py-2 border-b border-border flex items-center gap-2">
+        <ShoppingBag className="size-4 text-foreground/80" />
+        <span className="text-sm font-semibold text-foreground">Featured Shop</span>
         {isPremium && (
           <Badge className="ml-auto bg-amber-500/20 text-amber-300 text-[10px]">
             Premium 10% off
@@ -65,9 +65,9 @@ export function InStreamShop() {
           return (
             <div
               key={p.id}
-              className="rounded-lg border border-neutral-800 bg-neutral-900/60 overflow-hidden flex flex-col"
+              className="rounded-lg border border-border bg-card/60 overflow-hidden flex flex-col"
             >
-              <div className="relative aspect-square bg-neutral-800">
+              <div className="relative aspect-square bg-muted">
                 <Image
                   src={p.images[0] || "/placeholder.svg"}
                   alt={p.name}
@@ -77,13 +77,13 @@ export function InStreamShop() {
                 />
               </div>
               <div className="p-2 flex-1 flex flex-col gap-1">
-                <p className="text-xs font-medium text-neutral-100 line-clamp-2">
+                <p className="text-xs font-medium text-foreground line-clamp-2">
                   {p.name}
                 </p>
                 <div className="mt-auto">
                   {isPremium ? (
                     <div className="flex items-baseline gap-1.5">
-                      <span className="text-[10px] text-neutral-500 line-through">
+                      <span className="text-[10px] text-muted-foreground line-through">
                         {ngn(p.priceNgn)}
                       </span>
                       <span className="text-sm font-bold text-amber-300">
@@ -91,7 +91,7 @@ export function InStreamShop() {
                       </span>
                     </div>
                   ) : (
-                    <span className="text-sm font-bold text-neutral-100">
+                    <span className="text-sm font-bold text-foreground">
                       {ngn(p.priceNgn)}
                     </span>
                   )}

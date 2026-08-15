@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
 
   let created = 0;
   const runtimeErrors: ParseError[] = [];
-  // TODO: pg-port — neon-http has no transaction(); ports of bulk imports run
+  // TODO: pg-port - neon-http has no transaction(); ports of bulk imports run
   // sequentially without atomic rollback. Errors are collected per-row.
   try {
     for (let i = 0; i < rows.length; i++) {

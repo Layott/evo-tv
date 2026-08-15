@@ -16,7 +16,7 @@ import { db, schema } from "@/lib/db";
  *     owned by the publisher. Phase 3 doesn't yet track product↔channel
  *     ownership, so this is wired but stays 0 until products get
  *     channel_id. Tips are not money yet (just coins) so they don't
- *     contribute NGN — leave them out of gross_ngn for now.
+ *     contribute NGN - leave them out of gross_ngn for now.
  *
  * Idempotent at the (publisher_id, period_start, period_end) tuple via a
  * single SELECT before INSERT.

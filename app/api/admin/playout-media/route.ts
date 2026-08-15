@@ -5,7 +5,7 @@ import { db, schema } from "@/lib/db";
 import { requireMinRole } from "@/lib/auth/guards";
 
 /**
- * GET /api/admin/playout-media — support_admin+.
+ * GET /api/admin/playout-media - support_admin+.
  *
  * Lists the active media files the office playout box has reported (see
  * POST /api/internal/playout-media). Powers the file picker in the stream

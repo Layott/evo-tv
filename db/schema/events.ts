@@ -60,7 +60,7 @@ export const matches = pgTable(
 );
 
 /**
- * Per-player stats per match. Optional — present only for matches an admin
+ * Per-player stats per match. Optional - present only for matches an admin
  * manually scored. Fantasy scoring v2 prefers these; falls back to team-proxy
  * (team wins * 10) for matches without rows.
  */

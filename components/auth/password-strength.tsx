@@ -50,7 +50,7 @@ export function PasswordStrengthMeter({
                   : strength === "medium"
                     ? "bg-amber-400"
                     : "bg-red-500"
-                : "bg-neutral-800",
+                : "bg-muted",
             )}
           />
         ))}
@@ -64,7 +64,7 @@ export function PasswordStrengthMeter({
               ? "text-amber-400"
               : strength === "weak"
                 ? "text-red-400"
-                : "text-neutral-500",
+                : "text-muted-foreground",
         )}
       >
         {LABELS[strength]}

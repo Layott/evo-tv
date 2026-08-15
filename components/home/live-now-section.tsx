@@ -29,9 +29,9 @@ function LiveBadge() {
 function SkeletonCard() {
   return (
     <div className="space-y-2">
-      <div className="aspect-video animate-pulse rounded-xl bg-neutral-900" />
-      <div className="h-3 w-3/4 animate-pulse rounded bg-neutral-900" />
-      <div className="h-3 w-1/2 animate-pulse rounded bg-neutral-900" />
+      <div className="aspect-video animate-pulse rounded-xl bg-card" />
+      <div className="h-3 w-3/4 animate-pulse rounded bg-card" />
+      <div className="h-3 w-1/2 animate-pulse rounded bg-card" />
     </div>
   );
 }
@@ -57,7 +57,7 @@ export function LiveNow({ streams, games, loading }: LiveNowProps) {
           ))}
         </div>
       ) : streams.length === 0 ? (
-        <div className="rounded-xl border border-neutral-800 bg-neutral-900/60 p-6 text-center text-sm text-neutral-500">
+        <div className="rounded-xl border border-border bg-card/60 p-6 text-center text-sm text-muted-foreground">
           No streams live right now. Check back soon.
         </div>
       ) : (
@@ -68,7 +68,7 @@ export function LiveNow({ streams, games, loading }: LiveNowProps) {
               <Link
                 key={s.id}
                 href={`/stream/${s.id}`}
-                className="group overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900/60 transition-colors hover:border-neutral-700"
+                className="group overflow-hidden rounded-xl border border-border bg-card/60 transition-colors hover:border-input"
               >
                 <div className="relative aspect-video overflow-hidden">
                   <MediaImage
@@ -80,15 +80,15 @@ export function LiveNow({ streams, games, loading }: LiveNowProps) {
                   <div className="absolute left-2 top-2">
                     <LiveBadge />
                   </div>
-                  <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] text-neutral-200">
+                  <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] text-foreground">
                     <Eye className="h-3 w-3" /> {formatViewers(s.viewerCount)}
                   </div>
                 </div>
                 <div className="space-y-1 p-3">
-                  <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-neutral-100">
+                  <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-foreground">
                     {s.title}
                   </h3>
-                  <p className="text-xs text-neutral-400">{s.streamerName}</p>
+                  <p className="text-xs text-muted-foreground">{s.streamerName}</p>
                   {game && (
                     <p className="text-[11px] text-sky-400">{game.shortName}</p>
                   )}

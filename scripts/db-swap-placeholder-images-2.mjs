@@ -43,7 +43,7 @@ await swap("channels", "id", "banner_url", 1600, 400);
 await swap("shows", "id", "hero_url", 1600, 600);
 await swap("shows", "id", "poster_url", 800, 1200);
 
-// Products use jsonb `images` array — handle separately
+// Products use jsonb `images` array - handle separately
 const productRows = await sql`SELECT id, images FROM products`;
 let pUpdated = 0;
 for (const r of productRows) {

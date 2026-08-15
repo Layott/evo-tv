@@ -12,11 +12,11 @@ export function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-neutral-800 bg-neutral-900/40 p-5">
+    <section className="rounded-2xl border border-border bg-card/40 p-5">
       <div className="mb-4">
-        <h2 className="text-base font-semibold text-neutral-50">{title}</h2>
+        <h2 className="text-base font-semibold text-foreground">{title}</h2>
         {description ? (
-          <p className="mt-0.5 text-sm text-neutral-400">{description}</p>
+          <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>
         ) : null}
       </div>
       {children}
@@ -36,9 +36,9 @@ export function SettingRow({
   return (
     <div className="flex items-center justify-between gap-4 py-3">
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-neutral-100">{label}</p>
+        <p className="text-sm font-semibold text-foreground">{label}</p>
         {description ? (
-          <p className="text-xs text-neutral-500">{description}</p>
+          <p className="text-xs text-muted-foreground">{description}</p>
         ) : null}
       </div>
       <div className="shrink-0">{children}</div>

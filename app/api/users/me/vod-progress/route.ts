@@ -6,7 +6,7 @@ import { getCurrentUser } from "@/lib/auth/guards";
 /**
  * GET /api/users/me/vod-progress?limit=20
  *
- * Recent watch history for the current user — vod_progress rows joined with
+ * Recent watch history for the current user - vod_progress rows joined with
  * the parent VOD row so the client can render thumbnails + titles without a
  * second round-trip. Soft-deleted VODs (deletedAt NOT NULL) are filtered out.
  *

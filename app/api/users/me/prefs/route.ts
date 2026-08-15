@@ -69,7 +69,7 @@ async function loadOrCreate(userId: string) {
 }
 
 /**
- * GET /api/users/me/prefs — caller's preferences. Creates a default row if
+ * GET /api/users/me/prefs - caller's preferences. Creates a default row if
  * none exists.
  */
 export async function GET() {
@@ -80,7 +80,7 @@ export async function GET() {
 }
 
 /**
- * PATCH /api/users/me/prefs — partial update. Any field omitted in the
+ * PATCH /api/users/me/prefs - partial update. Any field omitted in the
  * request body is left unchanged.
  */
 export async function PATCH(req: NextRequest) {

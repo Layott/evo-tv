@@ -10,7 +10,7 @@ import { db, schema } from "@/lib/db";
  * predicted matches in their submitted picks. UPDATE pickem_entries.score
  * in one batch.
  *
- * Idempotent — safe to re-run after each match completes. Re-running on
+ * Idempotent - safe to re-run after each match completes. Re-running on
  * an event with no completed matches just resets everyone to score=0.
  *
  * Returns {matchesScored, entriesUpdated} for the admin trigger UI.

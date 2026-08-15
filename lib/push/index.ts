@@ -47,7 +47,7 @@ export async function sendPushToUser(userId: string, payload: PushPayload): Prom
     } catch (err: unknown) {
       const status = (err as { statusCode?: number }).statusCode;
       if (status === 404 || status === 410) {
-        // subscription expired/gone — prune
+        // subscription expired/gone - prune
         await db
           .delete(schema.pushSubscriptions)
           .where(eq(schema.pushSubscriptions.id, s.id));

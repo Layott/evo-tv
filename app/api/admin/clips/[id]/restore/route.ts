@@ -5,7 +5,7 @@ import { requireMinRole } from "@/lib/auth/guards";
 import { writeAudit } from "@/lib/api/audit";
 
 /**
- * POST /api/admin/clips/[id]/restore — moderator+. Un-soft-delete a clip.
+ * POST /api/admin/clips/[id]/restore - moderator+. Un-soft-delete a clip.
  */
 export async function POST(
   _req: NextRequest,

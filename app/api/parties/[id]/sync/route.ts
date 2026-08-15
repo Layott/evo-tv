@@ -6,9 +6,9 @@ import { getCurrentUser } from "@/lib/auth/guards";
 import { emit } from "@/lib/sse/bus";
 
 /**
- * POST /api/parties/[id]/sync — host broadcasts playback state.
+ * POST /api/parties/[id]/sync - host broadcasts playback state.
  * Members listening on SSE /api/sse/party/[id] receive and reconcile.
- * No persistence — sync is ephemeral.
+ * No persistence - sync is ephemeral.
  */
 const bodySchema = z.object({
   action: z.enum(["play", "pause", "seek"]),

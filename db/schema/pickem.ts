@@ -11,7 +11,7 @@ import { user } from "./users";
 import { events } from "./events";
 
 /**
- * Bracket pick'em. One entry per (user, event) — picks stored as JSON
+ * Bracket pick'em. One entry per (user, event) - picks stored as JSON
  * because the bracket shape is fixed per event. Score computed by the
  * resolve route or a cron.
  */

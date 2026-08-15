@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getCurrentUser } from "@/lib/auth/guards";
 import { FantasyError, joinLeague } from "@/lib/api/fantasy";
 
-/** POST /api/fantasy/leagues/[id]/join — join (member cap enforced). */
+/** POST /api/fantasy/leagues/[id]/join - join (member cap enforced). */
 export async function POST(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> },

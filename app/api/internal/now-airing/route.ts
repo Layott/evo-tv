@@ -17,10 +17,10 @@ import { writeAudit } from "@/lib/api/audit";
  *
  * Body (JSON):
  *   {
- *     "streamId":    "stream_xxx",            // REQUIRED — the linear channel row
+ *     "streamId":    "stream_xxx",            // REQUIRED - the linear channel row
  *     "live":        true,                     // default true; false = idle/down
  *     "title":       "One Piece",             // current program title
- *     "subtitle":    "S1E1 — Romance Dawn",
+ *     "subtitle":    "S1E1 - Romance Dawn",
  *     "targetId":    "ep_abc",                // EpgRow id, for app deep-link (opt)
  *     "thumbnailUrl":"https://...",           // optional
  *     "startedAt":   "2026-06-10T20:00:00Z",  // optional, default now

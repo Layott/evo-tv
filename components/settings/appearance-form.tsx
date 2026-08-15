@@ -30,7 +30,7 @@ export function AppearanceForm() {
             <Label
               key={o.v}
               htmlFor={`theme-${o.v}`}
-              className="flex cursor-pointer items-center gap-3 rounded-xl border border-neutral-800 bg-neutral-900/40 p-4 transition hover:border-sky-500/40 has-[:checked]:border-sky-500/60 has-[:checked]:bg-sky-500/5"
+              className="flex cursor-pointer items-center gap-3 rounded-xl border border-border bg-card/40 p-4 transition hover:border-sky-500/40 has-[:checked]:border-sky-500/60 has-[:checked]:bg-sky-500/5"
             >
               <RadioGroupItem id={`theme-${o.v}`} value={o.v} />
               <Icon className="size-4 text-sky-400" />

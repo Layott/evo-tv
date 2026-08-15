@@ -29,7 +29,7 @@ function categoryLabel(c: string): string {
 }
 
 function SkeletonTile() {
-  return <div className="aspect-[4/5] animate-pulse rounded-xl bg-neutral-900" />;
+  return <div className="aspect-[4/5] animate-pulse rounded-xl bg-card" />;
 }
 
 export default function CategoriesPage() {
@@ -39,7 +39,7 @@ export default function CategoriesPage() {
     <div className="mx-auto max-w-7xl px-4 py-6">
       <header className="mb-6">
         <h1 className="text-2xl font-bold tracking-tight">Categories</h1>
-        <p className="mt-1 text-sm text-neutral-400">
+        <p className="mt-1 text-sm text-muted-foreground">
           Browse by game. Dive into live streams, upcoming events, teams, and players.
         </p>
       </header>
@@ -51,7 +51,7 @@ export default function CategoriesPage() {
           ))}
         </div>
       ) : (games.data ?? []).length === 0 ? (
-        <div className="rounded-xl border border-neutral-800 bg-neutral-900/60 p-8 text-center text-sm text-neutral-500">
+        <div className="rounded-xl border border-border bg-card/60 p-8 text-center text-sm text-muted-foreground">
           No games available yet.
         </div>
       ) : (
@@ -60,7 +60,7 @@ export default function CategoriesPage() {
             <Link
               key={g.id}
               href={`/categories/${g.slug}`}
-              className="group relative overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900/60 transition-colors hover:border-neutral-700"
+              className="group relative overflow-hidden rounded-xl border border-border bg-card/60 transition-colors hover:border-input"
             >
               <div className="relative aspect-[4/5] overflow-hidden">
                 <img
@@ -74,9 +74,9 @@ export default function CategoriesPage() {
                     {categoryLabel(g.category)}
                   </span>
                   <h3 className="text-lg font-bold text-white">{g.name}</h3>
-                  <p className="text-xs text-neutral-300">{g.shortName}</p>
+                  <p className="text-xs text-foreground/80">{g.shortName}</p>
                   <div className="flex items-center justify-between pt-1">
-                    <span className="flex items-center gap-1 text-[11px] text-neutral-300">
+                    <span className="flex items-center gap-1 text-[11px] text-foreground/80">
                       <Users className="h-3 w-3" />
                       {formatPlayers(g.activePlayers)} active
                     </span>

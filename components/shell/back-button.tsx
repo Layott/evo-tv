@@ -33,7 +33,7 @@ export function BackButton({
     <button
       type="button"
       onClick={handleClick}
-      className={`inline-flex items-center gap-1.5 rounded-full border border-neutral-800 bg-neutral-900/60 px-3 py-1.5 text-xs text-neutral-300 transition-colors hover:border-sky-500/60 hover:text-sky-300 ${className}`}
+      className={`inline-flex items-center gap-1.5 rounded-full border border-border bg-card/60 px-3 py-1.5 text-xs text-foreground/80 transition-colors hover:border-sky-500/60 hover:text-sky-300 ${className}`}
       aria-label="Go back"
     >
       <ArrowLeft className="h-3.5 w-3.5" />

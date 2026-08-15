@@ -21,7 +21,7 @@ interface RenderedTemplate {
 
 /**
  * Render the transactional OTP email body. Keep this in code rather than the
- * `email_templates` DB table for now — Better-Auth fires synchronously and
+ * `email_templates` DB table for now - Better-Auth fires synchronously and
  * we want to keep latency low. Once the admin email-template UI is widely
  * used we can fall back to DB lookup with this as the default.
  */

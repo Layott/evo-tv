@@ -4,7 +4,7 @@ import { db, schema } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/guards";
 
 /**
- * POST /api/channels/[slug]/follow — toggle. Idempotent in either
+ * POST /api/channels/[slug]/follow - toggle. Idempotent in either
  * direction. Returns the new state + channel follower_count.
  */
 export async function POST(

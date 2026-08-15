@@ -47,7 +47,7 @@ export const vercelBlobStorage: StorageAdapter = {
   },
 
   async read(relativePath) {
-    // Blob doesn't expose a direct "read" — fetch the CDN URL.
+    // Blob doesn't expose a direct "read" - fetch the CDN URL.
     const meta = await head(relativePath, { token: ensureToken() });
     const res = await fetch(meta.url);
     if (!res.ok) throw new Error(`blob read failed: ${res.status}`);
@@ -58,7 +58,7 @@ export const vercelBlobStorage: StorageAdapter = {
     try {
       await del(relativePath, { token: ensureToken() });
     } catch (err) {
-      // Mirror local adapter behaviour — ENOENT-equivalent is non-fatal.
+      // Mirror local adapter behaviour - ENOENT-equivalent is non-fatal.
       const msg = (err as Error).message ?? "";
       if (!msg.includes("not found") && !msg.includes("404")) throw err;
     }
@@ -86,7 +86,7 @@ export const vercelBlobStorage: StorageAdapter = {
   },
 
   signedUrl(relativePath) {
-    // Vercel Blob doesn't sign URLs — public blobs are CDN-reachable. Caller
+    // Vercel Blob doesn't sign URLs - public blobs are CDN-reachable. Caller
     // should treat this as the canonical URL for the asset.
     return this.url(relativePath);
   },

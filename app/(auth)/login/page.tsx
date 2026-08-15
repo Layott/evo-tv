@@ -72,24 +72,24 @@ export default function LoginPage() {
   return (
     <div className="space-y-6">
       <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-bold tracking-tight text-neutral-50">Welcome back</h1>
-        <p className="text-sm text-neutral-400">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Welcome back</h1>
+        <p className="text-sm text-muted-foreground">
           Sign in to follow your teams, catch lives, and join the chat.
         </p>
       </div>
 
       {signedOutForIdle ? (
-        <div className="rounded-xl bg-neutral-800/60 px-4 py-3" role="status">
-          <p className="text-sm text-neutral-200">
+        <div className="rounded-xl bg-muted/60 px-4 py-3" role="status">
+          <p className="text-sm text-foreground">
             You were signed out after 3 hours without activity.
           </p>
-          <p className="mt-0.5 text-xs text-neutral-400">
+          <p className="mt-0.5 text-xs text-muted-foreground">
             This keeps your account closed if you leave a shared computer.
           </p>
         </div>
       ) : null}
 
-      <div className="rounded-2xl border border-neutral-800 bg-neutral-900/50 p-6">
+      <div className="rounded-2xl border border-border bg-card/50 p-6">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
           <TextField
             id="email"
@@ -103,7 +103,7 @@ export default function LoginPage() {
 
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <Label htmlFor="password" className="text-neutral-200 font-semibold">
+              <Label htmlFor="password" className="text-foreground font-semibold">
                 Password
               </Label>
               <Link
@@ -120,14 +120,14 @@ export default function LoginPage() {
                 autoComplete="current-password"
                 placeholder="••••••••"
                 aria-invalid={!!errors.password || undefined}
-                className="flex h-11 w-full rounded-md border border-neutral-800 bg-neutral-900/50 px-3 pr-10 text-sm text-neutral-100 placeholder:text-neutral-600 shadow-xs outline-none transition focus-visible:border-sky-500 focus-visible:ring-[3px] focus-visible:ring-sky-500/30 aria-invalid:border-destructive aria-invalid:ring-destructive/30"
+                className="flex h-11 w-full rounded-md border border-border bg-card/50 px-3 pr-10 text-sm text-foreground placeholder:text-muted-foreground shadow-xs outline-none transition focus-visible:border-sky-500 focus-visible:ring-[3px] focus-visible:ring-sky-500/30 aria-invalid:border-destructive aria-invalid:ring-destructive/30"
                 {...register("password")}
               />
               <button
                 type="button"
                 tabIndex={-1}
                 onClick={() => setShowPassword((s) => !s)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-neutral-500 hover:text-neutral-200"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:text-foreground"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
@@ -143,7 +143,7 @@ export default function LoginPage() {
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="h-11 w-full bg-sky-500 font-semibold text-neutral-950 hover:bg-sky-400"
+            className="h-11 w-full bg-sky-500 font-semibold text-ink hover:bg-sky-400"
           >
             {isSubmitting ? (
               <>
@@ -158,10 +158,10 @@ export default function LoginPage() {
 
         <div className="relative my-6">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-neutral-800" />
+            <div className="w-full border-t border-border" />
           </div>
           <div className="relative flex justify-center">
-            <span className="bg-neutral-900/50 px-2 text-[11px] uppercase tracking-widest text-neutral-500">
+            <span className="bg-card/50 px-2 text-[11px] uppercase tracking-widest text-muted-foreground">
               or
             </span>
           </div>
@@ -170,7 +170,7 @@ export default function LoginPage() {
         <OAuthButtons />
       </div>
 
-      <p className="text-center text-sm text-neutral-400">
+      <p className="text-center text-sm text-muted-foreground">
         New to EVO TV?{" "}
         <Link
           href={next ? `/signup?next=${encodeURIComponent(next)}` : "/signup"}

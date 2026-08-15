@@ -105,7 +105,7 @@ export const channels = pgTable(
     isVerified: boolean("is_verified").notNull().default(false),
     isEvotvOwned: boolean("is_evotv_owned").notNull().default(false),
     followerCount: integer("follower_count").notNull().default(0),
-    // Phase 9a — top-level content pillar. Defaults to esports for legacy rows.
+    // Phase 9a - top-level content pillar. Defaults to esports for legacy rows.
     pillar: text("pillar", {
       enum: ["esports", "anime", "lifestyle"],
     })

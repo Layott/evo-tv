@@ -75,7 +75,7 @@ async function probeDuration(path) {
     const s = Math.round(parseFloat(stdout.trim()));
     return Number.isFinite(s) && s > 0 ? s : null;
   } catch {
-    return null; // ffprobe missing or unreadable — duration is optional
+    return null; // ffprobe missing or unreadable - duration is optional
   }
 }
 

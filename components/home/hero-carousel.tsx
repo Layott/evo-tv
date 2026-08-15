@@ -41,7 +41,7 @@ export function HeroCarousel({ streams }: HeroCarouselProps) {
 
   if (streams.length === 0) {
     return (
-      <div className="flex h-48 items-center justify-center rounded-xl border border-neutral-800 bg-neutral-900/60 text-sm text-neutral-500 sm:h-64">
+      <div className="flex h-48 items-center justify-center rounded-xl border border-border bg-card/60 text-sm text-muted-foreground sm:h-64">
         No featured streams right now.
       </div>
     );
@@ -71,18 +71,18 @@ export function HeroCarousel({ streams }: HeroCarouselProps) {
                       <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
                       Live
                     </span>
-                    <span className="flex items-center gap-1 text-xs text-neutral-300">
+                    <span className="flex items-center gap-1 text-xs text-foreground/80">
                       <Eye className="h-3 w-3" /> {formatViewers(s.viewerCount)}
                     </span>
                   </div>
                   <h2 className="text-lg font-bold leading-tight text-white sm:text-2xl">
                     {s.title}
                   </h2>
-                  <p className="max-w-2xl text-xs text-neutral-300 sm:text-sm">
+                  <p className="max-w-2xl text-xs text-foreground/80 sm:text-sm">
                     {s.streamerName}
                   </p>
-                  <div className="mt-1 inline-flex w-fit items-center gap-2 rounded-md bg-sky-500 px-3 py-1.5 text-xs font-semibold text-neutral-950">
-                    <Play className="h-3.5 w-3.5 fill-neutral-950" /> Watch now
+                  <div className="mt-1 inline-flex w-fit items-center gap-2 rounded-md bg-sky-500 px-3 py-1.5 text-xs font-semibold text-ink">
+                    <Play className="h-3.5 w-3.5 fill-ink" /> Watch now
                   </div>
                 </div>
               </div>
@@ -99,7 +99,7 @@ export function HeroCarousel({ streams }: HeroCarouselProps) {
             aria-label={`Slide ${i + 1}`}
             onClick={() => emblaApi?.scrollTo(i)}
             className={`pointer-events-auto h-1.5 rounded-full transition-all ${
-              i === selectedIndex ? "w-6 bg-sky-400" : "w-1.5 bg-neutral-500/60"
+              i === selectedIndex ? "w-6 bg-sky-400" : "w-1.5 bg-muted-foreground/60"
             }`}
           />
         ))}

@@ -35,23 +35,23 @@ function ChapterList({ chapters, currentSec, onJump }: Props) {
     return idx;
   })();
   return (
-    <ul className="divide-y divide-neutral-800">
+    <ul className="divide-y divide-border">
       {chapters.map((c, i) => (
         <li key={`${c.label}-${i}`}>
           <button
             onClick={() => onJump(c.startSec)}
             className={cn(
-              "w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-neutral-900/70 transition-colors",
+              "w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-accent/70 transition-colors",
               i === activeIdx && "bg-sky-500/5 border-l-2 border-sky-500"
             )}
           >
-            <span className="text-xs font-mono text-neutral-500 w-14 shrink-0">
+            <span className="text-xs font-mono text-muted-foreground w-14 shrink-0">
               {fmt(c.startSec)}
             </span>
             <span
               className={cn(
                 "text-sm",
-                i === activeIdx ? "text-sky-300 font-medium" : "text-neutral-200"
+                i === activeIdx ? "text-sky-300 font-medium" : "text-foreground"
               )}
             >
               {c.label}
@@ -69,11 +69,11 @@ export function VodChapters({ chapters, currentSec, onJump }: Props) {
   return (
     <>
       {/* Desktop panel */}
-      <div className="hidden lg:block rounded-lg border border-neutral-800 bg-neutral-950">
-        <div className="px-3 py-2 border-b border-neutral-800 flex items-center gap-2">
-          <List className="size-4 text-neutral-300" />
-          <h3 className="text-sm font-semibold text-neutral-200">
-            Chapters <span className="text-neutral-500">({chapters.length})</span>
+      <div className="hidden lg:block rounded-lg border border-border bg-background">
+        <div className="px-3 py-2 border-b border-border flex items-center gap-2">
+          <List className="size-4 text-foreground/80" />
+          <h3 className="text-sm font-semibold text-foreground">
+            Chapters <span className="text-muted-foreground">({chapters.length})</span>
           </h3>
         </div>
         <ChapterList chapters={chapters} currentSec={currentSec} onJump={onJump} />
@@ -81,7 +81,7 @@ export function VodChapters({ chapters, currentSec, onJump }: Props) {
 
       {/* Mobile accordion */}
       <div className="lg:hidden">
-        <Accordion type="single" collapsible className="rounded-lg border border-neutral-800 bg-neutral-950">
+        <Accordion type="single" collapsible className="rounded-lg border border-border bg-background">
           <AccordionItem value="chapters" className="border-0">
             <AccordionTrigger className="px-3 py-2 text-sm font-semibold">
               <span className="flex items-center gap-2">

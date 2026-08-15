@@ -1,6 +1,6 @@
 /**
  * Phase 3.5 one-time seed: generate one stream key per channel that doesn't
- * have an active key yet. Plaintext keys are printed to stdout — copy them
+ * have an active key yet. Plaintext keys are printed to stdout - copy them
  * out of the run log if EVO needs to publish RTMP from OBS without going
  * through the partner UI yet. After this runs, every channel can be
  * authenticated via channel_stream_keys.

@@ -2,7 +2,7 @@ import { pgTable, text, timestamp, index } from "drizzle-orm/pg-core";
 import { user } from "./users";
 
 /**
- * Personal API keys for users — used by external integrations to call
+ * Personal API keys for users - used by external integrations to call
  * the EVO TV API without a session. Keys are hashed at rest; the plain
  * value is returned ONCE on create and never persisted.
  *
@@ -17,7 +17,7 @@ export const apiKeys = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
-    /** sha256(plain) — 64 hex chars. */
+    /** sha256(plain) - 64 hex chars. */
     keyHash: text("key_hash").notNull().unique(),
     /** First 12 chars of plain (e.g. "evo_a3b1c2d4") for identification in UI. */
     prefix: text("prefix").notNull(),

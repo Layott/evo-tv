@@ -112,12 +112,12 @@ export default function EventDetailPage() {
     return (
       <div className="mx-auto max-w-3xl px-4 py-20 text-center">
         <h1 className="text-2xl font-bold">Event not found</h1>
-        <p className="mt-2 text-sm text-neutral-400">
+        <p className="mt-2 text-sm text-muted-foreground">
           The event you're looking for doesn't exist.
         </p>
         <Link
           href="/events"
-          className="mt-6 inline-flex rounded-md bg-sky-500 px-4 py-2 text-sm font-semibold text-neutral-950 hover:bg-sky-400"
+          className="mt-6 inline-flex rounded-md bg-sky-500 px-4 py-2 text-sm font-semibold text-ink hover:bg-sky-400"
         >
           Back to events
         </Link>
@@ -128,7 +128,7 @@ export default function EventDetailPage() {
   if (!event) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-6">
-        <div className="h-72 animate-pulse rounded-xl bg-neutral-900" />
+        <div className="h-72 animate-pulse rounded-xl bg-card" />
       </div>
     );
   }
@@ -146,7 +146,7 @@ export default function EventDetailPage() {
 
       <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_auto]">
         <div className="space-y-4">
-          <p className="text-sm leading-relaxed text-neutral-300">{event.description}</p>
+          <p className="text-sm leading-relaxed text-foreground/80">{event.description}</p>
           <div className="flex flex-wrap gap-2">
             {event.status === "live" && liveStreamQ.data && (
               <Link
@@ -163,7 +163,7 @@ export default function EventDetailPage() {
               className={`inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                 reminded
                   ? "border-sky-500/50 bg-sky-500/10 text-sky-300"
-                  : "border-neutral-800 bg-neutral-900/60 text-neutral-200 hover:border-neutral-700"
+                  : "border-border bg-card/60 text-foreground hover:border-input"
               }`}
             >
               {reminded ? <Bell className="h-4 w-4 fill-sky-300" /> : <BellOff className="h-4 w-4" />}
@@ -171,32 +171,32 @@ export default function EventDetailPage() {
             </button>
             <Link
               href={`/events/${event.id}/bracket`}
-              className="inline-flex items-center gap-2 rounded-md border border-neutral-800 bg-neutral-900/60 px-4 py-2 text-sm font-semibold text-neutral-200 hover:border-neutral-700"
+              className="inline-flex items-center gap-2 rounded-md border border-border bg-card/60 px-4 py-2 text-sm font-semibold text-foreground hover:border-input"
             >
               <ListTree className="h-4 w-4" /> View bracket
             </Link>
           </div>
-          <dl className="grid grid-cols-2 gap-3 rounded-xl border border-neutral-800 bg-neutral-900/60 p-4 text-xs sm:grid-cols-4">
+          <dl className="grid grid-cols-2 gap-3 rounded-xl border border-border bg-card/60 p-4 text-xs sm:grid-cols-4">
             <div>
-              <dt className="text-neutral-500">Format</dt>
+              <dt className="text-muted-foreground">Format</dt>
               <dd className="mt-0.5 font-medium">{event.format}</dd>
             </div>
             <div>
-              <dt className="text-neutral-500">Region</dt>
+              <dt className="text-muted-foreground">Region</dt>
               <dd className="mt-0.5 font-medium">{event.region}</dd>
             </div>
             <div>
-              <dt className="text-neutral-500">Teams</dt>
+              <dt className="text-muted-foreground">Teams</dt>
               <dd className="mt-0.5 font-medium">{event.teamIds.length}</dd>
             </div>
             <div>
-              <dt className="text-neutral-500">Matches</dt>
+              <dt className="text-muted-foreground">Matches</dt>
               <dd className="mt-0.5 font-medium">{matchesByState.length}</dd>
             </div>
           </dl>
         </div>
 
-        <div className="flex flex-col items-start gap-3 rounded-xl border border-neutral-800 bg-neutral-900/60 p-4 lg:w-auto lg:min-w-[280px]">
+        <div className="flex flex-col items-start gap-3 rounded-xl border border-border bg-card/60 p-4 lg:w-auto lg:min-w-[280px]">
           {event.status === "scheduled" && (
             <CountdownTimer target={event.startsAt} label="Starts in" />
           )}
@@ -205,15 +205,15 @@ export default function EventDetailPage() {
               <span className="flex items-center gap-2 rounded-md border border-red-500/30 bg-red-500/10 px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-red-400">
                 <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" /> Live now
               </span>
-              <p className="text-sm text-neutral-300">Event in progress.</p>
+              <p className="text-sm text-foreground/80">Event in progress.</p>
             </div>
           )}
           {event.status === "completed" && (
             <div className="flex flex-col gap-2">
-              <span className="rounded-md border border-neutral-700 bg-neutral-800 px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-neutral-300">
+              <span className="rounded-md border border-input bg-muted px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-foreground/80">
                 Concluded
               </span>
-              <p className="text-sm text-neutral-400">
+              <p className="text-sm text-muted-foreground">
                 This event ended {new Date(event.endsAt).toLocaleDateString()}.
               </p>
             </div>
@@ -226,11 +226,11 @@ export default function EventDetailPage() {
         {teamsQ.isPending ? (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="h-40 animate-pulse rounded-xl bg-neutral-900" />
+              <div key={i} className="h-40 animate-pulse rounded-xl bg-card" />
             ))}
           </div>
         ) : teams.length === 0 ? (
-          <div className="rounded-xl border border-neutral-800 bg-neutral-900/60 p-6 text-center text-sm text-neutral-500">
+          <div className="rounded-xl border border-border bg-card/60 p-6 text-center text-sm text-muted-foreground">
             Teams TBA
           </div>
         ) : (

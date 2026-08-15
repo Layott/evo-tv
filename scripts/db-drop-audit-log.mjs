@@ -16,7 +16,7 @@ if (!exists[0].reg) {
 const c = await sql`SELECT count(*)::int AS n FROM admin_audit_log`;
 console.log("rows:", c[0].n);
 if (c[0].n > 0) {
-  console.error("ABORT — admin_audit_log not empty");
+  console.error("ABORT - admin_audit_log not empty");
   process.exit(1);
 }
 await sql`DROP TABLE admin_audit_log`;

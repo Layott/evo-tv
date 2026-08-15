@@ -114,7 +114,7 @@ export async function POST(req: NextRequest) {
     id,
     name: parsed.data.name,
     prefix,
-    /** Returned ONCE — caller must save it now. */
+    /** Returned ONCE - caller must save it now. */
     key: plain,
   });
 }

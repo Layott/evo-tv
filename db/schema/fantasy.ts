@@ -9,7 +9,7 @@ import {
 import { user } from "./users";
 
 /**
- * Fantasy leagues — Phase 7.2 starter. Owner creates a league with a salary
+ * Fantasy leagues - Phase 7.2 starter. Owner creates a league with a salary
  * cap + scoring system + game; members join, submit a lineup of players,
  * and the scoring engine (nightly cron, deferred) computes points.
  */
@@ -45,7 +45,7 @@ export const fantasyLeagues = pgTable(
   ],
 );
 
-/** Membership join — composite PK on (leagueId, userId). */
+/** Membership join - composite PK on (leagueId, userId). */
 export const fantasyLeagueMembers = pgTable(
   "fantasy_league_members",
   {

@@ -23,9 +23,9 @@ const ACCENT: Record<NonNullable<MetricCardProps["accent"]>, string> = {
 export function MetricCard({ label, value, hint, delta, icon: Icon, accent = "sky" }: MetricCardProps) {
   const positive = delta !== undefined && delta >= 0;
   return (
-    <div className="rounded-2xl border border-neutral-800 bg-neutral-900/40 p-4">
+    <div className="rounded-2xl border border-border bg-card/40 p-4">
       <div className="flex items-start justify-between">
-        <div className="text-[10px] uppercase tracking-wider text-neutral-500">{label}</div>
+        <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
         {Icon ? (
           <div className={cn("flex size-7 items-center justify-center rounded-lg ring-1", ACCENT[accent])}>
             <Icon className="size-4" />
@@ -33,7 +33,7 @@ export function MetricCard({ label, value, hint, delta, icon: Icon, accent = "sk
         ) : null}
       </div>
       <div className="mt-2 flex items-baseline gap-2">
-        <span className="text-2xl font-bold text-neutral-50 tabular-nums">{value}</span>
+        <span className="text-2xl font-bold text-foreground tabular-nums">{value}</span>
         {delta !== undefined ? (
           <span
             className={cn(
@@ -46,7 +46,7 @@ export function MetricCard({ label, value, hint, delta, icon: Icon, accent = "sk
           </span>
         ) : null}
       </div>
-      {hint ? <div className="mt-1 text-[11px] text-neutral-500">{hint}</div> : null}
+      {hint ? <div className="mt-1 text-[11px] text-muted-foreground">{hint}</div> : null}
     </div>
   );
 }

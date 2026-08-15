@@ -9,7 +9,7 @@ const VALID_PILLARS = ["esports", "anime", "lifestyle"] as const;
 const VALID_ORIGINS = ["evo_original", "licensed", "syndicated"] as const;
 const VALID_STATUS = ["airing", "completed", "upcoming", "hiatus"] as const;
 
-/** GET /api/originals — list shows, optional pillar/origin/status filters. */
+/** GET /api/originals - list shows, optional pillar/origin/status filters. */
 export async function GET(req: NextRequest) {
   const params = req.nextUrl.searchParams;
   const pillar = params.get("pillar");

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/guards";
 import { FantasyError, getLineup, upsertLineup } from "@/lib/api/fantasy";
 
-/** GET /api/fantasy/leagues/[id]/lineup — caller's lineup (null if none). */
+/** GET /api/fantasy/leagues/[id]/lineup - caller's lineup (null if none). */
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -26,7 +26,7 @@ const submitSchema = z.object({
     .max(12),
 });
 
-/** POST /api/fantasy/leagues/[id]/lineup — upsert lineup. */
+/** POST /api/fantasy/leagues/[id]/lineup - upsert lineup. */
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },

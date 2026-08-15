@@ -80,7 +80,7 @@ export function MainChannelHero() {
   });
 
   if (isPending) {
-    return <div className="mb-8 aspect-video w-full animate-pulse rounded-2xl bg-neutral-900" />;
+    return <div className="mb-8 aspect-video w-full animate-pulse rounded-2xl bg-card" />;
   }
 
   const channel = data?.channel ?? null;
@@ -92,11 +92,11 @@ export function MainChannelHero() {
   if (!channel) {
     if (role !== "admin") return null;
     return (
-      <div className="mb-8 rounded-2xl bg-neutral-900/60 px-6 py-8 text-center">
-        <p className="text-sm font-semibold text-neutral-200">
+      <div className="mb-8 rounded-2xl bg-card/60 px-6 py-8 text-center">
+        <p className="text-sm font-semibold text-foreground">
           No main channel set
         </p>
-        <p className="mt-1 text-sm text-neutral-400">
+        <p className="mt-1 text-sm text-muted-foreground">
           Mark a stream as the main channel in Admin to give it this position.
         </p>
         <Button asChild className="mt-4 bg-sky-600 hover:bg-sky-500">
@@ -110,7 +110,7 @@ export function MainChannelHero() {
 
   return (
     <section className="mb-10">
-      <div className="overflow-hidden rounded-2xl bg-neutral-950">
+      <div className="overflow-hidden rounded-2xl bg-background">
         {canWatch ? (
           <VideoPlayer
             src={channel.hlsUrl}
@@ -131,8 +131,8 @@ export function MainChannelHero() {
             <div className="relative flex flex-col items-center gap-3 px-6 text-center">
               {channel.isLive && !signedIn ? (
                 <>
-                  <Lock className="size-6 text-neutral-300" />
-                  <p className="text-lg font-semibold text-neutral-50">
+                  <Lock className="size-6 text-foreground/80" />
+                  <p className="text-lg font-semibold text-foreground">
                     Live now. Sign in to watch.
                   </p>
                   <div className="mt-1 flex flex-wrap justify-center gap-2">
@@ -142,7 +142,7 @@ export function MainChannelHero() {
                     <Button
                       asChild
                       variant="outline"
-                      className="border-neutral-700 bg-neutral-900 text-neutral-200 hover:bg-neutral-800"
+                      className="border-input bg-card text-foreground hover:bg-accent"
                     >
                       <Link href="/signup?next=/home">Create an account</Link>
                     </Button>
@@ -150,15 +150,15 @@ export function MainChannelHero() {
                 </>
               ) : (
                 <>
-                  <p className="text-sm font-medium uppercase tracking-wide text-neutral-400">
+                  <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
                     Off air
                   </p>
                   {upNext[0] ? (
-                    <p className="text-lg font-semibold text-neutral-50">
+                    <p className="text-lg font-semibold text-foreground">
                       Back at {clock(upNext[0].airsAt)} with {upNext[0].title}
                     </p>
                   ) : (
-                    <p className="text-lg font-semibold text-neutral-50">
+                    <p className="text-lg font-semibold text-foreground">
                       {channel.title}
                     </p>
                   )}
@@ -171,7 +171,7 @@ export function MainChannelHero() {
 
       <div className="mt-4 flex flex-wrap items-baseline justify-between gap-2">
         <div className="min-w-0">
-          <h2 className="flex items-center gap-2 text-xl font-bold tracking-tight text-neutral-50">
+          <h2 className="flex items-center gap-2 text-xl font-bold tracking-tight text-foreground">
             {channel.isLive ? (
               <span className="inline-flex items-center gap-1.5 rounded bg-red-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
                 <Radio className="size-3" />
@@ -180,7 +180,7 @@ export function MainChannelHero() {
             ) : null}
             {onNow?.title ?? channel.title}
           </h2>
-          <p className="mt-1 truncate text-sm text-neutral-400">
+          <p className="mt-1 truncate text-sm text-muted-foreground">
             {onNow?.subtitle || channel.tagline || "The EVO TV channel"}
           </p>
         </div>
@@ -194,18 +194,18 @@ export function MainChannelHero() {
 
       {/* What is next, on the channel it belongs to. */}
       {upNext.length > 0 ? (
-        <ul className="mt-4 divide-y divide-neutral-900 rounded-xl bg-neutral-900/40">
+        <ul className="mt-4 divide-y divide-border rounded-xl bg-card/40">
           {upNext.map((row) => (
             <li key={row.id} className="flex items-baseline gap-4 px-4 py-3">
-              <span className="w-12 shrink-0 font-mono text-sm tabular-nums text-neutral-500">
+              <span className="w-12 shrink-0 font-mono text-sm tabular-nums text-muted-foreground">
                 {clock(row.airsAt)}
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm text-neutral-200">
+                <span className="block truncate text-sm text-foreground">
                   {row.title}
                 </span>
                 {row.subtitle ? (
-                  <span className="block truncate text-xs text-neutral-500">
+                  <span className="block truncate text-xs text-muted-foreground">
                     {row.subtitle}
                   </span>
                 ) : null}
