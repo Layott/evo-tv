@@ -1,17 +1,25 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { and, eq, isNull } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
+import { SITE_URL } from "@/lib/site";
 
-const ALLOWED_HOSTS = new Set([
-  "evotv-app.vercel.app",
-  "evo-tv.vercel.app",
-  "www.evotv.app",
-  "evotv.app",
-]);
+/**
+ * Which URLs oEmbed will answer for, and where the iframe points.
+ *
+ * Every host here used to be somewhere the site no longer lives: two Vercel
+ * deployments that 404, and `evotv.app`, a domain we do not own. `evotv.co`,
+ * the domain it actually runs on, was not in the list, so oEmbed rejected every
+ * real URL and the embed it handed back pointed at a dead host.
+ *
+ * Driven off `SITE_URL` now, so a domain change moves this with it.
+ */
+const SITE_HOST = new URL(SITE_URL).hostname;
 
-const EMBED_BASE = "https://evotv-app.vercel.app";
+const ALLOWED_HOSTS = new Set([SITE_HOST, `www.${SITE_HOST}`]);
+
+const EMBED_BASE = SITE_URL;
 const PROVIDER_NAME = "EVO TV";
-const PROVIDER_URL = "https://evotv-app.vercel.app";
+const PROVIDER_URL = SITE_URL;
 
 interface OEmbedVideo {
   type: "video";

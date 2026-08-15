@@ -59,7 +59,7 @@ We received a request to reset the password for **{{email}}**.
 
 Reset link (valid 30 minutes): {{resetUrl}}
 
-If this wasn't you, let us know at support@evotv.app.`,
+If this wasn't you, let us know at info@evotv.co.`,
   },
   subscription_receipt: {
     label: "Subscription receipt",

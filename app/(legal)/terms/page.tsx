@@ -111,10 +111,10 @@ export default function TermsPage() {
         <p>
           If you believe something on EVO TV infringes your copyright, email{" "}
           <a
-            href="mailto:legal@evotv.co"
+            href="mailto:info@evotv.co"
             className="text-[var(--brand)] underline underline-offset-4"
           >
-            legal@evotv.co
+            info@evotv.co
           </a>{" "}
           with enough detail to identify the work and where it appears. We will
           investigate and remove anything that should not be there.
@@ -174,10 +174,10 @@ export default function TermsPage() {
       <Section heading="Contact">
         <p>
           <a
-            href="mailto:legal@evotv.co"
+            href="mailto:info@evotv.co"
             className="text-[var(--brand)] underline underline-offset-4"
           >
-            legal@evotv.co
+            info@evotv.co
           </a>{" "}
           for anything about these terms. See the{" "}
           <Link
