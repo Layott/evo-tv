@@ -5,6 +5,7 @@ import { db, schema } from "@/lib/db";
 import { requireMinRole } from "@/lib/auth/guards";
 import { writeAudit } from "@/lib/api/audit";
 import { canGrantRole, type PlatformRole } from "@/lib/auth/roles";
+import { wouldEmptyAdminRoster } from "@/lib/api/admin-roster";
 
 const PLATFORM_ROLES: [PlatformRole, ...PlatformRole[]] = [
   "guest",
@@ -66,6 +67,13 @@ export async function POST(req: NextRequest) {
     }
     if (currentRole === targetRole) {
       skipped.push({ id: row.id, reason: "noop" });
+      continue;
+    }
+    // Checked inside the loop, not before it: each update lands immediately, so
+    // a batch that demotes two of the three remaining admins has to be stopped
+    // on the row that empties the roster, not on the whole request.
+    if (await wouldEmptyAdminRoster(row.id, currentRole, targetRole)) {
+      skipped.push({ id: row.id, reason: "last_admin" });
       continue;
     }
     await db

@@ -4,7 +4,7 @@ import { UsersRolesPage } from "@/components/admin/users-roles-page";
 export default function AdminUsersRoute() {
   return (
     <div className="p-6 lg:p-8">
-      <AdminGuard>
+      <AdminGuard minRole="support_admin">
         <UsersRolesPage />
       </AdminGuard>
     </div>

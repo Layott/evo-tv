@@ -20,7 +20,7 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
   const session = await getSession();
   if (session?.user) return session.user;
 
-  // No session — check for X-API-Key (server-to-server / external integration).
+  // No session - check for X-API-Key (server-to-server / external integration).
   const { authenticateApiKey } = await import("./api-key");
   return authenticateApiKey();
 }
@@ -47,7 +47,7 @@ export async function requireRole(role: PlatformRole): Promise<SessionUser> {
 }
 
 /**
- * API Route guard — non-redirecting variant.
+ * API Route guard - non-redirecting variant.
  *
  * Returns either `{ ok: true, user, role }` for success or `{ ok: false, response }`
  * with a 401/403 NextResponse ready to be returned from the route handler.
@@ -202,7 +202,7 @@ export async function requirePublisherRoleByChannel(
 
 /**
  * Same as `requirePublisherRoleByChannel` but resolves by publisherId directly
- * (no channel involved — useful for publisher-level routes like /api/partner/[pubId]/members).
+ * (no channel involved - useful for publisher-level routes like /api/partner/[pubId]/members).
  */
 export async function requirePublisherRole(
   publisherId: string,

@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
-import { requireAdminFromRequest, generateId } from "@/lib/api/admin";
+import { generateId } from "@/lib/api/admin";
+import { requireMinRole } from "@/lib/auth/guards";
 import { getOrderById, updateOrderStatus } from "@/lib/api/orders";
 import { createNotification } from "@/lib/api/notifications";
 import { db, schema } from "@/lib/db";
@@ -14,7 +15,9 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const guard = await requireAdminFromRequest();
+  // Fulfilment is finance's job as much as an admin's, and it is the action
+  // that closes an order somebody is waiting on.
+  const guard = await requireMinRole("finance_admin");
   if (!guard.ok) return guard.response;
 
   const { id } = await params;

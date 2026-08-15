@@ -6,6 +6,11 @@ import { auth } from "@/lib/auth";
 import { getCurrentUser } from "@/lib/auth/guards";
 import { log } from "@/lib/log";
 import { writeAudit } from "@/lib/api/audit";
+import { firstNonEmpty, resolveAvatarUrl } from "@/lib/avatar";
+import {
+  LAST_ADMIN_MESSAGE,
+  wouldEmptyAdminRosterOnRemoval,
+} from "@/lib/api/admin-roster";
 
 /**
  * GET /api/users/me - joined view of user + profile (bio, country).
@@ -41,12 +46,16 @@ export async function GET() {
     user: {
       id: user.id,
       email: user.email,
-      name: user.name,
+      name:
+        firstNonEmpty(
+          user.name,
+          (user as { handle?: string | null }).handle,
+        ) ?? user.email,
       handle: (user as { handle?: string | null }).handle ?? null,
-      image:
-        profile?.avatarUrl ||
-        (user as { image?: string | null }).image ||
-        null,
+      image: resolveAvatarUrl(
+        profile?.avatarUrl,
+        (user as { image?: string | null }).image,
+      ),
       onboardedAt: profile?.onboardedAt ?? null,
       role: (user as { role?: string }).role ?? "user",
       bio: profile?.bio ?? "",
@@ -195,6 +204,11 @@ export async function PATCH(req: NextRequest) {
         bio: schema.profiles.bio,
         country: schema.profiles.country,
         onboardedAt: schema.profiles.onboardedAt,
+        // Selected because the response below has to resolve the picture the
+        // same way GET does. Returning Better-Auth's column alone meant a
+        // client that re-hydrated from a PATCH lost an avatar that GET would
+        // have given it, and the profile went black until the next full load.
+        avatarUrl: schema.profiles.avatarUrl,
       })
       .from(schema.profiles)
       .where(eq(schema.profiles.userId, user.id))
@@ -219,9 +233,13 @@ export async function PATCH(req: NextRequest) {
     user: {
       id: fresh?.id ?? user.id,
       email: fresh?.email ?? user.email,
-      name: fresh?.name ?? user.name,
+      // The app renders this as the display name, so an empty string is a
+      // blank where a name should be. Fall through rather than print nothing.
+      name:
+        firstNonEmpty(fresh?.name, user.name, fresh?.handle) ??
+        (fresh?.email ?? user.email),
       handle: fresh?.handle ?? null,
-      image: fresh?.image ?? null,
+      image: resolveAvatarUrl(profile?.avatarUrl, fresh?.image),
       role: fresh?.role ?? "user",
       // Same shape GET returns, so a client can re-hydrate from either.
       onboardedAt: profile?.onboardedAt ?? null,
@@ -237,10 +255,20 @@ export async function PATCH(req: NextRequest) {
  * Soft-deletes via user.deleted_at; the actual cascade purge runs after a
  * 30-day grace window by a Vercel Cron worker (Phase 5 follow-up).
  * Sessions are revoked immediately so the bearer stops working.
+ *
+ * Refused for the last account that can administer the platform. This is the
+ * one path where a single click empties the admin roster: role changes block
+ * self-edits, so an admin can never demote themselves, but nothing stopped one
+ * from deleting the account instead.
  */
 export async function DELETE() {
   const user = await getCurrentUser();
   if (!user) return new NextResponse("Auth required", { status: 401 });
+
+  const currentRole = (user as { role?: string }).role ?? "user";
+  if (await wouldEmptyAdminRosterOnRemoval(user.id, currentRole)) {
+    return NextResponse.json({ error: LAST_ADMIN_MESSAGE }, { status: 409 });
+  }
 
   const now = new Date();
   await db
