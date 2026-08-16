@@ -141,7 +141,30 @@ crontab -e
 0    5 * * *   /srv/evotv/cron.sh fantasy-score
 */5  * * * *   /srv/evotv/cron.sh viewer-count
 */15 * * * *   /srv/evotv/cron.sh reminders
+*/30 * * * *   /srv/evotv/bandwidth-watch.sh
 ```
+
+## Bandwidth
+
+We serve our own HLS, so being watched costs transfer out of the droplet, and
+the plan's allowance is the budget. `bandwidth-watch.sh` reads the interface
+counter every half hour, keeps the month's total in
+`/var/lib/evotv/bandwidth.json`, and notifies every admin the first time the
+month passes 60%, 80% and 95%. Install it alongside the other scripts:
+
+```bash
+cp api/deploy/bandwidth-watch.sh /srv/evotv/bandwidth-watch.sh
+chmod +x /srv/evotv/bandwidth-watch.sh
+grep evotv-bandwidth /var/log/syslog | tail
+```
+
+**A 24/7 channel is charged for viewers, not for being on.** Nobody watching
+costs nothing: the ingest from the office is inbound and DigitalOcean does not
+count inbound, and `hls_cleanup` keeps the segments on disk at about 100 MB.
+What the clock changes is that viewer-hours accumulate around the clock, so the
+number that matters is the *average* concurrent audience, not the peak during a
+show. At 720p the 4 TB allowance is about **8 viewers watching continuously for
+a month**; at 480p it is about 15.
 
 Box time is Africa/Lagos. Vercel Cron ran UTC, so these fire an hour earlier in absolute terms.
 
