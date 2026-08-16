@@ -29,6 +29,16 @@ import SiteHeader from "@/components/landing/site-header";
  * for a paid viewer and shows everyone else the date it opens.
  */
 
+/**
+ * Dynamic, because the build must not touch the database.
+ *
+ * Known and shared with the show page above it: a missing episode renders the
+ * not-found page with a **200** status rather than a 404. Tried and did not
+ * fix it: calling `notFound()` from `generateMetadata` first, and swapping
+ * `force-dynamic` for `connection()`. Something above the page commits the
+ * response before the body runs. A human sees the right page; a crawler reads
+ * a soft 404.
+ */
 export const dynamic = "force-dynamic";
 
 interface RouteParams {
