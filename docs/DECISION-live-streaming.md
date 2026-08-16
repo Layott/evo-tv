@@ -1,99 +1,138 @@
-# Can Cloudflare + DigitalOcean run our live streams, or do we fall back to embedding Twitch/YouTube?
+# How EVO TV delivers live video
 
-Short answer: **use Cloudflare Stream. Do not serve video off the droplet, and
-do not fall back to embedding Twitch or YouTube.** The app and the website are
-already wired for Cloudflare Stream and need no code changes to use it.
+**Decision, owner, 2026-08-16: not Cloudflare Stream.** It bills per minute
+delivered, so the bill is a function of how many people watch, and there is no
+setting that caps it. A bill that can only be discovered after the fact is not
+acceptable, however cheap it looks per unit.
+
+This supersedes the 2026-08-11 recommendation in this file, which was Cloudflare
+Stream. That recommendation was right about the engineering and wrong about the
+constraint that actually matters here.
+
+**What we do instead: serve the HLS ourselves, from a machine with a price that
+does not move, and make the software refuse to exceed what that machine can
+carry.**
 
 ---
 
-## Why Cloudflare Stream, concretely
+## The path already exists
 
-Both players already take a plain HLS URL:
+Nothing needs to be built to start. `deploy/nginx-rtmp.conf` takes RTMP on 1935,
+validates the stream key against `/api/rtmp/on-publish`, and writes HLS to
+`/var/hls`; Caddy serves it at `/hls/*`. Both players take a plain `.m3u8`.
 
-| Surface | Player | Takes |
-|---|---|---|
-| Website | `components/stream/hls-player.tsx`, hls.js plus native Safari HLS | an `.m3u8` |
-| App | `EVOTV-app/.../hls-player.tsx`, expo-video | an `.m3u8` |
+Two properties of that setup matter for cost:
 
-And the admin flow to point them at one exists and is tested end to end:
+- **The box does not transcode.** nginx repackages whatever the encoder sends.
+  Adding a second quality is work for the encoder in the office, not for the
+  server, so CPU stays flat as viewers arrive.
+- **Bandwidth is the only thing that scales with the audience**, and bandwidth
+  on a droplet is a fixed allowance, not a meter.
 
-1. Admin creates the stream in `/admin/streams`.
-2. Paste the Cloudflare playback URL into `hlsUrl`.
-3. Flip it live.
-4. It appears under "Live now" on the site and in the app.
+## What the current droplet can carry
 
-So the integration work for Cloudflare Stream is **zero code**. It is an account
-setup task: create a Live Input, point OBS or ffplayout at the RTMP URL it gives
-you, copy the playback `.m3u8` into the admin form.
+Measured 2026-08-16: 2 vCPU, 4 GB, 116 GB disk, and **7.3 GB of egress in six
+days**, which is nothing. The plan includes **4 TB a month**; DigitalOcean
+charges $0.01/GB beyond it.
 
-## Why not serve it from the droplet
+One viewer-hour costs, in transfer:
 
-The droplet is `s-2vcpu-4gb`. Two problems, either one disqualifying:
-
-- **CPU.** Adaptive bitrate means transcoding one input into several renditions.
-  Two vCPUs will not do that for even one 1080p stream while also running the
-  app, Postgres connections, Valkey and Caddy. Skipping ABR means every viewer
-  gets the 1080p ladder, which is the wrong call for Nigerian mobile data.
-- **No edge.** The droplet is in Frankfurt. Every viewer in Lagos pulls every
-  segment from Frankfurt. Cloudflare Stream serves from an edge near the viewer.
-
-Bandwidth is the third problem but the least interesting: the plan includes 4 TB
-of transfer, and at roughly 1 GB per viewer-hour that is about 3,600 viewer-hours
-a month before overage, shared with everything else the droplet serves.
-
-**One caution worth checking before anyone suggests it:** putting the standard
-Cloudflare CDN (the orange cloud) in front of self-hosted video is not the same
-thing as Cloudflare Stream. Cloudflare has historically restricted serving large
-volumes of video through the standard CDN, and Stream is the product intended
-for it. Confirm the current terms before relying on the free CDN for video.
-
-## Cost, so it is a decision and not a guess
-
-Cloudflare Stream bills delivery per minute watched, historically about **$1 per
-1,000 minutes delivered**, plus storage for recordings at about $5 per 1,000
-minutes stored. **Confirm today's rates before committing** - this changes.
-
-On those numbers, delivery of a live show costs roughly:
-
-| Concurrent viewers | Show length | Viewer-minutes | Delivery |
+| Quality | Bitrate | Per viewer-hour | Viewer-hours in 4 TB |
 |---|---|---|---|
-| 100 | 2 h | 12,000 | ~$12 |
-| 500 | 2 h | 60,000 | ~$60 |
-| 1,000 | 3 h | 180,000 | ~$180 |
+| 480p | 0.8 Mbps | 0.36 GB | ~11,400 |
+| 720p | 1.5 Mbps | 0.68 GB | ~6,000 |
+| 1080p | 3 Mbps | 1.35 GB | ~3,000 |
 
-That scales with success rather than with capacity planning, which is the right
-shape for launch: nothing to over-provision, and no cliff where the droplet
-falls over.
+So at 720p, a three-hour show with **100 concurrent viewers costs 203 GB**, and
+the included allowance covers about **twenty such shows a month, for nothing**.
+The same show on Cloudflare Stream would have been about $18; five hundred
+concurrent would have been about $90 a show, every show, with no ceiling.
 
-## Why not embed Twitch or YouTube
+### The channel is on 24/7, which changes which number matters
 
-It is genuinely the fastest thing to ship, and it is free. It is still the wrong
-call here:
+Being live costs nothing by itself. Transfer is spent per viewer: an empty
+channel serves nobody, the ingest from the office is inbound and DigitalOcean
+does not count inbound, and `hls_cleanup` holds the segments on disk at about
+100 MB. A channel nobody is watching is free.
 
-- **It is not zero work.** Neither gives you an HLS URL, so the existing players
-  cannot use them. You would add a second player path plus a WebView in the app.
-  That is a code change on launch day, against a path that is already working.
-- **You lose the product.** Chat, polls, tips, the ad slot and the viewer count
-  are all EVO TV surfaces built around our own player. Embedding puts the
-  audience inside somebody else's frame, with their branding, their
-  recommendations pulling viewers away at the end of the stream, and their
-  policies over your content.
-- **You lose the data.** Watch events, analytics, and the viewer counts the
-  admin dashboard reports all come from our own playback.
+What running around the clock changes is that viewer-hours accumulate around
+the clock, so the number to plan against is the **average concurrent audience
+over the month**, not the peak during a show. A month is 730 hours, so:
 
-Embedding is a reasonable **contingency** if the Stream account cannot be
-provisioned in time, and it is worth knowing it costs roughly half a day of work
-rather than being a switch that can be flipped. It is not the plan.
+| Quality | 4 TB supports, continuously |
+|---|---|
+| 480p | about **15 viewers**, all month |
+| 720p | about **8 viewers**, all month |
 
-## What to do
+That is the sharp edge of self-hosting a 24/7 channel. Twenty people watching
+on average is roughly 10 TB a month at 720p, which is 6 TB of overage at
+$0.01/GB, about $60. A hundred people watching on average is nearer $470 a
+month, at which point a fixed-price unmetered box costs a tenth of that and the
+question stops being about bandwidth at all.
 
-1. Enable Cloudflare Stream on the account and create a Live Input.
-2. Point OBS, or ffplayout for the scheduled rotation, at that RTMP URL.
-3. Paste the playback `.m3u8` into the stream in `/admin/streams` and take it
-   live.
-4. Watch it on both the site and the app.
+**The practical limit is throughput, not the allowance.** Five hundred viewers
+at 1.5 Mbps is 750 Mbps sustained out of one droplet, which is optimistic for a
+2 vCPU box on shared networking. Plan this machine for **300 concurrent**, and
+treat the 4 TB as the monthly budget rather than the constraint.
 
-Nothing in the codebase blocks this today. The one gap that did block it has
-been fixed: nothing could mark a stream live for an externally originated
-channel, because `isLive` was only ever set by our own RTMP callback, which a
-Cloudflare-hosted stream never triggers.
+## Making the cost unable to run away
+
+An allowance is only a ceiling if something enforces it. Two pieces, neither
+built yet:
+
+1. **A hard concurrency cap.** The viewer heartbeat and the Valkey-shared count
+   already exist. Above the cap the player says the channel is at capacity
+   rather than everybody's stream stuttering. This is the valve: it converts
+   "unbounded bill" into "bounded audience", which is a product decision
+   somebody can actually make.
+2. **A transfer watchdog.** A cron that reads the interface counter, warns at
+   60% and 80% of the monthly allowance, and can drop the ladder to 480p. It
+   makes overage something you decide rather than discover.
+
+## When 300 concurrent is not enough
+
+Move the origin to a machine with **unmetered bandwidth at a fixed price** - a
+Hetzner dedicated box at roughly €44 a month gives 1 Gbit unmetered, which is
+about 600 concurrent at 720p or 1,200 at 480p, at the same price whether one
+person watches or all of them do. That is the answer to "the cost cannot run
+away": the price is the price, and the only thing that changes is how many
+people fit.
+
+Each further box is another fixed step. This scales in known increments rather
+than in a bill.
+
+## What we give up, stated plainly
+
+- **No edge in Africa.** Frankfurt to Lagos on every segment means a slower
+  start and more rebuffering than a CDN would give. HLS with a few seconds of
+  buffer absorbs most of it; nobody should promise low latency on this path.
+- **One machine is one point of failure.** Cloudflare Stream would have been
+  somebody else's problem at 3am.
+- **No adaptive ladder unless the encoder makes one.** ffplayout and ffmpeg can
+  output two or three renditions; OBS on its own cannot, easily.
+
+If Lagos playback turns out to be genuinely bad, the smallest fix is a per-GB
+CDN in front of the origin at roughly $0.01 to $0.06 per GB, which is a
+different order of magnitude from per-minute video billing, and which can be
+switched off. That is a per-GB cost again, so it needs the same watchdog, and
+it is an optimisation to reach for after real viewers complain, not before.
+
+## What is not on the table
+
+**Embedding Twitch or Kick as the main TV.** Tested in a real browser on
+2026-08-16, at desktop and phone widths:
+
+- Twitch's embedded player **renders nothing at all on a mobile user agent**,
+  and this audience is on phones.
+- Kick's embed works on a phone, and carries Kick's own logo and a "Visit KICK
+  for HD" call to action over our page.
+- Kick's API answers **403 to a cross-origin fetch even from a real browser**,
+  so there is no playback URL to pull into our own player. Their iframe is the
+  only way in, which means a WebView in the app and a second player path.
+
+It would also cost the product: chat, polls, tips, the ad slot, viewer counts
+and every watch event come from our own player.
+
+**Multistreaming is a different thing and it is fine.** Send the same feed to
+our ingest and to Kick or Twitch at the same time. The people who arrive on
+EVO TV get the full product; the platforms are reach.
