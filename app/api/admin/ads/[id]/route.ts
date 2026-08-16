@@ -10,7 +10,7 @@ import {
 
 const updateSchema = z
   .object({
-    placement: z.enum(["home_banner", "stream_preroll", "sidebar", "between_content"]),
+    placement: z.enum(["home_banner", "stream_preroll", "mid_roll", "live_filler", "sidebar", "between_content"]),
     mediaUrl: z.string(),
     clickUrl: z.string(),
     advertiser: z.string().min(1).max(200),

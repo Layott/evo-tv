@@ -6,6 +6,7 @@ import Link from "next/link";
 import type { Product } from "@/lib/types";
 import { formatNgn } from "@/components/profile/ngn";
 import { Badge } from "@/components/ui/badge";
+import { Price } from "@/components/ui/price";
 
 export function ProductCard({ product }: { product: Product }) {
   const image = product.images[0] ?? "/placeholder.svg";
@@ -39,7 +40,7 @@ export function ProductCard({ product }: { product: Product }) {
           {product.name}
         </p>
         <div className="mt-auto pt-2 text-base font-bold text-sky-400">
-          {formatNgn(product.priceNgn)}
+          <Price ngn={product.priceNgn} />
         </div>
       </div>
     </Link>

@@ -64,13 +64,19 @@ export default function PrivacyPage() {
             "Messages you send in chat, and polls you vote in.",
             "Things you follow, like, add to a watchlist, or leave part-watched.",
             "Orders you place, including the delivery address you enter.",
-            "Your IP address. It is stored as a one-way hash for anonymous viewer counting, and in full only on the session record, so that you can see and revoke your own sign-ins.",
+            "Your IP address. It is stored as a one-way hash for anonymous viewer counting, and in full on the session record, so that you can see and revoke your own sign-ins.",
+            "An approximate country, worked out from that IP address. We use it for one thing: to show prices in your own currency instead of Nigerian naira. It is an estimate, it is not a street address, and it is never sold or shared.",
           ]}
         />
         <p>
-          We do not collect your location beyond the country you tell us, we do
-          not buy data about you from anyone, and we do not run advertising or
-          analytics trackers belonging to third parties.
+          Your time zone is read from your browser rather than your address,
+          which is both more accurate and less intrusive: it is how times on the
+          schedule appear in your own clock instead of ours.
+        </p>
+        <p>
+          We do not track your movements, we do not buy data about you from
+          anyone, and we do not run advertising or analytics trackers belonging
+          to third parties. Ads on EVO TV are served by EVO TV.
         </p>
       </Section>
 

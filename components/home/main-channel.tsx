@@ -7,6 +7,7 @@ import { Radio, Lock } from "lucide-react";
 
 import { useAuth } from "@/components/providers";
 import { VideoPlayer } from "@/components/stream/video-player";
+import { ChannelBreaks } from "@/components/stream/channel-breaks";
 import { MediaImage } from "@/components/ui/media-image";
 import { Button } from "@/components/ui/button";
 
@@ -112,14 +113,27 @@ export function MainChannelHero() {
     <section className="mb-10">
       <div className="overflow-hidden rounded-2xl bg-background">
         {canWatch ? (
-          <VideoPlayer
-            src={channel.hlsUrl}
-            poster={channel.thumbnailUrl || channel.posterUrl}
-            autoPlay
-            isLive
-            viewerCount={channel.viewerCount}
-            mediaId={channel.id}
-          />
+          // The channel is the one surface with breaks, an on-air card and
+          // filler. Everything else on the site is a video page.
+          <ChannelBreaks
+            nowNext={{
+              now: onNow
+                ? { title: onNow.title, subtitle: onNow.subtitle }
+                : null,
+              next: upNext[0]
+                ? { title: upNext[0].title, startLabel: clock(upNext[0].airsAt) }
+                : null,
+            }}
+          >
+            <VideoPlayer
+              src={channel.hlsUrl}
+              poster={channel.thumbnailUrl || channel.posterUrl}
+              autoPlay
+              isLive
+              viewerCount={channel.viewerCount}
+              mediaId={channel.id}
+            />
+          </ChannelBreaks>
         ) : (
           <div className="relative flex aspect-video w-full items-center justify-center">
             <MediaImage
