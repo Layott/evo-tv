@@ -13,7 +13,15 @@
 # its hostnames without also getting every secret.
 
 x-api: &api
-  build: ./api
+  build:
+    context: ./api
+    # NEXT_PUBLIC_* is compiled into the browser bundle, so these have to reach
+    # the build rather than only the running container. Empty is fine and means
+    # "not out yet" on the download page.
+    args:
+      NEXT_PUBLIC_ANDROID_APK_URL: ${NEXT_PUBLIC_ANDROID_APK_URL:-}
+      NEXT_PUBLIC_PLAY_STORE_URL: ${NEXT_PUBLIC_PLAY_STORE_URL:-}
+      NEXT_PUBLIC_APP_STORE_URL: ${NEXT_PUBLIC_APP_STORE_URL:-}
   # Both api services name the same image, so the second build is a full cache
   # hit rather than a second compile.
   image: evotv-api:latest
