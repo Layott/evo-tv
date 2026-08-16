@@ -61,6 +61,25 @@ Three env vars are feature switches, and each one is also the rollback:
 | `REDIS_URL` | Valkey pub/sub bus, two api containers safe | in-process EventEmitter, **one container only** |
 | `DATABASE_URL` | whatever it points at | required, the app throws without it |
 
+## The bucket needs a CORS rule, or every upload fails
+
+The dashboard uploads with a presigned PUT straight at Spaces, so the request never reaches the API and the **bucket** decides whether to allow it. Without a CORS rule the browser refuses before sending a byte, and the only symptom is a failed fetch.
+
+That was the state of `evotv-media` on 2026-08-16: a preflight for `https://evotv.co` answered 403 with no `Access-Control-Allow-Origin`. Check it from anywhere:
+
+```bash
+curl -i -X OPTIONS "https://evotv-media.fra1.digitaloceanspaces.com/admin-uploads/probe.png" \
+  -H "Origin: https://evotv.co" -H "Access-Control-Request-Method: PUT"
+```
+
+A rule is in place when that returns 200 with `access-control-allow-origin`. To set it, on the droplet where the keys live:
+
+```bash
+cd /srv/evotv/api && node deploy/spaces-cors.mjs
+```
+
+Local development does not need this: `SPACES_ENDPOINT` and `SPACES_FORCE_PATH_STYLE` point the same code at any S3-compatible server (MinIO on `127.0.0.1:9100`, say), which is how the upload path is exercised without production credentials.
+
 ## Hostnames
 
 `Caddyfile` takes its four hostnames from `.env`, so moving from a staging hostname to the real domain is an env edit and a restart rather than a file edit on the box.
