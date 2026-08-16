@@ -16,7 +16,7 @@ import { RANK, type PlatformRole } from "@/lib/auth/role-catalog";
  * The platform could already deliver a push in three ways - an in-app
  * notification row, an Expo push to the mobile app, a Web Push to a browser -
  * and nothing could trigger one. `sendExpoPushToUser` had exactly one caller,
- * `/api/cron/reminders`, and that path is not in `vercel.json` and has no
+ * `/api/cron/reminders`, and that path had no
  * scheduler on the droplet either, so in practice no notification has ever been
  * sent by this system.
  *

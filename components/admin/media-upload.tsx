@@ -276,32 +276,22 @@ export function MediaUpload({
     const pathname = `admin-uploads/${folder}/${safeFileName(file.name)}`;
     setProgress(0);
     try {
-      if (backend?.backend === "spaces") {
-        const res = await fetch("/api/admin/uploads/client", {
-          method: "POST",
-          credentials: "include",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ pathname, contentType: file.type }),
-        });
-        if (!res.ok) {
-          const body = (await res.json().catch(() => ({}))) as { error?: string };
-          throw new Error(body.error ?? `Could not start the upload (${res.status})`);
-        }
-        const signed = (await res.json()) as { uploadUrl: string; publicUrl: string };
-        await putWithProgress(signed.uploadUrl, file, file.type, setProgress);
-        onChange(signed.publicUrl);
-      } else {
-        // Vercel Blob's own client handles its two-leg token exchange. It has
-        // no progress events, so the bar sits at zero until it resolves; that
-        // is the legacy path and prod does not use it.
-        const { upload } = await import("@vercel/blob/client");
-        const result = await upload(pathname, file, {
-          access: "public",
-          contentType: file.type,
-          handleUploadUrl: "/api/admin/uploads/client",
-        });
-        onChange(result.url);
+      const res = await fetch("/api/admin/uploads/client", {
+        method: "POST",
+        credentials: "include",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ pathname, contentType: file.type }),
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(body.error ?? `Could not start the upload (${res.status})`);
       }
+      const signed = (await res.json()) as { uploadUrl: string; publicUrl: string };
+      // Only Content-Type goes up. The presign hoists the ACL into the query
+      // string and signs `host` alone, checked against the production bucket on
+      // 2026-08-16, so adding x-amz-acl here would be noise rather than needed.
+      await putWithProgress(signed.uploadUrl, file, file.type, setProgress);
+      onChange(signed.publicUrl);
       toast.success(`${label} uploaded`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Upload failed");

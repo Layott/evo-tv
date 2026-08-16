@@ -6,7 +6,7 @@ import { writeAudit } from "@/lib/api/audit";
 /**
  * Vercel Cron: weekly GDPR cascade purge.
  *
- * vercel.json: { "path": "/api/cron/gdpr-purge", "schedule": "0 4 * * 0" }
+ * Droplet crontab: `cron.sh gdpr-purge`, 04:00 Sundays, Africa/Lagos.
  *
  * Walks `user` rows where `deletedAt` is set AND older than 30 days. For
  * each matching user:

@@ -5,6 +5,8 @@ Sentry.init({
   tracesSampleRate: 0.1,
   replaysSessionSampleRate: 0,
   replaysOnErrorSampleRate: 1.0,
-  environment: process.env.VERCEL_ENV ?? "development",
-  release: process.env.VERCEL_GIT_COMMIT_SHA ?? "dev",
+  // Was VERCEL_ENV and VERCEL_GIT_COMMIT_SHA, which have been undefined
+  // since the move off Vercel, so every report claimed to be development.
+  environment: process.env.NODE_ENV ?? "development",
+  release: process.env.APP_COMMIT ?? "dev",
 });
