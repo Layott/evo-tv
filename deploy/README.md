@@ -213,7 +213,9 @@ docker compose ps                                 # status, with health
 
 - **Two api containers are only safe while `REDIS_URL` is set.** `lib/sse/bus.ts` falls back to an in-process EventEmitter without it, and then a subscriber on `api-1` cannot see an emit on `api-2`. Live chat, notifications and watch parties break silently, with no error anywhere.
 - **`flush_interval -1` stays on the SSE route.** Without it Caddy buffers the stream and chat looks frozen.
-- **`api` stays DNS-only on Cloudflare** (grey cloud). The free tier drops idle proxied connections at around 100s, which would kill every SSE stream on a loop.
+- **Cloudflare proxying is safe for SSE, and `api` is proxied today.** The old rule here said `api` had to stay DNS-only, because idle proxied connections are dropped at around 100s. Every SSE stream sends a `: ping` every 30 seconds (`lib/sse/bus.ts`), so none of them is ever idle that long. Measured on 2026-08-16 against the proxied `api.evotv.co`: a stream held for 150 seconds, taking heartbeats at 30, 60, 90 and 120 seconds, and was closed by the client rather than by Cloudflare. Do not revert this without repeating that test.
+- **Video is the one thing to keep off the orange cloud.** `RTMP_HLS_BASE_URL` points at `api.evotv.co/hls`, which is proxied, and Cloudflare's self-serve terms restrict serving large volumes of video through the standard CDN. At launch volumes nobody notices. Before it matters, move HLS to a DNS-only hostname (`hls.evotv.co`) so the segments never touch the proxy.
+- **RTMP ingest is on the IP** (`rtmp://138.68.126.199:1935/live`), not a hostname, so proxying a hostname cannot break ingest. Cloudflare's free plan does not proxy arbitrary TCP anyway.
 - **Never delete the `caddy_data` volume.** It holds the certificates.
 - **`valkey` is never published to a host port.** It has no auth and holds a live message bus.
 - The droplet holds no data. `.env` is the only thing on it worth backing up.
