@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
+import { getEntitlements } from "@/lib/api/entitlements";
 import { getCurrentUser } from "@/lib/auth/guards";
 import { getStreamById } from "@/lib/api/streams";
 import { listInitialMessages, postMessage } from "@/lib/api/chat";
@@ -68,10 +69,15 @@ export async function POST(
     );
   }
 
+  // Slow mode is for the room, not for the people paying for it. This is the
+  // second half of what the tiers page calls premium chat: the badge was
+  // already rendered, the exemption was not.
+  const entitlements = await getEntitlements(user.id, user.role);
+
   const key = `${id}:${user.id}`;
   const now = Date.now();
   const prev = lastPostAt.get(key) ?? 0;
-  if (now - prev < SLOW_MODE_MS) {
+  if (!entitlements.chatPerks && now - prev < SLOW_MODE_MS) {
     const retryAfter = Math.ceil((SLOW_MODE_MS - (now - prev)) / 1000);
     return new NextResponse("Slow mode: please wait before sending again", {
       status: 429,

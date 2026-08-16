@@ -4,6 +4,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { getSchedule } from "@/lib/api/epg";
+import {
+  getShowBySlug,
+  listSeasonsForShow,
+  listEpisodesForSeason,
+} from "@/lib/api/shows";
+import type { ShowArt } from "@/lib/epg/artwork";
 import { artForTitle, showArtBySlug } from "@/lib/epg/artwork";
 import { PILLARS } from "@/components/landing/pillar";
 import SiteFooter from "@/components/landing/site-footer";
@@ -71,13 +77,48 @@ function dayLabel(dateKey: string, dayOfWeek: number): string {
   return `${WEEKDAY[dayOfWeek - 1]} ${day} ${MONTH[month - 1]}`;
 }
 
+
+/**
+ * The artwork for a show, or something usable built from its row.
+ *
+ * The registry is hand-made and covers the shows with delivered posters. The
+ * `shows` table has thirty five rows, most backfilled from the grid, and until
+ * now every one of those answered 404 here because only the registry was
+ * consulted. A row is enough to render a page: title, synopsis, whatever
+ * artwork the CMS holds.
+ */
+function artFromRow(row: {
+  slug: string;
+  title: string;
+  synopsis: string;
+  posterUrl: string;
+  heroUrl: string;
+  pillar: "esports" | "anime" | "lifestyle";
+}): ShowArt {
+  return {
+    slug: row.slug,
+    title: row.title,
+    tagline: row.synopsis || undefined,
+    poster: row.posterUrl || row.heroUrl || "",
+    posterSmall: row.posterUrl || row.heroUrl || "",
+    // A one-pixel transparent GIF: no flash, and no pretending there is art.
+    blurDataURL:
+      "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
+    polarity: "dark",
+    accent: "#46E3CE",
+    accentOnDark: "#46E3CE",
+    pillar: row.pillar,
+  };
+}
+
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const show = showArtBySlug(slug);
+  const row = await getShowBySlug(slug);
+  const show = showArtBySlug(slug) ?? (row ? artFromRow(row) : null);
   // `notFound()` here rather than a "Show not found" title, because metadata
   // resolves first and returning normally commits a 200 before the page
   // component ever runs. That served the 404 page with a 200 status, which is
@@ -120,8 +161,16 @@ export default async function ShowPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const show = showArtBySlug(slug);
+  const row = await getShowBySlug(slug);
+  const show = showArtBySlug(slug) ?? (row ? artFromRow(row) : null);
   if (!show) notFound();
+
+  // Seasons and episodes come from the CMS. A show with none simply has none
+  // yet, which the section says rather than rendering an empty shelf.
+  const seasons = row ? await listSeasonsForShow(row.id) : [];
+  const seasonEpisodes = await Promise.all(
+    seasons.map(async (s) => ({ season: s, episodes: await listEpisodesForSeason(s.id) })),
+  );
 
   // Airings come from the same guide the rest of the site reads, matched by the
   // same normaliser that puts artwork on a grid row. A show with no slot simply
@@ -262,6 +311,51 @@ export default async function ShowPage({
             </section>
           </div>
         </div>
+
+        {seasonEpisodes.some((s) => s.episodes.length > 0) ? (
+          <section className="mt-16">
+            <h2 className="landing-display text-[1.5rem]">Episodes</h2>
+            {seasonEpisodes
+              .filter((s) => s.episodes.length > 0)
+              .map(({ season, episodes }) => (
+                <div key={season.id} className="mt-8">
+                  <h3 className="text-[0.85rem] uppercase tracking-[0.08em] text-[var(--paper-faint)]">
+                    Season {season.seasonNumber}
+                    {season.title ? ` · ${season.title}` : ""}
+                  </h3>
+                  <ul className="mt-3 divide-y divide-[var(--edge,#12383A)]">
+                    {episodes.map((ep) => (
+                      <li key={ep.id}>
+                        <Link
+                          href={`/show/${show.slug}/${season.seasonNumber}/${ep.episodeNumber}`}
+                          className="flex items-baseline gap-4 py-3.5 transition-opacity hover:opacity-80"
+                        >
+                          <span className="w-8 shrink-0 font-mono text-[0.8rem] tabular-nums text-[var(--paper-faint)]">
+                            {ep.episodeNumber}
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="landing-display block text-[1.05rem] text-[var(--paper)]">
+                              {ep.title}
+                            </span>
+                            {ep.synopsis ? (
+                              <span className="mt-0.5 line-clamp-2 block text-[0.82rem] text-[var(--paper-faint)]">
+                                {ep.synopsis}
+                              </span>
+                            ) : null}
+                          </span>
+                          {ep.runtimeSec > 0 ? (
+                            <span className="shrink-0 text-[0.8rem] text-[var(--paper-faint)]">
+                              {Math.round(ep.runtimeSec / 60)} min
+                            </span>
+                          ) : null}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+          </section>
+        ) : null}
       </main>
 
       <SiteFooter />

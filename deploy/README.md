@@ -169,6 +169,35 @@ show. At 720p the 4 TB allowance is about **8 viewers watching continuously for
 a month**; at 480p it is about 15.
 
 
+## The quality ladder, and who gets the top of it
+
+Free viewers are capped at 480p and paid viewers are not. The cap is applied in
+the player (`components/stream/video-player.tsx`, via `/api/me/entitlements`),
+and it does nothing at all until the stream carries more than one rendition.
+
+**The renditions have to come from the encoder, not from this droplet.** Two
+vCPUs cannot transcode a ladder while also running the app, and the whole point
+of the current setup is that nginx repackages rather than re-encodes, so CPU
+stays flat as the audience grows.
+
+From the office box, push three rungs with one ffmpeg process:
+
+```bash
+ffmpeg -re -i <source>   -filter_complex "[0:v]split=3[v1][v2][v3];     [v1]scale=w=854:h=480[v1out]; [v2]scale=w=1280:h=720[v2out]; [v3]scale=w=1920:h=1080[v3out]"   -map "[v1out]" -c:v:0 libx264 -b:v:0 800k  -preset veryfast -g 48 -sc_threshold 0   -map "[v2out]" -c:v:1 libx264 -b:v:1 2500k -preset veryfast -g 48 -sc_threshold 0   -map "[v3out]" -c:v:2 libx264 -b:v:2 5000k -preset veryfast -g 48 -sc_threshold 0   -map a:0 -c:a aac -b:a 128k -ac 2   -f tee "[f=flv]rtmp://138.68.126.199:1935/live/<stream key>"
+```
+
+Keep the keyframe interval identical on every rung (`-g 48` at 24fps is two
+seconds, matching `hls_fragment 2s`), or players cannot switch cleanly between
+them.
+
+Two things worth knowing before relying on the cap:
+
+- **Safari and iOS play HLS natively and hls.js cannot cap them.** The complete
+  fix is to serve a filtered manifest per tier rather than capping in the
+  client. Until then, an iPhone on the free tier can pull the top rung.
+- Capping is a data and cost decision, not a lock. What is *behind* a
+  subscription is decided on the server, where the video URL is handed out.
+
 ## Day to day
 
 ```bash

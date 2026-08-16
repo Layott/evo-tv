@@ -1,0 +1,240 @@
+import type { Metadata } from "next";
+import Image from "next/image";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+
+import {
+  getShowBySlug,
+  getEpisodeByLookup,
+  listSeasonsForShow,
+  listEpisodesForSeason,
+} from "@/lib/api/shows";
+import { getCurrentUser } from "@/lib/auth/guards";
+import { getEntitlements } from "@/lib/api/entitlements";
+import { episodeAccess } from "@/lib/api/episode-access";
+import { VideoPlayer } from "@/components/stream/video-player";
+import { LocalTime } from "@/components/ui/local-time";
+import SiteFooter from "@/components/landing/site-footer";
+import SiteHeader from "@/components/landing/site-header";
+
+/**
+ * One episode, at the address the schedule has been pointing at all along.
+ *
+ * `lib/api/schedule.ts` has been emitting `/show/<slug>/<season>/<episode>`
+ * links since episodes could be scheduled, and that route did not exist: every
+ * scheduled episode on the site linked to a 404.
+ *
+ * Access is decided on the server by `episodeAccess`, which is where early
+ * access becomes real: an episode that has aired but is not yet released plays
+ * for a paid viewer and shows everyone else the date it opens.
+ */
+
+export const dynamic = "force-dynamic";
+
+interface RouteParams {
+  params: Promise<{ slug: string; season: string; episode: string }>;
+}
+
+function parseNumber(value: string): number | null {
+  const n = Number(value);
+  return Number.isInteger(n) && n > 0 ? n : null;
+}
+
+export async function generateMetadata({ params }: RouteParams): Promise<Metadata> {
+  const { slug, season, episode } = await params;
+  const show = await getShowBySlug(slug);
+  const s = parseNumber(season);
+  const e = parseNumber(episode);
+  if (!show || s === null || e === null) return { title: "Episode" };
+  const ep = await getEpisodeByLookup(show.id, s, e);
+  if (!ep) return { title: show.title };
+  return {
+    title: `${show.title}, S${s}E${e}: ${ep.title}`,
+    description: ep.synopsis || show.synopsis,
+  };
+}
+
+export default async function EpisodePage({ params }: RouteParams) {
+  const { slug, season, episode } = await params;
+  const seasonNumber = parseNumber(season);
+  const episodeNumber = parseNumber(episode);
+  if (seasonNumber === null || episodeNumber === null) notFound();
+
+  const show = await getShowBySlug(slug);
+  if (!show) notFound();
+
+  const ep = await getEpisodeByLookup(show.id, seasonNumber, episodeNumber);
+  if (!ep) notFound();
+
+  const user = await getCurrentUser();
+  const entitlements = await getEntitlements(user?.id, user?.role);
+  const access = episodeAccess(ep, show, entitlements);
+
+  const seasons = await listSeasonsForShow(show.id);
+  const thisSeason = seasons.find((s) => s.seasonNumber === seasonNumber);
+  const siblings = thisSeason ? await listEpisodesForSeason(thisSeason.id) : [];
+
+  return (
+    <>
+      <SiteHeader />
+      <main className="mx-auto max-w-[76rem] px-5 pb-24 pt-8 sm:px-10">
+        <nav className="text-[0.85rem] text-[var(--paper-faint)]">
+          <Link href="/shows" className="hover:text-[var(--brand)]">
+            Shows
+          </Link>
+          {" / "}
+          <Link href={`/show/${show.slug}`} className="hover:text-[var(--brand)]">
+            {show.title}
+          </Link>
+          {` / Season ${seasonNumber}`}
+        </nav>
+
+        <div className="mt-5 overflow-hidden rounded-xl bg-black">
+          {access.canWatch && ep.hlsUrl ? (
+            <VideoPlayer
+              src={ep.hlsUrl}
+              poster={ep.thumbnailUrl || show.heroUrl}
+              mediaId={ep.id}
+            />
+          ) : (
+            <LockedFrame
+              posterUrl={ep.thumbnailUrl || show.heroUrl || show.posterUrl}
+              reason={access.reason}
+              availableAt={access.availableAt}
+              hasVideo={Boolean(ep.hlsUrl)}
+            />
+          )}
+        </div>
+
+        <header className="mt-6">
+          <p className="text-[0.85rem] uppercase tracking-[0.08em] text-[var(--brand)]">
+            Season {seasonNumber}, episode {episodeNumber}
+          </p>
+          <h1 className="landing-display mt-1 text-[clamp(1.6rem,4vw,2.6rem)]">
+            {ep.title}
+          </h1>
+          <p className="mt-1 text-[0.9rem] text-[var(--paper-faint)]">
+            {show.title}
+            {ep.runtimeSec > 0 ? ` · ${Math.round(ep.runtimeSec / 60)} min` : ""}
+            {ep.premiereAt ? (
+              <>
+                {" · aired "}
+                <LocalTime iso={ep.premiereAt} />
+              </>
+            ) : null}
+          </p>
+          {ep.synopsis ? (
+            <p className="mt-4 max-w-[62ch] leading-relaxed text-[var(--paper-dim)]">
+              {ep.synopsis}
+            </p>
+          ) : null}
+        </header>
+
+        {siblings.length > 1 ? (
+          <section className="mt-12">
+            <h2 className="landing-display text-[1.3rem]">
+              More of season {seasonNumber}
+            </h2>
+            <ul className="mt-5 divide-y divide-[var(--edge,#12383A)]">
+              {siblings.map((sib) => {
+                const current = sib.id === ep.id;
+                return (
+                  <li key={sib.id}>
+                    <Link
+                      href={`/show/${show.slug}/${seasonNumber}/${sib.episodeNumber}`}
+                      className={[
+                        "flex items-baseline gap-4 py-3.5",
+                        current ? "text-[var(--brand)]" : "hover:opacity-80",
+                      ].join(" ")}
+                      aria-current={current ? "page" : undefined}
+                    >
+                      <span className="w-8 shrink-0 font-mono text-[0.8rem] tabular-nums opacity-70">
+                        {sib.episodeNumber}
+                      </span>
+                      <span className="landing-display min-w-0 flex-1 text-[1.05rem]">
+                        {sib.title}
+                      </span>
+                      {sib.runtimeSec > 0 ? (
+                        <span className="shrink-0 text-[0.8rem] opacity-60">
+                          {Math.round(sib.runtimeSec / 60)} min
+                        </span>
+                      ) : null}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        ) : null}
+      </main>
+      <SiteFooter />
+    </>
+  );
+}
+
+/**
+ * What stands in for the player when this viewer cannot watch.
+ *
+ * Says which of the four reasons it is, in words, with the date where a date
+ * is the answer. "Unavailable" tells somebody nothing and reads as a fault.
+ */
+function LockedFrame({
+  posterUrl,
+  reason,
+  availableAt,
+  hasVideo,
+}: {
+  posterUrl: string;
+  reason: "early_access" | "premium_only" | "unaired" | "ok";
+  availableAt: string | null;
+  hasVideo: boolean;
+}) {
+  const copy =
+    !hasVideo
+      ? { title: "Not up yet", body: "This episode has no video on it yet." }
+      : reason === "premium_only"
+        ? {
+            title: "Part of a paid show",
+            body: "A subscription opens this episode and everything else behind it.",
+          }
+        : reason === "unaired"
+          ? {
+              title: "Has not aired",
+              body: "It airs on the channel first. Nobody has it early.",
+            }
+          : {
+              title: "Early on a subscription",
+              body: "It has aired and is not on demand for everyone yet.",
+            };
+
+  return (
+    <div className="relative flex aspect-video w-full items-center justify-center">
+      {posterUrl ? (
+        <Image
+          src={posterUrl}
+          alt=""
+          fill
+          sizes="100vw"
+          className="object-cover opacity-25"
+        />
+      ) : null}
+      <div className="relative z-10 max-w-[38ch] px-6 text-center">
+        <p className="landing-display text-[1.3rem] text-white">{copy.title}</p>
+        <p className="mt-2 text-[0.92rem] text-white/70">{copy.body}</p>
+        {availableAt ? (
+          <p className="mt-2 text-[0.92rem] text-white/70">
+            Opens <LocalTime iso={availableAt} />.
+          </p>
+        ) : null}
+        {reason === "early_access" || reason === "premium_only" ? (
+          <Link
+            href="/upgrade"
+            className="mt-5 inline-block rounded bg-[var(--brand,#46E3CE)] px-4 py-2 text-[0.9rem] font-semibold text-black hover:opacity-90"
+          >
+            See the plans
+          </Link>
+        ) : null}
+      </div>
+    </div>
+  );
+}
