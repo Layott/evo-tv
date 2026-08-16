@@ -315,7 +315,10 @@ async function gridRowsBetween(
         thumbnailUrl: "",
         airsAt: entry.startsAt,
         durationMin: entry.durationMin,
-        watchUrl: "",
+        // A grid row has no page of its own: the rotation is the channel. What
+        // it does have, while it is on air, is somewhere to watch it, and a row
+        // that says ON NOW and cannot be clicked is a dead end.
+        watchUrl: entry.isLive ? "/channel" : "",
         state: entry.isLive
           ? "live"
           : entry.endsAt <= now.toISOString()

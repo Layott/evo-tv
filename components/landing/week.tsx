@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { artForTitle } from "@/lib/epg/artwork";
 import type { EpgPillar, ScheduleEntry } from "@/lib/epg/grid";
 import { PILLARS, PILLAR_ORDER } from "./pillar";
@@ -204,14 +205,13 @@ function SlotRow({
   const past = entry.endsAt <= now;
   const art = artForTitle(entry.title);
 
-  return (
-    <li
-      style={{ animationDelay: `${delayMs}ms` }}
-      className={[
-        "listing-row flex items-baseline gap-4 py-3.5 sm:gap-5",
-        past ? "opacity-45" : "",
-      ].join(" ")}
-    >
+  // The row is a list item either way. Only the live one wraps its contents in
+  // a link: the rotation has no page of its own, but while something is on air
+  // there is somewhere to watch it, and a row that says On air and does nothing
+  // when pressed is a dead end.
+  const rowClass = "flex items-baseline gap-4 py-3.5 sm:gap-5";
+  const contents = (
+    <>
       <span
         className={[
           "w-[3.2rem] shrink-0 font-mono text-[0.78rem] tabular-nums",
@@ -266,6 +266,25 @@ function SlotRow({
           PILLARS[entry.pillar].label
         )}
       </span>
+    </>
+  );
+
+  return (
+    <li
+      style={{ animationDelay: `${delayMs}ms` }}
+      className={["listing-row", past ? "opacity-45" : ""].join(" ")}
+    >
+      {live ? (
+        <Link
+          href="/channel"
+          aria-label={`Watch ${entry.title}, on air now`}
+          className={`${rowClass} transition-opacity hover:opacity-80`}
+        >
+          {contents}
+        </Link>
+      ) : (
+        <div className={rowClass}>{contents}</div>
+      )}
     </li>
   );
 }
