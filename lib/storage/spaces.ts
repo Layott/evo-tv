@@ -16,17 +16,44 @@ const KEY = process.env.SPACES_KEY ?? "";
 const SECRET = process.env.SPACES_SECRET ?? "";
 
 /**
+ * Any S3-compatible endpoint, defaulting to DigitalOcean's.
+ *
+ * This exists so the upload path can be exercised without production
+ * credentials: point it at a local MinIO and the presign, the browser PUT and
+ * the public read all run for real. Unset, nothing about production changes.
+ */
+const ENDPOINT = (
+  process.env.SPACES_ENDPOINT ?? `https://${REGION}.digitaloceanspaces.com`
+).replace(/\/+$/, "");
+
+/**
+ * Spaces and S3 proper address a bucket as a subdomain. Local servers usually
+ * cannot, because `bucket.localhost` does not resolve, so they want the bucket
+ * in the path instead.
+ */
+const FORCE_PATH_STYLE = process.env.SPACES_FORCE_PATH_STYLE === "true";
+
+/**
  * Public read URL base. Prefer the CDN hostname: DO Spaces serves the origin
  * from `<bucket>.<region>.digitaloceanspaces.com` and the CDN edge from
  * `<bucket>.<region>.cdn.digitaloceanspaces.com`, and only the second one is
  * cached. Falling back to the origin keeps things working before the CDN is
  * switched on, at the cost of egress.
  */
-const PUBLIC_BASE = (
-  process.env.SPACES_CDN_URL ?? `https://${BUCKET}.${REGION}.digitaloceanspaces.com`
-).replace(/\/+$/, "");
+function defaultPublicBase(): string {
+  if (process.env.SPACES_ENDPOINT) {
+    // Whatever style the client is signing with, the readable URL has to match.
+    return FORCE_PATH_STYLE
+      ? `${ENDPOINT}/${BUCKET}`
+      : ENDPOINT.replace("://", `://${BUCKET}.`);
+  }
+  return `https://${BUCKET}.${REGION}.digitaloceanspaces.com`;
+}
 
-const ENDPOINT = `https://${REGION}.digitaloceanspaces.com`;
+const PUBLIC_BASE = (process.env.SPACES_CDN_URL ?? defaultPublicBase()).replace(
+  /\/+$/,
+  "",
+);
 
 function ensureConfigured(): void {
   if (!BUCKET || !KEY || !SECRET) {
@@ -43,8 +70,9 @@ function s3(): S3Client {
     region: REGION,
     endpoint: ENDPOINT,
     credentials: { accessKeyId: KEY, secretAccessKey: SECRET },
-    // Spaces is virtual-host style, same as S3 proper.
-    forcePathStyle: false,
+    // Spaces is virtual-host style, same as S3 proper. Only a local stand-in
+    // asks for path style.
+    forcePathStyle: FORCE_PATH_STYLE,
   });
   return client;
 }
