@@ -57,7 +57,7 @@ Three env vars are feature switches, and each one is also the rollback:
 
 | Variable | Set | Unset |
 |---|---|---|
-| `SPACES_KEY` | uploads go to DO Spaces | falls back to Vercel Blob, no deploy needed |
+| `SPACES_KEY` | uploads go to DO Spaces | uploads are refused, and the admin picker says so |
 | `REDIS_URL` | Valkey pub/sub bus, two api containers safe | in-process EventEmitter, **one container only** |
 | `DATABASE_URL` | whatever it points at | required, the app throws without it |
 

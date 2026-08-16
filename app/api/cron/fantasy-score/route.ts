@@ -5,7 +5,7 @@ import { writeAudit } from "@/lib/api/audit";
 /**
  * Vercel Cron: nightly fantasy scoring.
  *
- * vercel.json: { "path": "/api/cron/fantasy-score", "schedule": "0 5 * * *" }
+ * Droplet crontab: `cron.sh fantasy-score`, 05:00 Africa/Lagos.
  *
  * Walks every league with status="active" and recomputes lineup_picks.pointsScored
  * + lineups.totalPoints based on completed matches in the league's game during

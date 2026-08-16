@@ -2,11 +2,11 @@ import { NextResponse, type NextRequest } from "next/server";
 import { rollupDay, yesterdayYmd } from "@/lib/analytics/rollup";
 
 /**
- * Vercel Cron entry point. Configured in vercel.json:
- *   { "path": "/api/cron/analytics", "schedule": "0 2 * * *" }
+ * Cron entry point. Runs on the droplet's crontab, `cron.sh analytics` at
+ * 02:00 Africa/Lagos.
  *
- * Vercel signs Cron-triggered requests with the `CRON_SECRET` env var as a
- * bearer token. Reject anything else so the route isn't abusable.
+ * The caller sends `CRON_SECRET` as a bearer token. Reject anything else so
+ * the route isn't abusable.
  */
 export async function GET(req: NextRequest) {
   const secret = process.env.CRON_SECRET;
