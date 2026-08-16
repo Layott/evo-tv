@@ -45,9 +45,14 @@ export async function generateMetadata({ params }: RouteParams): Promise<Metadat
   const show = await getShowBySlug(slug);
   const s = parseNumber(season);
   const e = parseNumber(episode);
-  if (!show || s === null || e === null) return { title: "Episode" };
+  // `notFound()` here rather than a fallback title. Metadata resolves first and
+  // returning normally commits a 200, so the page's own `notFound()` then
+  // renders the not-found page with a 200 status: the soft 404 that search
+  // engines treat as a duplicate of every other one. Same trap as the show
+  // page above it.
+  if (!show || s === null || e === null) notFound();
   const ep = await getEpisodeByLookup(show.id, s, e);
-  if (!ep) return { title: show.title };
+  if (!ep) notFound();
   return {
     title: `${show.title}, S${s}E${e}: ${ep.title}`,
     description: ep.synopsis || show.synopsis,
