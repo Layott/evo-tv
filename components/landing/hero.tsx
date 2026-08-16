@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import type { ScheduleEntry } from "@/lib/epg/grid";
 import { PILLARS } from "./pillar";
 
@@ -29,9 +31,11 @@ export default function Hero({ onAir, next, upcoming }: Props) {
     <section className="relative">
       {onAir ? <OnAirBug onAir={onAir} next={next} upcoming={upcoming} /> : null}
 
+      {/* Centred, and out of Africa rather than out of Lagos: the channel is
+          made here but it is not a city's channel. */}
       <div className="mx-auto max-w-[92rem] px-5 pb-4 pt-12 sm:px-10 sm:pt-16">
-        <p className="reveal max-w-[46ch] text-[1.02rem] leading-relaxed text-[var(--paper-dim)]">
-          One channel, always on, out of Lagos. League nights, watch-alongs and
+        <p className="reveal mx-auto max-w-[46ch] text-center text-[1.02rem] leading-relaxed text-[var(--paper-dim)]">
+          One channel, always on, out of Africa. League nights, watch-alongs and
           the creators around them, running to a schedule you can plan your
           evening by.
         </p>
@@ -46,7 +50,14 @@ function OnAirBug({ onAir, next, upcoming }: Props & { onAir: ScheduleEntry }) {
 
   return (
     <div className="relative">
-      <div className="bar-in brand-bar" style={{ animationDelay: "420ms" }}>
+      {/* The bug is the most direct statement on the page that something is on
+          right now, so it is also the most obvious thing to press. */}
+      <Link
+        href="/channel"
+        aria-label={`Watch ${onAir.title}, on air now`}
+        className="bar-in brand-bar block transition-opacity hover:opacity-95"
+        style={{ animationDelay: "420ms" }}
+      >
         <div className="mx-auto flex max-w-[92rem] flex-col gap-6 px-5 py-7 sm:flex-row sm:items-center sm:gap-10 sm:px-10 sm:py-8">
           <div className="flex shrink-0 items-center gap-3.5">
             {/* Uppercase survives here because a broadcast bug genuinely is
@@ -76,7 +87,7 @@ function OnAirBug({ onAir, next, upcoming }: Props & { onAir: ScheduleEntry }) {
             </div>
           ) : null}
         </div>
-      </div>
+      </Link>
 
       {/* Running order ticker. Broadcast furniture, and it carries real titles
           rather than decorative text. */}

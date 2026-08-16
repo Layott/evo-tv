@@ -2,6 +2,7 @@ import "server-only";
 import PQueue from "p-queue";
 import { spawn } from "node:child_process";
 import fs from "node:fs";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
@@ -49,11 +50,42 @@ async function transcodeStreamToVod(streamId: string): Promise<string | null> {
     return null;
   }
 
+  /**
+   * The always-on channel is never recorded as a VOD, even when auto-VOD is on.
+   *
+   * A one-off show ending and becoming a VOD is the point of this worker. The
+   * 24/7 channel ending means its encoder dropped for a moment, which happens
+   * often and is not an event anybody wants a library entry for. Production had
+   * 64 rows called "EVO TV 24/7 LIVE — VOD", every one of them the same
+   * recording, before this check existed.
+   */
+  if (stream.isMainChannel) {
+    console.log(`[transcode] ${streamId} is the always-on channel — no VOD`);
+    return null;
+  }
+
+  /**
+   * One VOD per session, not per event.
+   *
+   * The id is derived from the stream and the moment it went live rather than
+   * being random, so a second delivery of the same event writes the same id and
+   * the insert below no-ops. That matters because the SSE bus is shared through
+   * Valkey: both api containers receive `stream:enqueue-transcode`, so every
+   * ending produced two rows even without a reconnect.
+   */
+  const sessionKey = `${streamId}:${stream.startedAt ?? "unknown"}`;
   const vodId =
-    "vod_" +
-    Array.from(crypto.getRandomValues(new Uint8Array(8)))
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
+    "vod_" + createHash("sha256").update(sessionKey).digest("hex").slice(0, 16);
+
+  const existing = await db
+    .select({ id: schema.vods.id })
+    .from(schema.vods)
+    .where(eq(schema.vods.id, vodId))
+    .limit(1);
+  if (existing.length > 0) {
+    console.log(`[transcode] ${streamId} already has a VOD for this session — skip`);
+    return existing[0]!.id;
+  }
   const vodDir = path.join(UPLOADS, "vods", vodId);
   fs.mkdirSync(vodDir, { recursive: true });
 
@@ -141,14 +173,29 @@ async function transcodeStreamToVod(streamId: string): Promise<string | null> {
     viewCount: 0,
     likeCount: 0,
     isPremium: stream.isPremium,
-  });
+  }).onConflictDoNothing();
 
   return vodId;
 }
 
+/**
+ * Auto-VOD is off unless `AUTO_VOD=true`.
+ *
+ * Owner's call, 2026-08-16: every video in the library is uploaded by hand for
+ * now. A stream ending should therefore produce nothing at all. The worker is
+ * kept rather than deleted because the transcode ladder it builds is the thing
+ * you want the day recording a one-off show is wanted again, and rewriting it
+ * from memory later would be worse than a flag.
+ */
+const AUTO_VOD_ENABLED = process.env.AUTO_VOD === "true";
+
 export function registerTranscodeWorker() {
   if (registered) return;
   registered = true;
+  if (!AUTO_VOD_ENABLED) {
+    console.log("[transcode] auto-VOD disabled (set AUTO_VOD=true to enable)");
+    return;
+  }
   subscribe("stream:enqueue-transcode", (payload) => {
     const streamId = (payload as { streamId?: string })?.streamId;
     if (!streamId) return;
