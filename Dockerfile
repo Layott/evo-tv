@@ -25,6 +25,17 @@ ENV NODE_ENV=production
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
+# Anything named NEXT_PUBLIC_* is inlined into the client bundle at build time,
+# so it has to be present here rather than only in the runtime env file. These
+# are store and download links: public by definition, empty until there is
+# something to point at, and the page says "not out yet" while they are.
+ARG NEXT_PUBLIC_ANDROID_APK_URL=""
+ARG NEXT_PUBLIC_PLAY_STORE_URL=""
+ARG NEXT_PUBLIC_APP_STORE_URL=""
+ENV NEXT_PUBLIC_ANDROID_APK_URL=$NEXT_PUBLIC_ANDROID_APK_URL
+ENV NEXT_PUBLIC_PLAY_STORE_URL=$NEXT_PUBLIC_PLAY_STORE_URL
+ENV NEXT_PUBLIC_APP_STORE_URL=$NEXT_PUBLIC_APP_STORE_URL
+
 COPY . .
 RUN pnpm build
 
