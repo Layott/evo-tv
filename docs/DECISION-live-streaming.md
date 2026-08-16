@@ -48,6 +48,28 @@ the included allowance covers about **twenty such shows a month, for nothing**.
 The same show on Cloudflare Stream would have been about $18; five hundred
 concurrent would have been about $90 a show, every show, with no ceiling.
 
+### The channel is on 24/7, which changes which number matters
+
+Being live costs nothing by itself. Transfer is spent per viewer: an empty
+channel serves nobody, the ingest from the office is inbound and DigitalOcean
+does not count inbound, and `hls_cleanup` holds the segments on disk at about
+100 MB. A channel nobody is watching is free.
+
+What running around the clock changes is that viewer-hours accumulate around
+the clock, so the number to plan against is the **average concurrent audience
+over the month**, not the peak during a show. A month is 730 hours, so:
+
+| Quality | 4 TB supports, continuously |
+|---|---|
+| 480p | about **15 viewers**, all month |
+| 720p | about **8 viewers**, all month |
+
+That is the sharp edge of self-hosting a 24/7 channel. Twenty people watching
+on average is roughly 10 TB a month at 720p, which is 6 TB of overage at
+$0.01/GB, about $60. A hundred people watching on average is nearer $470 a
+month, at which point a fixed-price unmetered box costs a tenth of that and the
+question stops being about bandwidth at all.
+
 **The practical limit is throughput, not the allowance.** Five hundred viewers
 at 1.5 Mbps is 750 Mbps sustained out of one droplet, which is optimistic for a
 2 vCPU box on shared networking. Plan this machine for **300 concurrent**, and
