@@ -2,6 +2,8 @@
 
 import * as React from "react";
 import Link from "next/link";
+
+import { LocalTime } from "@/components/ui/local-time";
 import { useQuery } from "@tanstack/react-query";
 import {
   listScheduleForDay,
@@ -242,7 +244,7 @@ function SlotRow({ row, onAir }: { row: EpgRow; onAir: boolean }) {
           onAir ? "text-sky-400" : "text-muted-foreground",
         ].join(" ")}
       >
-        {clockLabel(row.airsAt)}
+        <LocalTime iso={row.airsAt} showChannelTime />
       </span>
 
       <span className="min-w-0 flex-1">

@@ -6,7 +6,15 @@ export const ads = pgTable(
   {
     id: text("id").primaryKey(),
     placement: text("placement", {
-      enum: ["home_banner", "stream_preroll", "sidebar", "between_content"],
+      enum: [
+        "home_banner",
+        "stream_preroll",
+        // Breaks during the always-on channel, and what covers a dropped feed.
+        "mid_roll",
+        "live_filler",
+        "sidebar",
+        "between_content",
+      ],
     }).notNull(),
     mediaUrl: text("media_url").notNull(),
     clickUrl: text("click_url").notNull(),

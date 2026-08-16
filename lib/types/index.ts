@@ -401,7 +401,15 @@ export interface Order {
   trackingNumber: string | null;
 }
 
-export type AdPlacement = "home_banner" | "stream_preroll" | "sidebar" | "between_content";
+export type AdPlacement =
+  | "home_banner"
+  | "stream_preroll"
+  /** A break during the always-on channel, at the interval admins set. */
+  | "mid_roll"
+  /** What covers the player when the live feed drops. */
+  | "live_filler"
+  | "sidebar"
+  | "between_content";
 
 export interface Ad {
   id: UUID;

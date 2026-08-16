@@ -10,7 +10,7 @@ import {
 } from "@/lib/api/admin";
 
 const createSchema = z.object({
-  placement: z.enum(["home_banner", "stream_preroll", "sidebar", "between_content"]),
+  placement: z.enum(["home_banner", "stream_preroll", "mid_roll", "live_filler", "sidebar", "between_content"]),
   mediaUrl: z.string(),
   clickUrl: z.string(),
   advertiser: z.string().min(1).max(200),
@@ -22,7 +22,7 @@ const createSchema = z.object({
 
 const listQuerySchema = z.object({
   placement: z
-    .enum(["home_banner", "stream_preroll", "sidebar", "between_content"])
+    .enum(["home_banner", "stream_preroll", "mid_roll", "live_filler", "sidebar", "between_content"])
     .optional(),
   active: z
     .enum(["true", "false"])

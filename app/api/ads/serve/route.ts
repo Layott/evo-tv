@@ -5,7 +5,14 @@ import { db, schema } from "@/lib/db";
 
 const querySchema = z.object({
   placement: z
-    .enum(["home_banner", "stream_preroll", "sidebar", "between_content"])
+    .enum([
+      "home_banner",
+      "stream_preroll",
+      "mid_roll",
+      "live_filler",
+      "sidebar",
+      "between_content",
+    ])
     .default("home_banner"),
 });
 

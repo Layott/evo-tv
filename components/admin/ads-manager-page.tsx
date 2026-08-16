@@ -50,12 +50,17 @@ import {
 } from "@/components/ui/dialog";
 import { DataTable, type DataColumn } from "./data-table";
 import { PageHeader } from "./page-header";
+import { ChannelBreaksCard } from "./channel-breaks-card";
 import { StatusBadge } from "./status-badge";
 import { formatDate, formatNumber } from "./utils";
 
 const PLACEMENTS: { value: AdPlacement; label: string }[] = [
   { value: "home_banner", label: "Home banner" },
   { value: "stream_preroll", label: "Stream preroll" },
+  // The two the always-on channel uses. Mid-roll runs at the interval set in
+  // Channel breaks below; filler is what covers the screen when the feed drops.
+  { value: "mid_roll", label: "Channel break (mid-roll)" },
+  { value: "live_filler", label: "Filler when the feed drops" },
   { value: "sidebar", label: "Sidebar" },
   { value: "between_content", label: "Between content" },
 ];
@@ -264,6 +269,8 @@ export function AdsManagerPage() {
           </Button>
         }
       />
+
+      <ChannelBreaksCard />
 
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative w-full max-w-sm">
