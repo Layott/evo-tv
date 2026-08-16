@@ -89,6 +89,29 @@ function formatTime(sec: number) {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
+
+/**
+ * The tallest rendition this viewer may pull, or null for no cap.
+ *
+ * Free viewers are held to 480p. That is two decisions at once: it is the
+ * right default for a mobile-first audience buying its own data, and it is the
+ * difference between a viewer costing 0.36 GB an hour and 0.68, which is the
+ * budget that decides how many people the channel can carry.
+ *
+ * Fetched once per page and shared, so a grid of players makes one request.
+ * Null while it is in flight, which means no cap: a moment of the better
+ * picture is a far smaller problem than a moment of no picture.
+ */
+let entitlementsInflight: Promise<number | null> | null = null;
+
+function maxHeightForViewer(): Promise<number | null> {
+  entitlementsInflight ??= fetch("/api/me/entitlements", { credentials: "include" })
+    .then((r) => (r.ok ? r.json() : null))
+    .then((body: { maxHeight?: number | null } | null) => body?.maxHeight ?? null)
+    .catch(() => null);
+  return entitlementsInflight;
+}
+
 export function VideoPlayer({
   src,
   poster,
@@ -252,6 +275,23 @@ export function VideoPlayer({
           })),
         );
         setSelectedLevel(instance.currentLevel ?? -1);
+
+        // Cap the ladder for a viewer who has not paid for the top of it. This
+        // stops hls.js *asking* for the higher rungs; it is a data and cost
+        // decision, not a lock. What is behind a subscription is decided on the
+        // server, where the URL is handed out.
+        void maxHeightForViewer().then((maxHeight) => {
+          if (!maxHeight || cancelled) return;
+          const allowed = instance.levels
+            .map((lvl, index) => ({ index, height: lvl.height ?? 0 }))
+            .filter((l) => l.height > 0 && l.height <= maxHeight);
+          // Every rung is above the cap: leave it alone rather than refusing to
+          // play. A single-rendition stream is the common case today.
+          if (allowed.length === 0 || allowed.length === instance.levels.length) return;
+          const cap = allowed[allowed.length - 1]!.index;
+          instance.autoLevelCapping = cap;
+          if (instance.currentLevel > cap) instance.currentLevel = cap;
+        });
         if (autoPlay) {
           void videoRef.current?.play().catch(() => {
             const v = videoRef.current;

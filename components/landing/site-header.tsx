@@ -71,6 +71,12 @@ export default function SiteHeader({
               Schedule
             </Link>
             <Link
+              href="/shows"
+              className="landing-display hidden min-h-11 items-center px-2 text-[1.02rem] text-[var(--paper-dim)] transition-colors hover:text-[var(--paper)] sm:flex"
+            >
+              Shows
+            </Link>
+            <Link
               href="/login"
               className="landing-display flex min-h-11 items-center px-2 text-[1.02rem] text-[var(--paper-dim)] transition-colors hover:text-[var(--paper)]"
             >

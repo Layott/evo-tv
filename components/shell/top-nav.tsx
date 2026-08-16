@@ -32,6 +32,7 @@ const links = [
   { href: "/home", label: "Home" },
   { href: "/schedule", label: "Schedule" },
   { href: "/channel", label: "Channel" },
+  { href: "/shows", label: "Shows" },
   { href: "/discover", label: "Discover" },
   { href: "/events", label: "Events" },
   { href: "/shop", label: "Shop" },

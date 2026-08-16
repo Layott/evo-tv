@@ -28,12 +28,15 @@ export interface Entitlements {
   earlyAccess: boolean;
   /** Marked in chat, and exempt from the slow mode. */
   chatPerks: boolean;
+  /** Opens a show or episode marked premium. */
+  premiumContent: boolean;
 }
 
 export const NO_ENTITLEMENTS: Entitlements = {
   adFree: false,
   earlyAccess: false,
   chatPerks: false,
+  premiumContent: false,
 };
 
 /**
@@ -48,7 +51,12 @@ export async function getEntitlements(
   role?: string | null,
 ): Promise<Entitlements> {
   if (roleRank(role) >= RANK.premium) {
-    return { adFree: true, earlyAccess: true, chatPerks: true };
+    return {
+      adFree: true,
+      earlyAccess: true,
+      chatPerks: true,
+      premiumContent: true,
+    };
   }
   if (!userId) return NO_ENTITLEMENTS;
 
@@ -70,5 +78,6 @@ export async function getEntitlements(
     adFree: subscribed,
     earlyAccess: subscribed,
     chatPerks: subscribed,
+    premiumContent: subscribed,
   };
 }
