@@ -144,6 +144,8 @@ crontab -e
 */30 * * * *   /srv/evotv/bandwidth-watch.sh
 ```
 
+Box time is Africa/Lagos, so these fire an hour earlier in absolute terms than the UTC schedule they replaced.
+
 ## Bandwidth
 
 We serve our own HLS, so being watched costs transfer out of the droplet, and
@@ -166,9 +168,6 @@ number that matters is the *average* concurrent audience, not the peak during a
 show. At 720p the 4 TB allowance is about **8 viewers watching continuously for
 a month**; at 480p it is about 15.
 
-Box time is Africa/Lagos. Vercel Cron ran UTC, so these fire an hour earlier in absolute terms.
-
-`viewer-count` and `reminders` were never scheduled on Vercel. They are now.
 
 ## Day to day
 
