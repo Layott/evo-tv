@@ -463,7 +463,7 @@ export function StreamsManagerPage() {
                 </div>
 
                 <div>
-                  <div className="mb-1 text-xs r text-muted-foreground">Description</div>
+                  <div className="mb-1 text-xs text-muted-foreground">Description</div>
                   <p className="text-sm text-foreground/80">{selected.description}</p>
                 </div>
 
@@ -522,7 +522,7 @@ export function StreamsManagerPage() {
                       className={
                         (selected as Stream & { isMainChannel?: boolean })
                           .isMainChannel
-                          ? "border-sky-500/60 bg-sky-500/10 text-sky-200 hover:bg-sky-500/20"
+                          ? "bg-sky-500/25 text-sky-100 hover:bg-sky-500/25"
                           : "bg-card text-foreground hover:bg-accent"
                       }
                       onClick={() =>
@@ -624,8 +624,12 @@ export function StreamsManagerPage() {
             </div>
           )}
 
+          {/* A flat fill, not a 5% wash held together by a ring. The ring
+              survived the border token going transparent because it names a
+              colour outright, which is how a hairline was still being drawn
+              around the one box on this screen that most needs reading. */}
           {!ingestReveal?.keyRetrievable && ingestReveal?.streamKey ? (
-            <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-200">
+            <div className="rounded-lg bg-amber-500/25 p-3 text-xs text-amber-100">
               Copy the key now. Only a hash is stored, so it cannot be shown
               again. Anyone holding it can broadcast as this stream, so treat it
               like a password and never commit it.
@@ -680,7 +684,7 @@ export function StreamsManagerPage() {
 function Info({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <div className="mb-0.5 text-[10px] r text-muted-foreground">{label}</div>
+      <div className="mb-0.5 text-[10px] text-muted-foreground">{label}</div>
       <div className="text-foreground">{children}</div>
     </div>
   );

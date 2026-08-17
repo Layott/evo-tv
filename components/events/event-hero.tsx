@@ -56,12 +56,12 @@ export function EventHero({ event, game }: EventHeroProps) {
             Tier {event.tier}
           </span>
           {event.status === "live" && (
-            <span className="flex items-center gap-1 rounded-md bg-red-500/20 px-2 py-0.5 text-[10px] r text-red-400">
+            <span className="flex items-center gap-1 rounded-md bg-red-500/20 px-2 py-0.5 text-[10px] text-red-400">
               <span className="h-1.5 w-1.5 rounded-full bg-red-500" /> Live now
             </span>
           )}
           {event.status === "completed" && (
-            <span className="rounded-md bg-muted px-2 py-0.5 text-[10px] r text-muted-foreground">
+            <span className="rounded-md bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
               Concluded
             </span>
           )}

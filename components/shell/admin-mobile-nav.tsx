@@ -76,7 +76,7 @@ export function AdminMobileNav() {
               />
               <span>
                 <span className="block text-sm font-semibold">EVO TV</span>
-                <span className="block text-[10px] r text-sky-400">
+                <span className="block text-[10px] text-sky-400">
                   Admin CMS
                 </span>
               </span>
@@ -117,7 +117,7 @@ export function AdminMobileNav() {
       </Sheet>
 
       <div className="min-w-0">
-        <div className="text-[10px] r text-sky-400">
+        <div className="text-[10px] text-sky-400">
           Admin CMS
         </div>
         <div className="truncate text-sm font-semibold text-foreground">

@@ -115,10 +115,13 @@ export default function ProductDetailPage() {
                 <button
                   key={i}
                   onClick={() => setActiveImage(i)}
-                  className={cn( "relative aspect-square w-20 overflow-hidden rounded-lg border",
-                    i === activeImage
-                      ? "border-sky-500/60"
-                      : "border-border hover:bg-card"
+                  /* Selection by brightness, not by a ring. A thumbnail is a
+                     picture edge to edge, so there is no surface to fill and
+                     nothing to tint; dimming the ones you are not looking at
+                     reads faster than a line around the one you are. */
+                  className={cn(
+                    "relative aspect-square w-20 overflow-hidden rounded-lg transition-opacity",
+                    i === activeImage ? "opacity-100" : "opacity-45 hover:opacity-75"
                   )}
                 >
                   <MediaImage src={img} alt="" className="absolute inset-0 size-full object-cover" />

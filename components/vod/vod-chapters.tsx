@@ -35,14 +35,18 @@ function ChapterList({ chapters, currentSec, onJump }: Props) {
     return idx;
   })();
   return (
-    <ul className="divide-y divide-border">
+    <ul>
       {chapters.map((c, i) => (
         <li key={`${c.label}-${i}`}>
           <button
             onClick={() => onJump(c.startSec)}
             className={cn(
               "w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-accent/70 transition-colors",
-              i === activeIdx && "bg-sky-500/5 border-l-2 border-sky-500"
+              // The chapter you are in is a fill. It was a 5% wash plus a blue
+              // stripe down the left, which is both an accent bar and a line;
+              // the row padding already separates the rows, so the `divide-y`
+              // that used to draw between them goes with it.
+              i === activeIdx && "bg-sky-500/25"
             )}
           >
             <span className="text-xs font-mono text-muted-foreground w-14 shrink-0">

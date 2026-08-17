@@ -202,7 +202,7 @@ export default function EventDetailPage() {
           )}
           {event.status === "live" && (
             <div className="flex flex-col gap-2">
-              <span className="flex items-center gap-2 rounded-md bg-red-500/20 px-2.5 py-1 text-xs font-semibold r text-red-400">
+              <span className="flex items-center gap-2 rounded-md bg-red-500/20 px-2.5 py-1 text-xs font-semibold text-red-400">
                 <span className="h-2 w-2 rounded-full bg-red-500" /> Live now
               </span>
               <p className="text-sm text-foreground/80">Event in progress.</p>
@@ -210,7 +210,7 @@ export default function EventDetailPage() {
           )}
           {event.status === "completed" && (
             <div className="flex flex-col gap-2">
-              <span className="rounded-md bg-muted px-2.5 py-1 text-xs font-semibold r text-foreground/80">
+              <span className="rounded-md bg-muted px-2.5 py-1 text-xs font-semibold text-foreground/80">
                 Concluded
               </span>
               <p className="text-sm text-muted-foreground">
