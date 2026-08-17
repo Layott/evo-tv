@@ -44,7 +44,7 @@ function relTime(iso: string): string {
 export default function VodPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const { role } = useAuth();
+  const { role, isPremium } = useAuth();
   const vodId = params?.id ?? "";
 
   const [vod, setVod] = React.useState<Vod | null | undefined>(undefined);
@@ -102,7 +102,7 @@ export default function VodPage() {
     );
   }
 
-  const paywalled = vod.isPremium && role !== "premium";
+  const paywalled = vod.isPremium && !isPremium;
 
   const onLike = () => {
     if (liked) {

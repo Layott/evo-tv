@@ -1,7 +1,41 @@
 import "server-only";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
+import { roleRank } from "@/lib/auth/role-catalog";
 import type { Subscription } from "@/lib/types";
+
+/**
+ * Grant or remove the paid role without touching a role that outranks it.
+ *
+ * Paying used to `set({ role: "premium" })` unconditionally, and cancelling set
+ * it to `"user"`. Role and subscription are two different things sharing one
+ * column, so the result was that **anyone on staff who bought a subscription
+ * lost their staff role**: an admin became `premium`, and when the subscription
+ * lapsed they became `user`. A creator lost creator the same way.
+ *
+ * Found the honest way. A walkthrough account was promoted to `head_admin`,
+ * used to exercise checkout, and came back as `premium` with every admin route
+ * answering 403.
+ *
+ * So the rule is: subscriptions may only move somebody between `user` and
+ * `premium`. Anything above `premium` on the ladder is a decision somebody made
+ * about that person and is none of billing's business.
+ */
+async function setPaidRole(userId: string, paid: boolean): Promise<void> {
+  const rows = await db
+    .select({ role: schema.user.role })
+    .from(schema.user)
+    .where(eq(schema.user.id, userId))
+    .limit(1);
+
+  const current = rows[0]?.role ?? "user";
+  if (roleRank(current) > roleRank("premium")) return;
+
+  await db
+    .update(schema.user)
+    .set({ role: paid ? "premium" : "user", updatedAt: new Date() })
+    .where(eq(schema.user.id, userId));
+}
 
 function toSub(r: typeof schema.subscriptions.$inferSelect): Subscription {
   return {
@@ -97,11 +131,7 @@ export async function upsertFromPayment(input: {
       createdAt: nowIso,
     });
 
-  // Promote user role to premium.
-  await db
-    .update(schema.user)
-    .set({ role: "premium", updatedAt: new Date() })
-    .where(eq(schema.user.id, input.userId));
+  await setPaidRole(input.userId, true);
 
   return {
     id,
@@ -126,10 +156,7 @@ export async function cancelSubscription(userId: string): Promise<void> {
         eq(schema.subscriptions.status, "active")
       )
     );
-  await db
-    .update(schema.user)
-    .set({ role: "user", updatedAt: new Date() })
-    .where(eq(schema.user.id, userId));
+  await setPaidRole(userId, false);
 }
 
 /* ------------------------------------------------------------------ */
@@ -241,10 +268,7 @@ export async function cancelSubscriptionById(
       .limit(1)
   )[0];
   if (Number(stillActive?.c ?? 0) === 0) {
-    await db
-      .update(schema.user)
-      .set({ role: "user", updatedAt: new Date() })
-      .where(eq(schema.user.id, row.userId));
+    await setPaidRole(row.userId, false);
   }
 
   return toSub({ ...row, status: "canceled" });
@@ -274,10 +298,7 @@ export async function extendSubscriptionById(
     .where(eq(schema.subscriptions.id, id));
 
   if (row.tier === "premium") {
-    await db
-      .update(schema.user)
-      .set({ role: "premium", updatedAt: new Date() })
-      .where(eq(schema.user.id, row.userId));
+    await setPaidRole(row.userId, true);
   }
 
   return toSub({ ...row, status: "active", currentPeriodEnd: newEnd });

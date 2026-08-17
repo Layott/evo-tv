@@ -19,7 +19,7 @@ import AdBanner from "@/components/home/ad-banner";
 import Recommendations from "@/components/home/recommendations";
 
 export default function HomePage() {
-  const { role } = useAuth();
+  const { role, isPremium } = useAuth();
 
   const featured = useQuery({
     queryKey: ["streams", "featured"],
@@ -49,7 +49,7 @@ export default function HomePage() {
   const recs = useQuery({
     queryKey: ["vods", "recommendations"],
     queryFn: () => listVods({ limit: 8 }),
-    enabled: role === "premium",
+    enabled: isPremium,
   });
 
   return (
@@ -60,7 +60,7 @@ export default function HomePage() {
 
       <HeroCarousel streams={featured.data ?? []} />
 
-      {role !== "premium" && <AdBanner />}
+      {!isPremium && <AdBanner />}
 
       <LiveNow
         streams={live.data ?? []}
@@ -79,7 +79,7 @@ export default function HomePage() {
         loading={clips.isPending}
       />
 
-      {role === "premium" && (
+      {isPremium && (
         <Recommendations
           vods={recs.data ?? []}
           games={games.data ?? []}

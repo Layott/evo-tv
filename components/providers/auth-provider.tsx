@@ -4,7 +4,13 @@ import * as React from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Profile, Role } from "@/lib/types";
 import { authClient } from "@/lib/auth/client";
-import { getCurrentUser, listFollows, toggleFollow as apiToggleFollow } from "@/lib/client";
+import { isPremiumViewer, isStaff } from "@/lib/auth/entitlements";
+import {
+  getActiveSubscription,
+  getCurrentUser,
+  listFollows,
+  toggleFollow as apiToggleFollow,
+} from "@/lib/client";
 
 /**
  * Real authentication, replacing the mock session provider.
@@ -24,6 +30,14 @@ type FollowTargetType = "team" | "player" | "streamer";
 interface AuthContextValue {
   user: Profile | null;
   role: Role;
+  /**
+   * The paid experience: no ads, premium VODs, premium chat rooms.
+   *
+   * Separate from `role` deliberately. They used to be the same column, which
+   * meant paying overwrote a staff role, and guarding against that left a
+   * paying admin with none of what they bought. See `lib/auth/entitlements.ts`.
+   */
+  isPremium: boolean;
   /** False until the Better-Auth session has resolved. */
   ready: boolean;
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
@@ -91,6 +105,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     syncRoleCookie(role);
   }, [role]);
 
+  /**
+   * Whether this viewer gets the paid experience.
+   *
+   * Separate from `role` on purpose, because the two were the same column and
+   * that was wrong in both directions: paying overwrote a staff role, and once
+   * that was guarded, a paying admin got none of what they had bought. See
+   * `lib/auth/entitlements.ts`.
+   *
+   * Staff are entitled without a subscription, so the query only runs for
+   * everyone else. It is deliberately not gating the first paint: `isPremium`
+   * is false while it loads, which shows an ad for a moment rather than briefly
+   * handing a non-subscriber a premium VOD.
+   */
+  const subQuery = useQuery({
+    queryKey: ["auth", "subscription"],
+    queryFn: () => getActiveSubscription(),
+    enabled: signedIn && !isStaff(role),
+    staleTime: 60_000,
+  });
+
+  const isPremium = isPremiumViewer({
+    role,
+    hasActiveSubscription: Boolean(subQuery.data),
+  });
+
   const followKeys = React.useMemo(
     () => new Set(follows.map((f) => `${f.targetType}:${f.targetId}`)),
     [follows],
@@ -103,6 +142,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value: AuthContextValue = {
     user,
     role,
+    isPremium,
     // Ready as soon as the session resolves. The profile is extra detail for
     // the UI; it must not hold up an access decision.
     ready: !sessionPending,
