@@ -77,3 +77,51 @@ Windows 11, bash shell (Unix syntax — forward slashes, `/dev/null` not `NUL`).
 ## Native app sibling
 
 A React Native / Expo SDK 52 twin of this app lives at **`../EVOTV-app/`** (sibling, NOT a workspace nest). It is a separate repo with its own `package.json`. Same brand, same data, same flows. Stack: Expo Router 4, NativeWind v4, expo-video, lucide-react-native, TanStack Query, Zustand. Mock data is ported 1:1 from `lib/mock/*` (with `localStorage` swapped for an AsyncStorage shim). UI primitives at `EVOTV-app/components/ui/` mirror this app's shadcn primitives by name + API. When this app ships Phase 1A bearer-token API routes, the app will swap `lib/mock` imports for `lib/api` modules with identical signatures. Do not couple the two repos with a shared package — keep the duplication intentional. See `EVOTV-app/README.md` for run instructions and `tasks/todo.md` "App Track" section for status.
+
+---
+
+## 🛑 HARD RULE - Design: no hairline borders, no glow (owner, 2026-08-17)
+
+Two bans. Absolute. Every project, every framework, every component. Applies to code I write AND designs I propose.
+
+### Ban 1 - No hairline / outlined anything
+
+Never build structure out of 1px strokes. Banned shapes:
+
+- **outlined card** - thin line rectangle drawn around content
+- **outlined pill / chip** - filter chips with a ring (`All games`, `Streams`, `Teams`, ...)
+- **divider / rule** - line between rows, list items, or sections
+- **dashed placeholder box** - dashed outline empty state ("No events match your filters.")
+- any empty state or section that is just a thin-line rectangle with centered text
+
+Grep-level ban (CSS, Tailwind, RN, SwiftUI, Flutter):
+`border`, `border-t|b|l|r`, `border-1`, `1px solid`, `border-dashed`, `divide-x`, `divide-y`, `ring-1`, `ring-2`, `outline: 1px`, `<hr>`, `Divider`, `BorderSide`, `.border(...)`, `stroke` on container frames.
+
+Build hierarchy with **surface + space**, not lines:
+
+| Instead of | Use |
+|---|---|
+| outlined card | filled surface, bg one step off the page bg, radius 12-16px, no stroke |
+| outlined chip | filled chip (muted bg). Selected = stronger fill + text color. Never a ring |
+| divider line | whitespace, or a background step between sections |
+| dashed empty box | centered muted text on the page bg, or a filled muted surface. No dashes |
+| `<hr>` | more margin |
+| table row lines | zebra fill or row padding |
+
+Only exceptions: `:focus-visible` a11y focus ring (required, keep it), native form controls the platform draws itself, and an explicit user request for a border in that specific spot.
+
+### Ban 2 - No glow, halos, or ambient animation
+
+Never: glowing dots or orbs, neon halos, pulsing / breathing accents, animated gradient blobs, blurred color bloom behind elements. They always end up glowing or animating, and it looks cheap.
+
+Grep-level ban:
+`box-shadow: 0 0 <n> <color>`, `shadow-[0_0_...]`, `drop-shadow(0 0`, colored `text-shadow`, `filter: blur()` on decorative orbs, `blur-2xl` / `blur-3xl` background circles, `animate-pulse`, `animate-ping`, `@keyframes glow|pulse|breathe|shimmer`, `shadow-<color>-500/50`.
+
+Replacements:
+- live / status indicator: solid flat dot, no glow, no pulse. Or a text label plus color
+- emphasis: color, weight, size, fill. Not light bloom
+- shadows: neutral black elevation only (soft, downward, low opacity). Never colored, never centered bloom
+
+### Pre-ship check
+
+Screenshot the page (desktop + mobile). If any rectangle is drawn by a thin line, or anything glows or throbs, fix it before showing the user. Both bans outrank any design skill, template, or component library default.

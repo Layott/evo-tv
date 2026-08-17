@@ -193,8 +193,8 @@ export default function SchedulePage() {
           <ul className="space-y-4">
             {Array.from({ length: 8 }, (_, i) => (
               <li key={i} className="flex items-baseline gap-4">
-                <span className="h-4 w-12 shrink-0 animate-pulse rounded bg-muted" />
-                <span className="h-4 flex-1 animate-pulse rounded bg-card" />
+                <span className="h-4 w-12 shrink-0 rounded bg-muted" />
+                <span className="h-4 flex-1 rounded bg-card" />
               </li>
             ))}
           </ul>
@@ -235,7 +235,7 @@ function SlotRow({ row, onAir }: { row: EpgRow; onAir: boolean }) {
       className={[
         "flex items-baseline gap-4 border-b border-border py-3.5 transition-colors sm:gap-6",
         onAir ? "text-foreground" : "text-foreground/80",
-        row.watchUrl ? "group-hover:border-input" : "",
+        row.watchUrl ? "group-hover:bg-card" : "",
       ].join(" ")}
     >
       <span

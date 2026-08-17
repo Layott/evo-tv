@@ -4,13 +4,20 @@ import { cn } from "@/lib/utils";
 
 type Tone = "emerald" | "amber" | "red" | "blue" | "neutral" | "violet";
 
+/**
+ * Filled, not outlined.
+ *
+ * These were a 10% wash held together by a `ring-1` hairline, which is the
+ * outlined-chip shape banned product-wide. The fill carries the badge on its
+ * own now, so it is doubled and the text lightened a step to keep contrast.
+ */
 const tones: Record<Tone, string> = {
-  emerald: "bg-sky-500/10 text-sky-300 ring-sky-500/30",
-  amber: "bg-amber-500/10 text-amber-300 ring-amber-500/30",
-  red: "bg-red-500/10 text-red-300 ring-red-500/30",
-  blue: "bg-blue-500/10 text-blue-300 ring-blue-500/30",
-  neutral: "bg-muted/40 text-foreground/80 ring-ring/50",
-  violet: "bg-violet-500/10 text-violet-300 ring-violet-500/30",
+  emerald: "bg-sky-500/25 text-sky-100",
+  amber: "bg-amber-500/25 text-amber-100",
+  red: "bg-red-500/25 text-red-100",
+  blue: "bg-blue-500/25 text-blue-100",
+  neutral: "bg-muted/60 text-foreground/90",
+  violet: "bg-violet-500/25 text-violet-100",
 };
 
 export function StatusBadge({
@@ -27,7 +34,7 @@ export function StatusBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-medium ring-1 ring-inset",
+        "inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-medium",
         tones[tone],
         className,
       )}
@@ -36,7 +43,8 @@ export function StatusBadge({
         <span
           className={cn(
             "h-1.5 w-1.5 rounded-full",
-            tone === "emerald" && "bg-sky-400 shadow-[0_0_6px_currentColor]",
+            // Flat dot. It used to carry a 6px bloom of its own colour.
+            tone === "emerald" && "bg-sky-400",
             tone === "amber" && "bg-amber-400",
             tone === "red" && "bg-red-400",
             tone === "blue" && "bg-blue-400",

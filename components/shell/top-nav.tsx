@@ -81,7 +81,7 @@ export function TopNav() {
         <button
           type="button"
           onClick={() => router.push("/discover")}
-          className="ml-auto flex h-9 w-full max-w-xs items-center gap-2 rounded-full border border-border bg-card/60 px-3 text-left text-xs text-muted-foreground transition-colors hover:border-input hover:text-foreground"
+          className="ml-auto flex h-9 w-full max-w-xs items-center gap-2 rounded-full border border-border bg-card/60 px-3 text-left text-xs text-muted-foreground transition-colors hover:bg-card hover:text-foreground"
         >
           <Search className="h-3.5 w-3.5" />
           <span>Search streams, teams, players…</span>
@@ -95,7 +95,7 @@ export function TopNav() {
             <button
               type="button"
               onClick={() => setMenu((v) => !v)}
-              className="flex items-center gap-2 rounded-full border border-border bg-card/60 py-1 pl-1 pr-3 transition-colors hover:border-input"
+              className="flex items-center gap-2 rounded-full border border-border bg-card/60 py-1 pl-1 pr-3 transition-colors hover:bg-card"
             >
               <UserAvatar
                 src={user.avatarUrl}

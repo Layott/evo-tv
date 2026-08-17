@@ -68,7 +68,7 @@ export default function ForgotPasswordPage() {
   return (
     <div className="space-y-6">
       <div className="space-y-3 text-center">
-        <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-sky-500/10 ring-1 ring-sky-500/30">
+        <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-sky-500/25 text-sky-100">
           {sent ? (
             <CheckCircle2 className="size-6 text-sky-400" />
           ) : (

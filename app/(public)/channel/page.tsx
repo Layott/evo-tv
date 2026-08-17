@@ -109,7 +109,7 @@ export default function ChannelPage() {
               toast.success("Link copied");
             }
           }}
-          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card/60 px-3 py-1.5 text-xs text-foreground/80 hover:border-sky-500/60 hover:text-sky-300"
+          className="inline-flex items-center gap-1.5 rounded-full bg-card/70 px-3 py-1.5 text-xs text-foreground/80 hover:bg-card hover:text-sky-300"
         >
           <Share2 className="h-3.5 w-3.5" /> Share
         </button>
@@ -123,11 +123,11 @@ export default function ChannelPage() {
               {/* Read from the stream row. This was hardcoded, so the channel
                   announced itself as live even with nothing being broadcast. */}
               {channel?.isLive ? (
-                <span className="inline-flex items-center gap-1 rounded-md border border-red-500/30 bg-red-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-red-400">
-                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" /> Live
+                <span className="inline-flex items-center gap-1 rounded-md bg-red-500/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-red-400">
+                  <span className="h-1.5 w-1.5 rounded-full bg-red-500" /> Live
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1 rounded-md border border-input bg-card px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <span className="inline-flex items-center gap-1 rounded-md bg-card px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                   Off air
                 </span>
               )}
@@ -198,7 +198,7 @@ export default function ChannelPage() {
                 className={`inline-flex items-center gap-2 rounded-full border px-5 py-2.5 text-sm transition-colors ${
                   following
                     ? "border-sky-400 text-sky-300"
-                    : "border-input text-foreground hover:border-sky-400 hover:text-sky-300"
+                    : "bg-input/40 text-foreground hover:bg-input/60 hover:text-sky-300"
                 }`}
               >
                 <Heart className={`h-4 w-4 ${following ? "fill-current" : ""}`} />
@@ -231,7 +231,7 @@ export default function ChannelPage() {
           </Link>
         </div>
         {scheduleQ.isPending ? (
-          <div className="h-52 animate-pulse rounded-xl bg-card" />
+          <div className="h-52 rounded-xl bg-card" />
         ) : upNext.length === 0 ? (
           <p className="rounded-xl border border-border bg-card/40 px-4 py-6 text-sm text-muted-foreground">
             Nothing else scheduled today.
@@ -283,7 +283,7 @@ export default function ChannelPage() {
         {liveQ.isLoading ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-40 animate-pulse rounded-xl bg-card" />
+              <div key={i} className="h-40 rounded-xl bg-card" />
             ))}
           </div>
         ) : (
@@ -295,13 +295,13 @@ export default function ChannelPage() {
                 <Link
                   key={s.id}
                   href={`/stream/${s.id}`}
-                  className="group overflow-hidden rounded-xl border border-border bg-card/60 transition-colors hover:border-input"
+                  className="group overflow-hidden rounded-xl border border-border bg-card/60 transition-colors hover:bg-card"
                 >
                   <div className="relative aspect-video bg-background">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={s.thumbnailUrl} alt="" className="h-full w-full object-cover opacity-80" />
-                    <div className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-md border border-red-500/30 bg-red-500/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-red-400">
-                      <span className="h-1 w-1 animate-pulse rounded-full bg-red-500" /> Live
+                    <div className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-md bg-red-500/20 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-red-400">
+                      <span className="h-1 w-1 rounded-full bg-red-500" /> Live
                     </div>
                     <div className="absolute right-2 top-2 rounded-md bg-black/70 px-1.5 py-0.5 text-[10px] text-foreground">
                       {fmtViewers(s.viewerCount)}

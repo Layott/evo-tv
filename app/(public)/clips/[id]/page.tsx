@@ -151,7 +151,7 @@ export default function ClipDetailPage() {
   if (clip === undefined) {
     return (
       <div className="flex h-[calc(100vh-4rem)] items-center justify-center bg-black">
-        <div className="h-full aspect-[9/16] rounded-xl bg-card animate-pulse" />
+        <div className="h-full aspect-[9/16] rounded-xl bg-card " />
       </div>
     );
   }
@@ -328,7 +328,7 @@ export default function ClipDetailPage() {
           <div className="flex items-end justify-between gap-3">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <Avatar className="size-9 ring-2 ring-white/60">
+                <Avatar className="size-9">
                   <AvatarImage
                     src={clip.creatorAvatarUrl}
                     alt={clip.creatorHandle}

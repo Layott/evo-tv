@@ -48,7 +48,7 @@ export function DashboardShell({ children, title, description, actions }: Dashbo
                 Join the creator program
               </Link>
             </Button>
-            <Button variant="outline" className="border-input" onClick={() => router.back()}>
+            <Button variant="outline" onClick={() => router.back()}>
               <ArrowLeft className="size-4" /> Back
             </Button>
           </div>
@@ -91,8 +91,7 @@ export function DashboardShell({ children, title, description, actions }: Dashbo
               <li key={t.href}>
                 <Link
                   href={t.href}
-                  className={cn(
-                    "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium uppercase tracking-wider transition",
+                  className={cn( "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium uppercase tracking-wider transition",
                     active
                       ? "bg-muted text-foreground shadow-inner"
                       : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",

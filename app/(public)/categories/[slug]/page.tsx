@@ -38,8 +38,8 @@ function formatNgn(n: number): string {
 
 function LiveBadge() {
   return (
-    <span className="flex items-center gap-1 rounded-md border border-red-500/30 bg-red-500/10 px-2 py-0.5 text-[10px] uppercase tracking-wider text-red-400">
-      <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
+    <span className="flex items-center gap-1 rounded-md bg-red-500/20 px-2 py-0.5 text-[10px] uppercase tracking-wider text-red-400">
+      <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
       Live
     </span>
   );
@@ -102,7 +102,7 @@ export default function CategoryDetailPage() {
   if (!game) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-6">
-        <div className="h-56 animate-pulse rounded-xl bg-card" />
+        <div className="h-56 rounded-xl bg-card" />
       </div>
     );
   }
@@ -131,7 +131,7 @@ export default function CategoryDetailPage() {
             <img
               src={game.iconUrl}
               alt=""
-              className="h-12 w-12 rounded-md border border-input object-cover"
+              className="h-12 w-12 rounded-md  object-cover"
             />
             <div>
               <h1 className="text-2xl font-bold sm:text-3xl">{game.name}</h1>
@@ -162,7 +162,7 @@ export default function CategoryDetailPage() {
           {liveQ.isPending ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="aspect-video animate-pulse rounded-xl bg-card" />
+                <div key={i} className="aspect-video rounded-xl bg-card" />
               ))}
             </div>
           ) : live.length === 0 ? (
@@ -175,7 +175,7 @@ export default function CategoryDetailPage() {
                 <Link
                   key={s.id}
                   href={`/stream/${s.id}`}
-                  className="group overflow-hidden rounded-xl border border-border bg-card/60 transition-colors hover:border-input"
+                  className="group overflow-hidden rounded-xl border border-border bg-card/60 transition-colors hover:bg-card"
                 >
                   <div className="relative aspect-video overflow-hidden">
                     <img src={s.thumbnailUrl} alt={s.title} className="h-full w-full object-cover" />
@@ -200,7 +200,7 @@ export default function CategoryDetailPage() {
           {upcomingQ.isPending ? (
             <div className="space-y-3">
               {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="h-24 animate-pulse rounded-xl bg-card" />
+                <div key={i} className="h-24 rounded-xl bg-card" />
               ))}
             </div>
           ) : upcoming.length === 0 ? (
@@ -213,7 +213,7 @@ export default function CategoryDetailPage() {
                 <Link
                   key={ev.id}
                   href={`/events/${ev.id}`}
-                  className="flex gap-3 rounded-xl border border-border bg-card/60 p-3 transition-colors hover:border-input"
+                  className="flex gap-3 rounded-xl border border-border bg-card/60 p-3 transition-colors hover:bg-card"
                 >
                   <img src={ev.thumbnailUrl} alt={ev.title} className="h-20 w-32 shrink-0 rounded-md object-cover" />
                   <div className="min-w-0 flex-1">
@@ -236,7 +236,7 @@ export default function CategoryDetailPage() {
           {teamsQ.isPending ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="h-20 animate-pulse rounded-xl bg-card" />
+                <div key={i} className="h-20 rounded-xl bg-card" />
               ))}
             </div>
           ) : teams.length === 0 ? (
@@ -249,7 +249,7 @@ export default function CategoryDetailPage() {
                 <Link
                   key={t.id}
                   href={`/team/${t.slug}`}
-                  className="flex items-center gap-3 rounded-xl border border-border bg-card/60 p-3 transition-colors hover:border-input"
+                  className="flex items-center gap-3 rounded-xl border border-border bg-card/60 p-3 transition-colors hover:bg-card"
                 >
                   <img src={t.logoUrl} alt={t.name} className="h-12 w-12 rounded-md border border-border" />
                   <div className="min-w-0 flex-1">
@@ -268,7 +268,7 @@ export default function CategoryDetailPage() {
           {playersQ.isPending ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="h-20 animate-pulse rounded-xl bg-card" />
+                <div key={i} className="h-20 rounded-xl bg-card" />
               ))}
             </div>
           ) : players.length === 0 ? (
@@ -306,7 +306,7 @@ export default function CategoryDetailPage() {
           {vodsQ.isPending ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="aspect-video animate-pulse rounded-xl bg-card" />
+                <div key={i} className="aspect-video rounded-xl bg-card" />
               ))}
             </div>
           ) : vods.length === 0 ? (
@@ -319,7 +319,7 @@ export default function CategoryDetailPage() {
                 <Link
                   key={v.id}
                   href={`/vod/${v.id}`}
-                  className="group overflow-hidden rounded-xl border border-border bg-card/60 transition-colors hover:border-input"
+                  className="group overflow-hidden rounded-xl border border-border bg-card/60 transition-colors hover:bg-card"
                 >
                   <div className="relative aspect-video overflow-hidden">
                     <img src={v.thumbnailUrl} alt={v.title} className="h-full w-full object-cover" />

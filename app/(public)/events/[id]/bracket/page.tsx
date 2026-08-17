@@ -65,7 +65,7 @@ export default function EventBracketPage() {
       {matchesQ.isPending || teamsQ.isPending ? (
         <div className="flex gap-6 overflow-x-auto">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-40 w-64 shrink-0 animate-pulse rounded-xl bg-card" />
+            <div key={i} className="h-40 w-64 shrink-0 rounded-xl bg-card" />
           ))}
         </div>
       ) : (

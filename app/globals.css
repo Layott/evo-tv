@@ -383,10 +383,19 @@
   --destructive: #ff4a38;
   --destructive-foreground: #ffe6e2;
 
-  /* Barely there. The old value was a mid grey that outlined every card on the
-     page, which is the "hairline box round everything" the owner called out.
-     Cards now separate by surface weight instead. */
-  --border: #12383a;
+  /*
+   * No hairline. Not a fainter one: none.
+   *
+   * `--border` was lowered to a near-invisible teal once already and the
+   * outlines were still there, because the problem is the pattern rather than
+   * the contrast: a stroked rectangle around every card, chip and empty state
+   * is what makes a page read as generated. The landing separates things by
+   * surface weight and so does this now.
+   *
+   * `--input` is deliberately left visible. A text field with no edge is not a
+   * clean design, it is a field nobody can find.
+   */
+  --border: transparent;
   --input: #17454a;
   --ring: #46e3ce;
 
@@ -396,7 +405,8 @@
   --sidebar-primary-foreground: #05191b;
   --sidebar-accent: #103133;
   --sidebar-accent-foreground: #eaf6f5;
-  --sidebar-border: #12383a;
+  /* Same reasoning as --border above. The admin rail separates by weight. */
+  --sidebar-border: transparent;
   --sidebar-ring: #46e3ce;
 }
 

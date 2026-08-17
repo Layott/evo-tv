@@ -63,7 +63,7 @@ export default function UpgradePage() {
         <BackButton fallbackHref="/home" />
       </div>
       <header className="mx-auto max-w-3xl text-center">
-        <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-amber-300">
+        <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/20 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-amber-300">
           <Sparkles className="size-3" /> EVO TV Premium
         </span>
         <h1 className="mt-4 text-3xl font-bold text-foreground sm:text-4xl">
@@ -95,7 +95,7 @@ export default function UpgradePage() {
             title="Paystack"
             subtitle="Visa, Mastercard, Verve, bank transfer."
             Icon={CreditCard}
-            accent="bg-sky-500/15 text-sky-300 ring-sky-500/40"
+            accent="bg-sky-500/25 text-sky-100"
             primary
           />
           <PaymentMethodCard
@@ -104,7 +104,7 @@ export default function UpgradePage() {
             title="M-Pesa, MoMo, Airtel"
             subtitle="STK push to your phone in seconds."
             Icon={Phone}
-            accent="bg-emerald-500/15 text-emerald-300 ring-emerald-500/40"
+            accent="bg-emerald-500/25 text-emerald-100"
           />
           <PaymentMethodCard
             href="/ussd"
@@ -112,7 +112,7 @@ export default function UpgradePage() {
             title="Dial-to-pay"
             subtitle="No app needed. Works on any phone."
             Icon={Ticket}
-            accent="bg-amber-500/15 text-amber-300 ring-amber-500/40"
+            accent="bg-amber-500/25 text-amber-100"
           />
         </div>
       </section>
@@ -152,13 +152,11 @@ function PaymentMethodCard({
   return (
     <Link
       href={href}
-      className={`group flex flex-col gap-3 rounded-2xl border bg-card/40 p-5 transition hover:border-sky-500/60 ${
-        primary ? "border-sky-500/40" : "border-border"
-      }`}
+      className={`group flex flex-col gap-3 rounded-2xl p-5 transition hover:bg-card/70 ${primary ? "bg-sky-500/15" : "bg-card/40"}`}
     >
       <div className="flex items-start gap-3">
         <div
-          className={`flex size-10 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset ${accent}`}
+          className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${accent}`}
         >
           <Icon className="size-5" />
         </div>
@@ -191,10 +189,10 @@ function TierCard({
 }) {
   return (
     <div
-      className={`relative flex h-full flex-col rounded-2xl border p-6 ${
+      className={`relative flex h-full flex-col rounded-2xl p-6 ${
         highlight
-          ? "border-sky-500/60 bg-gradient-to-br from-sky-500/10 via-card/60 to-amber-500/10"
-          : "border-border bg-card/40"
+          ? "bg-gradient-to-br from-sky-500/25 via-card/60 to-amber-500/20"
+          : "bg-card/40"
       }`}
     >
       {highlight ? (

@@ -142,10 +142,10 @@ function FeatureFlagsSection() {
           ? Array.from({ length: 5 }).map((_, i) => (
               <li key={`sk-${i}`} className="flex items-center justify-between gap-4 p-4">
                 <div className="flex-1">
-                  <div className="h-4 w-1/3 animate-pulse rounded bg-muted" />
-                  <div className="mt-2 h-3 w-2/3 animate-pulse rounded bg-muted" />
+                  <div className="h-4 w-1/3 rounded bg-muted" />
+                  <div className="mt-2 h-3 w-2/3 rounded bg-muted" />
                 </div>
-                <div className="h-6 w-10 animate-pulse rounded-full bg-muted" />
+                <div className="h-6 w-10 rounded-full bg-muted" />
               </li>
             ))
           : (flagsQ.data ?? []).map((f) => (
@@ -208,7 +208,7 @@ function BrandingSection() {
             <Button
               type="button"
               variant="outline"
-              className="border-input bg-card hover:bg-accent"
+              className="bg-card hover:bg-accent"
               onClick={() => logoInput.current?.click()}
             >
               <Upload className="h-4 w-4" />

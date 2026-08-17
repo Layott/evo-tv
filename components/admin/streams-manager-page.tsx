@@ -523,7 +523,7 @@ export function StreamsManagerPage() {
                         (selected as Stream & { isMainChannel?: boolean })
                           .isMainChannel
                           ? "border-sky-500/60 bg-sky-500/10 text-sky-200 hover:bg-sky-500/20"
-                          : "border-input bg-card text-foreground hover:bg-accent"
+                          : "bg-card text-foreground hover:bg-accent"
                       }
                       onClick={() =>
                         mainChannelMut.mutate({
@@ -542,7 +542,7 @@ export function StreamsManagerPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="border-input bg-card text-foreground hover:bg-accent"
+                      className="bg-card text-foreground hover:bg-accent"
                       onClick={() => handleShowIngest(selected)}
                     >
                       <Radio className="h-3.5 w-3.5" />
@@ -551,7 +551,7 @@ export function StreamsManagerPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="border-input bg-card text-foreground hover:bg-accent"
+                      className="bg-card text-foreground hover:bg-accent"
                       onClick={() => handleRegenerate(selected)}
                     >
                       <RefreshCw className="h-3.5 w-3.5" />
@@ -662,7 +662,7 @@ export function StreamsManagerPage() {
           <DialogFooter>
             <Button
               variant="outline"
-              className="border-input bg-card hover:bg-accent"
+              className="bg-card hover:bg-accent"
               onClick={() => setConfirmDelete(null)}
             >
               Cancel
@@ -848,7 +848,7 @@ function CreateStreamDrawer({
         <SheetFooter>
           <Button
             variant="outline"
-            className="border-input bg-card hover:bg-accent"
+            className="bg-card hover:bg-accent"
             onClick={() => onOpenChange(false)}
           >
             Cancel
@@ -909,7 +909,7 @@ function CopyField({
           <Button
             size="sm"
             variant="outline"
-            className="border-input bg-card text-foreground hover:bg-accent"
+            className="bg-card text-foreground hover:bg-accent"
             onClick={() => {
               navigator.clipboard?.writeText(value).catch(() => {});
               toast.success(`${label} copied`);

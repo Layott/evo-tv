@@ -36,7 +36,7 @@ export function VodRelated({ vods }: { vods: Vod[] }) {
           <Link
             key={v.id}
             href={`/vod/${v.id}`}
-            className="group rounded-lg overflow-hidden border border-border bg-background hover:border-input transition"
+            className="group rounded-lg overflow-hidden border border-border bg-background hover:bg-card transition"
           >
             <div className="relative aspect-video bg-card">
               <Image

@@ -186,10 +186,10 @@ export function OverviewPage() {
             {streamsQ.isLoading
               ? Array.from({ length: 5 }).map((_, i) => (
                   <li key={`sk-${i}`} className="flex items-center gap-3 p-3">
-                    <div className="h-10 w-16 animate-pulse rounded bg-muted" />
+                    <div className="h-10 w-16 rounded bg-muted" />
                     <div className="flex-1">
-                      <div className="h-3 w-3/4 animate-pulse rounded bg-muted" />
-                      <div className="mt-1.5 h-2.5 w-1/3 animate-pulse rounded bg-muted" />
+                      <div className="h-3 w-3/4 rounded bg-muted" />
+                      <div className="mt-1.5 h-2.5 w-1/3 rounded bg-muted" />
                     </div>
                   </li>
                 ))

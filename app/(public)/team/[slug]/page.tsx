@@ -79,7 +79,7 @@ export default function TeamDetailPage() {
   if (!team) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-6">
-        <div className="h-56 animate-pulse rounded-xl bg-card" />
+        <div className="h-56 rounded-xl bg-card" />
       </div>
     );
   }
@@ -135,7 +135,7 @@ export default function TeamDetailPage() {
               onClick={onFollow}
               className={`inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-semibold transition-colors ${
                 following
-                  ? "border-sky-500/50 bg-sky-500/10 text-sky-300"
+                  ? "bg-sky-500/25 text-sky-100"
                   : "border-transparent bg-sky-500 text-ink hover:bg-sky-400"
               }`}
             >
@@ -177,7 +177,7 @@ export default function TeamDetailPage() {
         {rosterQ.isPending ? (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="h-20 animate-pulse rounded-xl bg-card" />
+              <div key={i} className="h-20 rounded-xl bg-card" />
             ))}
           </div>
         ) : roster.length === 0 ? (

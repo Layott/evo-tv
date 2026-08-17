@@ -14,8 +14,7 @@ import { getEntitlements } from "@/lib/api/entitlements";
 import { episodeAccess } from "@/lib/api/episode-access";
 import { VideoPlayer } from "@/components/stream/video-player";
 import { LocalTime } from "@/components/ui/local-time";
-import SiteFooter from "@/components/landing/site-footer";
-import SiteHeader from "@/components/landing/site-header";
+import { BackButton } from "@/components/shell/back-button";
 
 /**
  * One episode, at the address the schedule has been pointing at all along.
@@ -90,21 +89,21 @@ export default async function EpisodePage({ params }: RouteParams) {
   const siblings = thisSeason ? await listEpisodesForSeason(thisSeason.id) : [];
 
   return (
-    <>
-      <SiteHeader />
-      <main className="mx-auto max-w-[76rem] px-5 pb-24 pt-8 sm:px-10">
-        <nav className="text-[0.85rem] text-[var(--paper-faint)]">
-          <Link href="/shows" className="hover:text-[var(--brand)]">
-            Shows
-          </Link>
-          {" / "}
-          <Link href={`/show/${show.slug}`} className="hover:text-[var(--brand)]">
-            {show.title}
-          </Link>
-          {` / Season ${seasonNumber}`}
-        </nav>
+    <div className="mx-auto max-w-5xl px-4 py-6 sm:py-8">
+      <BackButton fallbackHref={`/show/${show.slug}`} />
 
-        <div className="mt-5 overflow-hidden rounded-xl bg-black">
+      <nav className="mt-4 text-xs text-muted-foreground">
+        <Link href="/shows" className="hover:text-foreground">
+          Shows
+        </Link>
+        {" / "}
+        <Link href={`/show/${show.slug}`} className="hover:text-foreground">
+          {show.title}
+        </Link>
+        {` / Season ${seasonNumber}`}
+      </nav>
+
+        <div className="mt-4 overflow-hidden rounded-2xl border border-border bg-black">
           {access.canWatch && ep.hlsUrl ? (
             <VideoPlayer
               src={ep.hlsUrl}
@@ -122,13 +121,13 @@ export default async function EpisodePage({ params }: RouteParams) {
         </div>
 
         <header className="mt-6">
-          <p className="text-[0.85rem] uppercase tracking-[0.08em] text-[var(--brand)]">
+          <p className="text-xs font-semibold uppercase tracking-wide text-sky-400">
             Season {seasonNumber}, episode {episodeNumber}
           </p>
-          <h1 className="landing-display mt-1 text-[clamp(1.6rem,4vw,2.6rem)]">
+          <h1 className="mt-1 text-2xl font-bold text-foreground sm:text-3xl">
             {ep.title}
           </h1>
-          <p className="mt-1 text-[0.9rem] text-[var(--paper-faint)]">
+          <p className="mt-1 text-sm text-muted-foreground">
             {show.title}
             {ep.runtimeSec > 0 ? ` · ${Math.round(ep.runtimeSec / 60)} min` : ""}
             {ep.premiereAt ? (
@@ -139,18 +138,18 @@ export default async function EpisodePage({ params }: RouteParams) {
             ) : null}
           </p>
           {ep.synopsis ? (
-            <p className="mt-4 max-w-[62ch] leading-relaxed text-[var(--paper-dim)]">
+            <p className="mt-3 max-w-[62ch] text-sm leading-relaxed text-muted-foreground">
               {ep.synopsis}
             </p>
           ) : null}
         </header>
 
         {siblings.length > 1 ? (
-          <section className="mt-12">
-            <h2 className="landing-display text-[1.3rem]">
+          <section className="mt-10">
+            <h2 className="text-lg font-semibold text-foreground">
               More of season {seasonNumber}
             </h2>
-            <ul className="mt-5 divide-y divide-[var(--edge,#12383A)]">
+            <ul className="mt-3 divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
               {siblings.map((sib) => {
                 const current = sib.id === ep.id;
                 return (
@@ -158,19 +157,21 @@ export default async function EpisodePage({ params }: RouteParams) {
                     <Link
                       href={`/show/${show.slug}/${seasonNumber}/${sib.episodeNumber}`}
                       className={[
-                        "flex items-baseline gap-4 py-3.5",
-                        current ? "text-[var(--brand)]" : "hover:opacity-80",
+                        "flex items-baseline gap-4 px-4 py-3 transition-colors",
+                        current
+                          ? "bg-background/40 text-sky-400"
+                          : "hover:bg-background/40",
                       ].join(" ")}
                       aria-current={current ? "page" : undefined}
                     >
-                      <span className="w-8 shrink-0 font-mono text-[0.8rem] tabular-nums opacity-70">
+                      <span className="w-6 shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
                         {sib.episodeNumber}
                       </span>
-                      <span className="landing-display min-w-0 flex-1 text-[1.05rem]">
+                      <span className="min-w-0 flex-1 text-sm font-medium">
                         {sib.title}
                       </span>
                       {sib.runtimeSec > 0 ? (
-                        <span className="shrink-0 text-[0.8rem] opacity-60">
+                        <span className="shrink-0 text-xs text-muted-foreground">
                           {Math.round(sib.runtimeSec / 60)} min
                         </span>
                       ) : null}
@@ -181,9 +182,7 @@ export default async function EpisodePage({ params }: RouteParams) {
             </ul>
           </section>
         ) : null}
-      </main>
-      <SiteFooter />
-    </>
+    </div>
   );
 }
 
@@ -234,7 +233,7 @@ function LockedFrame({
         />
       ) : null}
       <div className="relative z-10 max-w-[38ch] px-6 text-center">
-        <p className="landing-display text-[1.3rem] text-white">{copy.title}</p>
+        <p className="text-lg font-semibold text-white">{copy.title}</p>
         <p className="mt-2 text-[0.92rem] text-white/70">{copy.body}</p>
         {availableAt ? (
           <p className="mt-2 text-[0.92rem] text-white/70">
@@ -244,7 +243,7 @@ function LockedFrame({
         {reason === "early_access" || reason === "premium_only" ? (
           <Link
             href="/upgrade"
-            className="mt-5 inline-block rounded bg-[var(--brand,#46E3CE)] px-4 py-2 text-[0.9rem] font-semibold text-black hover:opacity-90"
+            className="mt-5 inline-block rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-black transition-colors hover:bg-sky-400"
           >
             See the plans
           </Link>

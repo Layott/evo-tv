@@ -75,8 +75,8 @@ export default function VodPage() {
   if (vod === undefined) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-6">
-        <div className="aspect-video w-full rounded-lg bg-card animate-pulse" />
-        <div className="mt-4 h-6 w-1/2 bg-card rounded animate-pulse" />
+        <div className="aspect-video w-full rounded-lg bg-card " />
+        <div className="mt-4 h-6 w-1/2 bg-card rounded " />
       </div>
     );
   }

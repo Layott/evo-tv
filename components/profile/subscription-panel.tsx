@@ -53,7 +53,7 @@ export function SubscriptionPanel({ subscription }: Props) {
             {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
-            <Button asChild variant="outline" className="border-input">
+            <Button asChild variant="outline">
               <Link href="/settings/billing">Manage billing</Link>
             </Button>
           </div>

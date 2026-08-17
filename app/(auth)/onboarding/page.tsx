@@ -64,12 +64,7 @@ const LANGUAGES: { code: UserPrefs["language"]; label: string }[] = [
   { code: "sw", label: "Kiswahili" },
 ];
 
-const QUALITIES: UserPrefs["playback"]["defaultQuality"][] = [
-  "auto",
-  "1080p",
-  "720p",
-  "480p",
-  "360p",
+const QUALITIES: UserPrefs["playback"]["defaultQuality"][] = [ "auto", "1080p", "720p", "480p", "360p",
 ];
 
 const NOTIF_ITEMS: { key: NotifKey; title: string; body: string }[] = [
@@ -306,7 +301,7 @@ function StepGames({
     return (
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-36 animate-pulse rounded-xl bg-card" />
+          <div key={i} className="h-36 rounded-xl bg-card" />
         ))}
       </div>
     );
@@ -321,11 +316,10 @@ function StepGames({
             type="button"
             onClick={() => onToggle(g.id)}
             aria-pressed={isSelected}
-            className={cn(
-              "group relative overflow-hidden rounded-xl border bg-background text-left transition",
+            className={cn( "group relative overflow-hidden rounded-xl border bg-background text-left transition",
               isSelected
-                ? "border-sky-500 ring-2 ring-sky-500/30"
-                : "border-border hover:border-input",
+                ? "bg-sky-500/25"
+                : "border-border hover:bg-card",
             )}
           >
             <div className="relative aspect-[16/9] w-full">
@@ -380,7 +374,7 @@ function StepTeams({
     return (
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="h-16 animate-pulse rounded-lg bg-card" />
+          <div key={i} className="h-16 rounded-lg bg-card" />
         ))}
       </div>
     );
@@ -401,11 +395,10 @@ function StepTeams({
             type="button"
             onClick={() => onToggle(t.id)}
             aria-pressed={isSelected}
-            className={cn(
-              "flex items-center gap-3 rounded-lg border bg-background p-3 text-left transition",
+            className={cn( "flex items-center gap-3 rounded-lg border bg-background p-3 text-left transition",
               isSelected
-                ? "border-sky-500 ring-2 ring-sky-500/30"
-                : "border-border hover:border-input",
+                ? "bg-sky-500/25"
+                : "border-border hover:bg-card",
             )}
           >
             <div className="relative size-10 shrink-0 overflow-hidden rounded-md bg-muted">
@@ -429,11 +422,10 @@ function StepTeams({
               </p>
             </div>
             <div
-              className={cn(
-                "flex size-5 shrink-0 items-center justify-center rounded-full border",
+              className={cn( "flex size-5 shrink-0 items-center justify-center rounded-full border",
                 isSelected
                   ? "border-sky-500 bg-sky-500 text-ink"
-                  : "border-input",
+                  : "bg-input/40",
               )}
             >
               {isSelected ? <Check className="size-3" /> : null}
@@ -514,11 +506,10 @@ function StepPreferences({
               <label
                 key={opt}
                 htmlFor={`theme-${opt}`}
-                className={cn(
-                  "flex cursor-pointer items-center justify-center gap-2 rounded-lg border bg-background px-3 py-2.5 text-sm capitalize transition",
+                className={cn( "flex cursor-pointer items-center justify-center gap-2 rounded-lg border bg-background px-3 py-2.5 text-sm capitalize transition",
                   active
-                    ? "border-sky-500 text-sky-400 ring-2 ring-sky-500/30"
-                    : "border-border text-foreground/80 hover:border-input",
+                    ? "bg-sky-500/25 text-sky-100"
+                    : "border-border text-foreground/80 hover:bg-card",
                 )}
               >
                 <RadioGroupItem
@@ -565,11 +556,10 @@ function StepPreferences({
                 key={q}
                 type="button"
                 onClick={() => onQualityChange(q)}
-                className={cn(
-                  "rounded-lg border bg-background px-2 py-2 text-xs font-semibold transition",
+                className={cn( "rounded-lg border bg-background px-2 py-2 text-xs font-semibold transition",
                   active
-                    ? "border-sky-500 text-sky-400 ring-2 ring-sky-500/30"
-                    : "border-border text-muted-foreground hover:border-input",
+                    ? "bg-sky-500/25 text-sky-100"
+                    : "border-border text-muted-foreground hover:bg-card",
                 )}
               >
                 {q}
