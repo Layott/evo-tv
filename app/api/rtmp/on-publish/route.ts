@@ -4,7 +4,7 @@ import { and, eq, sql } from "drizzle-orm";
 import { hashStreamKey } from "@/lib/video/stream-key";
 import { emit } from "@/lib/sse/bus";
 import "@/workers/transcode";
-import { rtmpHlsUrlFor } from "@/lib/video/ingest";
+import { baseStreamName, rtmpHlsUrlFor } from "@/lib/video/ingest";
 import { slugForStream } from "@/lib/api/slugs";
 
 /**
@@ -64,6 +64,17 @@ export async function POST(req: NextRequest) {
    * every viewer's network tab, so rotate onto the new form.
    */
   const publishName = params.get("name") ?? "";
+  /*
+   * One broadcast, three publishes.
+   *
+   * The encoder sends a stream per quality rung, so this callback fires once
+   * for `<streamId>_low`, once for `_mid` and once for `_hi`. Everything below
+   * cares about the broadcast, not the rung: the playback URL must be the
+   * master playlist nginx writes under the base name, and three publishes must
+   * not become three streams in the schedule.
+   */
+  const baseName = baseStreamName(publishName);
+  const hlsUrl = rtmpHlsUrlFor(baseName);
   const queryKey = params.get("key");
   const streamKey = queryKey || publishName;
   if (!streamKey) return new NextResponse("Missing stream key", { status: 400 });
@@ -148,6 +159,30 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    /*
+     * A second or third rung of a broadcast already on air is not a new
+     * broadcast. Without this the ladder would create three streams for one
+     * show: three rows in the schedule, three live badges, and three entries
+     * counting against the publisher's concurrent cap.
+     *
+     * Matching on the master playlist URL is what makes the rungs collapse
+     * together, since all three resolve to the same base name.
+     */
+    const alreadyLive = (
+      await db
+        .select({ id: schema.streams.id })
+        .from(schema.streams)
+        .where(
+          and(
+            eq(schema.streams.channelId, channel.id),
+            eq(schema.streams.hlsPath, hlsUrl),
+            eq(schema.streams.isLive, true),
+          ),
+        )
+        .limit(1)
+    )[0];
+    if (alreadyLive) return new NextResponse("OK", { status: 200 });
+
     const streamId = generateStreamId();
     await db.insert(schema.streams).values({
       id: streamId,
@@ -165,7 +200,7 @@ export async function POST(req: NextRequest) {
       isLive: true,
       startedAt: nowIso,
       endedAt: null,
-      hlsPath: rtmpHlsUrlFor(publishName),
+      hlsPath: hlsUrl,
       viewerCount: 0,
       peakViewerCount: 0,
       language: "en",
@@ -213,7 +248,7 @@ export async function POST(req: NextRequest) {
       // make "on air 2h" read "on air 4s" after a blip.
       startedAt: legacy.startedAt ?? nowIso,
       endedAt: null,
-      hlsPath: rtmpHlsUrlFor(publishName),
+      hlsPath: hlsUrl,
       viewerCount: 0,
     })
     .where(eq(schema.streams.id, legacy.id));

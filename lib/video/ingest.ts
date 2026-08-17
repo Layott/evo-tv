@@ -84,6 +84,38 @@ export function rtmpHlsUrlFor(streamKey: string): string {
 }
 
 /**
+ * The rungs of the quality ladder, as suffixes on the RTMP publish name.
+ *
+ * These must stay in step with the `hls_variant` lines in
+ * `deploy/nginx-rtmp.conf` and `infra/nginx-rtmp/nginx.conf`. nginx decides
+ * what a variant is from that config; this list only teaches the app to
+ * recognise the same names coming back through the publish callbacks.
+ */
+export const HLS_VARIANT_SUFFIXES = ["_low", "_mid", "_hi"] as const;
+
+/**
+ * The stream's real name, with any quality suffix removed.
+ *
+ * The encoder publishes one RTMP stream per rung, so the callbacks fire three
+ * times with `<streamId>_low`, `<streamId>_mid` and `<streamId>_hi`. nginx
+ * strips those suffixes and writes a single master playlist named after the
+ * base, which is the URL viewers must be given: pointing playback at
+ * `<streamId>_hi.m3u8` would hand every viewer one fixed rung and undo the
+ * ladder entirely, which is the failure this whole change exists to prevent.
+ *
+ * A single-rung broadcast has no suffix and passes through untouched, so an
+ * encoder that has not been reconfigured keeps working exactly as before.
+ */
+export function baseStreamName(publishName: string): string {
+  for (const suffix of HLS_VARIANT_SUFFIXES) {
+    if (publishName.endsWith(suffix)) {
+      return publishName.slice(0, -suffix.length);
+    }
+  }
+  return publishName;
+}
+
+/**
  * The channel a new stream belongs to.
  *
  * Streams created through the admin API had `channelId` null, and the viewer
