@@ -235,7 +235,7 @@ export function EditProfileModal({ open, onOpenChange, profile, onSave }: Props)
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting} className="bg-sky-500 hover:bg-sky-500/90 text-black">
+            <Button type="submit" disabled={isSubmitting} className="bg-sky-500 hover:bg-sky-500/90 text-ink">
               {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : null}
               Save changes
             </Button>

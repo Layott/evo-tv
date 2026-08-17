@@ -60,29 +60,32 @@ export default function CategoriesPage() {
             <Link
               key={g.id}
               href={`/categories/${g.slug}`}
-              className="group relative overflow-hidden rounded-xl border border-border bg-card/60 transition-colors hover:bg-card"
+              className="group relative overflow-hidden rounded-xl bg-card/60 hover:bg-card"
             >
               <div className="relative aspect-[4/5] overflow-hidden">
                 <img
                   src={g.coverUrl}
                   alt={g.name}
-                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  className="h-full w-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 space-y-2 p-4">
-                  <span className="inline-flex rounded-md bg-sky-500/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-sky-300">
+                  <span className="inline-flex rounded-md bg-sky-500/20 px-2 py-0.5 text-[10px] font-semibold r text-sky-100">
                     {categoryLabel(g.category)}
                   </span>
                   <h3 className="text-lg font-bold text-white">{g.name}</h3>
-                  <p className="text-xs text-foreground/80">{g.shortName}</p>
+                  {/* The scrim below is a fixed black, so the type on it has to be
+                      a fixed light too. `text-foreground` flipped to near-black
+                      here the moment the light theme landed. */}
+                  <p className="text-xs text-paper/80">{g.shortName}</p>
                   <div className="flex items-center justify-between pt-1">
-                    <span className="flex items-center gap-1 text-[11px] text-foreground/80">
+                    <span className="flex items-center gap-1 text-[11px] text-paper/80">
                       <Users className="h-3 w-3" />
                       {formatPlayers(g.activePlayers)} active
                     </span>
-                    <span className="flex items-center gap-1 text-xs font-semibold text-sky-400">
+                    <span className="flex items-center gap-1 text-xs font-semibold text-sky-100">
                       Enter
-                      <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                      <ArrowRight className="h-3.5 w-3.5" />
                     </span>
                   </div>
                 </div>

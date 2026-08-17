@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Loader2, ShoppingBag, Trash2, Tag } from "@/components/icons";
@@ -13,6 +12,7 @@ import type { Product } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { QtyStepper } from "@/components/shop/qty-stepper";
+import { MediaImage } from "@/components/ui/media-image";
 import {
   CartLine,
   getCart,
@@ -118,7 +118,7 @@ export default function CartPage() {
         </p>
         <Button
           asChild
-          className="mt-5 bg-sky-500 text-black hover:bg-sky-500/90"
+          className="mt-5 bg-sky-500 text-ink hover:bg-sky-600"
         >
           <Link href="/shop">Browse shop</Link>
         </Button>
@@ -140,12 +140,11 @@ export default function CartPage() {
               className={`flex flex-wrap items-start gap-4 p-4 ${i > 0 ? "border-t border-border" : ""}`}
             >
               <div className="relative size-20 shrink-0 overflow-hidden rounded-lg bg-muted">
-                <Image
-                  src={line.product.images[0] ?? "/placeholder.svg"}
+                <MediaImage
+                  src={line.product.images[0]}
                   alt={line.product.name}
-                  fill
-                  className="object-cover"
-                  sizes="80px"
+                  seed={line.product.id}
+                  className="absolute inset-0 h-full w-full object-cover"
                 />
               </div>
               <div className="min-w-0 flex-1">

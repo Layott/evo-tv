@@ -743,7 +743,7 @@ export function VideoPlayer({
             setMuted(false);
             setSoundChosen(true);
           }}
-          className="absolute left-1/2 top-4 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full bg-black/75 px-4 py-2 text-sm font-medium text-white backdrop-blur transition-colors hover:bg-black/90"
+          className="absolute left-1/2 top-4 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full bg-black/80 px-4 py-2 text-sm font-medium text-white hover:bg-black"
         >
           <VolumeX className="size-4" />
           Tap for sound
@@ -753,12 +753,12 @@ export function VideoPlayer({
       {/* Live badge + viewers + AI badge */}
       {isLive && (
         <div className="absolute top-3 left-3 z-20 flex items-center gap-2">
-          <div className="flex items-center gap-1.5 rounded-md bg-red-600 px-2 py-0.5 text-xs font-bold uppercase tracking-wider text-white">
-            <span className="size-2 rounded-full bg-white " />
+          <div className="flex items-center gap-1.5 rounded-md bg-red-600 px-2 py-0.5 text-xs font-bold r text-white">
+            <span className="size-2 rounded-full bg-paper" />
             Live
           </div>
           {typeof viewerCount === "number" && (
-            <div className="rounded-md bg-black/70 backdrop-blur px-2 py-0.5 text-xs text-white">
+            <div className="rounded-md bg-black/80 px-2 py-0.5 text-xs text-white">
               {viewerCount.toLocaleString()} watching
             </div>
           )}
@@ -770,10 +770,10 @@ export function VideoPlayer({
         <div className="pointer-events-none absolute inset-x-0 bottom-24 z-20 flex justify-center px-6">
           <div
             key={captionLineIndex}
-            className="max-w-2xl rounded bg-black/75 px-3 py-1.5 text-center text-sm text-white shadow-lg backdrop-blur-sm animate-in fade-in slide-in-from-bottom-1 duration-300 sm:text-base"
+            className="max-w-2xl rounded bg-black/80 px-3 py-1.5 text-center text-sm text-white animate-in fade-in slide-in-from-bottom-1 duration-300 sm:text-base"
           >
             {captionSelection === "auto" ? (
-              <span className="mr-2 rounded bg-amber-500/30 px-1 text-[10px] uppercase tracking-wider text-amber-200">
+              <span className="mr-2 rounded bg-amber-500/30 px-1 text-[10px] r text-amber-200">
                 AUTO
               </span>
             ) : null}
@@ -814,7 +814,7 @@ export function VideoPlayer({
           aria-label="Play"
           className="absolute inset-0 z-10 flex items-center justify-center"
         >
-          <div className="size-16 rounded-full bg-white/15 backdrop-blur flex items-center justify-center hover:bg-white/25 transition">
+          <div className="size-16 rounded-full bg-black/70 flex items-center justify-center hover:bg-black/85">
             <Play className="size-8 text-white ml-1" fill="white" />
           </div>
         </button>

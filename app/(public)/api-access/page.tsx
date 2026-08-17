@@ -46,7 +46,7 @@ export default function ApiAccessLandingPage() {
 
   return (
     <ApiAccessShell>
-      <section className="rounded-2xl border border-border bg-gradient-to-br from-card via-background to-card p-8">
+      <section className="rounded-2xl bg-card p-8">
         <div className="grid items-center gap-8 lg:grid-cols-[1.1fr_1fr]">
           <div>
             <h2 className="text-2xl font-semibold text-foreground sm:text-3xl">
@@ -73,7 +73,7 @@ export default function ApiAccessLandingPage() {
                   </Button>
                 </>
               ) : (
-                <Button asChild className="bg-amber-500 text-black hover:bg-amber-400">
+                <Button asChild className="bg-amber-500 text-ink hover:bg-amber-400">
                   <Link href="/upgrade">
                     <Unlock className="size-4" />
                     Upgrade to unlock
@@ -102,7 +102,7 @@ export default function ApiAccessLandingPage() {
       </section>
 
       <section className="mt-8">
-        <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+        <h3 className="mb-3 text-sm font-semibold r text-muted-foreground">
           What you get
         </h3>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -115,7 +115,7 @@ export default function ApiAccessLandingPage() {
               >
                 <div className="mb-2 flex items-center gap-2 text-sky-300">
                   <Icon className="size-4" />
-                  <span className="text-xs font-semibold uppercase tracking-wider">{f.title}</span>
+                  <span className="text-xs font-semibold r">{f.title}</span>
                 </div>
                 <p className="text-sm text-foreground/80">{f.body}</p>
               </div>

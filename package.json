@@ -5,7 +5,7 @@
   "packageManager": "pnpm@10.33.1",
   "scripts": {
     "build": "next build",
-    "predev": "node scripts/dev-css-guard.mjs",
+    "predev": "node scripts/dev-stale-guard.mjs",
     "dev": "next dev -p 3060",
     "dev:fresh": "node -e \"require('fs').rmSync('.next',{recursive:true,force:true})\" && next dev -p 3060",
     "lint": "eslint .",

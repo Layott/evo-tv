@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ProductCard } from "@/components/shop/product-card";
 import { VariantPicker } from "@/components/shop/variant-picker";
+import { MediaImage } from "@/components/ui/media-image";
 import { QtyStepper } from "@/components/shop/qty-stepper";
 import { addToCart } from "@/components/shop/cart-store";
 import { formatNgn } from "@/components/profile/ngn";
@@ -101,13 +102,11 @@ export default function ProductDetailPage() {
       <div className="grid gap-8 md:grid-cols-2">
         <div>
           <div className="relative aspect-square overflow-hidden rounded-2xl border border-border bg-card">
-            <Image
-              src={product.images[activeImage] ?? product.images[0] ?? "/placeholder.svg"}
+            <MediaImage
+              src={product.images[activeImage] ?? product.images[0]}
               alt={product.name}
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, 50vw"
-              priority
+              seed={product.id}
+              className="absolute inset-0 h-full w-full object-cover"
             />
           </div>
           {product.images.length > 1 ? (
@@ -151,7 +150,7 @@ export default function ProductDetailPage() {
               />
             ) : null}
             <div>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <p className="mb-2 text-xs font-semibold text-muted-foreground">
                 Quantity
               </p>
               <QtyStepper value={qty} onChange={setQty} max={inStock ? 10 : 0} />
@@ -160,7 +159,7 @@ export default function ProductDetailPage() {
               <Button
                 onClick={handleAdd}
                 disabled={!inStock}
-                className="flex-1 bg-sky-500 text-black hover:bg-sky-500/90"
+                className="flex-1 bg-sky-500 text-ink hover:bg-sky-500/90"
               >
                 <ShoppingCart className="size-4" />
                 {inStock ? "Add to cart" : "Out of stock"}

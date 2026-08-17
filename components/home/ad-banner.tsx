@@ -24,7 +24,7 @@ export function AdBanner() {
           alt={ad.advertiser}
           className="h-24 w-full object-cover sm:h-32"
         />
-        <span className="absolute right-2 top-2 rounded-md bg-black/70 px-2 py-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+        <span className="absolute right-2 top-2 rounded-md bg-black/70 px-2 py-0.5 text-[10px] r text-muted-foreground">
           Ad · {ad.advertiser}
         </span>
       </div>

@@ -80,7 +80,7 @@ function Row({
           {n.title}
         </p>
         <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{n.body}</p>
-        <p className="mt-1 text-[11px] uppercase tracking-wide text-muted-foreground">
+        <p className="mt-1 text-[11px] text-muted-foreground">
           {relativeTime(n.createdAt)}
         </p>
       </div>

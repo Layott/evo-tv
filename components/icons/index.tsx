@@ -224,7 +224,6 @@ export const ChevronRight = make(PCaretRight, "bold", "ChevronRight");
 export const ChevronRightIcon = make(PCaretRight, "bold", "ChevronRightIcon");
 export const ChevronUp = make(PCaretUp, "bold", "ChevronUp");
 export const ChevronUpIcon = make(PCaretUp, "bold", "ChevronUpIcon");
-export const Circle = make(PCircle, "fill", "Circle");
 export const CircleDollarSign = make(PCurrencyCircleDollar, "fill", "CircleDollarSign");
 export const CircleIcon = make(PCircle, "fill", "CircleIcon");
 export const Clock = make(PClock, "fill", "Clock");

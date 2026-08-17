@@ -102,7 +102,7 @@ export default function BillingPage() {
                 </p>
               )}
               <div className="mt-4 flex flex-wrap gap-2">
-                <Button asChild className="bg-sky-500 text-black hover:bg-sky-500/90">
+                <Button asChild className="bg-sky-500 text-ink hover:bg-sky-500/90">
                   <Link href="/upgrade">{sub ? "Change plan" : "Upgrade"}</Link>
                 </Button>
                 {sub ? (

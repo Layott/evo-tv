@@ -210,7 +210,7 @@ export function OrdersPage() {
                 </div>
 
                 <div>
-                  <div className="mb-2 text-xs uppercase tracking-wider text-muted-foreground">Items</div>
+                  <div className="mb-2 text-xs r text-muted-foreground">Items</div>
                   <ul className="space-y-2">
                     {selected.items.map((item, idx) => (
                       <li
@@ -241,7 +241,7 @@ export function OrdersPage() {
                 </div>
 
                 <div>
-                  <div className="mb-2 text-xs uppercase tracking-wider text-muted-foreground">Ship to</div>
+                  <div className="mb-2 text-xs r text-muted-foreground">Ship to</div>
                   <div className="rounded-lg border border-border bg-card/40 p-3 text-sm text-foreground">
                     {selected.shipping.fullName}
                     <div className="text-xs text-muted-foreground">

@@ -98,15 +98,17 @@ export default function TeamDetailPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6">
-      <div className="relative mb-6 overflow-hidden rounded-xl border border-border">
-        <div className="relative h-48 w-full overflow-hidden bg-gradient-to-br from-sky-500/20 via-card to-background">
+      <div className="relative mb-6 overflow-hidden rounded-xl">
+        <div className="relative h-48 w-full overflow-hidden bg-sky-500/15">
           <img src={team.logoUrl} alt="" className="h-full w-full object-contain opacity-10" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
         </div>
         <div className="absolute inset-x-0 bottom-0 p-4 sm:p-6">
           <Link
             href="/team"
-            className="mb-2 inline-flex w-fit items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+            /* Sits on the fixed black scrim, so it takes fixed light type rather
+               than the theme's muted token, which goes near-black on paper. */
+            className="mb-2 inline-flex w-fit items-center gap-1 text-xs text-paper/70 hover:text-paper"
           >
             <ArrowLeft className="h-3 w-3" /> All teams
           </Link>
@@ -114,7 +116,7 @@ export default function TeamDetailPage() {
             <img
               src={team.logoUrl}
               alt={team.name}
-              className="h-20 w-20 rounded-xl border-2 border-border bg-card object-cover sm:h-24 sm:w-24"
+              className="h-20 w-20 rounded-xl bg-card object-cover sm:h-24 sm:w-24"
             />
             <div className="flex-1">
               <div className="flex items-center gap-2">
@@ -123,20 +125,20 @@ export default function TeamDetailPage() {
                   {team.tag}
                 </span>
               </div>
-              <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+              <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-paper/70">
                 <span className="flex items-center gap-1">
                   <MapPin className="h-3 w-3" /> {team.country} · {team.region}
                 </span>
-                <span className="flex items-center gap-1 text-sky-400">{gameQ.data?.name}</span>
+                <span className="flex items-center gap-1 text-sky-100">{gameQ.data?.name}</span>
               </div>
             </div>
             <button
               type="button"
               onClick={onFollow}
-              className={`inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-semibold transition-colors ${
+              className={`inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold ${
                 following
                   ? "bg-sky-500/25 text-sky-100"
-                  : "border-transparent bg-sky-500 text-ink hover:bg-sky-400"
+                  : "bg-sky-500 text-ink hover:bg-sky-600"
               }`}
             >
               {following ? <Bell className="h-4 w-4 fill-sky-300" /> : <BellOff className="h-4 w-4" />}
@@ -148,26 +150,26 @@ export default function TeamDetailPage() {
 
       <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div className="rounded-xl border border-border bg-card/60 p-4">
-          <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Rank</p>
+          <p className="text-[11px] r text-muted-foreground">Rank</p>
           <p className="mt-1 flex items-center gap-1 text-lg font-bold text-amber-300">
             <Trophy className="h-4 w-4" /> #{team.ranking}
           </p>
         </div>
         <div className="rounded-xl border border-border bg-card/60 p-4">
-          <p className="text-[11px] uppercase tracking-wider text-muted-foreground">W-L</p>
+          <p className="text-[11px] r text-muted-foreground">W-L</p>
           <p className="mt-1 text-lg font-bold text-sky-400">
             {team.wins}-{team.losses}
           </p>
           <p className="text-[11px] text-muted-foreground">{winRate}% win rate</p>
         </div>
         <div className="rounded-xl border border-border bg-card/60 p-4">
-          <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Followers</p>
+          <p className="text-[11px] r text-muted-foreground">Followers</p>
           <p className="mt-1 flex items-center gap-1 text-lg font-bold">
             <Users className="h-4 w-4" /> {formatFollowers(team.followers)}
           </p>
         </div>
         <div className="rounded-xl border border-border bg-card/60 p-4">
-          <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Active roster</p>
+          <p className="text-[11px] r text-muted-foreground">Active roster</p>
           <p className="mt-1 text-lg font-bold">{roster.length}</p>
         </div>
       </div>
@@ -259,7 +261,7 @@ export default function TeamDetailPage() {
                   className="flex items-center gap-3 rounded-xl border border-border bg-card/60 p-3 text-sm"
                 >
                   <span
-                    className={`rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
+                    className={`rounded px-2 py-0.5 text-[10px] font-semibold uppercase ${
                       won ? "bg-sky-500/10 text-sky-300" : "bg-rose-500/10 text-rose-300"
                     }`}
                   >

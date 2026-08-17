@@ -122,7 +122,7 @@ export default async function EpisodePage({ params }: RouteParams) {
         </div>
 
         <header className="mt-6">
-          <p className="text-xs font-semibold uppercase tracking-wide text-sky-400">
+          <p className="text-xs font-semibold text-sky-400">
             Season {seasonNumber}, episode {episodeNumber}
           </p>
           <h1 className="mt-1 text-2xl font-bold text-foreground sm:text-3xl">
@@ -244,7 +244,7 @@ function LockedFrame({
         {reason === "early_access" || reason === "premium_only" ? (
           <Link
             href="/upgrade"
-            className="mt-5 inline-block rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-black transition-colors hover:bg-sky-400"
+            className="mt-5 inline-block rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-sky-400"
           >
             See the plans
           </Link>

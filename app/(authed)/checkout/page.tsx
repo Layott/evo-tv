@@ -10,8 +10,10 @@ import { z } from "zod";
 import { ArrowLeft, Loader2, ShieldCheck } from "@/components/icons";
 import { toast } from "sonner";
 
+import { useQuery } from "@tanstack/react-query";
+
 import { useAuth } from "@/components/providers";
-import { getProductById } from "@/lib/client";
+import { getProductById, listTiers } from "@/lib/client";
 import type { Order, OrderItem, Product } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -68,7 +70,28 @@ export default function CheckoutPage() {
   const router = useRouter();
   const search = useSearchParams();
   const plan = search.get("plan");
-  const isSubscription = plan === "premium";
+
+  /**
+   * Which plan is being bought, resolved against the real ladder.
+   *
+   * This used to be `plan === "premium"` with the price written into the page
+   * as `4_500`. Two things were wrong with that. Any other tier id fell through
+   * to the shop checkout and asked for a shipping address for a subscription.
+   * And the price was a copy: changing Premium in the database would have left
+   * this page charging the old number, silently, with no error anywhere.
+   */
+  const { data: tiers = [] } = useQuery({
+    queryKey: ["tiers"],
+    queryFn: () => listTiers(),
+  });
+  const planTier = React.useMemo(
+    () => tiers.find((t) => t.id === plan && t.priceNgn > 0) ?? null,
+    [tiers, plan],
+  );
+  // `plan` present means the intent is a subscription, even before the ladder
+  // has loaded. Deciding on `planTier` alone would flash the shop checkout,
+  // shipping form and all, on every subscription visit.
+  const isSubscription = Boolean(plan);
   const { user } = useAuth();
 
   const [lines, setLines] = React.useState<CartLine[]>([]);
@@ -130,7 +153,7 @@ export default function CheckoutPage() {
     .filter((r): r is ResolvedLine => r !== null);
 
   const cartSubtotal = resolved.reduce((s, r) => s + r.subtotal, 0);
-  const subtotal = isSubscription ? 4_500 : cartSubtotal;
+  const subtotal = isSubscription ? planTier?.priceNgn ?? 0 : cartSubtotal;
   const shipping = isSubscription
     ? 0
     : cartSubtotal >= FREE_SHIPPING_MIN
@@ -146,12 +169,12 @@ export default function CheckoutPage() {
     const items: OrderItem[] = isSubscription
       ? [
           {
-            productId: "sub_premium",
-            productName: "Premium Subscription - Monthly",
+            productId: `sub_${planTier?.id ?? "unknown"}`,
+            productName: `${planTier?.name ?? "Subscription"} - Monthly`,
             variantId: null,
             variantLabel: "Monthly",
             qty: 1,
-            unitPriceNgn: 4_500,
+            unitPriceNgn: planTier?.priceNgn ?? 0,
             thumbnailUrl: "/premium-sub.jpg",
           },
         ]
@@ -201,7 +224,9 @@ export default function CheckoutPage() {
       /* noop */
     }
 
-    toast.success(isSubscription ? "Premium activated" : "Payment successful");
+    toast.success(
+      isSubscription ? `${planTier?.name ?? "Subscription"} activated` : "Payment successful",
+    );
     router.push(`/order/${id}`);
   }
 
@@ -225,7 +250,7 @@ export default function CheckoutPage() {
       <div className="mx-auto max-w-2xl px-4 py-12 text-center">
         <h1 className="text-xl font-bold text-foreground">Your cart is empty</h1>
         <p className="mt-1 text-sm text-muted-foreground">Add items before checking out.</p>
-        <Button asChild className="mt-5 bg-sky-500 text-black hover:bg-sky-500/90">
+        <Button asChild className="mt-5 bg-sky-500 text-ink hover:bg-sky-500/90">
           <Link href="/shop">Go to shop</Link>
         </Button>
       </div>
@@ -242,7 +267,7 @@ export default function CheckoutPage() {
         {isSubscription ? "Back to upgrade" : "Back to cart"}
       </Link>
       <h1 className="mb-6 text-xl font-bold text-foreground">
-        {isSubscription ? "Confirm Premium" : "Checkout"}
+        {isSubscription ? `Confirm ${planTier?.name ?? "plan"}` : "Checkout"}
       </h1>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_380px]">

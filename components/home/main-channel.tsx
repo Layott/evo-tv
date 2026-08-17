@@ -164,7 +164,7 @@ export function MainChannelHero() {
                 </>
               ) : (
                 <>
-                  <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+                  <p className="text-sm font-medium text-muted-foreground">
                     Off air
                   </p>
                   {upNext[0] ? (
@@ -187,7 +187,7 @@ export function MainChannelHero() {
         <div className="min-w-0">
           <h2 className="flex items-center gap-2 text-xl font-bold tracking-tight text-foreground">
             {channel.isLive ? (
-              <span className="inline-flex items-center gap-1.5 rounded bg-red-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+              <span className="inline-flex items-center gap-1.5 rounded bg-red-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
                 <Radio className="size-3" />
                 Live
               </span>

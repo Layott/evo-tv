@@ -109,7 +109,7 @@ export function AccountForm({ email }: { email: string }) {
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="bg-sky-500 text-black hover:bg-sky-500/90"
+            className="bg-sky-500 text-ink hover:bg-sky-500/90"
           >
             {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : null}
             Change password

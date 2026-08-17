@@ -190,7 +190,7 @@ export default function OnboardingPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-3">
-        <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+        <span className="text-xs font-semibold st text-muted-foreground">
           Step {step} of 4
         </span>
         <Link
@@ -330,7 +330,6 @@ function StepGames({
                 sizes="(max-width: 640px) 100vw, 240px"
                 className="object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
               {isSelected ? (
                 <div className="absolute right-2 top-2 flex size-6 items-center justify-center rounded-full bg-sky-500 text-ink">
                   <Check className="size-3.5" />
@@ -340,7 +339,7 @@ function StepGames({
             <div className="space-y-1 p-3">
               <div className="flex items-center gap-2">
                 <h3 className="truncate text-sm font-semibold text-foreground">{g.shortName}</h3>
-                <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
                   {g.platform}
                 </span>
               </div>

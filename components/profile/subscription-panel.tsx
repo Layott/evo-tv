@@ -14,7 +14,7 @@ interface Props {
 export function SubscriptionPanel({ subscription }: Props) {
   if (!subscription) {
     return (
-      <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-card/40 p-6">
+      <div className="rounded-2xl bg-amber-500/15 p-6">
         <div className="flex items-start gap-3">
           <Unlock className="mt-1 size-6 text-amber-400" />
           <div className="flex-1">
@@ -26,7 +26,7 @@ export function SubscriptionPanel({ subscription }: Props) {
             </p>
             <Button
               asChild
-              className="mt-4 bg-amber-500 text-black hover:bg-amber-500/90"
+              className="mt-4 bg-amber-500 text-ink hover:bg-amber-600"
             >
               <Link href="/upgrade">Upgrade - {formatNgn(4500)}/mo</Link>
             </Button>
@@ -36,7 +36,7 @@ export function SubscriptionPanel({ subscription }: Props) {
     );
   }
   return (
-    <div className="rounded-2xl border border-sky-500/30 bg-gradient-to-br from-sky-500/10 to-card/40 p-6">
+    <div className="rounded-2xl bg-sky-500/15 p-6">
       <div className="flex items-start gap-3">
         <BadgeCheck className="mt-1 size-6 text-amber-400" />
         <div className="flex-1">

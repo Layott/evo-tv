@@ -441,10 +441,14 @@
   --foreground: #05191b;
   /* Cards are the lighter surface here, the inverse of the dark theme where
      they are the raised one. Same idea either way: separation by surface
-     weight rather than by drawing a box around everything. */
-  --card: #ffffff;
+     weight rather than by drawing a box around everything.
+
+     Off-white, not #fff. Pure white is the giveaway ground of a generated
+     page, and it also leaves nothing above the card to raise a popover or a
+     dialog onto. This keeps a step in hand at either end of the ramp. */
+  --card: #fbfdfd;
   --card-foreground: #05191b;
-  --popover: #ffffff;
+  --popover: #fbfdfd;
   --popover-foreground: #05191b;
   --primary: #12666f;
   --primary-foreground: #f2f8f7;
@@ -461,7 +465,7 @@
   --input: #bcd7d3;
   --ring: #12666f;
 
-  --sidebar: #ffffff;
+  --sidebar: #fbfdfd;
   --sidebar-foreground: #05191b;
   --sidebar-primary: #12666f;
   --sidebar-primary-foreground: #f2f8f7;

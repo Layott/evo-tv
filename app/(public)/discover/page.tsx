@@ -34,7 +34,7 @@ function formatDuration(sec: number): string {
 
 function LiveBadge() {
   return (
-    <span className="flex items-center gap-1 rounded-md bg-red-500/20 px-2 py-0.5 text-[10px] uppercase tracking-wider text-red-400">
+    <span className="flex items-center gap-1 rounded-md bg-red-500/20 px-2 py-0.5 text-[10px] r text-red-400">
       <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
       Live
     </span>
@@ -103,7 +103,7 @@ export default function DiscoverPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6">
-      <div className="sticky top-14 z-30 -mx-4 mb-6 border-b border-border bg-background/95 px-4 py-3 backdrop-blur">
+      <div className="sticky top-14 z-30 -mx-4 mb-6 bg-background px-4 py-3">
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
@@ -233,7 +233,7 @@ export default function DiscoverPage() {
                             <LiveBadge />
                           </div>
                         )}
-                        <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] text-foreground">
+                        <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] text-paper">
                           <Eye className="h-3 w-3" /> {formatViewers(s.viewerCount)}
                         </div>
                       </div>
@@ -268,7 +268,7 @@ export default function DiscoverPage() {
                           seed={v.id}
                           className="h-full w-full object-cover"
                         />
-                        <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] text-foreground">
+                        <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] text-paper">
                           <Clock className="h-3 w-3" /> {formatDuration(v.durationSec)}
                         </div>
                       </div>

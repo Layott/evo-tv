@@ -67,18 +67,18 @@ export function HeroCarousel({ streams }: HeroCarouselProps) {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 flex flex-col gap-2 p-4 sm:p-6">
                   <div className="flex items-center gap-2">
-                    <span className="flex items-center gap-1 rounded-md bg-red-500/20 px-2 py-0.5 text-[10px] uppercase tracking-wider text-red-400">
+                    <span className="flex items-center gap-1 rounded-md bg-red-500/20 px-2 py-0.5 text-[10px] r text-red-400">
                       <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
                       Live
                     </span>
-                    <span className="flex items-center gap-1 text-xs text-foreground/80">
+                    <span className="flex items-center gap-1 text-xs text-paper/80">
                       <Eye className="h-3 w-3" /> {formatViewers(s.viewerCount)}
                     </span>
                   </div>
                   <h2 className="text-lg font-bold leading-tight text-white sm:text-2xl">
                     {s.title}
                   </h2>
-                  <p className="max-w-2xl text-xs text-foreground/80 sm:text-sm">
+                  <p className="max-w-2xl text-xs text-paper/80 sm:text-sm">
                     {s.streamerName}
                   </p>
                   <div className="mt-1 inline-flex w-fit items-center gap-2 rounded-md bg-sky-500 px-3 py-1.5 text-xs font-semibold text-ink">

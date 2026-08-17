@@ -22,11 +22,11 @@ function formatNgn(n: number): string {
 function tierColor(t: string): string {
   switch (t) {
     case "s":
-      return "border-amber-500/40 bg-amber-500/10 text-amber-300";
+      return "bg-amber-500/25 text-amber-100";
     case "a":
-      return "border-sky-500/40 bg-sky-500/10 text-sky-300";
+      return "bg-sky-500/25 text-sky-100";
     case "b":
-      return "border-sky-500/40 bg-sky-500/10 text-sky-300";
+      return "bg-sky-500/25 text-sky-100";
     default:
       return "bg-muted text-foreground/80";
   }
@@ -77,11 +77,11 @@ export function UpcomingEvents({ events, games, loading }: UpcomingEventsProps) 
                   <img
                     src={ev.bannerUrl}
                     alt={ev.title}
-                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    className="h-full w-full object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
                   <span
-                    className={`absolute left-2 top-2 rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${tierColor(
+                    className={`absolute left-2 top-2 rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase ${tierColor(
                       ev.tier
                     )}`}
                   >

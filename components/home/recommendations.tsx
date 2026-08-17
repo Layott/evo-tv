@@ -71,9 +71,9 @@ export function Recommendations({ vods, games, loading }: RecommendationsProps) 
                     src={v.thumbnailUrl}
                     alt={v.title}
                     seed={v.id}
-                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    className="h-full w-full object-cover"
                   />
-                  <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] text-foreground">
+                  <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] text-paper">
                     <Clock className="h-3 w-3" /> {formatDuration(v.durationSec)}
                   </div>
                 </div>

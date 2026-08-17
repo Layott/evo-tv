@@ -81,9 +81,9 @@ export function DataTable<T>({
     // table is wider than the screen, and hiding the overflow cut the columns off
     // with no way to reach them. The table scrolls inside its own box so the page
     // itself never scrolls sideways.
-    <div className="overflow-x-auto rounded-xl border border-border bg-card/30">
+    <div className="overflow-x-auto rounded-xl bg-card/30">
       <Table>
-        <TableHeader className="sticky top-0 z-10 bg-card/80 backdrop-blur">
+        <TableHeader className="sticky top-0 z-10 bg-card">
           <TableRow className="border-border hover:bg-transparent">
             {columns.map((col) => (
               <TableHead

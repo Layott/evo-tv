@@ -18,7 +18,7 @@ export function ApiAccessShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 sm:py-8">
       <header className="mb-6">
-        <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/20 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-amber-300">
+        <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/20 px-3 py-1 text-xs font-semibold r text-amber-300">
           <Unlock className="size-3" />
           Premium feature
         </span>
@@ -41,7 +41,7 @@ export function ApiAccessShell({ children }: { children: React.ReactNode }) {
               className={cn(
                 "flex shrink-0 items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition",
                 active
-                  ? "bg-background text-sky-300 shadow-sm"
+                  ? "bg-background text-sky-300"
                   : "text-muted-foreground hover:bg-accent hover:text-foreground",
               )}
             >

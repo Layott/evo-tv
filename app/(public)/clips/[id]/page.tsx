@@ -150,7 +150,7 @@ export default function ClipDetailPage() {
 
   if (clip === undefined) {
     return (
-      <div className="flex h-[calc(100vh-4rem)] items-center justify-center bg-black">
+      <div className="flex h-[calc(100vh-4rem)] items-center justify-center bg-ink">
         <div className="h-full aspect-[9/16] rounded-xl bg-card " />
       </div>
     );
@@ -209,7 +209,7 @@ export default function ClipDetailPage() {
 
   return (
     <div
-      className="relative mx-auto flex min-h-[calc(100vh-4rem)] items-center justify-center bg-black"
+      className="relative mx-auto flex min-h-[calc(100vh-4rem)] items-center justify-center bg-ink"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
@@ -249,7 +249,7 @@ export default function ClipDetailPage() {
       </div>
 
       {/* Video stage */}
-      <div className="relative aspect-[9/16] h-[calc(100vh-5rem)] max-h-[920px] w-auto max-w-[100vw] overflow-hidden rounded-xl border border-border bg-black">
+      <div className="relative aspect-[9/16] h-[calc(100vh-5rem)] max-h-[920px] w-auto max-w-[100vw] overflow-hidden rounded-xl bg-black">
         <video
           ref={videoRef}
           src={clip.mp4Url}
@@ -295,7 +295,7 @@ export default function ClipDetailPage() {
             onClick={togglePlay}
             className="absolute inset-0 z-10 flex items-center justify-center"
           >
-            <div className="size-16 rounded-full bg-white/15 backdrop-blur flex items-center justify-center">
+            <div className="size-16 rounded-full bg-black/70 flex items-center justify-center">
               <Play className="size-8 text-white ml-1" fill="white" />
             </div>
           </button>

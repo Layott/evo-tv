@@ -359,7 +359,7 @@ function GamesTable({
       header: "Category",
       sortable: true,
       accessor: (r) => r.category,
-      cell: (row) => <StatusBadge tone="violet">{row.category.toUpperCase()}</StatusBadge>,
+      cell: (row) => <StatusBadge>{row.category.toUpperCase()}</StatusBadge>,
     },
     {
       key: "platform",

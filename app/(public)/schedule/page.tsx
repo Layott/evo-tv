@@ -159,7 +159,7 @@ export default function SchedulePage() {
                     "mt-2 block h-[3px] origin-left transition-transform duration-200",
                     active
                       ? "scale-x-100 bg-sky-400"
-                      : "scale-x-0 bg-muted-foreground group-hover:scale-x-100",
+                      : "scale-x-0 bg-muted-foreground",
                   ].join(" ")}
                 />
               </button>
@@ -258,7 +258,7 @@ function SlotRow({ row, onAir }: { row: EpgRow; onAir: boolean }) {
             {row.title}
           </span>
           {onAir ? (
-            <span className="rounded-sm bg-red-600 px-1.5 py-px text-[10px] font-bold uppercase tracking-wide text-white">
+            <span className="rounded-sm bg-red-600 px-1.5 py-px text-[10px] font-bold text-white">
               On now
             </span>
           ) : null}

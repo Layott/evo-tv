@@ -71,7 +71,7 @@ export default async function ShowsPage() {
       ) : (
         groups.map((group) => (
           <section key={group.key} className="mb-10">
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            <h2 className="mb-3 text-sm font-semibold text-muted-foreground">
               {group.label}
             </h2>
 
@@ -95,7 +95,7 @@ export default async function ShowsPage() {
                             alt=""
                             fill
                             sizes="(max-width: 640px) 45vw, 18vw"
-                            className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                            className="object-cover"
                           />
                         </div>
                       ) : (

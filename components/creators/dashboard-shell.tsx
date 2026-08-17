@@ -33,7 +33,7 @@ export function DashboardShell({ children, title, description, actions }: Dashbo
   if (!allowed) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-12">
-        <div className="rounded-3xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-fuchsia-500/10 p-10 text-center">
+        <div className="rounded-3xl bg-amber-500/15 p-10 text-center">
           <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-amber-500/20">
             <Lock className="size-6 text-amber-300" />
           </div>
@@ -92,7 +92,7 @@ export function DashboardShell({ children, title, description, actions }: Dashbo
               <li key={t.href}>
                 <Link
                   href={t.href}
-                  className={cn( "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium uppercase tracking-wider transition",
+                  className={cn( "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium r transition",
                     active
                       ? "bg-muted text-foreground shadow-inner"
                       : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",

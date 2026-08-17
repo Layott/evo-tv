@@ -16,7 +16,7 @@ export function VariantPicker({
   if (!variants.length) return null;
   return (
     <div>
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+      <p className="mb-2 text-xs font-semibold text-muted-foreground">
         Size
       </p>
       <div className="flex flex-wrap gap-2">

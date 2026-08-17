@@ -197,7 +197,7 @@ export default function VodPage() {
               <span>·</span>
               <span>{relTime(vod.publishedAt)}</span>
               {vod.isPremium && (
-                <Badge className="bg-amber-500 text-black">Premium</Badge>
+                <Badge className="bg-amber-500 text-ink">Premium</Badge>
               )}
             </div>
           </div>
@@ -298,7 +298,7 @@ function PaywallOverlay({
     <div className="relative aspect-video w-full">
       <Image src={thumb} alt={title} fill className="object-cover opacity-40" />
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/60 px-6 text-center">
-        <Badge className="bg-amber-500 text-black">
+        <Badge className="bg-amber-500 text-ink">
           <Lock className="size-3" />
           Premium VOD
         </Badge>
@@ -308,7 +308,7 @@ function PaywallOverlay({
         </p>
         <Button
           onClick={onUpgrade}
-          className="bg-amber-500 text-black hover:bg-amber-400"
+          className="bg-amber-500 text-ink hover:bg-amber-400"
         >
           <Unlock className="size-4" />
           Upgrade with Paystack

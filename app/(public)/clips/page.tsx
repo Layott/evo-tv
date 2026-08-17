@@ -78,7 +78,7 @@ function ClipCard({ clip }: { clip: Clip }) {
   return (
     <Link
       href={`/clips/${clip.id}`}
-      className="group relative overflow-hidden rounded-lg border border-border bg-card aspect-[9/16] block"
+      className="group relative overflow-hidden rounded-lg bg-card aspect-[9/16] block"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
@@ -86,7 +86,7 @@ function ClipCard({ clip }: { clip: Clip }) {
         src={clip.thumbnailUrl}
         alt={clip.title}
         fill
-        className="object-cover transition-transform duration-300 group-hover:scale-105"
+        className="object-cover"
         sizes="(max-width:640px) 50vw, 20vw"
       />
       {/* Hover state. A wash rather than the 2px sky ring it used to draw. */}
@@ -97,7 +97,7 @@ function ClipCard({ clip }: { clip: Clip }) {
         <p className="text-xs font-semibold text-white line-clamp-2">
           {clip.title}
         </p>
-        <div className="mt-1 flex items-center justify-between text-[10px] text-foreground/80">
+        <div className="mt-1 flex items-center justify-between text-[10px] text-paper/80">
           <span>@{clip.creatorHandle}</span>
           <span>{relTime(clip.createdAt)}</span>
         </div>

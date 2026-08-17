@@ -107,7 +107,7 @@ export default function OrdersPage() {
           <p className="mt-3 text-sm font-semibold text-foreground">No orders yet.</p>
           <Button
             asChild
-            className="mt-4 bg-sky-500 text-black hover:bg-sky-500/90"
+            className="mt-4 bg-sky-500 text-ink hover:bg-sky-500/90"
           >
             <Link href="/shop">Browse shop</Link>
           </Button>

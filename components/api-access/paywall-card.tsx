@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 
 export function ApiPaywallCard() {
   return (
-    <div className="rounded-2xl border border-amber-500/40 bg-gradient-to-br from-amber-500/10 via-background to-amber-500/10 p-8 text-center">
+    <div className="rounded-2xl bg-amber-500/15 p-8 text-center">
       <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-amber-500/20 text-amber-300">
         <Lock className="size-5" />
       </div>
@@ -16,13 +16,13 @@ export function ApiPaywallCard() {
         odds data.
       </p>
       <div className="mt-5 flex items-center justify-center gap-3">
-        <Button asChild className="bg-amber-500 text-black hover:bg-amber-400">
+        <Button asChild className="bg-amber-500 text-ink hover:bg-amber-600">
           <Link href="/upgrade">
             <Unlock className="size-4" />
             Upgrade for API access
           </Link>
         </Button>
-        <Button asChild variant="outline" className="border-border">
+        <Button asChild variant="secondary">
           <Link href="/api-access/docs">Browse docs anyway</Link>
         </Button>
       </div>

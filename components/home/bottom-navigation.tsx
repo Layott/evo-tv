@@ -26,13 +26,10 @@ export default function BottomNavigation({ activeTab, setActiveTab }: BottomNavi
   }
 
   return (
-    <div
-      className="fixed bottom-0 left-0 right-0 flex items-center justify-around py-3 border-t"
-      style={{
-        backgroundColor: "#000000",
-        borderColor: "rgba(44, 215, 227, 0.2)",
-      }}
-    >
+    // Every colour here used to be an inline literal: a pure black ground, a
+    // tinted top rule, and a hardcoded cyan. It reads off the theme now, and the
+    // bar separates from the page by surface weight rather than by that rule.
+    <div className="fixed bottom-0 left-0 right-0 flex items-center justify-around bg-card py-3">
       {navItems.map((item) => {
         const isActive = activeTab === item.id
         const Icon = item.icon
@@ -41,14 +38,13 @@ export default function BottomNavigation({ activeTab, setActiveTab }: BottomNavi
           <button
             key={item.id}
             onClick={() => handleNavigation(item)}
-            className="flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-all"
-            style={{
-              color: isActive ? "#2CD7E3" : "#666666",
-            }}
+            className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg ${
+              isActive ? "text-sky-400" : "text-muted-foreground"
+            }`}
           >
             <Icon size={24} />
             <span className="text-xs font-semibold">{item.label}</span>
-            {isActive && <div className="w-1 h-1 rounded-full" style={{ backgroundColor: "#2CD7E3" }} />}
+            {isActive && <div className="w-1 h-1 rounded-full bg-sky-400" />}
           </button>
         )
       })}

@@ -34,7 +34,7 @@ export function StatsRow({ followingCount, watchHours, subSince }: Props) {
           key={it.label}
           className="rounded-xl border border-border bg-card/60 p-4"
         >
-          <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
             {it.icon}
             {it.label}
           </div>

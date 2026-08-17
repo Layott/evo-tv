@@ -133,7 +133,7 @@ export function OrderView({ id }: { id: string }) {
       <div className="rounded-2xl border border-border bg-card/40 p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Order</p>
+            <p className="text-xs text-muted-foreground">Order</p>
             <h1 className="font-mono text-lg font-bold text-foreground">
               #{order.id.slice(-8).toUpperCase()}
             </h1>
@@ -162,7 +162,7 @@ export function OrderView({ id }: { id: string }) {
                 <div className="flex items-center gap-2">
                   <span
                     className={cn( "flex size-7 items-center justify-center rounded-full",
-                      active ? "bg-sky-500 text-black" : "bg-muted text-muted-foreground"
+                      active ? "bg-sky-500 text-ink" : "bg-muted text-muted-foreground"
                     )}
                   >
                     <Icon className="size-4" />
@@ -264,7 +264,7 @@ export function OrderView({ id }: { id: string }) {
             </Button>
             <Button
               asChild
-              className="flex-1 bg-sky-500 text-black hover:bg-sky-500/90"
+              className="flex-1 bg-sky-500 text-ink hover:bg-sky-500/90"
             >
               <Link href="/shop">
                 <ShoppingBag className="size-4" /> Continue

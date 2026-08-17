@@ -463,7 +463,7 @@ export function StreamsManagerPage() {
                 </div>
 
                 <div>
-                  <div className="mb-1 text-xs uppercase tracking-wider text-muted-foreground">Description</div>
+                  <div className="mb-1 text-xs r text-muted-foreground">Description</div>
                   <p className="text-sm text-foreground/80">{selected.description}</p>
                 </div>
 
@@ -680,7 +680,7 @@ export function StreamsManagerPage() {
 function Info({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <div className="mb-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className="mb-0.5 text-[10px] r text-muted-foreground">{label}</div>
       <div className="text-foreground">{children}</div>
     </div>
   );
