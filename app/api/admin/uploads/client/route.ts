@@ -21,7 +21,24 @@ const ALLOWED_CONTENT_TYPES = [
   "image/webp",
 ];
 
-const PATHNAME_PREFIX = "admin-uploads/";
+/**
+ * Where an admin upload is allowed to land.
+ *
+ * `admin-uploads/` is the general namespace for anything the CMS uploads. It
+ * exists so a presigned PUT cannot be pointed at an arbitrary key in the bucket.
+ *
+ * `downloads/` is for release binaries, and it is separate because the URL is
+ * user-facing: the Android build is linked from /apps, so people see it, paste
+ * it and share it. `admin-uploads/downloads/evotv-0.1.0.apk` invites the
+ * question of why the public is being handed something labelled admin. The
+ * previously hosted APK already lives under `downloads/`, so this also keeps one
+ * home for release artifacts rather than two.
+ *
+ * Adding the APK content type without adding this prefix is what made the whole
+ * publish path unreachable: the script asked for `downloads/<name>` and got a
+ * 400 back, so no release was ever published.
+ */
+const PATHNAME_PREFIXES = ["admin-uploads/", "downloads/"] as const;
 
 /** Random suffix so two uploads of the same filename cannot collide. */
 function randomSuffix(): string {
@@ -101,9 +118,13 @@ export async function POST(req: NextRequest) {
   if (!pathname || typeof pathname !== "string") {
     return NextResponse.json({ error: "Missing `pathname`" }, { status: 400 });
   }
-  if (!pathname.startsWith(PATHNAME_PREFIX)) {
+  if (!PATHNAME_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
     return NextResponse.json(
-      { error: `pathname must start with "${PATHNAME_PREFIX}"` },
+      {
+        error: `pathname must start with one of: ${PATHNAME_PREFIXES.map(
+          (p) => `"${p}"`,
+        ).join(", ")}`,
+      },
       { status: 400 },
     );
   }
