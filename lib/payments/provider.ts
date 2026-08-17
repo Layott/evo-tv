@@ -21,6 +21,15 @@ export interface VerificationResult {
   amountNgn: number;
   userId?: string;
   paidAt?: string;
+  /**
+   * The tier this payment was for, carried through the provider's metadata.
+   *
+   * Without it the callback cannot know what was bought, which is why both the
+   * verify route and the webhook used to hardcode a 30 day Premium period and
+   * tell every payer "Welcome to Premium" - including, once Supporter and Pro
+   * became purchasable, the people who had bought neither.
+   */
+  plan?: string;
 }
 
 export interface PaymentProvider {

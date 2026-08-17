@@ -3,7 +3,7 @@
 import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -13,8 +13,8 @@ import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 
 import { useAuth } from "@/components/providers";
-import { getProductById, listTiers } from "@/lib/client";
-import type { Order, OrderItem, Product } from "@/lib/types";
+import { createOrder, getProductById, listTiers, startSubscription } from "@/lib/client";
+import type { Product } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,13 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PaystackButton, PaystackMark } from "@/components/shop/paystack-button";
-import {
-  CART_KEY,
-  ORDERS_KEY,
-  CartLine,
-  clearCart,
-  getCart,
-} from "@/components/shop/cart-store";
+import { CartLine, clearCart, getCart } from "@/components/shop/cart-store";
 import { formatNgn } from "@/components/profile/ngn";
 import { MediaImage } from "@/components/ui/media-image";
 
@@ -63,12 +57,7 @@ interface ResolvedLine extends CartLine {
   variantLabel: string | null;
 }
 
-function newId() {
-  return `order_${Math.random().toString(36).slice(2, 10)}_${Date.now().toString(36)}`;
-}
-
 export default function CheckoutPage() {
-  const router = useRouter();
   const search = useSearchParams();
   const plan = search.get("plan");
 
@@ -162,80 +151,79 @@ export default function CheckoutPage() {
     : SHIPPING_FEE;
   const total = subtotal + shipping;
 
+  /**
+   * Hand off to the payment provider.
+   *
+   * This function used to be the whole checkout: it waited 1.2 seconds, built
+   * an `Order` object in the browser with a `paymentRef` of `PS_` plus eight
+   * random characters, wrote it to localStorage, and said "Payment successful".
+   * No money moved, no row was written, and the order existed only in that one
+   * browser. The server has had `/api/orders` and `/api/payments/init` the
+   * whole time.
+   *
+   * The client now sends ids and quantities and lets the server price it. That
+   * matters beyond tidiness: the old page computed the total itself, so the
+   * amount charged was whatever the page decided.
+   */
   async function finishOrder(shippingValues: ShippingValues | null) {
     setProcessing(true);
-    await new Promise((r) => setTimeout(r, 1_200));
-
-    const id = newId();
-    const items: OrderItem[] = isSubscription
-      ? [
-          {
-            productId: `sub_${planTier?.id ?? "unknown"}`,
-            productName: `${planTier?.name ?? "Subscription"} - Monthly`,
-            variantId: null,
-            variantLabel: "Monthly",
-            qty: 1,
-            unitPriceNgn: planTier?.priceNgn ?? 0,
-            thumbnailUrl: "/premium-sub.jpg",
-          },
-        ]
-      : resolved.map<OrderItem>((r) => ({
-          productId: r.product.id,
-          productName: r.product.name,
-          variantId: r.variantId,
-          variantLabel: r.variantLabel,
-          qty: r.qty,
-          unitPriceNgn: r.unit,
-          thumbnailUrl: r.product.images[0] ?? "",
-        }));
-
-    const order: Order = {
-      id,
-      userId: user?.id ?? "user_current",
-      status: "paid",
-      items,
-      subtotalNgn: subtotal,
-      shippingNgn: shipping,
-      totalNgn: total,
-      shipping: {
-        fullName: shippingValues?.fullName ?? user?.displayName ?? "Customer",
-        phone: shippingValues?.phone ?? "",
-        address1: shippingValues?.address1 ?? "",
-        address2: shippingValues?.address2 ?? "",
-        city: shippingValues?.city ?? "",
-        state: shippingValues?.state ?? "",
-        country: shippingValues?.country ?? "Nigeria",
-      },
-      paymentProvider: "paystack",
-      paymentRef: `PS_${id.slice(-8).toUpperCase()}`,
-      createdAt: new Date().toISOString(),
-      trackingNumber: null,
-    };
-
     try {
-      const existing = JSON.parse(window.localStorage.getItem(ORDERS_KEY) || "[]");
-      const arr = Array.isArray(existing) ? existing : [];
-      arr.unshift(order);
-      window.localStorage.setItem(ORDERS_KEY, JSON.stringify(arr));
-      if (!isSubscription) {
-        clearCart();
-        window.localStorage.removeItem(CART_KEY);
+      if (isSubscription) {
+        if (!planTier) {
+          toast.error("That plan is not available");
+          return;
+        }
+        const { redirectUrl } = await startSubscription(planTier.id);
+        // Leave the SPA entirely: this is the provider's hosted page.
+        window.location.href = redirectUrl;
+        return;
       }
-    } catch {
-      /* noop */
-    }
 
-    toast.success(
-      isSubscription ? `${planTier?.name ?? "Subscription"} activated` : "Payment successful",
-    );
-    router.push(`/order/${id}`);
+      if (!shippingValues) {
+        toast.error("Fill shipping details first");
+        return;
+      }
+
+      const { redirectUrl } = await createOrder({
+        items: resolved.map((r) => ({
+          productId: r.productId,
+          variantId: r.variantId,
+          qty: r.qty,
+        })),
+        shipping: {
+          fullName: shippingValues.fullName,
+          phone: shippingValues.phone,
+          address1: shippingValues.address1,
+          address2: shippingValues.address2,
+          city: shippingValues.city,
+          state: shippingValues.state,
+          country: shippingValues.country,
+        },
+      });
+
+      // The cart is only cleared once the server has the order. Clearing it
+      // first would lose the basket if the request failed.
+      clearCart();
+      window.location.href = redirectUrl;
+    } catch (err) {
+      // A refused payment provider, an out-of-stock line, an expired session.
+      // All of them used to be impossible, because nothing was contacted.
+      const message =
+        err instanceof Error ? err.message : "Checkout could not be started";
+      toast.error(message);
+      setProcessing(false);
+    }
   }
 
   function onShippingSubmit(values: ShippingValues) {
     void finishOrder(values);
   }
 
-  function mockSimulate() {
+  /**
+   * The pay button. Named `startPayment` when it faked a payment; it now starts
+   * a real one, which is why the shipping form has to validate first.
+   */
+  function startPayment() {
     if (isSubscription) {
       void finishOrder(null);
       return;
@@ -373,7 +361,7 @@ export default function CheckoutPage() {
                 variant="outline"
                 className="w-full border-border"
                 disabled={processing}
-                onClick={mockSimulate}
+                onClick={startPayment}
               >
                 {processing ? <Loader2 className="size-4 animate-spin" /> : null}
                 Mock simulate

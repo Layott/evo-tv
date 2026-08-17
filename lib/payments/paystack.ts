@@ -58,7 +58,7 @@ export const paystack: PaymentProvider = {
         status: string;
         amount: number;
         paid_at: string | null;
-        metadata?: { userId?: string };
+        metadata?: { userId?: string; plan?: string };
       };
     }>(`/transaction/verify/${encodeURIComponent(reference)}`);
     return {
@@ -71,6 +71,7 @@ export const paystack: PaymentProvider = {
           : "pending",
       amountNgn: Math.round(res.data.amount / 100),
       userId: res.data.metadata?.userId,
+      plan: res.data.metadata?.plan,
       paidAt: res.data.paid_at ?? undefined,
     };
   },
@@ -91,7 +92,7 @@ export const paystack: PaymentProvider = {
         status: string;
         amount: number;
         paid_at: string | null;
-        metadata?: { userId?: string };
+        metadata?: { userId?: string; plan?: string };
       };
     };
     return {
@@ -104,6 +105,7 @@ export const paystack: PaymentProvider = {
           : "pending",
       amountNgn: Math.round(parsed.data.amount / 100),
       userId: parsed.data.metadata?.userId,
+      plan: parsed.data.metadata?.plan,
       paidAt: parsed.data.paid_at ?? undefined,
     };
   },
