@@ -21,9 +21,20 @@ export const products = pgTable(
     featured: boolean("featured").notNull().default(false),
     active: boolean("active").notNull().default(true),
     teamId: text("team_id").references(() => teams.id, { onDelete: "set null" }),
+    /**
+     * The show this came out of, when it came out of one.
+     *
+     * Nullable because most stock is not tied to a programme, and `set null`
+     * rather than a cascade because a product that loses its show should keep
+     * selling rather than vanish from the shop.
+     */
+    showId: text("show_id"),
     inventory: integer("inventory").notNull().default(0),
   },
-  (t) => [index("products_category_idx").on(t.category)],
+  (t) => [
+    index("products_category_idx").on(t.category),
+    index("products_show_idx").on(t.showId),
+  ],
 );
 
 export const orders = pgTable(

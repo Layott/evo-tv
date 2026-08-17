@@ -4,6 +4,8 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 
+import { useAuth } from "@/components/providers";
+
 /**
  * The site header, which now stays put.
  *
@@ -28,6 +30,9 @@ export default function SiteHeader({
 }: {
   overlay?: boolean;
 }) {
+  const { role } = useAuth();
+  const signedIn = role !== "guest";
+
   const [scrolled, setScrolled] = React.useState(false);
 
   React.useEffect(() => {
@@ -76,18 +81,33 @@ export default function SiteHeader({
             >
               Shows
             </Link>
-            <Link
-              href="/login"
-              className="landing-display flex min-h-11 items-center px-2 text-[1.02rem] text-[var(--paper-dim)] transition-colors hover:text-[var(--paper)]"
-            >
-              Sign in
-            </Link>
-            <Link
-              href="/signup"
-              className="landing-display flex min-h-11 items-center bg-[var(--paper)] px-4 text-[0.95rem] text-[var(--ink)] transition-colors hover:bg-[var(--brand)]"
-            >
-              Join free
-            </Link>
+            {/* Offering "Sign in" and "Join free" to somebody who is already
+                signed in is the header telling them they are a stranger. These
+                pages are reached from inside the app as well as from a shared
+                link, so the bar has to know which it is. */}
+            {signedIn ? (
+              <Link
+                href="/home"
+                className="landing-display flex min-h-11 items-center bg-[var(--paper)] px-4 text-[0.95rem] text-[var(--ink)] transition-colors hover:bg-[var(--brand)]"
+              >
+                Watch now
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="landing-display flex min-h-11 items-center px-2 text-[1.02rem] text-[var(--paper-dim)] transition-colors hover:text-[var(--paper)]"
+                >
+                  Sign in
+                </Link>
+                <Link
+                  href="/signup"
+                  className="landing-display flex min-h-11 items-center bg-[var(--paper)] px-4 text-[0.95rem] text-[var(--ink)] transition-colors hover:bg-[var(--brand)]"
+                >
+                  Join free
+                </Link>
+              </>
+            )}
           </nav>
         </div>
       </header>

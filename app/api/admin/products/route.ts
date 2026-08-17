@@ -56,6 +56,9 @@ export const productBody = z.object({
   featured: z.boolean().default(false),
   active: z.boolean().default(true),
   teamId: z.string().min(1).nullable().default(null),
+  // The show this came out of. Null is the common case: most stock is not
+  // tied to a programme.
+  showId: z.string().min(1).nullable().default(null),
   inventory: z.number().int().min(0).max(1_000_000).default(0),
 });
 
@@ -108,6 +111,21 @@ export async function POST(req: NextRequest) {
     )[0];
     if (!team) {
       return NextResponse.json({ error: "Team not found" }, { status: 422 });
+    }
+  }
+
+  // A product pointing at a show that does not exist would render an empty
+  // shelf on that show's page and be invisible everywhere else.
+  if (input.showId) {
+    const show = (
+      await db
+        .select({ id: schema.shows.id })
+        .from(schema.shows)
+        .where(eq(schema.shows.id, input.showId))
+        .limit(1)
+    )[0];
+    if (!show) {
+      return NextResponse.json({ error: "Show not found" }, { status: 422 });
     }
   }
 

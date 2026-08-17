@@ -356,6 +356,8 @@ export interface Product {
   featured: boolean;
   active: boolean;
   teamId: UUID | null;
+  /** The show this came out of, when it came out of one. */
+  showId: UUID | null;
   inventory: number;
 }
 

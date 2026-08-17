@@ -4,6 +4,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { getSchedule } from "@/lib/api/epg";
+import { listProducts } from "@/lib/api/products";
+import { Price } from "@/components/ui/price";
 import {
   getShowBySlug,
   listSeasonsForShow,
@@ -168,18 +170,35 @@ export default async function ShowPage({
   // Seasons and episodes come from the CMS. A show with none simply has none
   // yet, which the section says rather than rendering an empty shelf.
   const seasons = row ? await listSeasonsForShow(row.id) : [];
+  // Merchandise for this programme. The shop and the catalogue were two worlds
+  // until `products.show_id`: a viewer reading about a show was never told
+  // there was a shirt for it.
+  const merch = row ? await listProducts({ showId: row.id }) : [];
   const seasonEpisodes = await Promise.all(
     seasons.map(async (s) => ({ season: s, episodes: await listEpisodesForSeason(s.id) })),
   );
 
-  // Airings come from the same guide the rest of the site reads, matched by the
-  // same normaliser that puts artwork on a grid row. A show with no slot simply
-  // has no dates yet, which the page says plainly.
+  /**
+   * Airings, matched two ways because there are two kinds of show.
+   *
+   * The artwork registry knows which grid titles belong to a hand-made show, so
+   * that lookup stays. It returns nothing for the thirty rows backfilled out of
+   * the grid itself, and those were the shows telling visitors they were "not
+   * on the published schedule" while sitting in the middle of it. Their titles
+   * came from the grid verbatim, so comparing the title is exactly right for
+   * them, and is only reached when the registry has no answer.
+   */
   const week = await getSchedule(new Date(), LOOKAHEAD_DAYS);
+  const normalise = (value: string) => value.trim().toLowerCase();
+  const showTitle = normalise(row?.title ?? show.title);
   const airings = week
     .flatMap((day) =>
       day.entries
-        .filter((entry) => artForTitle(entry.title)?.slug === show.slug)
+        .filter((entry) => {
+          const art = artForTitle(entry.title);
+          if (art) return art.slug === show.slug;
+          return normalise(entry.title) === showTitle;
+        })
         .map((entry) => ({ entry, dayOfWeek: day.dayOfWeek, dateKey: day.dateKey })),
     )
     .slice(0, 6);
@@ -203,21 +222,36 @@ export default async function ShowPage({
             {/* Capped: the two-column grid only starts at `lg`, so without this
                 the poster stretched to the full 768px of a tablet. */}
             <div
-              className="relative aspect-[4/5] w-full max-w-[22rem] overflow-hidden"
-              style={{
-                boxShadow: `0 26px 60px -28px ${show.accent}80, 0 8px 22px -14px rgba(0,0,0,0.85)`,
-              }}
+              className="relative flex aspect-[4/5] w-full max-w-[22rem] items-end overflow-hidden bg-[var(--ink-raised)] p-5"
+              style={
+                show.poster
+                  ? {
+                      boxShadow: `0 26px 60px -28px ${show.accent}80, 0 8px 22px -14px rgba(0,0,0,0.85)`,
+                    }
+                  : undefined
+              }
             >
-              <Image
-                src={show.poster}
-                alt={`${show.title} poster`}
-                fill
-                sizes="(min-width: 1024px) 22rem, 100vw"
-                placeholder="blur"
-                blurDataURL={show.blurDataURL}
-                priority
-                className="object-cover"
-              />
+              {/* A row backfilled from the grid has no artwork. Rendering an
+                  <Image> with an empty src draws the browser's broken-image
+                  icon, which is worse than admitting there is no poster: the
+                  title carries the panel instead, the way the catalogue cards
+                  do. */}
+              {show.poster ? (
+                <Image
+                  src={show.poster}
+                  alt={`${show.title} poster`}
+                  fill
+                  sizes="(min-width: 1024px) 22rem, 100vw"
+                  placeholder="blur"
+                  blurDataURL={show.blurDataURL}
+                  priority
+                  className="object-cover"
+                />
+              ) : (
+                <p className="landing-display text-balance text-[1.4rem] leading-tight text-[var(--paper)]">
+                  {show.title}
+                </p>
+              )}
             </div>
           </div>
 
@@ -249,6 +283,59 @@ export default async function ShowPage({
               <p className="reveal mt-4 max-w-[46ch] text-[1.05rem] leading-relaxed text-[var(--paper-dim)]">
                 {show.tagline}
               </p>
+            ) : null}
+
+            {/* What the CMS knows about this show, and only what it knows. A
+                rating of zero is "nobody has rated it", not "zero out of five",
+                so it is left out rather than printed as a bad score. */}
+            {row ? (
+              <dl className="mt-5 flex flex-wrap gap-x-8 gap-y-3">
+                {row.rating > 0 ? (
+                  <div>
+                    <dt className="text-[0.78rem] uppercase tracking-[0.08em] text-[var(--paper-faint)]">
+                      Rating
+                    </dt>
+                    <dd className="landing-display text-[1.1rem] text-[var(--paper)]">
+                      {row.rating.toFixed(1)} / 5
+                    </dd>
+                  </div>
+                ) : null}
+                {row.totalEpisodes > 0 ? (
+                  <div>
+                    <dt className="text-[0.78rem] uppercase tracking-[0.08em] text-[var(--paper-faint)]">
+                      Episodes
+                    </dt>
+                    <dd className="landing-display text-[1.1rem] text-[var(--paper)]">
+                      {row.totalEpisodes}
+                      {row.totalSeasons > 1 ? ` across ${row.totalSeasons} seasons` : ""}
+                    </dd>
+                  </div>
+                ) : null}
+                <div>
+                  <dt className="text-[0.78rem] uppercase tracking-[0.08em] text-[var(--paper-faint)]">
+                    Status
+                  </dt>
+                  <dd className="landing-display text-[1.1rem] text-[var(--paper)]">
+                    {row.status === "airing"
+                      ? "On the channel"
+                      : row.status === "completed"
+                        ? "Complete"
+                        : row.status === "hiatus"
+                          ? "On a break"
+                          : "Coming soon"}
+                  </dd>
+                </div>
+                {row.maturityRating ? (
+                  <div>
+                    <dt className="text-[0.78rem] uppercase tracking-[0.08em] text-[var(--paper-faint)]">
+                      Rated
+                    </dt>
+                    <dd className="landing-display text-[1.1rem] uppercase text-[var(--paper)]">
+                      {row.maturityRating}
+                    </dd>
+                  </div>
+                ) : null}
+              </dl>
             ) : null}
 
             {show.handle ? (
@@ -311,6 +398,45 @@ export default async function ShowPage({
             </section>
           </div>
         </div>
+
+        {merch.length > 0 ? (
+          <section className="mt-16">
+            <h2 className="landing-display text-[1.5rem]">In the shop</h2>
+            <ul className="mt-6 grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-5">
+              {merch.map((product) => (
+                <li key={product.id}>
+                  <Link href={`/shop/${product.id}`} className="group block">
+                    <div className="relative flex aspect-square items-end overflow-hidden rounded-lg bg-[var(--ink-raised)] p-3">
+                      {/* Same rule as the catalogue cards: no photograph is a
+                          fact about the product, and an empty square reads as a
+                          failed image. */}
+                      {product.images[0] ? (
+                        <Image
+                          src={product.images[0]}
+                          alt=""
+                          fill
+                          sizes="(max-width: 640px) 45vw, 18vw"
+                          className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                        />
+                      ) : (
+                        <span className="landing-display text-balance text-[0.95rem] leading-snug text-[var(--paper-dim)]">
+                          {product.name}
+                        </span>
+                      )}
+                    </div>
+                    <p className="landing-display mt-2 text-balance text-[1rem] text-[var(--paper)] group-hover:text-[var(--brand)]">
+                      {product.name}
+                    </p>
+                    <Price
+                      ngn={product.priceNgn}
+                      className="mt-0.5 block text-[0.85rem] text-[var(--paper-dim)]"
+                    />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
 
         {seasonEpisodes.some((s) => s.episodes.length > 0) ? (
           <section className="mt-16">

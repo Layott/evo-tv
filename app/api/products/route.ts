@@ -15,6 +15,7 @@ export async function GET(req: NextRequest) {
   const featuredParam = params.get("featured");
   const categoryParam = params.get("category");
   const teamIdParam = params.get("teamId");
+  const showIdParam = params.get("showId");
 
   const filter: Parameters<typeof listProducts>[0] = {};
   if (featuredParam !== null) {
@@ -27,6 +28,7 @@ export async function GET(req: NextRequest) {
     filter.category = categoryParam as Product["category"];
   }
   if (teamIdParam) filter.teamId = teamIdParam;
+  if (showIdParam) filter.showId = showIdParam;
 
   return NextResponse.json(await listProducts(filter));
 }

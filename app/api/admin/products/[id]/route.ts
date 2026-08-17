@@ -41,6 +41,21 @@ export async function PATCH(
   )[0];
   if (!existing) return new NextResponse("Product not found", { status: 404 });
 
+  // Same reason as the create route: a product pointing at a show that is not
+  // there is invisible in the shop and renders an empty shelf on the show.
+  if (parsed.data.showId) {
+    const show = (
+      await db
+        .select({ id: schema.shows.id })
+        .from(schema.shows)
+        .where(eq(schema.shows.id, parsed.data.showId))
+        .limit(1)
+    )[0];
+    if (!show) {
+      return NextResponse.json({ error: "Show not found" }, { status: 422 });
+    }
+  }
+
   if (parsed.data.teamId) {
     const team = (
       await db
