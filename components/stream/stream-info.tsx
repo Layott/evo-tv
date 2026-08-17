@@ -78,8 +78,8 @@ export function StreamInfo({ stream, game }: StreamInfoProps) {
     if (reporting) return;
     setReporting(true);
     try {
-      const { ticketId } = await reportStream(stream.id, "user-reported");
-      toast.message(`Report submitted to moderators. Ticket: ${ticketId}`);
+      const { reportId } = await reportStream(stream.id, "user-reported");
+      toast.success(`Report sent to moderators. Reference ${reportId}`);
     } catch {
       toast.error("Could not submit report");
     } finally {
@@ -105,7 +105,24 @@ export function StreamInfo({ stream, game }: StreamInfoProps) {
     const url = typeof window !== "undefined" ? window.location.href : "";
     if (!url) return;
 
-    if (navigator.share) {
+    /*
+     * Native share on a phone, clipboard on a desktop.
+     *
+     * `navigator.share` exists on desktop Chrome for Windows, so the old check
+     * sent a laptop into the OS share flyout. Dismissing that raises AbortError,
+     * which is correctly treated as a deliberate choice and returns silently,
+     * and the result is a Share button that looks broken on the machine most
+     * likely to be testing it. Nobody on a desktop wanted the OS sheet anyway;
+     * they wanted the link.
+     *
+     * A coarse pointer is the honest test for "this is a phone or tablet",
+     * where the share sheet genuinely is the better route.
+     */
+    const isTouchDevice =
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(pointer: coarse)").matches;
+
+    if (isTouchDevice && navigator.share) {
       try {
         await navigator.share({ title: stream.title, url });
         return;
