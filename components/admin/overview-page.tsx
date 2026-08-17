@@ -20,7 +20,7 @@ import {
   Radio,
   UserPlus,
   Users,
-} from "lucide-react";
+} from "@/components/icons";
 
 import {
   adminListStreams,

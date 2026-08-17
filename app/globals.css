@@ -75,8 +75,8 @@
 }
 
 @theme inline {
-  --font-sans: "Geist", "Geist Fallback";
-  --font-mono: "Geist Mono", "Geist Mono Fallback";
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-martian-mono), ui-monospace, monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -158,7 +158,11 @@
 
   background-color: var(--ink);
   color: var(--paper);
-  font-feature-settings: "ss01", "cv01";
+  /* Was `"ss01", "cv01"`, which were Geist's stylistic sets and became dead
+     the moment Geist left. Archivo has no such sets; what it does have is
+     proper old-style-free lining figures, and the schedule strip wants them
+     column-aligned. */
+  font-variant-numeric: tabular-nums;
 }
 
 /* Paper grain. A single inline SVG turbulence, no network request. Sits above
@@ -176,6 +180,7 @@
 
 .landing-display {
   font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+  font-variation-settings: "wdth" var(--display-wdth);
   font-weight: 800;
   letter-spacing: -0.03em;
   line-height: 0.92;
@@ -340,7 +345,12 @@
   --color-ink: #05191b;
   --color-paper: #eaf6f5;
 
-  --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+  /* Same family as the body, opened up on the width axis rather than swapped
+     for a second one. `--display-wdth` is applied by the rules that use this
+     face, because font-variation-settings is not inheritable through a
+     shorthand and has to be set where the type is. */
+  --font-display: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --display-wdth: 118;
 }
 
 /* The app is dark-first (ThemeProvider defaultTheme="dark"), so the dark
@@ -500,7 +510,16 @@
 @layer base {
   h1, h2, h3 {
     font-family: var(--font-display);
+    font-variation-settings: "wdth" var(--display-wdth);
     letter-spacing: -0.02em;
+  }
+
+  /* Numbers that sit in a column - view counts, watch time, prices, timecodes -
+     have to line up, and Archivo's default figures are proportional. Scoped to
+     the elements that actually hold figures rather than set globally, because
+     tabular figures in running prose look mechanical. */
+  th, td, time, output {
+    font-variant-numeric: tabular-nums;
   }
 }
 

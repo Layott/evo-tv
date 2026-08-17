@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Lock, Sparkles } from "lucide-react";
+import { Lock, Unlock } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 
 export function ApiPaywallCard() {
@@ -18,7 +18,7 @@ export function ApiPaywallCard() {
       <div className="mt-5 flex items-center justify-center gap-3">
         <Button asChild className="bg-amber-500 text-black hover:bg-amber-400">
           <Link href="/upgrade">
-            <Sparkles className="size-4" />
+            <Unlock className="size-4" />
             Upgrade for API access
           </Link>
         </Button>

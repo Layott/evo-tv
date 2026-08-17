@@ -3,11 +3,11 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Code2, Gauge, KeyRound, Sparkles } from "lucide-react";
+import { Code2, Gauge, KeyRound, LayoutDashboard, Unlock } from "@/components/icons";
 import { cn } from "@/lib/utils";
 
 const TABS = [
-  { href: "/api-access", label: "Overview", Icon: Sparkles, exact: true },
+  { href: "/api-access", label: "Overview", Icon: LayoutDashboard, exact: true },
   { href: "/api-access/keys", label: "Keys", Icon: KeyRound },
   { href: "/api-access/docs", label: "Docs", Icon: Code2 },
   { href: "/api-access/usage", label: "Usage", Icon: Gauge },
@@ -19,7 +19,7 @@ export function ApiAccessShell({ children }: { children: React.ReactNode }) {
     <div className="mx-auto max-w-6xl px-4 py-6 sm:py-8">
       <header className="mb-6">
         <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/20 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-amber-300">
-          <Sparkles className="size-3" />
+          <Unlock className="size-3" />
           Premium feature
         </span>
         <h1 className="mt-3 text-2xl font-bold tracking-tight text-foreground">

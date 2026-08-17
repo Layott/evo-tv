@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Radio, Clock, Eye, Heart, Share2, Info } from "lucide-react";
+import { Radio, Clock, Eye, Heart, Share2, Info } from "@/components/icons";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/providers";
 import { BackButton } from "@/components/shell/back-button";

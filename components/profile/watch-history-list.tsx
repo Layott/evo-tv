@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Vod } from "@/lib/types";
 import { relativeTime } from "./ngn";
-import { Play } from "lucide-react";
+import { Play } from "@/components/icons";
 
 interface Props {
   vods: Vod[];

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { MediaImage } from "@/components/ui/media-image";
-import { Eye } from "lucide-react";
+import { Eye } from "@/components/icons";
 import type { Stream, Game } from "@/lib/types";
 
 interface LiveNowProps {

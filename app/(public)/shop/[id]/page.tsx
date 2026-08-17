@@ -4,7 +4,7 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, notFound } from "next/navigation";
-import { Loader2, ShoppingCart, ArrowLeft, Check } from "lucide-react";
+import { Loader2, ShoppingCart, ArrowLeft, Check } from "@/components/icons";
 import { toast } from "sonner";
 
 import {

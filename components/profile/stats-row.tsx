@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Clock, Users, Star } from "lucide-react";
+import { Clock, Users, BadgeCheck } from "@/components/icons";
 
 interface Props {
   followingCount: number;
@@ -24,7 +24,7 @@ export function StatsRow({ followingCount, watchHours, subSince }: Props) {
     {
       label: "Subscribed",
       value: subSince ?? "Not active",
-      icon: <Star className="size-4 text-amber-400" />,
+      icon: <BadgeCheck className="size-4 text-amber-400" />,
     },
   ];
   return (

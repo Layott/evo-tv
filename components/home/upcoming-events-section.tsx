@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Calendar, Trophy } from "lucide-react";
+import { Calendar, Trophy } from "@/components/icons";
 import type { EsportsEvent, Game } from "@/lib/types";
 
 interface UpcomingEventsProps {

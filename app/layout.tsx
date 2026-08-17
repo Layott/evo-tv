@@ -1,17 +1,40 @@
 import type { Metadata } from "next";
-import { Bricolage_Grotesque, Geist, Geist_Mono } from "next/font/google";
+import { Archivo, Martian_Mono } from "next/font/google";
 import { Providers } from "@/components/providers";
 import "./globals.css";
 
-const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
-const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" });
-
-// Display face for every heading in the product. Geist alone - a neutral tech
-// grotesque - is a large part of why the app read as a generic dashboard.
-const bricolage = Bricolage_Grotesque({
+/**
+ * One family, headings and body both.
+ *
+ * The product used to run Geist for UI and Bricolage Grotesque for headings.
+ * Geist is banned outright by the no-vibecoded-look rule, and two unrelated
+ * families was the wrong shape anyway: the admin CMS and the channel headline
+ * had nothing in common.
+ *
+ * Archivo carries a real `wdth` axis, which is what earns it the job. A
+ * broadcast headline is set wide, the way a scoreboard or a lower-third is,
+ * and the same family runs at normal width for 12px table text without a
+ * second download. `axes: ["wdth"]` is what makes that axis reach the browser;
+ * without it next/font ships the weight axis alone and every
+ * `font-variation-settings: "wdth"` silently does nothing.
+ */
+const archivo = Archivo({
   subsets: ["latin"],
-  weight: ["600", "700", "800"],
-  variable: "--font-bricolage",
+  axes: ["wdth"],
+  variable: "--font-archivo",
+  display: "swap",
+});
+
+/**
+ * Stream keys, timecodes, bitrates, ingest URLs.
+ *
+ * Martian Mono is wide on purpose - it is drawn so a character cannot be
+ * mistaken for a similar one, which is the only thing that matters when
+ * somebody is copying a stream key off a screen.
+ */
+const martianMono = Martian_Mono({
+  subsets: ["latin"],
+  variable: "--font-martian-mono",
   display: "swap",
 });
 
@@ -68,7 +91,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geist.variable} ${geistMono.variable} ${bricolage.variable} font-sans antialiased`}
+        className={`${archivo.variable} ${martianMono.variable} font-sans antialiased`}
       >
         <Providers>{children}</Providers>
       </body>

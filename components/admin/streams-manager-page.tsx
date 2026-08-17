@@ -8,10 +8,10 @@ import {
   Plus,
   RefreshCw,
   Radio,
-  Star,
+  Pin,
   Search,
   Trash2,
-} from "lucide-react";
+} from "@/components/icons";
 import { toast } from "sonner";
 import {
   adminCreateStream,
@@ -533,7 +533,7 @@ export function StreamsManagerPage() {
                         })
                       }
                     >
-                      <Star className="h-3.5 w-3.5" />
+                      <Pin className="h-3.5 w-3.5" />
                       {(selected as Stream & { isMainChannel?: boolean })
                         .isMainChannel
                         ? "Main channel"

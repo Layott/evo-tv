@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Users, Gauge } from "lucide-react";
+import { Send, Users, Gauge } from "@/components/icons";
 import { toast } from "sonner";
 import { MessageItem } from "@/components/chat/message-item";
 import { EmojiPicker } from "@/components/chat/emoji-picker";

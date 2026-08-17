@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ExternalLink, Loader2, Search, UserPlus } from "lucide-react";
+import { ExternalLink, Loader2, Search, UserPlus } from "@/components/icons";
 import { toast } from "sonner";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {

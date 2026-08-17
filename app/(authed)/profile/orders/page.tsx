@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ArrowLeft, Loader2, Package } from "lucide-react";
+import { ArrowLeft, Loader2, Package } from "@/components/icons";
 
 import { useAuth } from "@/components/providers";
 import { listOrdersForUser } from "@/lib/client";

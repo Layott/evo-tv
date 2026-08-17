@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Loader2, CreditCard, ArrowLeft, Crown } from "lucide-react";
+import { Loader2, CreditCard, ArrowLeft, BadgeCheck } from "@/components/icons";
 import { toast } from "sonner";
 
 import { useAuth } from "@/components/providers";
@@ -75,7 +75,7 @@ export default function BillingPage() {
       <div className="mt-6 grid gap-4 md:grid-cols-2">
         <div className="rounded-2xl border border-border bg-card/40 p-5">
           <div className="flex items-start gap-3">
-            <Crown className={sub ? "size-6 text-amber-400" : "size-6 text-muted-foreground"} />
+            <BadgeCheck className={sub ? "size-6 text-amber-400" : "size-6 text-muted-foreground"} />
             <div className="flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="text-base font-semibold text-foreground">

@@ -5,7 +5,7 @@ import type { ChatMessage } from "@/lib/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Pin, Trash2, Ban } from "lucide-react";
+import { Pin, Trash2, Ban } from "@/components/icons";
 import { toast } from "sonner";
 import { pinMessage, deleteMessage, banUser } from "@/lib/client";
 

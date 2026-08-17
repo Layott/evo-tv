@@ -9,7 +9,7 @@ import {
   LogOut,
   Settings,
   User,
-} from "lucide-react";
+} from "@/components/icons";
 import { useAuth } from "@/components/providers";
 import { countUnread } from "@/lib/client";
 import { BrandMark } from "@/components/shell/brand-mark";

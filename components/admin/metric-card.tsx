@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDownRight, ArrowUpRight } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight } from "@/components/icons";
 import { cn } from "@/lib/utils";
 
 interface MetricCardProps {

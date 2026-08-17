@@ -14,7 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Share2, Flag, Loader2, Languages, Headphones, BadgeCheck } from "lucide-react";
+import { Share2, Flag, Loader2, Languages, Headphones, BadgeCheck } from "@/components/icons";
 import { toast } from "sonner";
 import { FollowButton } from "./follow-button";
 import { reportStream } from "@/lib/client";

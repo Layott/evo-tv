@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Loader2, Settings, Bell, ShoppingBag } from "lucide-react";
+import { Loader2, Settings, Bell, ShoppingBag } from "@/components/icons";
 import { useAuth } from "@/components/providers";
 import {
   listFollows,

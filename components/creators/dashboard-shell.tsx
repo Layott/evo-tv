@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { ArrowLeft, BarChart3, Coins, Film, Lock, Mic2, Sparkles, Users } from "lucide-react";
+import { ArrowLeft, BarChart3, Coins, Film, Lock, Mic2, Users } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/components/providers";
@@ -70,8 +70,9 @@ export function DashboardShell({ children, title, description, actions }: Dashbo
                 <ArrowLeft className="size-4" />
               </Link>
             </Button>
+            {/* The page title is the page title. It had a gold sparkle in
+                front of it, which is decoration pretending to be meaning. */}
             <h1 className="text-xl font-bold text-foreground sm:text-2xl">
-              <Sparkles className="mr-2 inline size-5 text-amber-400" />
               {title}
             </h1>
             <Badge variant="outline" className="border-emerald-500/40 bg-emerald-500/10 text-emerald-200">

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Plus, Search, Trash2, Upload } from "lucide-react";
+import { Plus, Search, Trash2, Upload } from "@/components/icons";
 import { toast } from "sonner";
 import {
   CartesianGrid,

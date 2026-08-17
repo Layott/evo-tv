@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { Radio, Lock } from "lucide-react";
+import { Radio, Lock } from "@/components/icons";
 
 import { useAuth } from "@/components/providers";
 import { VideoPlayer } from "@/components/stream/video-player";

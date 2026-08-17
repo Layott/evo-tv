@@ -23,9 +23,9 @@ import {
   BookmarkPlus,
   ArrowLeft,
   Lock,
-  Sparkles,
+  Unlock,
   Eye,
-} from "lucide-react";
+} from "@/components/icons";
 import { toast } from "sonner";
 
 function relTime(iso: string): string {
@@ -310,7 +310,7 @@ function PaywallOverlay({
           onClick={onUpgrade}
           className="bg-amber-500 text-black hover:bg-amber-400"
         >
-          <Sparkles className="size-4" />
+          <Unlock className="size-4" />
           Upgrade with Paystack
         </Button>
       </div>

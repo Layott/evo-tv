@@ -6,7 +6,7 @@ import { listActivePolls, listPollsForStream, votePoll } from "@/lib/client";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Vote, CheckCircle2 } from "lucide-react";
+import { Vote, CheckCircle2 } from "@/components/icons";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 

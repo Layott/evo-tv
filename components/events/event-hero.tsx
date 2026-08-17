@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, Calendar, MapPin, Trophy } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Trophy } from "@/components/icons";
 import type { EsportsEvent, Game } from "@/lib/types";
 
 interface EventHeroProps {

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Compass, CalendarDays, Radio, User } from "lucide-react";
+import { Home, Compass, CalendarDays, Radio, User } from "@/components/icons";
 
 /**
  * `/calendar` was a mock match calendar and now renders ComingSoon, so the

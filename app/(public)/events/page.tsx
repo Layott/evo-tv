@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { Calendar, MapPin, Trophy } from "lucide-react";
+import { Calendar, MapPin, Trophy } from "@/components/icons";
 import { listEvents, listGames } from "@/lib/client";
 import type { EsportsEvent, EventTier } from "@/lib/types";
 

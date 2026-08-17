@@ -18,8 +18,7 @@ import {
   RotateCcw,
   RotateCw,
   AlertTriangle,
-  Sparkles,
-} from "lucide-react";
+} from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import {

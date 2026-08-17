@@ -10,11 +10,11 @@ import {
   Loader2,
   Package,
   Play,
-  Star,
+  BadgeCheck,
   UserPlus,
   AlertCircle,
   CheckCheck,
-} from "lucide-react";
+} from "@/components/icons";
 import { toast } from "sonner";
 
 import { useAuth } from "@/components/providers";
@@ -35,7 +35,7 @@ const ICONS: Record<NotificationType, React.ElementType> = {
   new_vod: Film,
   follow: UserPlus,
   order_update: Package,
-  subscription: Star,
+  subscription: BadgeCheck,
   system: AlertCircle,
 };
 

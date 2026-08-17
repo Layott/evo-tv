@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Gauge, X } from "lucide-react";
+import { Gauge, X } from "@/components/icons";
 import { useLiteMode } from "@/lib/client/player-features";
 
 /**

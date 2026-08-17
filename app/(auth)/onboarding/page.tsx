@@ -13,7 +13,7 @@ import {
   Shield,
   BellRing,
   SlidersHorizontal,
-} from "lucide-react";
+} from "@/components/icons";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";

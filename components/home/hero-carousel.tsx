@@ -4,7 +4,7 @@ import * as React from "react";
 import { MediaImage } from "@/components/ui/media-image";
 import Link from "next/link";
 import useEmblaCarousel from "embla-carousel-react";
-import { Play, Eye } from "lucide-react";
+import { Play, Eye } from "@/components/icons";
 import type { Stream } from "@/lib/types";
 
 interface HeroCarouselProps {

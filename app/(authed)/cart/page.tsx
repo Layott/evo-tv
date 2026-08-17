@@ -4,7 +4,7 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Loader2, ShoppingBag, Trash2, Tag } from "lucide-react";
+import { Loader2, ShoppingBag, Trash2, Tag } from "@/components/icons";
 import { toast } from "sonner";
 import { BackButton } from "@/components/shell/back-button";
 

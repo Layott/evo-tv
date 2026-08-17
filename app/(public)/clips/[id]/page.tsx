@@ -22,7 +22,7 @@ import {
   VolumeX,
   AlertTriangle,
   RefreshCw,
-} from "lucide-react";
+} from "@/components/icons";
 import { toast } from "sonner";
 import { FollowButton } from "@/components/stream/follow-button";
 import { cn } from "@/lib/utils";

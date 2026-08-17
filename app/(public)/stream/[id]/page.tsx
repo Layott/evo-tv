@@ -26,7 +26,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Lock, ArrowLeft, Sparkles, SkipForward } from "lucide-react";
+import { Lock, ArrowLeft, Unlock, SkipForward } from "@/components/icons";
 import { BackButton } from "@/components/shell/back-button";
 import { PremiumPaywallModal } from "@/components/shell/premium-paywall";
 
@@ -335,7 +335,7 @@ function PaywallOverlay({
           exclusive analysis.
         </p>
         <Button onClick={onUpgrade} className="bg-amber-500 text-black hover:bg-amber-400">
-          <Sparkles className="size-4" />
+          <Unlock className="size-4" />
           Upgrade with Paystack
         </Button>
       </div>

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { MediaImage } from "@/components/ui/media-image";
-import { Play, Eye } from "lucide-react";
+import { Play, Eye } from "@/components/icons";
 import type { Clip } from "@/lib/types";
 
 interface TrendingClipsProps {

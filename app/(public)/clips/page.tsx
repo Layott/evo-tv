@@ -6,7 +6,7 @@ import Link from "next/link";
 import type { Clip } from "@/lib/types";
 import { listTrendingClips } from "@/lib/client";
 import { Badge } from "@/components/ui/badge";
-import { Flame, Play, Heart } from "lucide-react";
+import { Flame, Play, Heart } from "@/components/icons";
 
 function relTime(iso: string): string {
   const diff = Math.max(0, Date.now() - new Date(iso).getTime());

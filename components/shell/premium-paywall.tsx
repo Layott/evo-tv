@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Lock, X, Check } from "lucide-react";
+import { Lock, X, Check } from "@/components/icons";
 import * as React from "react";
 
 interface Props {

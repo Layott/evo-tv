@@ -9,7 +9,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { cn } from "@/lib/utils";
-import { List } from "lucide-react";
+import { List } from "@/components/icons";
 
 function fmt(sec: number) {
   const h = Math.floor(sec / 3600);

@@ -1,6 +1,6 @@
 "use client"
 
-import { Home, Calendar, Compass, Library, User, ShoppingBag } from "lucide-react"
+import { Home, Calendar, Compass, Library, User, ShoppingBag } from "@/components/icons"
 import { useRouter } from "next/navigation"
 
 interface BottomNavigationProps {

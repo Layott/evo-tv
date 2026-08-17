@@ -10,7 +10,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { PercentCircle, Users, Wallet } from "lucide-react";
+import { PercentCircle, Users, Wallet } from "@/components/icons";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "./page-header";
 import { MetricCard } from "./metric-card";

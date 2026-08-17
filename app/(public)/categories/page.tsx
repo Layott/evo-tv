@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, Users } from "lucide-react";
+import { ArrowRight, Users } from "@/components/icons";
 import { listGames } from "@/lib/client";
 
 function formatPlayers(n: number): string {

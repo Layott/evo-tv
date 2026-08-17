@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronLeft, Menu } from "lucide-react";
+import { ChevronLeft, Menu } from "@/components/icons";
 
 import {
   Sheet,

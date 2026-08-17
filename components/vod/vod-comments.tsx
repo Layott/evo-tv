@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useAuth } from "@/components/providers";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle } from "@/components/icons";
 
 interface Comment {
   id: string;

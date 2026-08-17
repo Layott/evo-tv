@@ -9,9 +9,9 @@ import {
   KeyRound,
   Layers,
   ShieldCheck,
-  Sparkles,
+  Unlock,
   Zap,
-} from "lucide-react";
+} from "@/components/icons";
 import { useAuth } from "@/components/providers";
 import { ApiAccessShell } from "@/components/api-access/api-access-shell";
 import { ApiPaywallCard } from "@/components/api-access/paywall-card";
@@ -75,7 +75,7 @@ export default function ApiAccessLandingPage() {
               ) : (
                 <Button asChild className="bg-amber-500 text-black hover:bg-amber-400">
                   <Link href="/upgrade">
-                    <Sparkles className="size-4" />
+                    <Unlock className="size-4" />
                     Upgrade to unlock
                   </Link>
                 </Button>

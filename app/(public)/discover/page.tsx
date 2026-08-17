@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { Search, X, Eye, Users, UserRound, Clock } from "lucide-react";
+import { Search, X, Eye, Users, UserRound, Clock } from "@/components/icons";
 import {
   globalSearch,
   searchSuggestions,

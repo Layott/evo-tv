@@ -4,7 +4,7 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Team, Player } from "@/lib/types";
-import { Users } from "lucide-react";
+import { Users } from "@/components/icons";
 import { UserAvatar } from "@/components/ui/user-avatar";
 
 interface Props {

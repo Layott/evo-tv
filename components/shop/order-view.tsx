@@ -12,7 +12,7 @@ import {
   Printer,
   ShoppingBag,
   Truck,
-} from "lucide-react";
+} from "@/components/icons";
 
 import { getOrderById } from "@/lib/client";
 import type { Order, OrderStatus } from "@/lib/types";

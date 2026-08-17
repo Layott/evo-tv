@@ -6,7 +6,7 @@ import type { Product } from "@/lib/types";
 import { listProducts } from "@/lib/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingBag } from "lucide-react";
+import { ShoppingBag } from "@/components/icons";
 import { toast } from "sonner";
 import { useAuth } from "@/components/providers";
 import { addToCart } from "@/components/shop/cart-store";

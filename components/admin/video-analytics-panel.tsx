@@ -13,7 +13,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Clock, Eye, Gauge, Heart, PlayCircle, Users } from "lucide-react";
+import { Clock, Eye, Gauge, Heart, PlayCircle, Users } from "@/components/icons";
 
 import { useQuery } from "@tanstack/react-query";
 import { adminVideoAnalytics, adminVideoSummaries } from "@/lib/client";
