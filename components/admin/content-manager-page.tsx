@@ -1276,7 +1276,7 @@ function EventForm({
                 onClick={() => toggleTeam(t.id)}
                 className={`rounded-md border px-2 py-1 text-xs transition ${
                   selected
-                    ? "border-sky-500/50 bg-sky-500/10 text-sky-200"
+                    ? "bg-sky-500/25 text-sky-100"
                     : "border-border bg-card text-muted-foreground hover:text-foreground"
                 }`}
               >

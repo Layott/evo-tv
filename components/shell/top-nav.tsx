@@ -108,12 +108,12 @@ export function TopNav() {
               />
               <span className="hidden text-xs text-foreground sm:inline">{user.handle}</span>
               {role === "premium" && (
-                <span className="rounded-sm bg-amber-500/20 px-1.5 py-0.5 text-[9px] font-semibold r text-amber-300">
+                <span className="rounded-sm bg-amber-500/20 px-1.5 py-0.5 text-[9px] font-semibold text-amber-300">
                   Premium
                 </span>
               )}
               {role === "admin" && (
-                <span className="rounded-sm bg-sky-500/20 px-1.5 py-0.5 text-[9px] font-semibold r text-sky-300">
+                <span className="rounded-sm bg-sky-500/20 px-1.5 py-0.5 text-[9px] font-semibold text-sky-300">
                   Admin
                 </span>
               )}

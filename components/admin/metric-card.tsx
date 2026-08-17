@@ -19,7 +19,7 @@ export function MetricCard({ title, value, delta, deltaLabel, icon: Icon, hint }
   return (
     <div className="rounded-xl border border-border bg-card/50 p-4">
       <div className="flex items-start justify-between">
-        <div className="text-xs font-medium r text-muted-foreground">{title}</div>
+        <div className="text-xs font-medium text-muted-foreground">{title}</div>
         {Icon ? (
           <div className="rounded-md bg-muted/50 p-1.5 text-muted-foreground">
             <Icon className="h-3.5 w-3.5" />

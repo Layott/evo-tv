@@ -41,7 +41,7 @@ export function ProgramPitch() {
       {FEATURES.map((f) => (
         <div
           key={f.title}
-          className="rounded-xl border border-border bg-card/40 p-4 transition hover:border-sky-500/40"
+          className="rounded-xl bg-card/40 p-4 transition hover:bg-card"
         >
           <div className="flex size-10 items-center justify-center rounded-lg bg-sky-500/25 text-sky-100">
             <f.icon className="size-5" />

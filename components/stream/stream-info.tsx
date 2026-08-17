@@ -165,7 +165,7 @@ export function StreamInfo({ stream, game }: StreamInfoProps) {
             <div className="text-sm font-semibold text-foreground">
               {stream.streamerName}
             </div>
-            <div className="text-[11px] r text-muted-foreground">
+            <div className="text-[11px] text-muted-foreground">
               {stream.streamerType} streamer
             </div>
           </div>

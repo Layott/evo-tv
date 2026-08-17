@@ -67,7 +67,7 @@ export function HeroCarousel({ streams }: HeroCarouselProps) {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 flex flex-col gap-2 p-4 sm:p-6">
                   <div className="flex items-center gap-2">
-                    <span className="flex items-center gap-1 rounded-md bg-red-500/20 px-2 py-0.5 text-[10px] r text-red-400">
+                    <span className="flex items-center gap-1 rounded-md bg-red-500/20 px-2 py-0.5 text-[10px] text-red-400">
                       <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
                       Live
                     </span>

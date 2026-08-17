@@ -22,7 +22,7 @@ export default function GlobalError({
             !
           </div>
         </div>
-        <div className="mb-2 text-[11px] font-semibold st text-rose-400">
+        <div className="mb-2 text-[11px] font-semibold text-rose-400">
           500 · Something broke
         </div>
         <h1 className="mb-3 text-3xl font-semibold tracking-tight">
@@ -47,7 +47,7 @@ export default function GlobalError({
           </Link>
         </div>
         {error.digest && (
-          <p className="mt-6 text-[10px] r text-muted-foreground">
+          <p className="mt-6 text-[10px] text-muted-foreground">
             ref: {error.digest}
           </p>
         )}
