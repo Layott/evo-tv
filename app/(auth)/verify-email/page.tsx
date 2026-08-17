@@ -94,7 +94,7 @@ export default function VerifyEmailPage() {
   return (
     <div className="space-y-6">
       <div className="space-y-3 text-center">
-        <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-sky-500/10 ring-1 ring-sky-500/30">
+        <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-sky-500/25 text-sky-100">
           <Mail className="size-6 text-sky-400" />
         </div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">Verify your email</h1>

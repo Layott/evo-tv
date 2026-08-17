@@ -118,8 +118,8 @@ export default function StreamPage() {
   if (stream === undefined) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-6">
-        <div className="aspect-video w-full rounded-lg bg-card animate-pulse" />
-        <div className="mt-4 h-6 w-1/2 bg-card rounded animate-pulse" />
+        <div className="aspect-video w-full rounded-lg bg-card " />
+        <div className="mt-4 h-6 w-1/2 bg-card rounded " />
       </div>
     );
   }
@@ -228,7 +228,7 @@ export default function StreamPage() {
                     <Button
                       asChild
                       variant="outline"
-                      className="border-input bg-card text-foreground hover:bg-accent"
+                      className="bg-card text-foreground hover:bg-accent"
                     >
                       <Link href={`/signup?next=/stream/${streamId}`}>
                         Create an account

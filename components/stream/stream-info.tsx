@@ -154,7 +154,7 @@ export function StreamInfo({ stream, game }: StreamInfoProps) {
 
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2.5">
-          <Avatar className="size-10 ring-2 ring-sky-500/60">
+          <Avatar className="size-10">
             <AvatarImage
               src={stream.streamerAvatarUrl}
               alt={stream.streamerName}

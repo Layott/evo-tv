@@ -110,7 +110,7 @@ export function ActivityFeed() {
     return (
       <div className="space-y-2">
         {[0, 1, 2].map((i) => (
-          <div key={i} className="h-14 animate-pulse rounded-xl bg-card" />
+          <div key={i} className="h-14 rounded-xl bg-card" />
         ))}
       </div>
     );

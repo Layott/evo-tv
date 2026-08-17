@@ -43,7 +43,7 @@ export function ProgramPitch() {
           key={f.title}
           className="rounded-xl border border-border bg-card/40 p-4 transition hover:border-sky-500/40"
         >
-          <div className="flex size-10 items-center justify-center rounded-lg bg-sky-500/10 text-sky-400 ring-1 ring-sky-500/20">
+          <div className="flex size-10 items-center justify-center rounded-lg bg-sky-500/25 text-sky-100">
             <f.icon className="size-5" />
           </div>
           <h3 className="mt-3 text-sm font-semibold text-foreground">{f.title}</h3>

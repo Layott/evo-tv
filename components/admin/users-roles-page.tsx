@@ -360,7 +360,7 @@ export function UsersRolesPage() {
                 </div>
               </div>
               <SheetFooter>
-                <Button asChild variant="outline" className="border-input bg-card hover:bg-accent">
+                <Button asChild variant="outline" className="bg-card hover:bg-accent">
                   <Link href={`/profile/${selected.handle}`}>
                     <ExternalLink className="h-4 w-4" />
                     View profile

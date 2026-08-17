@@ -285,7 +285,7 @@ export function OrdersPage() {
           <DialogFooter>
             <Button
               variant="outline"
-              className="border-input bg-card hover:bg-accent"
+              className="bg-card hover:bg-accent"
               onClick={() => setRefundConfirm(null)}
             >
               Cancel

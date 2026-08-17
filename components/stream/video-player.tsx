@@ -732,7 +732,7 @@ export function VideoPlayer({
       {isLive && (
         <div className="absolute top-3 left-3 z-20 flex items-center gap-2">
           <div className="flex items-center gap-1.5 rounded-md bg-red-600 px-2 py-0.5 text-xs font-bold uppercase tracking-wider text-white">
-            <span className="size-2 rounded-full bg-white animate-pulse" />
+            <span className="size-2 rounded-full bg-white " />
             Live
           </div>
           {typeof viewerCount === "number" && (
@@ -834,7 +834,7 @@ export function VideoPlayer({
               {chapters.map((c, i) => (
                 <div
                   key={`${c.label}-${i}`}
-                  className="absolute top-1/2 -translate-y-1/2 size-1.5 rounded-full bg-amber-300 ring-1 ring-black"
+                  className="absolute top-1/2 -translate-y-1/2 size-1.5 rounded-full bg-amber-300"
                   style={{ left: `${Math.min(100, (c.startSec / duration) * 100)}%` }}
                   title={c.label}
                 />

@@ -34,8 +34,8 @@ function formatDuration(sec: number): string {
 
 function LiveBadge() {
   return (
-    <span className="flex items-center gap-1 rounded-md border border-red-500/30 bg-red-500/10 px-2 py-0.5 text-[10px] uppercase tracking-wider text-red-400">
-      <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
+    <span className="flex items-center gap-1 rounded-md bg-red-500/20 px-2 py-0.5 text-[10px] uppercase tracking-wider text-red-400">
+      <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
       Live
     </span>
   );
@@ -152,10 +152,10 @@ export default function DiscoverPage() {
           <button
             type="button"
             onClick={() => setGameFilter(null)}
-            className={`shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+            className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
               gameFilter === null
-                ? "border-sky-500/50 bg-sky-500/10 text-sky-300"
-                : "border-border bg-card/60 text-muted-foreground hover:border-input"
+                ? "bg-sky-500/25 text-sky-100"
+                : "bg-card/70 text-muted-foreground hover:bg-card"
             }`}
           >
             All games
@@ -165,10 +165,10 @@ export default function DiscoverPage() {
               key={g.id}
               type="button"
               onClick={() => setGameFilter(g.id)}
-              className={`shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+              className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                 gameFilter === g.id
-                  ? "border-sky-500/50 bg-sky-500/10 text-sky-300"
-                  : "border-border bg-card/60 text-muted-foreground hover:border-input"
+                  ? "bg-sky-500/25 text-sky-100"
+                  : "bg-card/70 text-muted-foreground hover:bg-card"
               }`}
             >
               {g.shortName}
@@ -180,10 +180,10 @@ export default function DiscoverPage() {
               key={c}
               type="button"
               onClick={() => setContentFilter(c)}
-              className={`shrink-0 rounded-full border px-3 py-1 text-xs font-medium capitalize transition-colors ${
+              className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium capitalize transition-colors ${
                 contentFilter === c
-                  ? "border-sky-500/50 bg-sky-500/10 text-sky-300"
-                  : "border-border bg-card/60 text-muted-foreground hover:border-input"
+                  ? "bg-sky-500/25 text-sky-100"
+                  : "bg-card/70 text-muted-foreground hover:bg-card"
               }`}
             >
               {c}
@@ -219,7 +219,7 @@ export default function DiscoverPage() {
                     <Link
                       key={s.id}
                       href={`/stream/${s.id}`}
-                      className="group overflow-hidden rounded-xl border border-border bg-card/60 transition-colors hover:border-input"
+                      className="group overflow-hidden rounded-xl border border-border bg-card/60 transition-colors hover:bg-card"
                     >
                       <div className="relative aspect-video overflow-hidden">
                         <MediaImage
@@ -259,7 +259,7 @@ export default function DiscoverPage() {
                     <Link
                       key={v.id}
                       href={`/vod/${v.id}`}
-                      className="group overflow-hidden rounded-xl border border-border bg-card/60 transition-colors hover:border-input"
+                      className="group overflow-hidden rounded-xl border border-border bg-card/60 transition-colors hover:bg-card"
                     >
                       <div className="relative aspect-video overflow-hidden">
                         <MediaImage
@@ -293,7 +293,7 @@ export default function DiscoverPage() {
                     <Link
                       key={t.id}
                       href={`/team/${t.slug}`}
-                      className="flex items-center gap-3 rounded-xl border border-border bg-card/60 p-3 transition-colors hover:border-input"
+                      className="flex items-center gap-3 rounded-xl border border-border bg-card/60 p-3 transition-colors hover:bg-card"
                     >
                       <img
                         src={t.logoUrl}

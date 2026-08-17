@@ -16,7 +16,7 @@ export function AdBanner() {
       href={ad.clickUrl}
       target="_blank"
       rel="noopener noreferrer"
-      className="block overflow-hidden rounded-xl border border-border bg-card/60 transition-colors hover:border-input"
+      className="block overflow-hidden rounded-xl border border-border bg-card/60 transition-colors hover:bg-card"
     >
       <div className="relative">
         <img

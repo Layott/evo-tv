@@ -21,8 +21,8 @@ function formatDuration(sec: number): string {
 function SkeletonCard() {
   return (
     <div className="space-y-2">
-      <div className="aspect-video animate-pulse rounded-xl bg-card" />
-      <div className="h-3 w-3/4 animate-pulse rounded bg-card" />
+      <div className="aspect-video rounded-xl bg-card" />
+      <div className="h-3 w-3/4 rounded bg-card" />
     </div>
   );
 }
@@ -62,7 +62,7 @@ export function Recommendations({ vods, games, loading }: RecommendationsProps) 
               <Link
                 key={v.id}
                 href={`/vod/${v.id}`}
-                className="group overflow-hidden rounded-xl border border-border bg-card/60 transition-colors hover:border-input"
+                className="group overflow-hidden rounded-xl border border-border bg-card/60 transition-colors hover:bg-card"
               >
                 <div className="relative aspect-video overflow-hidden">
                   <MediaImage

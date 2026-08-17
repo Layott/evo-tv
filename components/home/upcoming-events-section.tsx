@@ -28,13 +28,13 @@ function tierColor(t: string): string {
     case "b":
       return "border-sky-500/40 bg-sky-500/10 text-sky-300";
     default:
-      return "border-input bg-muted text-foreground/80";
+      return "bg-muted text-foreground/80";
   }
 }
 
 function SkeletonCard() {
   return (
-    <div className="h-48 w-72 shrink-0 animate-pulse rounded-xl bg-card" />
+    <div className="h-48 w-72 shrink-0 rounded-xl bg-card" />
   );
 }
 
@@ -71,7 +71,7 @@ export function UpcomingEvents({ events, games, loading }: UpcomingEventsProps) 
               <Link
                 key={ev.id}
                 href={`/events/${ev.id}`}
-                className="group flex w-72 shrink-0 snap-start flex-col overflow-hidden rounded-xl border border-border bg-card/60 transition-colors hover:border-input"
+                className="group flex w-72 shrink-0 snap-start flex-col overflow-hidden rounded-xl border border-border bg-card/60 transition-colors hover:bg-card"
               >
                 <div className="relative aspect-[16/9] overflow-hidden">
                   <img

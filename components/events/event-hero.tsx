@@ -27,7 +27,7 @@ function tierColor(t: string): string {
     case "b":
       return "border-sky-500/40 bg-sky-500/10 text-sky-300";
     default:
-      return "border-input bg-muted text-foreground/80";
+      return "bg-muted text-foreground/80";
   }
 }
 
@@ -56,12 +56,12 @@ export function EventHero({ event, game }: EventHeroProps) {
             Tier {event.tier}
           </span>
           {event.status === "live" && (
-            <span className="flex items-center gap-1 rounded-md border border-red-500/30 bg-red-500/10 px-2 py-0.5 text-[10px] uppercase tracking-wider text-red-400">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" /> Live now
+            <span className="flex items-center gap-1 rounded-md bg-red-500/20 px-2 py-0.5 text-[10px] uppercase tracking-wider text-red-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-red-500" /> Live now
             </span>
           )}
           {event.status === "completed" && (
-            <span className="rounded-md border border-input bg-muted px-2 py-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+            <span className="rounded-md bg-muted px-2 py-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">
               Concluded
             </span>
           )}

@@ -128,7 +128,7 @@ export default function EventDetailPage() {
   if (!event) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-6">
-        <div className="h-72 animate-pulse rounded-xl bg-card" />
+        <div className="h-72 rounded-xl bg-card" />
       </div>
     );
   }
@@ -162,8 +162,8 @@ export default function EventDetailPage() {
               disabled={event.status === "completed"}
               className={`inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                 reminded
-                  ? "border-sky-500/50 bg-sky-500/10 text-sky-300"
-                  : "border-border bg-card/60 text-foreground hover:border-input"
+                  ? "bg-sky-500/25 text-sky-100"
+                  : "border-border bg-card/60 text-foreground hover:bg-card"
               }`}
             >
               {reminded ? <Bell className="h-4 w-4 fill-sky-300" /> : <BellOff className="h-4 w-4" />}
@@ -171,7 +171,7 @@ export default function EventDetailPage() {
             </button>
             <Link
               href={`/events/${event.id}/bracket`}
-              className="inline-flex items-center gap-2 rounded-md border border-border bg-card/60 px-4 py-2 text-sm font-semibold text-foreground hover:border-input"
+              className="inline-flex items-center gap-2 rounded-md border border-border bg-card/60 px-4 py-2 text-sm font-semibold text-foreground hover:bg-card"
             >
               <ListTree className="h-4 w-4" /> View bracket
             </Link>
@@ -202,15 +202,15 @@ export default function EventDetailPage() {
           )}
           {event.status === "live" && (
             <div className="flex flex-col gap-2">
-              <span className="flex items-center gap-2 rounded-md border border-red-500/30 bg-red-500/10 px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-red-400">
-                <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" /> Live now
+              <span className="flex items-center gap-2 rounded-md bg-red-500/20 px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-red-400">
+                <span className="h-2 w-2 rounded-full bg-red-500" /> Live now
               </span>
               <p className="text-sm text-foreground/80">Event in progress.</p>
             </div>
           )}
           {event.status === "completed" && (
             <div className="flex flex-col gap-2">
-              <span className="rounded-md border border-input bg-muted px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-foreground/80">
+              <span className="rounded-md bg-muted px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-foreground/80">
                 Concluded
               </span>
               <p className="text-sm text-muted-foreground">
@@ -226,7 +226,7 @@ export default function EventDetailPage() {
         {teamsQ.isPending ? (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="h-40 animate-pulse rounded-xl bg-card" />
+              <div key={i} className="h-40 rounded-xl bg-card" />
             ))}
           </div>
         ) : teams.length === 0 ? (

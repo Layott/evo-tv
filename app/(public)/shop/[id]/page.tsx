@@ -116,11 +116,10 @@ export default function ProductDetailPage() {
                 <button
                   key={i}
                   onClick={() => setActiveImage(i)}
-                  className={cn(
-                    "relative aspect-square w-20 overflow-hidden rounded-lg border",
+                  className={cn( "relative aspect-square w-20 overflow-hidden rounded-lg border",
                     i === activeImage
                       ? "border-sky-500/60"
-                      : "border-border hover:border-input"
+                      : "border-border hover:bg-card"
                   )}
                 >
                   <Image src={img} alt="" fill className="object-cover" />
@@ -131,7 +130,7 @@ export default function ProductDetailPage() {
         </div>
 
         <div>
-          <Badge className="border-input bg-card capitalize text-foreground/80">
+          <Badge className="bg-card capitalize text-foreground/80">
             {product.category}
           </Badge>
           <h1 className="mt-2 text-2xl font-bold text-foreground sm:text-3xl">

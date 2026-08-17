@@ -16,7 +16,7 @@ export function FollowingGrid({ teams, players }: Props) {
   const empty = teams.length === 0 && players.length === 0;
   if (empty) {
     return (
-      <div className="rounded-xl border border-dashed border-border bg-card/30 p-8 text-center">
+      <div className="rounded-xl bg-card/50 bg-card/30 p-8 text-center">
         <Users className="mx-auto size-10 text-muted-foreground" />
         <p className="mt-3 text-sm font-medium text-foreground/80">
           You&apos;re not following anyone yet.
