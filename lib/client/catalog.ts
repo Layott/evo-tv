@@ -68,8 +68,15 @@ export async function getMainChannel(): Promise<Stream | null> {
 export async function reportStream(
   streamId: string,
   reason = "user-reported",
-): Promise<{ ticketId: string }> {
-  return apiSend<{ ticketId: string }>("POST", "/api/reports", {
+  /*
+   * The route answers `{ ok, reportId }`. This asked for `ticketId`, which no
+   * response has ever contained, so the caller destructured undefined and the
+   * confirmation read "Ticket: undefined". The report itself was always filed;
+   * only the receipt was broken, which is the kind of bug that makes a working
+   * feature look dead.
+   */
+): Promise<{ ok: boolean; reportId: string }> {
+  return apiSend<{ ok: boolean; reportId: string }>("POST", "/api/reports", {
     targetType: "stream",
     targetId: streamId,
     category: "other",
