@@ -49,7 +49,10 @@ function Slider({
         <SliderPrimitive.Thumb
           data-slot="slider-thumb"
           key={index}
-          className="border-primary ring-ring/50 block size-4 shrink-0 rounded-full border bg-white shadow-sm transition-[color,box-shadow] hover:ring-4 focus-visible:ring-4 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50"
+          // The knob reads against both the muted track and the filled range on
+          // its own, so it needs neither the ring it was outlined with nor the
+          // hover halo. The focus ring stays: that one is the a11y affordance.
+          className="ring-ring/50 bg-foreground block size-4 shrink-0 rounded-full focus-visible:ring-4 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50"
         />
       ))}
     </SliderPrimitive.Root>

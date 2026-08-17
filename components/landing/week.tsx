@@ -93,14 +93,16 @@ export default function Week({ days, nowIso }: Props) {
                 <span className="mt-1 block font-mono text-[0.68rem] tabular-nums text-[var(--paper-faint)]">
                   {d.dateKey.slice(8)}.{d.dateKey.slice(5, 7)}
                 </span>
-                {/* Scales in from the left rather than cutting on/off. */}
+                {/* Marks the selected day only. It used to grow in on hover as
+                    well, which made every day in the row animate under the
+                    pointer; the label colour already carries the hover. */}
                 <span
                   aria-hidden
                   className={[
                     "day-underline mt-2 block h-[3px]",
                     active
                       ? "scale-x-100 bg-[var(--brand)]"
-                      : "scale-x-0 bg-[var(--paper-faint)] group-hover:scale-x-100",
+                      : "scale-x-0 bg-[var(--paper-faint)]",
                   ].join(" ")}
                 />
               </button>

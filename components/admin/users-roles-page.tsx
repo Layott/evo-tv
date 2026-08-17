@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ExternalLink, Loader2, Search, UserPlus } from "lucide-react";
+import { ExternalLink, Loader2, Search, UserPlus } from "@/components/icons";
 import { toast } from "sonner";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -54,8 +54,10 @@ import { formatDate, timeAgo } from "./utils";
 import { UserAvatar } from "@/components/ui/user-avatar";
 
 interface AdminProfile extends Profile {
-  lastActive: string;
+  /** Null when the account has never signed in. Not the same as "long ago". */
+  lastActive: string | null;
   suspended: boolean;
+  email: string;
 }
 
 function roleTone(role: string): "emerald" | "amber" | "blue" | "neutral" {
@@ -77,14 +79,15 @@ export function UsersRolesPage() {
     queryFn: () => adminListUsers({ limit: 200 }),
   });
 
-  // `lastActive` and `suspended` are not on the users endpoint yet, so they are
-  // filled from what the row does carry rather than invented per render.
+  // The endpoint sends `suspended` and a real `lastActive` now. It used to send
+  // neither, and `lastActive` fell back to `createdAt`, which put a confident
+  // wrong date in the column for every account.
   const all: AdminProfile[] = React.useMemo(
     () =>
       (usersQ.data?.users ?? []).map((p) => ({
         ...p,
-        suspended: Boolean((p as { suspended?: boolean }).suspended),
-        lastActive: (p as { lastActive?: string }).lastActive ?? p.createdAt,
+        suspended: p.suspended,
+        lastActive: p.lastActive,
       })),
     [usersQ.data],
   );
@@ -144,7 +147,13 @@ export function UsersRolesPage() {
     {
       key: "country",
       header: "Country",
-      cell: (row) => <StatusBadge tone="neutral">{row.country}</StatusBadge>,
+      // Blank beats a badge reading "NG" for somebody who never told us.
+      cell: (row) =>
+        row.country ? (
+          <StatusBadge tone="neutral">{row.country}</StatusBadge>
+        ) : (
+          <span className="text-xs text-muted-foreground">Unknown</span>
+        ),
     },
     {
       key: "created",
@@ -157,8 +166,13 @@ export function UsersRolesPage() {
       key: "lastActive",
       header: "Last active",
       sortable: true,
-      accessor: (r) => new Date(r.lastActive).getTime(),
-      cell: (row) => <span className="text-xs text-muted-foreground">{timeAgo(row.lastActive)}</span>,
+      // Never-signed-in sorts oldest rather than to "now".
+      accessor: (r) => (r.lastActive ? new Date(r.lastActive).getTime() : 0),
+      cell: (row) => (
+        <span className="text-xs text-muted-foreground">
+          {row.lastActive ? timeAgo(row.lastActive) : "Never signed in"}
+        </span>
+      ),
     },
     {
       key: "status",
@@ -314,9 +328,11 @@ export function UsersRolesPage() {
                 </div>
 
                 <dl className="grid grid-cols-2 gap-3 text-sm">
-                  <Info label="Country">{selected.country}</Info>
+                  <Info label="Country">{selected.country || "Unknown"}</Info>
                   <Info label="Member since">{formatDate(selected.createdAt)}</Info>
-                  <Info label="Last active">{timeAgo(selected.lastActive)}</Info>
+                  <Info label="Last active">
+                    {selected.lastActive ? timeAgo(selected.lastActive) : "Never signed in"}
+                  </Info>
                   <Info label="Onboarded">{selected.onboardedAt ? "Yes" : "No"}</Info>
                 </dl>
 
@@ -440,7 +456,7 @@ export function UsersRolesPage() {
 function Info({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <dt className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</dt>
+      <dt className="text-[10px] r text-muted-foreground">{label}</dt>
       <dd className="text-foreground">{children}</dd>
     </div>
   );

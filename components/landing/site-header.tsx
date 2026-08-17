@@ -48,7 +48,7 @@ export default function SiteHeader({
     <>
       <header
         className={`fixed inset-x-0 top-0 z-40 transition-colors duration-300 ${
-          scrolled ? "bg-[var(--ink)]/90 backdrop-blur-md" : "bg-transparent"
+          scrolled ? "bg-[var(--ink)]" : "bg-transparent"
         }`}
       >
         <div className="mx-auto flex max-w-[92rem] items-center justify-between px-5 py-6 sm:px-10">

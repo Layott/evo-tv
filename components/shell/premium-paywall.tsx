@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Lock, X, Check } from "lucide-react";
+import { Lock, X } from "@/components/icons";
 import * as React from "react";
 
 interface Props {
@@ -69,12 +69,13 @@ export function PremiumPaywallModal({
         type="button"
         aria-label="Close paywall"
         onClick={onClose}
-        className="absolute inset-0 bg-black/75 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/75"
       />
 
       {/* Elevation is neutral black, not a sky-blue bloom, and the panel is a
-          filled surface rather than a tinted outline. */}
-      <div className="relative w-full max-w-md overflow-hidden rounded-2xl bg-gradient-to-b from-[#0b1020] to-[#05091a] shadow-2xl shadow-black/50">
+          filled surface rather than a tinted outline. A dialog is one of the
+          few things that genuinely floats, so it keeps its shadow. */}
+      <div className="relative w-full max-w-md overflow-hidden rounded-2xl bg-card shadow-2xl shadow-black/50">
         {onClose && (
           <button
             type="button"
@@ -103,11 +104,13 @@ export function PremiumPaywallModal({
           </div>
         </div>
 
+        {/* Set as plain lines. A tick beside every row is the stock landing-page
+            perks list, and the ticks were carrying no information the sentences
+            did not already carry. */}
         <ul className="space-y-2 px-6 pb-5 text-sm">
           {PERKS.map((p) => (
-            <li key={p} className="flex items-start gap-2 text-foreground/80">
-              <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-sky-400" />
-              <span>{p}</span>
+            <li key={p} className="text-foreground/80">
+              {p}
             </li>
           ))}
         </ul>
@@ -119,7 +122,7 @@ export function PremiumPaywallModal({
               onClose?.();
               router.push("/upgrade");
             }}
-            className="flex flex-1 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-sky-500 to-cyan-400 px-4 py-2.5 text-sm font-semibold text-ink transition-opacity hover:opacity-90"
+            className="flex flex-1 items-center justify-center gap-2 rounded-full bg-sky-500 px-4 py-2.5 text-sm font-semibold text-ink hover:bg-sky-600"
           >
             Upgrade with Paystack
           </button>

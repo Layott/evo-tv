@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2 } from "@/components/icons";
 
 import { SectionCard, SettingRow } from "./section-card";
 import { Switch } from "@/components/ui/switch";
@@ -183,7 +183,7 @@ export function NotificationsForm() {
       <Button
         onClick={save}
         disabled={saving || !state}
-        className="mt-4 bg-sky-500 text-black hover:bg-sky-500/90"
+        className="mt-4 bg-sky-500 text-ink hover:bg-sky-500/90"
       >
         {saving ? <Loader2 className="size-4 animate-spin" /> : null}
         Save preferences

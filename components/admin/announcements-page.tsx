@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Bell, Loader2, Send } from "lucide-react";
+import { Bell, Loader2, Send } from "@/components/icons";
 import { toast } from "sonner";
 import { useMutation } from "@tanstack/react-query";
 

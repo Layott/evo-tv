@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Mail, Palette, Save, ToggleLeft, Upload } from "lucide-react";
+import { Mail, Palette, Save, ToggleLeft, Upload } from "@/components/icons";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {

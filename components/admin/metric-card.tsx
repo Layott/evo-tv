@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDownRight, ArrowUpRight } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight } from "@/components/icons";
 import { cn } from "@/lib/utils";
 
 interface MetricCardProps {
@@ -19,7 +19,7 @@ export function MetricCard({ title, value, delta, deltaLabel, icon: Icon, hint }
   return (
     <div className="rounded-xl border border-border bg-card/50 p-4">
       <div className="flex items-start justify-between">
-        <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{title}</div>
+        <div className="text-xs font-medium r text-muted-foreground">{title}</div>
         {Icon ? (
           <div className="rounded-md bg-muted/50 p-1.5 text-muted-foreground">
             <Icon className="h-3.5 w-3.5" />
@@ -39,8 +39,15 @@ export function MetricCard({ title, value, delta, deltaLabel, icon: Icon, hint }
             {Math.abs(delta!).toFixed(1)}%
           </span>
         ) : null}
-        {deltaLabel ? <span className="text-muted-foreground">{deltaLabel}</span> : null}
-        {hint && !deltaLabel ? <span className="text-muted-foreground">{hint}</span> : null}
+        {/* The label only means something next to the number it qualifies. On
+            its own it rendered as a bare "vs yesterday" under a figure with
+            nothing to compare it to. */}
+        {deltaLabel && showDelta ? (
+          <span className="text-muted-foreground">{deltaLabel}</span>
+        ) : null}
+        {hint && !(deltaLabel && showDelta) ? (
+          <span className="text-muted-foreground">{hint}</span>
+        ) : null}
       </div>
     </div>
   );

@@ -27,6 +27,19 @@ const ORIGIN_LIST =
           .filter(Boolean),
       );
 
+// `null` means reflect whatever origin asked, with credentials. That is the
+// right default for local development and the wrong one for a public API, so
+// say so once at boot rather than letting it pass unnoticed. `lib/auth` refuses
+// the wildcard outright in production; this side keeps working, because losing
+// CORS would take the whole app down, and a loud log is the safer failure.
+if (ORIGIN_LIST === null && process.env.NODE_ENV === "production") {
+  console.warn(
+    "[cors] ALLOWED_ORIGINS is unset or '*'. Every origin is being reflected " +
+      "with credentials. Set it to the real list, e.g. " +
+      "ALLOWED_ORIGINS=https://evotv.co,https://www.evotv.co",
+  );
+}
+
 function pickOrigin(reqOrigin: string | null): string | null {
   if (!reqOrigin) return null;
   if (ORIGIN_LIST === null) return reqOrigin;

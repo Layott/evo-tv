@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Plus, Search, Trash2, Upload } from "lucide-react";
+import { Plus, Search, Trash2, Upload } from "@/components/icons";
 import { toast } from "sonner";
 import {
   CartesianGrid,
@@ -166,7 +166,7 @@ export function AdsManagerPage() {
       header: "Placement",
       sortable: true,
       accessor: (r) => r.placement,
-      cell: (row) => <StatusBadge tone="violet">{placementLabel(row.placement)}</StatusBadge>,
+      cell: (row) => <StatusBadge>{placementLabel(row.placement)}</StatusBadge>,
     },
     {
       key: "weight",
@@ -313,19 +313,19 @@ export function AdsManagerPage() {
         </p>
         <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
           <div>
-            <div className="text-xs uppercase tracking-wider text-muted-foreground">Impressions</div>
+            <div className="text-xs r text-muted-foreground">Impressions</div>
             <div className="mt-1 text-2xl font-bold tabular-nums text-foreground">
               {formatNumber(totals.impressions)}
             </div>
           </div>
           <div>
-            <div className="text-xs uppercase tracking-wider text-muted-foreground">Clicks</div>
+            <div className="text-xs r text-muted-foreground">Clicks</div>
             <div className="mt-1 text-2xl font-bold tabular-nums text-foreground">
               {formatNumber(totals.clicks)}
             </div>
           </div>
           <div>
-            <div className="text-xs uppercase tracking-wider text-muted-foreground">CTR</div>
+            <div className="text-xs r text-muted-foreground">CTR</div>
             <div className="mt-1 text-2xl font-bold tabular-nums text-foreground">
               {totals.impressions > 0
                 ? `${((totals.clicks / totals.impressions) * 100).toFixed(2)}%`
@@ -390,7 +390,7 @@ function AdForm({
     initial ?? {
       id: `ad_new_${Date.now()}`,
       placement: "home_banner",
-      mediaUrl: "/placeholder.svg?height=200&width=1200&text=New+Creative",
+      mediaUrl: "",
       clickUrl: "https://example.com",
       advertiser: "",
       active: true,
@@ -407,7 +407,7 @@ function AdForm({
         initial ?? {
           id: `ad_new_${Date.now()}`,
           placement: "home_banner",
-          mediaUrl: "/placeholder.svg?height=200&width=1200&text=New+Creative",
+          mediaUrl: "",
           clickUrl: "https://example.com",
           advertiser: "",
           active: true,

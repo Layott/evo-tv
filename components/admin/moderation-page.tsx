@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { AlertTriangle, Check, MessageSquare, ShieldBan, Undo2 } from "lucide-react";
+import { AlertTriangle, Check, MessageSquare, ShieldBan, Undo2 } from "@/components/icons";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { useQueryClient } from "@tanstack/react-query";

@@ -1,12 +1,12 @@
 "use client";
 
 import * as React from "react";
-import Image from "next/image";
 import type { Product } from "@/lib/types";
 import { listProducts } from "@/lib/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingBag } from "lucide-react";
+import { MediaImage } from "@/components/ui/media-image";
+import { ShoppingBag } from "@/components/icons";
 import { toast } from "sonner";
 import { useAuth } from "@/components/providers";
 import { addToCart } from "@/components/shop/cart-store";
@@ -68,12 +68,11 @@ export function InStreamShop() {
               className="rounded-lg border border-border bg-card/60 overflow-hidden flex flex-col"
             >
               <div className="relative aspect-square bg-muted">
-                <Image
-                  src={p.images[0] || "/placeholder.svg"}
+                <MediaImage
+                  src={p.images[0]}
                   alt={p.name}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width:768px) 50vw, 200px"
+                  seed={p.id}
+                  className="absolute inset-0 h-full w-full object-cover"
                 />
               </div>
               <div className="p-2 flex-1 flex flex-col gap-1">

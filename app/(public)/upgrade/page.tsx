@@ -3,7 +3,6 @@
 import { useQuery } from "@tanstack/react-query";
 import * as React from "react";
 import Link from "next/link";
-import { Check, CreditCard, Crown, Phone, Sparkles, Star, Ticket, X } from "lucide-react";
 
 import { listTiers, type Tier } from "@/lib/client";
 import { BackButton } from "@/components/shell/back-button";
@@ -17,113 +16,154 @@ import {
 import { formatNgn } from "@/components/profile/ngn";
 import { PaystackMark } from "@/components/shop/paystack-button";
 
+/**
+ * Upgrade.
+ *
+ * Rewritten because the old page had three problems, and only one of them was
+ * the look.
+ *
+ * **It hid half the product.** `/api/tiers` returns four tiers. This page
+ * picked out `free` and `premium` by id and rendered those two, so Supporter
+ * at 1,500 and Pro at 12,000 did not exist on the website at all, while the
+ * app listed them. Anyone who wanted the cheap tier could not find it.
+ *
+ * **Every button bought Premium.** The CTA linked to a hardcoded
+ * `/checkout?plan=premium` regardless of which tier's card it sat in, so the
+ * moment a second paid tier appeared it would have charged the wrong price.
+ *
+ * **The shape was the banned one.** Columns side by side with a "Most popular"
+ * flag on the middle one. The flag also claimed a fact nobody has measured:
+ * there is no data on which plan sells.
+ *
+ * The page is ordered by who is reading it instead. Free is a line, because it
+ * is the state you are in rather than a product on sale. Supporter and Premium
+ * are the viewer's decision, as full-width rows. Pro is a creator buying
+ * analytics, an ingest slot and API access - a different person at eight times
+ * the price - so it gets its own section rather than a column asking a viewer
+ * to rule it out.
+ */
+
 const FAQ = [
   {
     q: "Can I cancel anytime?",
-    a: "Yes. Premium benefits continue through the end of your current billing period after cancelling.",
+    a: "Yes. Your benefits continue to the end of the period you have paid for, and nothing renews after that.",
   },
   {
     q: "Which payment methods work?",
-    a: "Any Nigerian card, bank transfer, USSD, or Opay via Paystack. We never store card details ourselves.",
+    a: "Card and bank transfer through Paystack. Card details never touch EVO TV's servers.",
   },
   {
-    q: "Is the trial really free?",
-    a: "Your first 7 days are free. You won't be billed until the trial ends and you can cancel any time before.",
+    q: "What happens to my account if I stop paying?",
+    a: "Nothing is deleted. You drop back to Free, keep your follows, watch history and profile, and the ads come back.",
   },
   {
-    q: "Do I need Premium to chat?",
-    a: "No. Chat is free on every stream. Premium gets you a badge, slower cooldowns, and custom emotes.",
+    q: "Do I need to pay to chat?",
+    a: "No. Chat is free on every stream. Paid plans add a badge and access to premium-only rooms.",
   },
 ];
 
 export default function UpgradePage() {
-  // The tier ladder comes from /api/tiers now rather than a bundled constant.
-  const { data: tiers = [] } = useQuery({
+  const { data: tiers = [], isPending, isError, refetch } = useQuery({
     queryKey: ["tiers"],
     queryFn: () => listTiers(),
   });
-  const free = tiers.find((t: Tier) => t.id === "free");
-  const premium = tiers.find((t: Tier) => t.id === "premium");
 
-  // The ladder is fetched, so the first paint has neither tier yet.
-  if (!free || !premium) {
-    return (
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:py-12">
-        <div className="mb-4">
-          <BackButton fallbackHref="/home" />
-        </div>
-        <p className="text-sm text-muted-foreground">Loading plans…</p>
-      </div>
-    );
-  }
+  const free = tiers.find((t: Tier) => t.id === "free");
+  // Split by who the plan is for, not by price, so a new middle tier lands in
+  // the right section without a code change.
+  const viewerPlans = tiers.filter((t: Tier) => t.priceNgn > 0 && t.id !== "pro");
+  const creatorPlan = tiers.find((t: Tier) => t.id === "pro");
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 sm:py-12">
-      <div className="mb-4">
+    <div className="mx-auto max-w-3xl px-4 py-8 sm:py-12">
+      <div className="mb-6">
         <BackButton fallbackHref="/home" />
       </div>
-      <header className="mx-auto max-w-3xl text-center">
-        <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/20 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-amber-300">
-          <Sparkles className="size-3" /> EVO TV Premium
-        </span>
-        <h1 className="mt-4 text-3xl font-bold text-foreground sm:text-4xl">
-          Never miss a play. No ads. 1080p.
+
+      <header className="max-w-2xl">
+        <h1 className="text-3xl font-bold text-foreground sm:text-4xl">
+          Watch without the ads
         </h1>
-        <p className="mt-3 text-sm text-muted-foreground sm:text-base">
-          Upgrade once, watch every tournament across Africa in full fidelity - and grab exclusive film-room
-          analysis from the casters you already trust.
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground sm:text-base">
+          Every stream, show and VOD is free to watch. Paying removes the ads,
+          opens the premium chat rooms, and gets you VOD drops before they go out
+          to everyone.
         </p>
       </header>
 
-      <div className="mx-auto mt-10 grid max-w-4xl gap-4 sm:grid-cols-2">
-        <TierCard tier={free} current />
-        <TierCard tier={premium} highlight />
-      </div>
-
-      <div className="mx-auto mt-6 max-w-4xl text-center text-xs text-muted-foreground">
-        Secure checkout via <PaystackMark className="align-middle" /> · Cancel anytime
-      </div>
-
-      <section className="mx-auto mt-12 max-w-4xl">
-        <h2 className="mb-4 text-center text-lg font-semibold text-foreground">
-          Choose how you want to pay
-        </h2>
-        <div className="grid gap-3 sm:grid-cols-3">
-          <PaymentMethodCard
-            href="/checkout?plan=premium"
-            badge="Card"
-            title="Paystack"
-            subtitle="Visa, Mastercard, Verve, bank transfer."
-            Icon={CreditCard}
-            accent="bg-sky-500/25 text-sky-100"
-            primary
-          />
-          <PaymentMethodCard
-            href="/checkout/mobile-money"
-            badge="Mobile money"
-            title="M-Pesa, MoMo, Airtel"
-            subtitle="STK push to your phone in seconds."
-            Icon={Phone}
-            accent="bg-emerald-500/25 text-emerald-100"
-          />
-          <PaymentMethodCard
-            href="/ussd"
-            badge="USSD"
-            title="Dial-to-pay"
-            subtitle="No app needed. Works on any phone."
-            Icon={Ticket}
-            accent="bg-amber-500/25 text-amber-100"
-          />
+      {/* `isPending` first. `isLoading` is `isPending && isFetching` in React
+          Query v5, so between two retries of a failing request isLoading,
+          isError and data are all falsy at once and a naive three-way branch
+          renders a page with a heading and nothing under it. */}
+      {isPending ? (
+        <div className="mt-10 space-y-3" aria-busy="true">
+          <div className="h-4 w-40 rounded bg-card" />
+          <div className="h-36 rounded-2xl bg-card" />
+          <div className="h-44 rounded-2xl bg-card" />
         </div>
-      </section>
+      ) : isError || viewerPlans.length === 0 ? (
+        <div className="mt-10 max-w-md">
+          <h2 className="text-base font-semibold text-foreground">
+            Plans are not loading
+          </h2>
+          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+            We could not reach the server. Everything on EVO TV is still free to
+            watch while this is down.
+          </p>
+          <Button
+            className="mt-4 bg-accent text-foreground hover:bg-accent/80"
+            onClick={() => refetch()}
+          >
+            Try again
+          </Button>
+        </div>
+      ) : (
+        <>
+          {free ? (
+            <div className="mt-10">
+              <p className="text-xs text-muted-foreground">
+                You are on {free.name}
+              </p>
+              <p className="mt-1 text-sm text-foreground">{free.tagline}</p>
+            </div>
+          ) : null}
 
-      <section className="mx-auto mt-14 max-w-3xl">
-        <h2 className="mb-4 text-center text-lg font-semibold text-foreground">Frequently asked</h2>
-        <Accordion type="single" collapsible className="rounded-2xl border border-border bg-card/40 px-4">
+          <div className="mt-6 space-y-3">
+            {viewerPlans.map((t: Tier) => (
+              <PlanRow key={t.id} tier={t} emphasis={t.id === "premium"} />
+            ))}
+          </div>
+
+          <p className="mt-4 text-xs text-muted-foreground">
+            <PaystackMark className="align-middle" /> handles the payment. Cancel
+            any time.
+          </p>
+
+          {creatorPlan ? (
+            <section className="mt-16">
+              <h2 className="text-lg font-semibold text-foreground">
+                Streaming on EVO TV?
+              </h2>
+              <p className="mt-1 mb-4 text-sm leading-relaxed text-muted-foreground">
+                {creatorPlan.tagline}
+              </p>
+              <PlanRow tier={creatorPlan} />
+            </section>
+          ) : null}
+        </>
+      )}
+
+      <section className="mt-16">
+        <h2 className="mb-3 text-lg font-semibold text-foreground">
+          Frequently asked
+        </h2>
+        <Accordion type="single" collapsible className="rounded-2xl bg-card/40 px-4">
           {FAQ.map((f, i) => (
-            <AccordionItem key={f.q} value={`q-${i}`} className="border-border last:border-b-0">
+            <AccordionItem key={f.q} value={`q-${i}`} className="border-none">
               <AccordionTrigger className="text-left">{f.q}</AccordionTrigger>
-              <AccordionContent className="text-sm text-muted-foreground">{f.a}</AccordionContent>
+              <AccordionContent className="text-sm text-muted-foreground">
+                {f.a}
+              </AccordionContent>
             </AccordionItem>
           ))}
         </Accordion>
@@ -132,117 +172,50 @@ export default function UpgradePage() {
   );
 }
 
-function PaymentMethodCard({
-  href,
-  badge,
-  title,
-  subtitle,
-  Icon,
-  accent,
-  primary,
-}: {
-  href: string;
-  badge: string;
-  title: string;
-  subtitle: string;
-  Icon: React.ComponentType<{ className?: string }>;
-  accent: string;
-  primary?: boolean;
-}) {
-  return (
-    <Link
-      href={href}
-      className={`group flex flex-col gap-3 rounded-2xl p-5 transition hover:bg-card/70 ${primary ? "bg-sky-500/15" : "bg-card/40"}`}
-    >
-      <div className="flex items-start gap-3">
-        <div
-          className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${accent}`}
-        >
-          <Icon className="size-5" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-            {badge}
-          </span>
-          <p className="text-sm font-semibold text-foreground">{title}</p>
-          <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{subtitle}</p>
-        </div>
-      </div>
-      <div className="mt-auto flex items-center justify-between text-xs">
-        <span className="text-muted-foreground">Premium · {formatNgn(4_500)}/mo</span>
-        <span className="font-semibold text-sky-300 transition group-hover:translate-x-0.5">
-          Continue →
-        </span>
-      </div>
-    </Link>
-  );
-}
-
-function TierCard({
-  tier,
-  current,
-  highlight,
-}: {
-  tier: Tier;
-  current?: boolean;
-  highlight?: boolean;
-}) {
+/**
+ * One plan, full width.
+ *
+ * `emphasis` fills the surface a step brighter for the plan the page actually
+ * recommends. A fill, not a badge and not a ring: the old card carried a "Most
+ * popular" flag, which is a claim, and this is a design decision.
+ */
+function PlanRow({ tier, emphasis }: { tier: Tier; emphasis?: boolean }) {
   return (
     <div
-      className={`relative flex h-full flex-col rounded-2xl p-6 ${
-        highlight
-          ? "bg-gradient-to-br from-sky-500/25 via-card/60 to-amber-500/20"
-          : "bg-card/40"
-      }`}
+      className={`rounded-2xl p-5 sm:p-6 ${emphasis ? "bg-sky-500/15" : "bg-card/40"}`}
     >
-      {highlight ? (
-        <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-sky-500 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-black">
-          Most popular
-        </span>
-      ) : null}
-      <div className="flex items-center gap-2">
-        {highlight ? (
-          <Crown className="size-5 text-amber-400" />
-        ) : (
-          <Star className="size-5 text-muted-foreground" />
-        )}
-        <h3 className="text-xl font-bold text-foreground">{tier.name}</h3>
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <h3 className="text-lg font-bold text-foreground">{tier.name}</h3>
+        <p className="text-2xl font-bold text-foreground">
+          {formatNgn(tier.priceNgn)}
+          <span className="ml-1 text-xs font-normal text-muted-foreground">
+            /month
+          </span>
+        </p>
       </div>
-      <p className="mt-1 text-sm text-muted-foreground">{tier.tagline}</p>
-      <div className="mt-4">
-        <span className="text-3xl font-extrabold text-foreground">
-          {tier.priceNgn === 0 ? "Free" : formatNgn(tier.priceNgn)}
-        </span>
-        {tier.priceNgn > 0 ? (
-          <span className="ml-1 text-sm text-muted-foreground">/month</span>
-        ) : null}
-      </div>
-      <ul className="mt-5 flex-1 space-y-2">
+
+      <ul className="mt-3 space-y-1.5">
         {tier.features.map((f: string) => (
-          <li key={f} className="flex items-start gap-2 text-sm text-foreground">
-            <Check
-              className={`mt-0.5 size-4 shrink-0 ${highlight ? "text-sky-400" : "text-muted-foreground"}`}
-            />
-            <span>{f}</span>
+          <li key={f} className="text-sm leading-relaxed text-muted-foreground">
+            {f}
           </li>
         ))}
       </ul>
-      <div className="mt-6">
-        {current ? (
-          <Button variant="outline" className="w-full border-border" disabled>
-            <X className="size-4" /> {tier.cta}
-          </Button>
-        ) : (
-          <Button
-            asChild
-            className="w-full bg-amber-500 text-black hover:bg-amber-500/90"
-          >
-            <Link href="/checkout?plan=premium">
-              {tier.cta} - {formatNgn(tier.priceNgn)}/mo
-            </Link>
-          </Button>
-        )}
-      </div>
+
+      <Button
+        asChild
+        className={`mt-5 w-full sm:w-auto ${
+          emphasis
+            ? "bg-sky-500 text-ink hover:bg-sky-400"
+            : "bg-accent text-foreground hover:bg-accent/80"
+        }`}
+      >
+        {/* The plan the button sits in, not a hardcoded one. This used to read
+            `?plan=premium` on every card. */}
+        <Link href={`/checkout?plan=${tier.id}`}>{tier.cta}</Link>
+      </Button>
     </div>
   );
 }
+
+

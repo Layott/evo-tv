@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Radio, Clock, Eye, Heart, Share2, Info } from "lucide-react";
+import { Radio, Clock, Eye, Heart, Share2, Info } from "@/components/icons";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/providers";
 import { BackButton } from "@/components/shell/back-button";
@@ -115,31 +115,32 @@ export default function ChannelPage() {
         </button>
       </div>
 
-      <section className="relative overflow-hidden rounded-2xl border border-sky-500/20 bg-[#05091a]">
-        <div className="absolute inset-0 bg-gradient-to-br from-sky-500/15 via-transparent to-cyan-400/10" />
+      <section className="relative overflow-hidden rounded-2xl bg-sky-500/10">
         <div className="relative grid gap-6 p-6 md:grid-cols-[2fr,1fr] md:p-8">
           <div>
             <div className="mb-3 inline-flex items-center gap-2">
               {/* Read from the stream row. This was hardcoded, so the channel
                   announced itself as live even with nothing being broadcast. */}
               {channel?.isLive ? (
-                <span className="inline-flex items-center gap-1 rounded-md bg-red-500/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-red-400">
+                <span className="inline-flex items-center gap-1 rounded-md bg-red-500/20 px-2 py-0.5 text-[10px] font-semibold r text-red-400">
                   <span className="h-1.5 w-1.5 rounded-full bg-red-500" /> Live
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1 rounded-md bg-card px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <span className="inline-flex items-center gap-1 rounded-md bg-card px-2 py-0.5 text-[10px] font-semibold r text-muted-foreground">
                   Off air
                 </span>
               )}
-              <span className="rounded-md border border-sky-400/30 bg-sky-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-sky-300">
+              <span className="rounded-md bg-sky-500/25 px-2 py-0.5 text-[10px] font-semibold r text-sky-300">
                 Flagship
               </span>
-              <span className="rounded-md border border-border bg-card/80 px-2 py-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+              <span className="rounded-md bg-card/80 px-2 py-0.5 text-[10px] r text-muted-foreground">
                 24 / 7
               </span>
             </div>
             <div className="mb-2 flex items-center gap-3">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-sky-400/30 bg-[#05091a] p-2">
+              {/* The mark is a light logo, so its tile stays ink on either theme
+                  rather than following the surface tokens. */}
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-ink p-2">
                 <Image
                   src="/evo-logo/evo-tv-152.png"
                   alt="EVO TV"
@@ -177,7 +178,9 @@ export default function ChannelPage() {
             <div className="mt-6 flex gap-3">
               <Link
                 href="/stream/channel_main"
-                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-sky-500 to-cyan-400 px-5 py-2.5 text-sm font-semibold text-ink transition-opacity hover:opacity-90"
+                /* sky-500/600 are the two fill steps that are NOT theme-indirected,
+                   so the hover darkens the same way on paper and on ink. */
+                className="inline-flex items-center gap-2 rounded-full bg-sky-500 px-5 py-2.5 text-sm font-semibold text-ink hover:bg-sky-600"
               >
                 Watch now
               </Link>
@@ -207,7 +210,7 @@ export default function ChannelPage() {
             </div>
           </div>
 
-          <div className="relative hidden overflow-hidden rounded-xl border border-border md:block">
+          <div className="relative hidden overflow-hidden rounded-xl md:block">
             <Image
               src="/evo-logo/evo-tv-hero.png"
               alt="EVO TV channel preview"
@@ -215,7 +218,6 @@ export default function ChannelPage() {
               height={360}
               className="h-full w-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#05091a] via-transparent to-transparent" />
           </div>
         </div>
       </section>
@@ -255,11 +257,11 @@ export default function ChannelPage() {
                     </td>
                     <td className="px-4 py-3">
                       {row.state === "live" ? (
-                        <span className="inline-flex rounded-md bg-red-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+                        <span className="inline-flex rounded-md bg-red-600 px-2 py-0.5 text-[10px] font-bold r text-white">
                           On now
                         </span>
                       ) : (
-                        <span className="inline-flex rounded-md border border-border bg-card px-2 py-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+                        <span className="inline-flex rounded-md border border-border bg-card px-2 py-0.5 text-[10px] r text-muted-foreground">
                           {row.pillar}
                         </span>
                       )}
@@ -300,10 +302,10 @@ export default function ChannelPage() {
                   <div className="relative aspect-video bg-background">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={s.thumbnailUrl} alt="" className="h-full w-full object-cover opacity-80" />
-                    <div className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-md bg-red-500/20 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-red-400">
+                    <div className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-md bg-red-500/20 px-1.5 py-0.5 text-[10px] font-semibold r text-red-400">
                       <span className="h-1 w-1 rounded-full bg-red-500" /> Live
                     </div>
-                    <div className="absolute right-2 top-2 rounded-md bg-black/70 px-1.5 py-0.5 text-[10px] text-foreground">
+                    <div className="absolute right-2 top-2 rounded-md bg-black/70 px-1.5 py-0.5 text-[10px] text-paper">
                       {fmtViewers(s.viewerCount)}
                     </div>
                   </div>
@@ -326,7 +328,7 @@ export default function ChannelPage() {
             <Link
               key={c.id}
               href={`/clips/${c.id}`}
-              className="group overflow-hidden rounded-xl border border-border bg-card/60 transition-colors hover:border-sky-500/40"
+              className="group overflow-hidden rounded-xl bg-card/60 hover:bg-card"
             >
               <div className="relative aspect-[9/16] bg-background">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -354,7 +356,7 @@ export default function ChannelPage() {
               href={`/events/${e.id}`}
               className="group rounded-xl border border-border bg-card/60 p-4 transition-colors hover:border-sky-500/40"
             >
-              <div className="mb-2 flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
+              <div className="mb-2 flex items-center gap-2 text-[10px] r text-muted-foreground">
                 <span className="rounded-md border border-sky-400/30 bg-sky-500/10 px-1.5 py-0.5 text-sky-300">
                   Tier {e.tier.toUpperCase()}
                 </span>

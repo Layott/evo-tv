@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { Play, ShoppingBag } from "lucide-react";
+import { Play, ShoppingBag } from "@/components/icons";
 
 import { listOrdersForUser } from "@/lib/client";
 

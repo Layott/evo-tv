@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft } from "@/components/icons";
 
 import {
   adminNavFor,
@@ -34,7 +34,7 @@ export function AdminSidebar() {
         />
         <div>
           <div className="text-sm font-semibold text-foreground">EVO TV</div>
-          <div className="text-[10px] uppercase tracking-wider text-sky-400">Admin CMS</div>
+          <div className="text-[10px] r text-sky-400">Admin CMS</div>
         </div>
       </div>
 

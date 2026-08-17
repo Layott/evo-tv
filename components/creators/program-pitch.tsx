@@ -1,6 +1,6 @@
 "use client";
 
-import { Coins, Sparkles, Users, BarChart3, Mic2, Trophy } from "lucide-react";
+import { Coins, Scissors, Users, BarChart3, Mic2, Trophy } from "@/components/icons";
 
 const FEATURES = [
   {
@@ -14,7 +14,7 @@ const FEATURES = [
     body: "Real-time tips, follower growth, peak concurrent viewers, audience demographics, and payouts.",
   },
   {
-    icon: Sparkles,
+    icon: Scissors,
     title: "Auto-clipper",
     body: "Our highlight engine automatically queues your best moments - approve and publish in two taps.",
   },

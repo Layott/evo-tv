@@ -17,15 +17,15 @@ import {
   Tv,
   Users,
   Vote,
-  type LucideIcon,
-} from "lucide-react";
+  type Icon,
+} from "@/components/icons";
 
 import { hasMinRole, type PlatformRole } from "@/lib/auth/role-catalog";
 
 export interface AdminNavItem {
   href: string;
   label: string;
-  Icon: LucideIcon;
+  Icon: Icon;
   /** Only `/admin` itself needs an exact match, or it lights up on every page. */
   exact?: boolean;
   /**

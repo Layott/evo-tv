@@ -9,7 +9,7 @@ import {
   LogOut,
   Settings,
   User,
-} from "lucide-react";
+} from "@/components/icons";
 import { useAuth } from "@/components/providers";
 import { countUnread } from "@/lib/client";
 import { BrandMark } from "@/components/shell/brand-mark";
@@ -50,7 +50,7 @@ export function TopNav() {
   }, [user]);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur">
+    <header className="sticky top-0 z-40 bg-card">
       <div className="mx-auto flex h-14 max-w-7xl items-center gap-6 px-4">
         <Link href="/home" className="flex shrink-0 items-center gap-2">
           <BrandMark size={28} withWordmark={false} />
@@ -108,12 +108,12 @@ export function TopNav() {
               />
               <span className="hidden text-xs text-foreground sm:inline">{user.handle}</span>
               {role === "premium" && (
-                <span className="rounded-sm bg-amber-500/20 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-amber-300">
+                <span className="rounded-sm bg-amber-500/20 px-1.5 py-0.5 text-[9px] font-semibold r text-amber-300">
                   Premium
                 </span>
               )}
               {role === "admin" && (
-                <span className="rounded-sm bg-sky-500/20 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-sky-300">
+                <span className="rounded-sm bg-sky-500/20 px-1.5 py-0.5 text-[9px] font-semibold r text-sky-300">
                   Admin
                 </span>
               )}

@@ -5,7 +5,7 @@ import type { ChatMessage } from "@/lib/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Pin, Trash2, Ban } from "lucide-react";
+import { Pin, Trash2, Ban } from "@/components/icons";
 import { toast } from "sonner";
 import { pinMessage, deleteMessage, banUser } from "@/lib/client";
 
@@ -119,12 +119,12 @@ export function MessageItem({
         <span className={cn("text-xs font-semibold mr-1.5", roleColor(msg.userRole))}>
           {displayHandle(msg.userHandle)}
           {msg.userRole === "premium" && (
-            <span className="ml-1 text-[9px] uppercase tracking-wider text-amber-400">
+            <span className="ml-1 text-[9px] r text-amber-400">
               prem
             </span>
           )}
           {msg.userRole === "admin" && (
-            <span className="ml-1 text-[9px] uppercase tracking-wider text-sky-400">
+            <span className="ml-1 text-[9px] r text-sky-400">
               admin
             </span>
           )}

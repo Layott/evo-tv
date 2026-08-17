@@ -22,13 +22,41 @@ import { SESSION_MAX_AGE_SEC, SESSION_UPDATE_AGE_SEC } from "./idle";
  * Same variable proxy.ts uses for CORS, deliberately: the browser's preflight
  * and Better-Auth's origin check have to agree, and two lists would drift.
  *
- * Left unset the array is empty and Better-Auth keeps its own [baseURL]
- * default, which is correct for local development.
+ * `*` now works, outside production. proxy.ts has always read the wildcard as
+ * "reflect whatever origin asked", so CORS passed and then Better-Auth answered
+ * 403 on the sign-in itself, which reads as a wrong password. The cause was
+ * this list filtering `*` out, leaving the array empty, which fell back to
+ * Better-Auth's [baseURL] default - the one value guaranteed not to be the
+ * origin the wildcard was set for. Better-Auth 1.6 matches `*` as a host glob,
+ * so passing it through makes both sides agree.
+ *
+ * It is refused when NODE_ENV is production, and that is not a style choice.
+ * trustedOrigins is also the allowlist for OAuth callbackURL and redirect
+ * targets, so a wildcard there turns every sign-in link into an open redirect:
+ * ?callbackURL=https://attacker.example would be honoured, handing over the
+ * session token in the URL. Development gets the convenience; production gets
+ * an explicit list or nothing.
+ *
+ * Left unset the array is empty and Better-Auth keeps its [baseURL] default,
+ * which is correct for a single-origin deployment.
  */
+const IS_PROD = process.env.NODE_ENV === "production";
+
 const TRUSTED_ORIGINS = (process.env.ALLOWED_ORIGINS ?? "")
   .split(",")
   .map((s) => s.trim())
-  .filter((s) => s.length > 0 && s !== "*");
+  .filter((s) => {
+    if (s.length === 0) return false;
+    if (s === "*" && IS_PROD) {
+      console.error(
+        "[auth] ALLOWED_ORIGINS contains '*', which is ignored in production " +
+          "because it would allow arbitrary OAuth redirect targets. List the " +
+          "origins explicitly, e.g. ALLOWED_ORIGINS=https://evotv.co,https://www.evotv.co",
+      );
+      return false;
+    }
+    return true;
+  });
 
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3060",

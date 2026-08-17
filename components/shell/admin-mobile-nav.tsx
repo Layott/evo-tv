@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronLeft, Menu } from "lucide-react";
+import { ChevronLeft, Menu } from "@/components/icons";
 
 import {
   Sheet,
@@ -46,7 +46,7 @@ export function AdminMobileNav() {
   }, [pathname]);
 
   return (
-    <div className="sticky top-0 z-40 flex items-center gap-3 border-b border-border bg-background/95 px-4 py-3 backdrop-blur md:hidden">
+    <div className="sticky top-0 z-40 flex items-center gap-3 bg-card px-4 py-3 md:hidden">
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
           <button
@@ -76,7 +76,7 @@ export function AdminMobileNav() {
               />
               <span>
                 <span className="block text-sm font-semibold">EVO TV</span>
-                <span className="block text-[10px] uppercase tracking-wider text-sky-400">
+                <span className="block text-[10px] r text-sky-400">
                   Admin CMS
                 </span>
               </span>
@@ -117,7 +117,7 @@ export function AdminMobileNav() {
       </Sheet>
 
       <div className="min-w-0">
-        <div className="text-[10px] uppercase tracking-wider text-sky-400">
+        <div className="text-[10px] r text-sky-400">
           Admin CMS
         </div>
         <div className="truncate text-sm font-semibold text-foreground">

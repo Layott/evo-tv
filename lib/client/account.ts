@@ -246,3 +246,61 @@ export async function requestAccountDeletion(
     erase: true,
   });
 }
+
+/* ── Checkout ───────────────────────────────────────────────────────────── */
+
+export interface ShippingAddress {
+  fullName: string;
+  phone: string;
+  address1: string;
+  address2?: string;
+  city: string;
+  state: string;
+  country: string;
+}
+
+export interface CreateOrderResult {
+  order: Order;
+  /** Where the provider wants the buyer sent to pay. */
+  redirectUrl: string;
+  reference: string;
+}
+
+/**
+ * Place a shop order and start its payment.
+ *
+ * The server prices the order from the products table; the client sends ids and
+ * quantities only. That is deliberate and worth keeping: the previous checkout
+ * computed a total in the browser and wrote the result straight into
+ * localStorage, so the "price paid" was whatever the page felt like.
+ */
+export async function createOrder(input: {
+  items: Array<{ productId: string; variantId?: string | null; qty: number }>;
+  shipping: ShippingAddress;
+}): Promise<CreateOrderResult> {
+  return apiSend<CreateOrderResult>("POST", "/api/orders", {
+    items: input.items,
+    shipping: input.shipping,
+  });
+}
+
+export interface StartSubscriptionResult {
+  provider: string;
+  redirectUrl: string;
+  reference: string;
+  amountNgn: number;
+  plan: string;
+  planName: string;
+}
+
+/**
+ * Start a subscription payment for a tier id.
+ *
+ * The amount comes back from the server, priced off the same ladder the pricing
+ * page renders, so nothing here decides what a plan costs.
+ */
+export async function startSubscription(
+  plan: string,
+): Promise<StartSubscriptionResult> {
+  return apiSend<StartSubscriptionResult>("POST", "/api/payments/init", { plan });
+}

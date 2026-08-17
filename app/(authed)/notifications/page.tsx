@@ -10,11 +10,11 @@ import {
   Loader2,
   Package,
   Play,
-  Star,
+  BadgeCheck,
   UserPlus,
   AlertCircle,
   CheckCheck,
-} from "lucide-react";
+} from "@/components/icons";
 import { toast } from "sonner";
 
 import { useAuth } from "@/components/providers";
@@ -28,6 +28,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { relativeTime } from "@/components/profile/ngn";
 import { cn } from "@/lib/utils";
+import { MediaImage } from "@/components/ui/media-image";
 
 const ICONS: Record<NotificationType, React.ElementType> = {
   stream_live: Play,
@@ -35,7 +36,7 @@ const ICONS: Record<NotificationType, React.ElementType> = {
   new_vod: Film,
   follow: UserPlus,
   order_update: Package,
-  subscription: Star,
+  subscription: BadgeCheck,
   system: AlertCircle,
 };
 
@@ -59,13 +60,7 @@ function Row({
     >
       <div className="relative shrink-0">
         {n.imageUrl ? (
-          <Image
-            src={n.imageUrl}
-            alt=""
-            width={48}
-            height={48}
-            className="size-12 rounded-lg bg-muted object-cover"
-          />
+          <MediaImage src={n.imageUrl} alt="" className="size-12 rounded-lg bg-muted object-cover" />
         ) : (
           <div className="flex size-12 items-center justify-center rounded-lg bg-muted">
             <Icon className="size-5 text-sky-400" />
@@ -80,7 +75,7 @@ function Row({
           {n.title}
         </p>
         <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{n.body}</p>
-        <p className="mt-1 text-[11px] uppercase tracking-wide text-muted-foreground">
+        <p className="mt-1 text-[11px] text-muted-foreground">
           {relativeTime(n.createdAt)}
         </p>
       </div>
