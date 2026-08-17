@@ -24,7 +24,7 @@ export function MetricCard({ label, value, hint, delta, icon: Icon, accent = "sk
   return (
     <div className="rounded-2xl border border-border bg-card/40 p-4">
       <div className="flex items-start justify-between">
-        <div className="text-[10px] r text-muted-foreground">{label}</div>
+        <div className="text-[10px] text-muted-foreground">{label}</div>
         {Icon ? (
           <div className={cn("flex size-7 items-center justify-center rounded-lg", ACCENT[accent])}>
             <Icon className="size-4" />

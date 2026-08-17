@@ -75,7 +75,7 @@ export function DashboardShell({ children, title, description, actions }: Dashbo
             <h1 className="text-xl font-bold text-foreground sm:text-2xl">
               {title}
             </h1>
-            <Badge variant="outline" className="border-emerald-500/40 bg-emerald-500/10 text-emerald-200">
+            <Badge variant="outline" className="bg-emerald-500/25 text-emerald-100">
               Creator
             </Badge>
           </div>
@@ -92,7 +92,7 @@ export function DashboardShell({ children, title, description, actions }: Dashbo
               <li key={t.href}>
                 <Link
                   href={t.href}
-                  className={cn( "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium r transition",
+                  className={cn( "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition",
                     active
                       ? "bg-muted text-foreground shadow-inner"
                       : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",

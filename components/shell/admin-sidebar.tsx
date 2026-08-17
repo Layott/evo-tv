@@ -34,7 +34,7 @@ export function AdminSidebar() {
         />
         <div>
           <div className="text-sm font-semibold text-foreground">EVO TV</div>
-          <div className="text-[10px] r text-sky-400">Admin CMS</div>
+          <div className="text-[10px] text-sky-400">Admin CMS</div>
         </div>
       </div>
 

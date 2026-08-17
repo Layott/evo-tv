@@ -13,7 +13,7 @@ export default function NotFound() {
             className="object-contain"
           />
         </div>
-        <div className="mb-2 text-[11px] font-semibold st text-sky-400">
+        <div className="mb-2 text-[11px] font-semibold text-sky-400">
           404 · Not found
         </div>
         <h1 className="mb-3 text-3xl font-semibold tracking-tight">

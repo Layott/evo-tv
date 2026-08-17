@@ -38,8 +38,36 @@ import {
   listCaptionLanguages,
   type CaptionLang,
 } from "@/lib/client/player-features";
-import {
-} from "@/lib/client/player-features";
+
+/**
+ * Seconds of video to bank before a live stream starts playing.
+ *
+ * Tuned against the 2s fragments nginx cuts, so this is four segments in hand.
+ * Raising it makes the start slower and the picture steadier; the ceiling is
+ * patience, not memory.
+ */
+const LIVE_PREBUFFER_SEC = 8;
+
+/** Start anyway after this long, however little was banked. */
+const LIVE_PREBUFFER_TIMEOUT_MS = 6000;
+
+/**
+ * Seconds of contiguous buffer sitting in front of the playhead.
+ *
+ * `video.buffered` is a set of ranges rather than one span, and only the range
+ * containing the playhead can actually be played through; a later range across
+ * a gap is not a cushion. So this finds the range the playhead is in and
+ * measures to its end, and reports nothing when the playhead sits in a hole.
+ */
+function bufferedAheadOf(v: HTMLVideoElement): number {
+  const t = v.currentTime;
+  for (let i = 0; i < v.buffered.length; i++) {
+    if (v.buffered.start(i) <= t + 0.1 && v.buffered.end(i) > t) {
+      return v.buffered.end(i) - t;
+    }
+  }
+  return 0;
+}
 
 interface VideoPlayerProps {
   src: string;
@@ -179,6 +207,7 @@ export function VideoPlayer({
     }
 
     let cancelled = false;
+    let prebufferTimer: ReturnType<typeof setTimeout> | null = null;
 
     // Any instance still attached from a previous run has to go before a new
     // one touches the element. React's dev Strict Mode mounts this effect
@@ -234,45 +263,45 @@ export function VideoPlayer({
        * without confirming segments are actually being loaded.
        */
       const instance = new Hls({
-        // Sit ~12s behind the edge instead of ~6s.
-        liveSyncDurationCount: 6,
+        /*
+         * Start ~20s behind the edge rather than ~12s.
+         *
+         * Latency on a broadcast channel is worth almost nothing and a stall
+         * costs everything: nobody watching a tournament can tell whether the
+         * picture is twelve or twenty seconds old, but everybody notices a
+         * spinner. This is the single biggest lever on stalling, because the
+         * gap it opens is the only thing standing between a slow round trip
+         * from Frankfurt and an empty buffer.
+         */
+        liveSyncDurationCount: 10,
         /*
          * How far behind hls.js tolerates before it seeks the viewer forward.
          *
-         * This is counted in fragments, so at 2s fragments the value of 20 it
-         * held meant a 40 second ceiling: scrubbing further back than that was
-         * silently undone within a couple of seconds, which is exactly what
-         * "the slider does not work" looked like. Measured on the live stream,
-         * 20s and 35s back held and 60s and 150s were both dragged back to
-         * about 13s behind.
+         * This was 200 fragments, about 400 seconds, deliberately: it let a
+         * viewer scrub back across the whole DVR window without the player
+         * dragging them forward again, and "Go live" was how they returned.
          *
-         * nginx keeps a 300s DVR window, which is 150 fragments, so anything
-         * below that fights the scrub bar. 200 clears the whole window with
-         * headroom, and being behind is then the viewer's choice rather than
-         * something the player overrides. The "Go live" control is how they
-         * come back.
-         *
-         * Keep this above `hls_playlist_length / hls_fragment` whenever either
-         * of those changes in nginx.conf.
+         * Live scrubbing and that button are both gone now, so nothing puts a
+         * viewer behind on purpose any more, and anything that does put them
+         * behind (a backgrounded tab, a laptop waking up) is a fault the player
+         * has to correct on its own. 30 fragments is about a minute: past that
+         * it resyncs to the edge, which is what the manual control used to do.
          */
-        liveMaxLatencyDurationCount: 200,
+        liveMaxLatencyDurationCount: 30,
         // Buffer ahead aggressively when bandwidth allows.
         maxBufferLength: 60,
         maxMaxBufferLength: 120,
         /*
-         * Keep the whole DVR window behind the playhead, not part of it.
+         * Retain only a little behind the playhead.
          *
-         * This was 90s while nginx serves a 300s window, so hls.js evicted
-         * everything older than 90 seconds and a seek further back than that
-         * landed on data it no longer held. Offering five minutes of rewind
-         * while retaining ninety seconds of it is the kind of mismatch that
-         * makes a scrub bar feel arbitrary: near seeks work, far ones do not.
-         *
-         * Memory cost is bounded by the window, and the window is bounded by
-         * hls_playlist_length. At 2.8 Mbps, 300s is roughly 105 MB, which is
-         * acceptable for a tab that is deliberately watching a broadcast.
+         * This was 300s to match the DVR window nginx serves, so that a seek
+         * back five minutes landed on data hls.js still held. With no live
+         * scrub bar there is nothing to seek back to, and at 2.8 Mbps that
+         * window was roughly 105 MB of memory kept for a feature the player no
+         * longer offers. Thirty seconds is enough for `recoverMediaError` to
+         * have something to work with.
          */
-        backBufferLength: 300,
+        backBufferLength: 30,
         // A dropped segment on a busy origin is ordinary. Retry rather than
         // raising a fatal error and tearing the stream down.
         fragLoadingMaxRetry: 6,
@@ -312,13 +341,61 @@ export function VideoPlayer({
           if (instance.currentLevel > cap) instance.currentLevel = cap;
         });
         if (autoPlay) {
-          void videoRef.current?.play().catch(() => {
+          const startPlayback = () => {
+            void videoRef.current?.play().catch(() => {
+              const v = videoRef.current;
+              if (!v) return;
+              v.muted = true;
+              setMuted(true);
+              void v.play().catch(() => {});
+            });
+          };
+
+          if (!isLive) {
+            startPlayback();
+            return;
+          }
+
+          /*
+           * Hold the first frame back until there is a cushion behind it.
+           *
+           * `canplay` fires as soon as the decoder has roughly one frame, so
+           * calling `play()` there starts the picture with almost nothing in
+           * hand: the viewer sees video for a second or two and then the
+           * spinner, because the buffer was empty the whole time and the first
+           * slow segment emptied it. That start-then-stall is what "it still
+           * buffers" looks like, and no amount of retuning the sync point fixes
+           * it, because the problem is when playback begins rather than where.
+           *
+           * So the gate is on buffered seconds, not on readiness. A few seconds
+           * of black at the start buys a cushion that survives a slow segment,
+           * and a viewer who waited three seconds for a channel to come up will
+           * not notice; the same three seconds spent stalling mid-picture is
+           * the thing they complain about.
+           *
+           * The timeout is the escape hatch. A thin or throttled connection may
+           * never reach the target, and refusing to start at all would be worse
+           * than starting shallow, so past that point it plays with whatever it
+           * has.
+           */
+          let started = false;
+          const begin = () => {
+            if (started || cancelled) return;
+            started = true;
+            instance.off(Hls.Events.BUFFER_APPENDED, onAppended);
+            if (prebufferTimer) clearTimeout(prebufferTimer);
+            setPrebuffering(false);
+            startPlayback();
+          };
+          const onAppended = () => {
             const v = videoRef.current;
             if (!v) return;
-            v.muted = true;
-            setMuted(true);
-            void v.play().catch(() => {});
-          });
+            if (bufferedAheadOf(v) >= LIVE_PREBUFFER_SEC) begin();
+          };
+
+          setPrebuffering(true);
+          instance.on(Hls.Events.BUFFER_APPENDED, onAppended);
+          prebufferTimer = setTimeout(begin, LIVE_PREBUFFER_TIMEOUT_MS);
         }
       });
       instance.on(Hls.Events.LEVEL_SWITCHED, (_e, data) => {
@@ -342,10 +419,12 @@ export function VideoPlayer({
 
     return () => {
       cancelled = true;
+      if (prebufferTimer) clearTimeout(prebufferTimer);
+      setPrebuffering(false);
       hlsRef.current?.destroy();
       hlsRef.current = null;
     };
-  }, [src, autoPlay]);
+  }, [src, autoPlay, isLive]);
   const controlsTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [playing, setPlaying] = React.useState(false);
@@ -367,16 +446,6 @@ export function VideoPlayer({
   const [currentTime, setCurrentTime] = React.useState(0);
   const [duration, setDuration] = React.useState(0);
   /**
-   * The DVR window: what a live stream can actually be scrubbed across.
-   *
-   * `duration` is Infinity while live, so the scrub bar had nothing to bind to
-   * and was simply disabled. nginx now keeps a five minute playlist, so there
-   * is a real window to move around in, and it moves forward continuously as
-   * old segments age out.
-   */
-  const [seekStart, setSeekStart] = React.useState(0);
-  const [seekEnd, setSeekEnd] = React.useState(0);
-  /**
    * The handle position while dragging.
    *
    * Null when not dragging, and the slider reads `currentTime` as usual. While
@@ -389,6 +458,15 @@ export function VideoPlayer({
   const scrubbingRef = React.useRef(false);
   const [isFullscreen, setIsFullscreen] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
+  /**
+   * Banking the opening buffer, before the first frame is shown.
+   *
+   * Tracked apart from `loading` because the element reports itself ready long
+   * before the cushion exists: `canplay` clears `loading`, and without this the
+   * player would drop the spinner and offer a centre play button while it was
+   * still deliberately holding playback back, which reads as "stuck, click me".
+   */
+  const [prebuffering, setPrebuffering] = React.useState(false);
   const [error, setError] = React.useState(false);
   const [renditions, setRenditions] = React.useState<Rendition[]>([]);
   /** -1 = auto (let hls.js pick by bandwidth). */
@@ -437,13 +515,6 @@ export function VideoPlayer({
     const onTime = () => {
       setCurrentTime(v.currentTime);
       onTimeUpdate?.(v.currentTime);
-      // Frozen while dragging. The live window slides forward continuously, so
-      // updating min and max mid-gesture moves the whole scale under the
-      // pointer and the handle appears to drift on its own.
-      if (v.seekable.length > 0 && !scrubbingRef.current) {
-        setSeekStart(v.seekable.start(0));
-        setSeekEnd(v.seekable.end(v.seekable.length - 1));
-      }
     };
     const onDur = () => setDuration(v.duration || 0);
     const onWaiting = () => setLoading(true);
@@ -529,6 +600,16 @@ export function VideoPlayer({
     const v = videoRef.current;
     if (!v) return;
     /*
+     * Live does not seek at all, from any entry point.
+     *
+     * The buttons are hidden on live, but the arrow keys reach this too, and a
+     * viewer who nudged the left arrow would drop behind the edge with no
+     * control offering the way back and no readout saying they had moved. The
+     * refusal belongs here rather than at the two call sites, so a third one
+     * cannot reintroduce it.
+     */
+    if (isLive) return;
+    /*
      * Clamp to what is actually seekable, not to [0, duration].
      *
      * On a live stream `duration` is Infinity and the seekable range does not
@@ -546,7 +627,7 @@ export function VideoPlayer({
       return;
     }
     v.currentTime = Math.max(0, target);
-  }, []);
+  }, [isLive]);
 
   const toggleFullscreen = React.useCallback(() => {
     const el = containerRef.current;
@@ -622,9 +703,6 @@ export function VideoPlayer({
     };
   }, [scheduleHide]);
 
-  /** Seconds behind the live edge. Zero when watching live or not live. */
-  const behindLiveSec = isLive && seekEnd > 0 ? Math.max(0, seekEnd - currentTime) : 0;
-
   /**
    * Dragging moves the handle only. The seek happens once, on release.
    *
@@ -646,23 +724,13 @@ export function VideoPlayer({
     scrubbingRef.current = false;
     setScrubValue(null);
     if (!v || typeof next !== "number") return;
-    // Never land exactly on the live edge: that position has no buffered data
-    // yet, so it re-buffers immediately and looks like a failed seek.
-    const max = isLive && seekEnd > 0 ? Math.max(seekStart, seekEnd - 0.5) : next;
-    const target = isLive ? Math.min(next, max) : next;
-    v.currentTime = target;
+    // Only reachable on recorded video now, so there is no live edge to keep
+    // clear of and the value can be taken as given.
+    v.currentTime = next;
     // Reflect it immediately rather than waiting for the next timeupdate, so
     // the handle does not jump back for a frame after release.
-    setCurrentTime(target);
+    setCurrentTime(next);
   };
-
-  /** Jump back to the live edge after scrubbing into the DVR window. */
-  const goLive = React.useCallback(() => {
-    const v = videoRef.current;
-    if (!v || v.seekable.length === 0) return;
-    v.currentTime = Math.max(0, v.seekable.end(v.seekable.length - 1) - 0.5);
-    void v.play().catch(() => {});
-  }, []);
 
   const handleVolume = (values: number[]) => {
     const v = videoRef.current;
@@ -705,7 +773,20 @@ export function VideoPlayer({
            hls.js. Setting both makes the browser fetch the manifest twice and
            race hls.js for the media element. */
         poster={poster}
-        autoPlay={autoPlay}
+        /*
+         * Live starts itself, from the effect, once it has banked a cushion.
+         *
+         * The attribute cannot stay on for live: it tells the browser to begin
+         * the moment the first bytes are appended, which is precisely what the
+         * prebuffer gate exists to prevent, and the element wins because it
+         * does not wait to be asked. Measured with the gate's threshold turned
+         * up to ten minutes, playback still started at once and `paused` was
+         * false with `readyState` 0, which is what gave this away.
+         *
+         * Recorded video keeps it: there is no live edge to fall off, so
+         * starting on the first frame is the right behaviour there.
+         */
+        autoPlay={autoPlay && !isLive}
         playsInline
         muted={muted}
         className="absolute inset-0 h-full w-full object-contain bg-black"
@@ -743,7 +824,17 @@ export function VideoPlayer({
             setMuted(false);
             setSoundChosen(true);
           }}
-          className="absolute left-1/2 top-4 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full bg-black/80 px-4 py-2 text-sm font-medium text-white hover:bg-black"
+          /*
+           * Below the live badge on a phone, beside it from `sm` up.
+           *
+           * Centring it at `top-4` put it straight through the "0 watching"
+           * counter at 390px: the badge row starts at the left edge and the
+           * pill is centred, and at that width the two overlap into unreadable
+           * stacked text. There is room on a desktop player and none on a
+           * phone, so the pill drops below the badge row rather than fighting
+           * it for the same line.
+           */
+          className="absolute left-1/2 top-14 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full bg-black/80 px-4 py-2 text-sm font-medium text-white hover:bg-black sm:top-4"
         >
           <VolumeX className="size-4" />
           Tap for sound
@@ -753,7 +844,7 @@ export function VideoPlayer({
       {/* Live badge + viewers + AI badge */}
       {isLive && (
         <div className="absolute top-3 left-3 z-20 flex items-center gap-2">
-          <div className="flex items-center gap-1.5 rounded-md bg-red-600 px-2 py-0.5 text-xs font-bold r text-white">
+          <div className="flex items-center gap-1.5 rounded-md bg-red-600 px-2 py-0.5 text-xs font-bold text-white">
             <span className="size-2 rounded-full bg-paper" />
             Live
           </div>
@@ -773,7 +864,7 @@ export function VideoPlayer({
             className="max-w-2xl rounded bg-black/80 px-3 py-1.5 text-center text-sm text-white animate-in fade-in slide-in-from-bottom-1 duration-300 sm:text-base"
           >
             {captionSelection === "auto" ? (
-              <span className="mr-2 rounded bg-amber-500/30 px-1 text-[10px] r text-amber-200">
+              <span className="mr-2 rounded bg-amber-500/30 px-1 text-[10px] text-amber-200">
                 AUTO
               </span>
             ) : null}
@@ -783,7 +874,7 @@ export function VideoPlayer({
       )}
 
       {/* Loading spinner */}
-      {loading && !error && (
+      {(loading || prebuffering) && !error && (
         <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
           <Loader2 className="size-10 animate-spin text-white/80" />
         </div>
@@ -808,7 +899,7 @@ export function VideoPlayer({
       )}
 
       {/* Center play button when paused and not loading */}
-      {!playing && !loading && !error && (
+      {!playing && !loading && !prebuffering && !error && (
         <button
           onClick={togglePlay}
           aria-label="Play"
@@ -828,42 +919,48 @@ export function VideoPlayer({
         )}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Scrub bar */}
-        <div className="relative px-1">
-          {/* Bound to the DVR window when live, to duration otherwise.
-              This was `disabled={error || isLive}`: correct when the playlist
-              held ten seconds and there was nothing to scrub, wrong now that it
-              holds five minutes. Dragging did nothing at all. */}
-          <Slider
-            value={[
-              scrubValue !== null
-                ? scrubValue
-                : isLive
-                  ? Math.min(Math.max(currentTime, seekStart), seekEnd || seekStart + 1)
+        {/*
+          Scrub bar, on recorded video only.
+
+          A live channel has no meaningful position to show. The bar bound to
+          the DVR window instead, which made a broadcast look like a file with a
+          beginning and an end, and invited a viewer to drag themselves off the
+          live edge for no gain: every second scrubbed back is a second of
+          latency they cannot see the value of, and landing near the edge
+          re-buffers on arrival. Removing it is also what lets the player hold a
+          fixed cushion, because nothing moves the playhead any more.
+        */}
+        {!isLive && (
+          <div className="relative px-1">
+            <Slider
+              value={[
+                scrubValue !== null
+                  ? scrubValue
                   : Math.min(currentTime, duration || 0),
-            ]}
-            min={isLive ? seekStart : 0}
-            max={isLive ? seekEnd || seekStart + 1 : duration || 1}
-            step={0.1}
-            onValueChange={handleScrub}
-            onValueCommit={handleSeekCommit}
-            className="w-full"
-            disabled={error || (isLive && seekEnd - seekStart < 5)}
-          />
-          {/* Chapter ticks */}
-          {chapters && chapters.length > 0 && duration > 0 && (
-            <div className="pointer-events-none absolute inset-x-1 top-1/2 -translate-y-1/2 h-2">
-              {chapters.map((c, i) => (
-                <div
-                  key={`${c.label}-${i}`}
-                  className="absolute top-1/2 -translate-y-1/2 size-1.5 rounded-full bg-amber-300"
-                  style={{ left: `${Math.min(100, (c.startSec / duration) * 100)}%` }}
-                  title={c.label}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+              ]}
+              min={0}
+              max={duration || 1}
+              step={0.1}
+              onValueChange={handleScrub}
+              onValueCommit={handleSeekCommit}
+              className="w-full"
+              disabled={error}
+            />
+            {/* Chapter ticks */}
+            {chapters && chapters.length > 0 && duration > 0 && (
+              <div className="pointer-events-none absolute inset-x-1 top-1/2 -translate-y-1/2 h-2">
+                {chapters.map((c, i) => (
+                  <div
+                    key={`${c.label}-${i}`}
+                    className="absolute top-1/2 -translate-y-1/2 size-1.5 rounded-full bg-amber-300"
+                    style={{ left: `${Math.min(100, (c.startSec / duration) * 100)}%` }}
+                    title={c.label}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="mt-2 flex items-center gap-1.5">
           <Button
@@ -876,30 +973,38 @@ export function VideoPlayer({
             {playing ? <Pause className="size-4" /> : <Play className="size-4" />}
           </Button>
 
-          {/* Skip back and forward. `seekBy` existed but was reachable only
-              from the arrow keys, so on a phone there was no way to do it at
-              all. On a live stream these move inside the DVR window the
-              manifest retains; at the live edge, forward simply does nothing. */}
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={() => seekBy(-10)}
-            className="text-white hover:bg-white/10"
-            aria-label="Back 10 seconds"
-            title="Back 10s"
-          >
-            <RotateCcw className="size-4" />
-          </Button>
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={() => seekBy(10)}
-            className="text-white hover:bg-white/10"
-            aria-label="Forward 10 seconds"
-            title="Forward 10s"
-          >
-            <RotateCw className="size-4" />
-          </Button>
+          {/* Skip back and forward, on recorded video only. `seekBy` existed
+              but was reachable only from the arrow keys, so on a phone there
+              was no way to do it at all.
+
+              These are gone on live for the same reason the scrub bar is, and
+              one more: with no "Go live" control left, a viewer who tapped back
+              10s would have no way to return to the edge and nothing on screen
+              telling them they had left it. */}
+          {!isLive && (
+            <>
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() => seekBy(-10)}
+                className="text-white hover:bg-white/10"
+                aria-label="Back 10 seconds"
+                title="Back 10s"
+              >
+                <RotateCcw className="size-4" />
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() => seekBy(10)}
+                className="text-white hover:bg-white/10"
+                aria-label="Forward 10 seconds"
+                title="Forward 10s"
+              >
+                <RotateCw className="size-4" />
+              </Button>
+            </>
+          )}
 
           <Button
             size="icon-sm"
@@ -925,32 +1030,26 @@ export function VideoPlayer({
             />
           </div>
 
+          {/*
+            Live says LIVE, and nothing else.
+
+            This used to read "0:26 behind · Go live" whenever the playhead sat
+            more than five seconds off the edge. That was accurate and it was
+            still wrong to show: the player now deliberately holds a cushion of
+            about twenty seconds, so the honest readout was permanently on,
+            reporting the fix as though it were a fault and pointing at a button
+            whose whole effect was to undo it. Latency on a broadcast is not a
+            number a viewer has any use for.
+
+            Falling genuinely far behind is handled by hls.js resyncing, not by
+            asking the viewer to notice and press something.
+          */}
           <span className="ml-1 text-xs font-mono text-white tabular-nums">
             {isLive ? (
-              /* Behind the edge after scrubbing back, this says so and offers
-                 the way back. A static "LIVE" while watching two minutes in the
-                 past is simply untrue. */
-              behindLiveSec > 5 ? (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    goLive();
-                  }}
-                  className="flex items-center gap-1.5 text-foreground/80 transition-colors hover:text-white"
-                >
-                  <span className="size-1.5 rounded-full bg-muted-foreground" />
-                  {formatTime(behindLiveSec)} behind
-                  <span className="ml-1 underline underline-offset-2">
-                    Go live
-                  </span>
-                </button>
-              ) : (
-                <span className="flex items-center gap-1.5">
-                  <span className="size-1.5 rounded-full bg-red-500" />
-                  LIVE
-                </span>
-              )
+              <span className="flex items-center gap-1.5">
+                <span className="size-1.5 rounded-full bg-red-500" />
+                LIVE
+              </span>
             ) : (
               `${formatTime(currentTime)} / ${formatTime(duration)}`
             )}

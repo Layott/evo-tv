@@ -16,7 +16,7 @@ function MatchCard({ match, teams }: { match: Match; teams: Map<string, Team> })
 
   return (
     <div className="w-64 shrink-0 overflow-hidden rounded-xl border border-border bg-card/60">
-      <div className="flex items-center justify-between border-b border-border px-3 py-1.5 text-[10px] r text-muted-foreground">
+      <div className="flex items-center justify-between border-b border-border px-3 py-1.5 text-[10px] text-muted-foreground">
         <span>Bo{match.bestOf}</span>
         {match.state === "live" && (
           <span className="flex items-center gap-1 text-red-400">
@@ -80,7 +80,7 @@ export function BracketView({ matches, teams }: BracketViewProps) {
       <div className="flex min-w-max gap-6">
         {Array.from(groups.entries()).map(([round, ms]) => (
           <div key={round} className="flex min-w-[16rem] flex-col gap-3">
-            <h3 className="text-xs font-semibold r text-sky-400">
+            <h3 className="text-xs font-semibold text-sky-400">
               {round}
             </h3>
             <div className="flex flex-col gap-3">

@@ -105,7 +105,7 @@ export function LivePolls({ streamId }: { streamId: string }) {
       ))}
       {closedPolls.length > 0 && (
         <div className="pt-2 border-t border-border">
-          <h4 className="text-xs r text-muted-foreground mb-2 px-1">
+          <h4 className="text-xs text-muted-foreground mb-2 px-1">
             Recent polls
           </h4>
           <div className="space-y-3">
@@ -154,7 +154,7 @@ function PollCard({
               {showResults ? (
                 <div
                   className={cn( "rounded-md border border-border px-2.5 py-1.5",
-                    selected && "border-sky-500/50 bg-sky-500/5"
+                    selected && "bg-sky-500/25"
                   )}
                 >
                   <div className="flex items-center justify-between text-xs">

@@ -190,7 +190,7 @@ export function ModerationPage() {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="border-sky-500/40 bg-sky-500/10 text-sky-200 hover:bg-sky-500/20"
+                        className="bg-sky-500/25 text-sky-100 hover:bg-sky-500/25"
                         onClick={() => reportAction(r.id, "approve")}
                       >
                         <Check className="h-3.5 w-3.5" /> Approve
@@ -198,7 +198,7 @@ export function ModerationPage() {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="border-red-500/40 bg-red-500/10 text-red-200 hover:bg-red-500/20"
+                        className="bg-red-500/25 text-red-100 hover:bg-red-500/25"
                         onClick={() => reportAction(r.id, "remove")}
                       >
                         Delete message
@@ -206,7 +206,7 @@ export function ModerationPage() {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="border-red-500/40 bg-red-500/10 text-red-200 hover:bg-red-500/20"
+                        className="bg-red-500/25 text-red-100 hover:bg-red-500/25"
                         onClick={() => reportAction(r.id, "ban")}
                       >
                         <ShieldBan className="h-3.5 w-3.5" /> Ban user
@@ -214,7 +214,7 @@ export function ModerationPage() {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="border-amber-500/40 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20"
+                        className="bg-amber-500/25 text-amber-100 hover:bg-amber-500/25"
                         onClick={() => reportAction(r.id, "escalate")}
                       >
                         <AlertTriangle className="h-3.5 w-3.5" /> Escalate
@@ -254,7 +254,7 @@ export function ModerationPage() {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="border-sky-500/40 bg-sky-500/10 text-sky-200 hover:bg-sky-500/20"
+                  className="bg-sky-500/25 text-sky-100 hover:bg-sky-500/25"
                   onClick={() => unban(b.id)}
                 >
                   <Undo2 className="h-3.5 w-3.5" /> Unban
@@ -309,7 +309,7 @@ export function ModerationPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    className="border-red-500/40 bg-red-500/10 text-red-200 hover:bg-red-500/20"
+                    className="bg-red-500/25 text-red-100 hover:bg-red-500/25"
                     onClick={() => resolveAppeal(a.id, "reject")}
                   >
                     Reject

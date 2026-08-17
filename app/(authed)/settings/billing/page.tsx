@@ -82,7 +82,7 @@ export default function BillingPage() {
                   {sub ? "Premium" : "Free plan"}
                 </h2>
                 {sub ? (
-                  <Badge className="border-sky-500/40 bg-sky-500/15 text-sky-300">
+                  <Badge className="bg-sky-500/25 text-sky-100">
                     Active
                   </Badge>
                 ) : null}
@@ -185,7 +185,7 @@ export default function BillingPage() {
                   <TableCell className="font-mono text-xs text-muted-foreground">{h.ref}</TableCell>
                   <TableCell>{formatNgn(h.amount)}</TableCell>
                   <TableCell className="text-right">
-                    <Badge className="border-sky-500/40 bg-sky-500/15 text-sky-300">
+                    <Badge className="bg-sky-500/25 text-sky-100">
                       Paid
                     </Badge>
                   </TableCell>
