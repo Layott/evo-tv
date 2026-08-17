@@ -17,7 +17,7 @@ function formatViewers(n: number): string {
 }
 
 function SkeletonCard() {
-  return <div className="aspect-[9/16] w-40 shrink-0 animate-pulse rounded-xl bg-card" />;
+  return <div className="aspect-[9/16] w-40 shrink-0 rounded-xl bg-card" />;
 }
 
 export function TrendingClips({ clips, loading }: TrendingClipsProps) {
@@ -48,7 +48,7 @@ export function TrendingClips({ clips, loading }: TrendingClipsProps) {
             <Link
               key={c.id}
               href={`/vod/${c.vodId ?? c.id}`}
-              className="group relative w-40 shrink-0 overflow-hidden rounded-xl border border-border bg-card/60 transition-colors hover:border-input"
+              className="group relative w-40 shrink-0 overflow-hidden rounded-xl border border-border bg-card/60 transition-colors hover:bg-card"
             >
               <div className="relative aspect-[9/16] overflow-hidden">
                 <MediaImage

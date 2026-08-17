@@ -89,8 +89,8 @@ export default function ShopPage() {
               className={cn(
                 "rounded-full border px-3 py-1.5 text-xs font-semibold transition",
                 c.v === cat
-                  ? "border-sky-500/60 bg-sky-500/15 text-sky-200"
-                  : "border-border bg-card/60 text-foreground/80 hover:border-input"
+                  ? "bg-sky-500/25 text-sky-100"
+                  : "border-border bg-card/60 text-foreground/80 hover:bg-card"
               )}
             >
               {c.label}
@@ -115,7 +115,7 @@ export default function ShopPage() {
           <Loader2 className="size-6 animate-spin text-muted-foreground" />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border p-12 text-center text-muted-foreground">
+        <div className="rounded-2xl bg-card/50 p-12 text-center text-muted-foreground">
           No products match your filters.
         </div>
       ) : (

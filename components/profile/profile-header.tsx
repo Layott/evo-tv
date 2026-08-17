@@ -43,7 +43,7 @@ export function ProfileHeader({ profile, onEdit, canEdit = false }: Props) {
           textClassName="text-2xl"
         />
         {canEdit ? (
-          <span className="absolute -bottom-1 -right-1 rounded-full border border-input bg-muted p-1.5">
+          <span className="absolute -bottom-1 -right-1 rounded-full bg-muted p-1.5">
             <Edit className="size-3.5 text-sky-400" />
           </span>
         ) : null}

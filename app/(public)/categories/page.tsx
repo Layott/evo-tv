@@ -29,7 +29,7 @@ function categoryLabel(c: string): string {
 }
 
 function SkeletonTile() {
-  return <div className="aspect-[4/5] animate-pulse rounded-xl bg-card" />;
+  return <div className="aspect-[4/5] rounded-xl bg-card" />;
 }
 
 export default function CategoriesPage() {
@@ -60,7 +60,7 @@ export default function CategoriesPage() {
             <Link
               key={g.id}
               href={`/categories/${g.slug}`}
-              className="group relative overflow-hidden rounded-xl border border-border bg-card/60 transition-colors hover:border-input"
+              className="group relative overflow-hidden rounded-xl border border-border bg-card/60 transition-colors hover:bg-card"
             >
               <div className="relative aspect-[4/5] overflow-hidden">
                 <img
@@ -70,7 +70,7 @@ export default function CategoriesPage() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 space-y-2 p-4">
-                  <span className="inline-flex rounded-md border border-sky-500/30 bg-sky-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-sky-300">
+                  <span className="inline-flex rounded-md bg-sky-500/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-sky-300">
                     {categoryLabel(g.category)}
                   </span>
                   <h3 className="text-lg font-bold text-white">{g.name}</h3>

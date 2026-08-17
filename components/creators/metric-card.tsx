@@ -13,11 +13,11 @@ interface MetricCardProps {
 }
 
 const ACCENT: Record<NonNullable<MetricCardProps["accent"]>, string> = {
-  sky: "text-sky-400 bg-sky-500/10 ring-sky-500/20",
-  amber: "text-amber-300 bg-amber-500/10 ring-amber-500/20",
-  emerald: "text-emerald-300 bg-emerald-500/10 ring-emerald-500/20",
-  fuchsia: "text-fuchsia-300 bg-fuchsia-500/10 ring-fuchsia-500/20",
-  rose: "text-rose-300 bg-rose-500/10 ring-rose-500/20",
+  sky: "text-sky-400 bg-sky-500/25",
+  amber: "text-amber-300 bg-amber-500/25",
+  emerald: "text-emerald-300 bg-emerald-500/25",
+  fuchsia: "text-fuchsia-300 bg-fuchsia-500/25",
+  rose: "text-rose-300 bg-rose-500/25",
 };
 
 export function MetricCard({ label, value, hint, delta, icon: Icon, accent = "sky" }: MetricCardProps) {
@@ -27,7 +27,7 @@ export function MetricCard({ label, value, hint, delta, icon: Icon, accent = "sk
       <div className="flex items-start justify-between">
         <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
         {Icon ? (
-          <div className={cn("flex size-7 items-center justify-center rounded-lg ring-1", ACCENT[accent])}>
+          <div className={cn("flex size-7 items-center justify-center rounded-lg", ACCENT[accent])}>
             <Icon className="size-4" />
           </div>
         ) : null}

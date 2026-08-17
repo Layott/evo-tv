@@ -269,7 +269,7 @@ export function ShowEpisodesPanel({ show }: { show: AdminShow }) {
       </div>
 
       {seasons.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+        <p className="rounded-lg bg-card/50 p-6 text-center text-sm text-muted-foreground">
           No seasons yet. Add one, then episodes go inside it.
         </p>
       ) : null}

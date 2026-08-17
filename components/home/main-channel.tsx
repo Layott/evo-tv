@@ -81,7 +81,7 @@ export function MainChannelHero() {
   });
 
   if (isPending) {
-    return <div className="mb-8 aspect-video w-full animate-pulse rounded-2xl bg-card" />;
+    return <div className="mb-8 aspect-video w-full rounded-2xl bg-card" />;
   }
 
   const channel = data?.channel ?? null;
@@ -156,7 +156,7 @@ export function MainChannelHero() {
                     <Button
                       asChild
                       variant="outline"
-                      className="border-input bg-card text-foreground hover:bg-accent"
+                      className="bg-card text-foreground hover:bg-accent"
                     >
                       <Link href="/signup?next=/home">Create an account</Link>
                     </Button>

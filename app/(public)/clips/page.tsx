@@ -54,7 +54,7 @@ export default function ClipsFeedPage() {
           {Array.from({ length: 10 }).map((_, i) => (
             <div
               key={i}
-              className="aspect-[9/16] rounded-lg bg-card animate-pulse"
+              className="aspect-[9/16] rounded-lg bg-card "
             />
           ))}
         </div>
@@ -89,9 +89,9 @@ function ClipCard({ clip }: { clip: Clip }) {
         className="object-cover transition-transform duration-300 group-hover:scale-105"
         sizes="(max-width:640px) 50vw, 20vw"
       />
-      {/* Hover pulse - "preview frame" cosmetic */}
+      {/* Hover state. A wash rather than the 2px sky ring it used to draw. */}
       {hovered && (
-        <div className="absolute inset-0 ring-2 ring-sky-400/70 animate-pulse pointer-events-none" />
+        <div className="pointer-events-none absolute inset-0 bg-sky-400/15" />
       )}
       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/70 to-transparent p-2">
         <p className="text-xs font-semibold text-white line-clamp-2">

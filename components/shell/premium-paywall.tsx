@@ -72,25 +72,28 @@ export function PremiumPaywallModal({
         className="absolute inset-0 bg-black/75 backdrop-blur-sm"
       />
 
-      <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-sky-500/20 bg-gradient-to-b from-[#0b1020] to-[#05091a] shadow-2xl shadow-sky-500/10">
+      {/* Elevation is neutral black, not a sky-blue bloom, and the panel is a
+          filled surface rather than a tinted outline. */}
+      <div className="relative w-full max-w-md overflow-hidden rounded-2xl bg-gradient-to-b from-[#0b1020] to-[#05091a] shadow-2xl shadow-black/50">
         {onClose && (
           <button
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="absolute right-3 top-3 rounded-full border border-border bg-card/60 p-1.5 text-muted-foreground transition-colors hover:border-sky-500/60 hover:text-sky-300"
+            className="absolute right-3 top-3 rounded-full bg-card/70 p-1.5 text-muted-foreground transition-colors hover:bg-card hover:text-sky-300"
           >
             <X className="h-3.5 w-3.5" />
           </button>
         )}
 
         <div className="relative p-6 pb-4">
-          <div className="pointer-events-none absolute -top-20 left-1/2 h-40 w-40 -translate-x-1/2 rounded-full bg-sky-500/20 blur-3xl" />
-          <div className="relative mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl border border-sky-400/30 bg-sky-500/10 text-sky-300">
+          {/* The blurred sky-blue orb that used to sit behind the lock is gone.
+              The icon tile carries the accent as a fill instead. */}
+          <div className="relative mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-500/25 text-sky-100">
             <Lock className="h-5 w-5" />
           </div>
           <div className="text-center">
-            <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-amber-300">
+            <div className="mb-1 text-xs font-semibold text-amber-300">
               Premium · ₦4,500/mo
             </div>
             <h2 id="paywall-heading" className="text-xl font-semibold tracking-tight text-foreground">
@@ -109,7 +112,7 @@ export function PremiumPaywallModal({
           ))}
         </ul>
 
-        <div className="flex flex-col gap-2 border-t border-border/60 bg-background/60 p-5 sm:flex-row">
+        <div className="flex flex-col gap-2 bg-background/60 p-5 sm:flex-row">
           <button
             type="button"
             onClick={() => {
@@ -123,7 +126,7 @@ export function PremiumPaywallModal({
           <Link
             href="/discover"
             onClick={onClose}
-            className="flex flex-1 items-center justify-center rounded-full border border-input px-4 py-2.5 text-sm text-foreground/80 transition-colors hover:border-input hover:text-foreground"
+            className="flex flex-1 items-center justify-center rounded-full px-4 py-2.5 text-sm text-foreground/80 transition-colors hover:bg-card hover:text-foreground"
           >
             Browse free content
           </Link>

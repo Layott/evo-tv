@@ -360,7 +360,7 @@ export function AdsManagerPage() {
           <DialogFooter>
             <Button
               variant="outline"
-              className="border-input bg-card hover:bg-accent"
+              className="bg-card hover:bg-accent"
               onClick={() => setConfirmDelete(null)}
             >
               Cancel
@@ -448,7 +448,7 @@ function AdForm({
                 type="button"
                 variant="outline"
                 size="icon"
-                className="border-input bg-card hover:bg-accent"
+                className="bg-card hover:bg-accent"
                 onClick={() => mediaInput.current?.click()}
               >
                 <Upload className="h-4 w-4" />
@@ -554,7 +554,7 @@ function AdForm({
         <SheetFooter>
           <Button
             variant="outline"
-            className="border-input bg-card hover:bg-accent"
+            className="bg-card hover:bg-accent"
             onClick={() => onOpenChange(false)}
           >
             Cancel
