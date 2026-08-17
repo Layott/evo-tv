@@ -32,13 +32,13 @@ const STATUS_LABEL: Record<OrderStatus, string> = {
 };
 
 const STATUS_TONE: Record<OrderStatus, string> = {
-  pending: "border-input bg-muted text-foreground/80",
+  pending: "bg-muted text-foreground/80",
   paid: "border-sky-500/40 bg-sky-500/15 text-sky-300",
   processing: "border-sky-500/40 bg-sky-500/15 text-sky-300",
   shipped: "border-amber-500/40 bg-amber-500/15 text-amber-300",
   delivered: "border-sky-500/40 bg-sky-500/15 text-sky-300",
   cancelled: "border-red-500/40 bg-red-500/15 text-red-400",
-  refunded: "border-input bg-muted text-foreground/80",
+  refunded: "bg-muted text-foreground/80",
 };
 
 function readLocalOrders(): Order[] {
@@ -102,7 +102,7 @@ export default function OrdersPage() {
       </div>
 
       {orders.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border p-10 text-center">
+        <div className="rounded-2xl bg-card/50 p-10 text-center">
           <Package className="mx-auto size-10 text-muted-foreground" />
           <p className="mt-3 text-sm font-semibold text-foreground">No orders yet.</p>
           <Button

@@ -41,7 +41,7 @@ export function FollowButton({
       onClick={onClick}
       className={cn(
         following
-          ? "border-input text-foreground hover:bg-accent"
+          ? "bg-input/40 text-foreground hover:bg-accent"
           : "bg-sky-600 text-white hover:bg-sky-500",
         className
       )}

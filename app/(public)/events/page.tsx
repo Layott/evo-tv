@@ -27,14 +27,14 @@ function tierColor(t: string): string {
     case "b":
       return "border-sky-500/40 bg-sky-500/10 text-sky-300";
     default:
-      return "border-input bg-muted text-foreground/80";
+      return "bg-muted text-foreground/80";
   }
 }
 
 function LiveBadge() {
   return (
-    <span className="flex items-center gap-1 rounded-md border border-red-500/30 bg-red-500/10 px-2 py-0.5 text-[10px] uppercase tracking-wider text-red-400">
-      <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
+    <span className="flex items-center gap-1 rounded-md bg-red-500/20 px-2 py-0.5 text-[10px] uppercase tracking-wider text-red-400">
+      <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
       Live
     </span>
   );
@@ -44,7 +44,7 @@ function EventCard({ event, gameName }: { event: EsportsEvent; gameName?: string
   return (
     <Link
       href={`/events/${event.id}`}
-      className="group flex overflow-hidden rounded-xl border border-border bg-card/60 transition-colors hover:border-input"
+      className="group flex overflow-hidden rounded-xl border border-border bg-card/60 transition-colors hover:bg-card"
     >
       <div className="relative aspect-square w-32 shrink-0 overflow-hidden sm:w-48">
         <img src={event.bannerUrl} alt={event.title} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
@@ -82,7 +82,7 @@ function EventCard({ event, gameName }: { event: EsportsEvent; gameName?: string
 }
 
 function SkeletonCard() {
-  return <div className="h-28 animate-pulse rounded-xl bg-card sm:h-36" />;
+  return <div className="h-28 rounded-xl bg-card sm:h-36" />;
 }
 
 export default function EventsPage() {
@@ -132,10 +132,10 @@ export default function EventsPage() {
           <button
             type="button"
             onClick={() => setGameFilter(null)}
-            className={`shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+            className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
               gameFilter === null
-                ? "border-sky-500/50 bg-sky-500/10 text-sky-300"
-                : "border-border bg-card/60 text-muted-foreground hover:border-input"
+                ? "bg-sky-500/25 text-sky-100"
+                : "bg-card/70 text-muted-foreground hover:bg-card"
             }`}
           >
             All games
@@ -145,10 +145,10 @@ export default function EventsPage() {
               key={g.id}
               type="button"
               onClick={() => setGameFilter(g.id)}
-              className={`shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+              className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                 gameFilter === g.id
-                  ? "border-sky-500/50 bg-sky-500/10 text-sky-300"
-                  : "border-border bg-card/60 text-muted-foreground hover:border-input"
+                  ? "bg-sky-500/25 text-sky-100"
+                  : "bg-card/70 text-muted-foreground hover:bg-card"
               }`}
             >
               {g.shortName}
@@ -166,7 +166,7 @@ export default function EventsPage() {
               className={`rounded-full border px-2.5 py-0.5 text-[11px] font-semibold uppercase transition-colors ${
                 tierFilter === t
                   ? tierColor(t)
-                  : "border-border bg-card/60 text-muted-foreground hover:border-input"
+                  : "bg-card/70 text-muted-foreground hover:bg-card"
               }`}
             >
               {t}

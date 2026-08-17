@@ -31,8 +31,7 @@ export function ComingSoon({
         {title}
       </h1>
       <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-        {description ??
-          "This part of EVO TV is not ready yet. We would rather show you nothing than show you numbers we made up."}
+        {description ?? "This part of EVO TV is not ready yet. We would rather show you nothing than show you numbers we made up."}
       </p>
       <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
         <Button asChild className="bg-sky-600 text-white hover:bg-sky-500">
@@ -41,7 +40,7 @@ export function ComingSoon({
         <Button
           asChild
           variant="outline"
-          className="border-input bg-card text-foreground hover:bg-accent"
+          className="bg-card text-foreground hover:bg-accent"
         >
           <Link href="/schedule">See the schedule</Link>
         </Button>

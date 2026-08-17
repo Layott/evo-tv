@@ -17,7 +17,7 @@ function TeamCard({ team }: { team: Team }) {
   return (
     <Link
       href={`/team/${team.slug}`}
-      className="group flex items-center gap-3 rounded-xl border border-border bg-card/60 p-3 transition-colors hover:border-input"
+      className="group flex items-center gap-3 rounded-xl border border-border bg-card/60 p-3 transition-colors hover:bg-card"
     >
       <img
         src={team.logoUrl}
@@ -72,7 +72,7 @@ export default function TeamsIndexPage() {
       {teams.isPending || games.isPending ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-20 animate-pulse rounded-xl bg-card" />
+            <div key={i} className="h-20 rounded-xl bg-card" />
           ))}
         </div>
       ) : (teams.data ?? []).length === 0 ? (

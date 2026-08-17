@@ -14,7 +14,7 @@ interface Props {
 export function WatchHistoryList({ vods }: Props) {
   if (vods.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-border bg-card/30 p-8 text-center text-sm text-muted-foreground">
+      <div className="rounded-xl bg-card/50 bg-card/30 p-8 text-center text-sm text-muted-foreground">
         Nothing watched yet.
       </div>
     );

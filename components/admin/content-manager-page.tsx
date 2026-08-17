@@ -133,27 +133,19 @@ export function ContentManagerPage() {
     };
   }
 
-  const handleSaveGame = makeSave<Game>(
-    "game",
-    "games",
+  const handleSaveGame = makeSave<Game>( "game", "games",
     (r) => adminCreateGame(r),
     (id, r) => adminUpdateGame(id, r),
   );
-  const handleSaveTeam = makeSave<Team>(
-    "team",
-    "teams",
+  const handleSaveTeam = makeSave<Team>( "team", "teams",
     (r) => adminCreateTeam(r),
     (id, r) => adminUpdateTeam(id, r),
   );
-  const handleSavePlayer = makeSave<Player>(
-    "player",
-    "players",
+  const handleSavePlayer = makeSave<Player>( "player", "players",
     (r) => adminCreatePlayer(r),
     (id, r) => adminUpdatePlayer(id, r),
   );
-  const handleSaveEvent = makeSave<EsportsEvent>(
-    "event",
-    "events",
+  const handleSaveEvent = makeSave<EsportsEvent>( "event", "events",
     (r) => adminCreateEvent(r),
     (id, r) => adminUpdateEvent(id, r),
   );
@@ -311,7 +303,7 @@ export function ContentManagerPage() {
           <DialogFooter>
             <Button
               variant="outline"
-              className="border-input bg-card hover:bg-accent"
+              className="bg-card hover:bg-accent"
               onClick={() => setConfirmDelete(null)}
             >
               Cancel
@@ -662,7 +654,7 @@ function ImagePreview({ label, url, onChange }: { label: string; url: string; on
             type="button"
             size="sm"
             variant="outline"
-            className="border-input bg-card text-foreground hover:bg-accent"
+            className="bg-card text-foreground hover:bg-accent"
             onClick={() => inputRef.current?.click()}
           >
             <Upload className="h-3.5 w-3.5" />
@@ -714,7 +706,7 @@ function FormShell({
         <SheetFooter>
           <Button
             variant="outline"
-            className="border-input bg-card hover:bg-accent"
+            className="bg-card hover:bg-accent"
             onClick={() => onOpenChange(false)}
           >
             Cancel

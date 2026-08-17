@@ -32,7 +32,7 @@ export default function NotFound() {
           </Link>
           <Link
             href="/discover"
-            className="rounded-full border border-input px-5 py-2 text-sm text-foreground hover:border-input"
+            className="rounded-full  px-5 py-2 text-sm text-foreground hover:bg-card"
           >
             Discover
           </Link>

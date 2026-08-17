@@ -33,13 +33,13 @@ const STATUS_LABEL: Record<OrderStatus, string> = {
 };
 
 const STATUS_TONE: Record<OrderStatus, string> = {
-  pending: "border-input bg-muted text-foreground/80",
+  pending: "bg-muted text-foreground/80",
   paid: "border-sky-500/40 bg-sky-500/15 text-sky-300",
   processing: "border-sky-500/40 bg-sky-500/15 text-sky-300",
   shipped: "border-amber-500/40 bg-amber-500/15 text-amber-300",
   delivered: "border-sky-500/40 bg-sky-500/15 text-sky-300",
   cancelled: "border-red-500/40 bg-red-500/15 text-red-400",
-  refunded: "border-input bg-muted text-foreground/80",
+  refunded: "bg-muted text-foreground/80",
 };
 
 function readLocalOrder(id: string): Order | null {
@@ -153,8 +153,7 @@ export function OrderView({ id }: { id: string }) {
             return (
               <li
                 key={s.key}
-                className={cn(
-                  "rounded-xl border p-3",
+                className={cn( "rounded-xl border p-3",
                   active
                     ? "border-sky-500/40 bg-sky-500/5"
                     : "border-border bg-card/30"
@@ -162,8 +161,7 @@ export function OrderView({ id }: { id: string }) {
               >
                 <div className="flex items-center gap-2">
                   <span
-                    className={cn(
-                      "flex size-7 items-center justify-center rounded-full",
+                    className={cn( "flex size-7 items-center justify-center rounded-full",
                       active ? "bg-sky-500 text-black" : "bg-muted text-muted-foreground"
                     )}
                   >

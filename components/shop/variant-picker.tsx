@@ -32,8 +32,8 @@ export function VariantPicker({
               className={cn(
                 "min-w-[3rem] rounded-lg border px-3 py-2 text-sm font-semibold transition",
                 selected
-                  ? "border-sky-500/60 bg-sky-500/15 text-sky-200"
-                  : "border-border bg-card text-foreground hover:border-input",
+                  ? "bg-sky-500/25 text-sky-100"
+                  : "border-border bg-card text-foreground hover:bg-card",
                 oos ? "cursor-not-allowed opacity-40 line-through" : ""
               )}
               aria-pressed={selected}

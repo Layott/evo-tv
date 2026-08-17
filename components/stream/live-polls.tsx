@@ -75,8 +75,8 @@ export function LivePolls({ streamId }: { streamId: string }) {
   if (loading) {
     return (
       <div className="p-4 space-y-3">
-        <div className="h-6 w-32 rounded bg-muted animate-pulse" />
-        <div className="h-20 rounded bg-muted animate-pulse" />
+        <div className="h-6 w-32 rounded bg-muted " />
+        <div className="h-20 rounded bg-muted " />
       </div>
     );
   }
@@ -153,8 +153,7 @@ function PollCard({
             <div key={opt.id} className="space-y-1">
               {showResults ? (
                 <div
-                  className={cn(
-                    "rounded-md border border-border px-2.5 py-1.5",
+                  className={cn( "rounded-md border border-border px-2.5 py-1.5",
                     selected && "border-sky-500/50 bg-sky-500/5"
                   )}
                 >
@@ -175,7 +174,7 @@ function PollCard({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="w-full justify-between border-input hover:border-sky-500/50 hover:bg-sky-500/5"
+                  className="w-full justify-between hover:bg-sky-500/20"
                   onClick={() => onVote(poll, opt.id)}
                 >
                   <span>{opt.label}</span>

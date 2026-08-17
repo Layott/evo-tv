@@ -125,7 +125,7 @@ export function DataTable<T>({
               <TableRow key={`skeleton-${i}`} className="border-border">
                 {columns.map((col) => (
                   <TableCell key={col.key}>
-                    <div className="h-4 w-full animate-pulse rounded bg-muted" />
+                    <div className="h-4 w-full rounded bg-muted" />
                   </TableCell>
                 ))}
               </TableRow>

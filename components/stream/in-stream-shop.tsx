@@ -34,7 +34,7 @@ export function InStreamShop() {
     return (
       <div className="p-3 grid grid-cols-2 gap-3">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-40 rounded bg-muted animate-pulse" />
+          <div key={i} className="h-40 rounded bg-muted " />
         ))}
       </div>
     );

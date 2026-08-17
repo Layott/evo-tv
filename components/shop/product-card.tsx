@@ -23,7 +23,7 @@ export function ProductCard({ product }: { product: Product }) {
           className="object-cover transition group-hover:scale-[1.02]"
           sizes="(max-width: 768px) 50vw, 25vw"
         />
-        <Badge className="absolute left-2 top-2 border-input bg-background/70 text-foreground/80 capitalize">
+        <Badge className="absolute left-2 top-2 bg-background/70 text-foreground/80 capitalize">
           {product.category}
         </Badge>
         {product.featured ? (

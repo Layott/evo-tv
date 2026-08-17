@@ -19,8 +19,8 @@ function formatViewers(n: number): string {
 
 function LiveBadge() {
   return (
-    <span className="flex items-center gap-1 rounded-md border border-red-500/30 bg-red-500/10 px-2 py-0.5 text-[10px] uppercase tracking-wider text-red-400">
-      <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
+    <span className="flex items-center gap-1 rounded-md bg-red-500/20 px-2 py-0.5 text-[10px] uppercase tracking-wider text-red-400">
+      <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
       Live
     </span>
   );
@@ -29,9 +29,9 @@ function LiveBadge() {
 function SkeletonCard() {
   return (
     <div className="space-y-2">
-      <div className="aspect-video animate-pulse rounded-xl bg-card" />
-      <div className="h-3 w-3/4 animate-pulse rounded bg-card" />
-      <div className="h-3 w-1/2 animate-pulse rounded bg-card" />
+      <div className="aspect-video rounded-xl bg-card" />
+      <div className="h-3 w-3/4 rounded bg-card" />
+      <div className="h-3 w-1/2 rounded bg-card" />
     </div>
   );
 }
@@ -68,7 +68,7 @@ export function LiveNow({ streams, games, loading }: LiveNowProps) {
               <Link
                 key={s.id}
                 href={`/stream/${s.id}`}
-                className="group overflow-hidden rounded-xl border border-border bg-card/60 transition-colors hover:border-input"
+                className="group overflow-hidden rounded-xl border border-border bg-card/60 transition-colors hover:bg-card"
               >
                 <div className="relative aspect-video overflow-hidden">
                   <MediaImage
