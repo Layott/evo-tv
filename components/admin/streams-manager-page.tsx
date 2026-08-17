@@ -128,6 +128,35 @@ export function StreamsManagerPage() {
   const [selectedIngest, setSelectedIngest] =
     React.useState<IngestDetails | null>(null);
 
+  /**
+   * One key per rung of the quality ladder, for the self-hosted RTMP path.
+   *
+   * The rungs are the same credential with a suffix on the publish name, so
+   * they are derived here rather than stored: there is no second secret to
+   * manage and no way for this screen to drift out of step with the
+   * `hls_variant` lines nginx is configured with.
+   *
+   * The suffix goes before the query string, because the name is what nginx
+   * matches a variant on and the key rides in `?key=`. Appending to the whole
+   * string would produce `...?key=secret_low`, which is a broken key rather
+   * than a rung, and it would fail authentication rather than fail visibly.
+   *
+   * Cloudflare ingest gets nothing here: it builds its own ladder server side,
+   * so a single key remains correct there.
+   */
+  const ladderKeys = React.useMemo(() => {
+    const key = ingestReveal?.streamKey;
+    if (!key || ingestReveal?.kind !== "rtmp") return null;
+    const q = key.indexOf("?");
+    const name = q === -1 ? key : key.slice(0, q);
+    const query = q === -1 ? "" : key.slice(q);
+    return [
+      { label: "high", hint: "1280x720 · 2200 kbps", value: `${name}_hi${query}` },
+      { label: "mid", hint: "854x480 · 900 kbps", value: `${name}_mid${query}` },
+      { label: "low", hint: "640x360 · 400 kbps", value: `${name}_low${query}` },
+    ];
+  }, [ingestReveal]);
+
   React.useEffect(() => {
     if (!selected) {
       setSelectedIngest(null);
@@ -595,8 +624,8 @@ export function StreamsManagerPage() {
             <DialogTitle>Broadcast settings</DialogTitle>
             <DialogDescription className="text-muted-foreground">
               In OBS: Settings, Stream, Service{" "}
-              <span className="text-foreground">Custom</span>, then paste these
-              two fields.
+              <span className="text-foreground">Custom</span>, then paste the
+              server and a stream key.
             </DialogDescription>
           </DialogHeader>
 
@@ -612,12 +641,36 @@ export function StreamsManagerPage() {
                 value={ingestReveal?.server ?? ""}
                 empty="Not available"
               />
-              <CopyField
-                label="Stream Key"
-                value={ingestReveal?.streamKey ?? ""}
-                empty="Not shown again. Regenerate to get a new one."
-                secret
-              />
+              {ladderKeys ? (
+                <>
+                  {/*
+                    Three keys, because the channel goes out as three qualities.
+                    This screen used to hand over one key, which was right until
+                    the ladder existed and actively misleading afterwards: an
+                    operator pasted the single key into OBS, got one rendition,
+                    and every viewer who could not hold 2.7 Mbps stalled with no
+                    lower rung to fall to. The rungs are the same key with a
+                    suffix on the name, so there is nothing extra to store and
+                    nothing that can drift out of step with the server.
+                  */}
+                  {ladderKeys.map((rung) => (
+                    <CopyField
+                      key={rung.label}
+                      label={`Stream Key · ${rung.label} (${rung.hint})`}
+                      value={rung.value}
+                      empty="Not shown again. Regenerate to get a new one."
+                      secret
+                    />
+                  ))}
+                </>
+              ) : (
+                <CopyField
+                  label="Stream Key"
+                  value={ingestReveal?.streamKey ?? ""}
+                  empty="Not shown again. Regenerate to get a new one."
+                  secret
+                />
+              )}
               {ingestReveal?.srtUrl ? (
                 <CopyField label="SRT (optional)" value={ingestReveal.srtUrl} />
               ) : null}
@@ -636,12 +689,29 @@ export function StreamsManagerPage() {
             </div>
           ) : null}
 
-          <div className="rounded-lg border border-border bg-card/40 p-3 text-xs text-muted-foreground">
-            Recommended output: 1280x720, 30fps, CBR 2500 kbps, and a{" "}
-            <span className="text-foreground">keyframe interval of 2</span>.
-            Segments can only be cut on a keyframe, so leaving it on auto gives
-            long segments and a slow start.
-          </div>
+          {ladderKeys ? (
+            <div className="rounded-lg bg-card/60 p-3 text-xs text-muted-foreground">
+              Publish all three. The <span className="text-foreground">high</span>{" "}
+              rung goes in OBS itself; the other two go in a multi-output plugin,
+              each with its own resolution and bitrate. Set a{" "}
+              <span className="text-foreground">keyframe interval of 2</span> on
+              every rung: segments are only cut on a keyframe, and rungs whose
+              keyframes do not line up cannot be switched between cleanly, so the
+              picture stutters at every quality change.
+              <br />
+              <br />
+              Publishing only one rung works, and gives every viewer that single
+              quality. Anyone whose connection cannot carry it will stall with
+              nothing to fall back to.
+            </div>
+          ) : (
+            <div className="rounded-lg bg-card/60 p-3 text-xs text-muted-foreground">
+              Recommended output: 1280x720, 30fps, CBR 2500 kbps, and a{" "}
+              <span className="text-foreground">keyframe interval of 2</span>.
+              Segments can only be cut on a keyframe, so leaving it on auto gives
+              long segments and a slow start.
+            </div>
+          )}
 
           <DialogFooter>
             <Button
