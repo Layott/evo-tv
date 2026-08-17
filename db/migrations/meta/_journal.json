@@ -288,6 +288,13 @@
       "when": 1787011200000,
       "tag": "0040_video_view_buckets",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1787097600000,
+      "tag": "0041_app_releases",
+      "breakpoints": true
     }
   ]
 }
