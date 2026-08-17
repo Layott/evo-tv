@@ -191,7 +191,7 @@ export default function OnboardingPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-3">
-        <span className="text-xs font-semibold st text-muted-foreground">
+        <span className="text-xs font-semibold text-muted-foreground">
           Step {step} of 4
         </span>
         <Link
@@ -412,7 +412,7 @@ function StepTeams({
             <div
               className={cn( "flex size-5 shrink-0 items-center justify-center rounded-full border",
                 isSelected
-                  ? "border-sky-500 bg-sky-500 text-ink"
+                  ? "bg-sky-500 text-ink"
                   : "bg-input/40",
               )}
             >
@@ -557,8 +557,8 @@ function StepPreferences({
         </div>
       </div>
 
-      <div className="flex items-start gap-2 rounded-lg border border-sky-500/20 bg-sky-500/5 p-3">
-        <Checkbox checked disabled className="mt-0.5 border-sky-500 bg-sky-500 text-ink opacity-100 disabled:opacity-100" />
+      <div className="flex items-start gap-2 rounded-lg bg-sky-500/25 p-3">
+        <Checkbox checked disabled className="mt-0.5 bg-sky-500 text-ink opacity-100 disabled:opacity-100" />
         <p className="text-xs text-foreground/80">
           Your preferences save to this device. Sign in anywhere to sync them across EVO TV.
         </p>

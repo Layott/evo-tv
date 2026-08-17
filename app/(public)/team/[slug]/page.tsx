@@ -150,26 +150,26 @@ export default function TeamDetailPage() {
 
       <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div className="rounded-xl border border-border bg-card/60 p-4">
-          <p className="text-[11px] r text-muted-foreground">Rank</p>
+          <p className="text-[11px] text-muted-foreground">Rank</p>
           <p className="mt-1 flex items-center gap-1 text-lg font-bold text-amber-300">
             <Trophy className="h-4 w-4" /> #{team.ranking}
           </p>
         </div>
         <div className="rounded-xl border border-border bg-card/60 p-4">
-          <p className="text-[11px] r text-muted-foreground">W-L</p>
+          <p className="text-[11px] text-muted-foreground">W-L</p>
           <p className="mt-1 text-lg font-bold text-sky-400">
             {team.wins}-{team.losses}
           </p>
           <p className="text-[11px] text-muted-foreground">{winRate}% win rate</p>
         </div>
         <div className="rounded-xl border border-border bg-card/60 p-4">
-          <p className="text-[11px] r text-muted-foreground">Followers</p>
+          <p className="text-[11px] text-muted-foreground">Followers</p>
           <p className="mt-1 flex items-center gap-1 text-lg font-bold">
             <Users className="h-4 w-4" /> {formatFollowers(team.followers)}
           </p>
         </div>
         <div className="rounded-xl border border-border bg-card/60 p-4">
-          <p className="text-[11px] r text-muted-foreground">Active roster</p>
+          <p className="text-[11px] text-muted-foreground">Active roster</p>
           <p className="mt-1 text-lg font-bold">{roster.length}</p>
         </div>
       </div>

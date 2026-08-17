@@ -115,7 +115,7 @@ export function AccountForm({ email }: { email: string }) {
             Change password
           </Button>
         </form>
-        <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-4">
+        <div className="rounded-xl bg-red-500/25 p-4">
           <h3 className="text-sm font-semibold text-red-400">Danger zone</h3>
           <p className="mt-1 text-xs text-muted-foreground">
             This permanently removes your EVO TV account, watch history, and subscriptions.

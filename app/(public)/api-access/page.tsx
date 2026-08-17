@@ -102,7 +102,7 @@ export default function ApiAccessLandingPage() {
       </section>
 
       <section className="mt-8">
-        <h3 className="mb-3 text-sm font-semibold r text-muted-foreground">
+        <h3 className="mb-3 text-sm font-semibold text-muted-foreground">
           What you get
         </h3>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -115,7 +115,7 @@ export default function ApiAccessLandingPage() {
               >
                 <div className="mb-2 flex items-center gap-2 text-sky-300">
                   <Icon className="size-4" />
-                  <span className="text-xs font-semibold r">{f.title}</span>
+                  <span className="text-xs font-semibold">{f.title}</span>
                 </div>
                 <p className="text-sm text-foreground/80">{f.body}</p>
               </div>

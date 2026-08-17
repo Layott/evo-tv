@@ -35,11 +35,11 @@ const STATUS_LABEL: Record<OrderStatus, string> = {
 
 const STATUS_TONE: Record<OrderStatus, string> = {
   pending: "bg-muted text-foreground/80",
-  paid: "border-sky-500/40 bg-sky-500/15 text-sky-300",
-  processing: "border-sky-500/40 bg-sky-500/15 text-sky-300",
-  shipped: "border-amber-500/40 bg-amber-500/15 text-amber-300",
-  delivered: "border-sky-500/40 bg-sky-500/15 text-sky-300",
-  cancelled: "border-red-500/40 bg-red-500/15 text-red-400",
+  paid: "bg-sky-500/25 text-sky-100",
+  processing: "bg-sky-500/25 text-sky-100",
+  shipped: "bg-amber-500/25 text-amber-100",
+  delivered: "bg-sky-500/25 text-sky-100",
+  cancelled: "bg-red-500/25 text-red-400",
   refunded: "bg-muted text-foreground/80",
 };
 
@@ -156,7 +156,7 @@ export function OrderView({ id }: { id: string }) {
                 key={s.key}
                 className={cn( "rounded-xl border p-3",
                   active
-                    ? "border-sky-500/40 bg-sky-500/5"
+                    ? "bg-sky-500/25"
                     : "border-border bg-card/30"
                 )}
               >

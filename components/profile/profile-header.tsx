@@ -54,12 +54,12 @@ export function ProfileHeader({ profile, onEdit, canEdit = false }: Props) {
             {profile.displayName}
           </h1>
           {isPremium ? (
-            <Badge className="border-amber-500/40 bg-amber-500/15 text-amber-300">
+            <Badge className="bg-amber-500/25 text-amber-100">
               <BadgeCheck className="size-3" /> Premium
             </Badge>
           ) : null}
           {isAdmin ? (
-            <Badge className="border-sky-500/40 bg-sky-500/15 text-sky-300">
+            <Badge className="bg-sky-500/25 text-sky-100">
               <ShieldCheck className="size-3" /> Admin
             </Badge>
           ) : null}
@@ -81,7 +81,7 @@ export function ProfileHeader({ profile, onEdit, canEdit = false }: Props) {
         <Button
           onClick={onEdit}
           variant="outline"
-          className="self-start border-sky-500/40 text-sky-300 hover:bg-sky-500/10"
+          className="self-start text-sky-100 hover:bg-sky-500/25"
         >
           <Edit className="size-4" /> Edit profile
         </Button>

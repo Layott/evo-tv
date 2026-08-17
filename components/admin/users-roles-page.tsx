@@ -456,7 +456,7 @@ export function UsersRolesPage() {
 function Info({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <dt className="text-[10px] r text-muted-foreground">{label}</dt>
+      <dt className="text-[10px] text-muted-foreground">{label}</dt>
       <dd className="text-foreground">{children}</dd>
     </div>
   );

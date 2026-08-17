@@ -38,7 +38,7 @@ export function FollowingGrid({ teams, players }: Props) {
               <Link
                 key={t.id}
                 href={`/team/${t.slug}`}
-                className="flex items-center gap-3 rounded-xl border border-border bg-card/60 p-3 transition hover:border-sky-500/40"
+                className="flex items-center gap-3 rounded-xl bg-card/60 p-3 transition hover:bg-card"
               >
                 <MediaImage src={t.logoUrl} alt={t.name} className="size-12 rounded-lg bg-muted object-cover" />
                 <div className="min-w-0">

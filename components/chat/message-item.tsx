@@ -105,7 +105,9 @@ export function MessageItem({
     <div
       className={cn(
         "group flex gap-2 px-3 py-1.5 hover:bg-accent/60 rounded-md transition-colors",
-        pinned && "bg-amber-500/10 border-l-2 border-amber-400"
+        // A pinned message is a deeper fill. It was a 10% wash with an amber
+        // stripe down the left, which is the accent bar the rules name outright.
+        pinned && "bg-amber-500/25"
       )}
       title={fmtTime(msg.createdAt)}
     >
@@ -119,12 +121,12 @@ export function MessageItem({
         <span className={cn("text-xs font-semibold mr-1.5", roleColor(msg.userRole))}>
           {displayHandle(msg.userHandle)}
           {msg.userRole === "premium" && (
-            <span className="ml-1 text-[9px] r text-amber-400">
+            <span className="ml-1 text-[9px] text-amber-400">
               prem
             </span>
           )}
           {msg.userRole === "admin" && (
-            <span className="ml-1 text-[9px] r text-sky-400">
+            <span className="ml-1 text-[9px] text-sky-400">
               admin
             </span>
           )}

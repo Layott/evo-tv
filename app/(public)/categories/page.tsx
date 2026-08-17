@@ -70,7 +70,7 @@ export default function CategoriesPage() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 space-y-2 p-4">
-                  <span className="inline-flex rounded-md bg-sky-500/20 px-2 py-0.5 text-[10px] font-semibold r text-sky-100">
+                  <span className="inline-flex rounded-md bg-sky-500/20 px-2 py-0.5 text-[10px] font-semibold text-sky-100">
                     {categoryLabel(g.category)}
                   </span>
                   <h3 className="text-lg font-bold text-white">{g.name}</h3>

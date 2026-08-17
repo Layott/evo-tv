@@ -122,18 +122,18 @@ export default function ChannelPage() {
               {/* Read from the stream row. This was hardcoded, so the channel
                   announced itself as live even with nothing being broadcast. */}
               {channel?.isLive ? (
-                <span className="inline-flex items-center gap-1 rounded-md bg-red-500/20 px-2 py-0.5 text-[10px] font-semibold r text-red-400">
+                <span className="inline-flex items-center gap-1 rounded-md bg-red-500/20 px-2 py-0.5 text-[10px] font-semibold text-red-400">
                   <span className="h-1.5 w-1.5 rounded-full bg-red-500" /> Live
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1 rounded-md bg-card px-2 py-0.5 text-[10px] font-semibold r text-muted-foreground">
+                <span className="inline-flex items-center gap-1 rounded-md bg-card px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
                   Off air
                 </span>
               )}
-              <span className="rounded-md bg-sky-500/25 px-2 py-0.5 text-[10px] font-semibold r text-sky-300">
+              <span className="rounded-md bg-sky-500/25 px-2 py-0.5 text-[10px] font-semibold text-sky-300">
                 Flagship
               </span>
-              <span className="rounded-md bg-card/80 px-2 py-0.5 text-[10px] r text-muted-foreground">
+              <span className="rounded-md bg-card/80 px-2 py-0.5 text-[10px] text-muted-foreground">
                 24 / 7
               </span>
             </div>
@@ -198,9 +198,12 @@ export default function ChannelPage() {
                   toggleFollow("streamer", "channel_main");
                 }}
                 aria-pressed={following}
-                className={`inline-flex items-center gap-2 rounded-full border px-5 py-2.5 text-sm transition-colors ${
+                /* Both states are fills. Followed used to be an outline while
+                   unfollowed was a fill, so the button changed shape rather
+                   than weight, and the ring is banned besides. */
+                className={`inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm transition-colors ${
                   following
-                    ? "border-sky-400 text-sky-300"
+                    ? "bg-sky-500/25 text-sky-100 hover:bg-sky-500/35"
                     : "bg-input/40 text-foreground hover:bg-input/60 hover:text-sky-300"
                 }`}
               >
@@ -257,11 +260,11 @@ export default function ChannelPage() {
                     </td>
                     <td className="px-4 py-3">
                       {row.state === "live" ? (
-                        <span className="inline-flex rounded-md bg-red-600 px-2 py-0.5 text-[10px] font-bold r text-white">
+                        <span className="inline-flex rounded-md bg-red-600 px-2 py-0.5 text-[10px] font-bold text-white">
                           On now
                         </span>
                       ) : (
-                        <span className="inline-flex rounded-md border border-border bg-card px-2 py-0.5 text-[10px] r text-muted-foreground">
+                        <span className="inline-flex rounded-md border border-border bg-card px-2 py-0.5 text-[10px] text-muted-foreground">
                           {row.pillar}
                         </span>
                       )}
@@ -302,7 +305,7 @@ export default function ChannelPage() {
                   <div className="relative aspect-video bg-background">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={s.thumbnailUrl} alt="" className="h-full w-full object-cover opacity-80" />
-                    <div className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-md bg-red-500/20 px-1.5 py-0.5 text-[10px] font-semibold r text-red-400">
+                    <div className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-md bg-red-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-red-400">
                       <span className="h-1 w-1 rounded-full bg-red-500" /> Live
                     </div>
                     <div className="absolute right-2 top-2 rounded-md bg-black/70 px-1.5 py-0.5 text-[10px] text-paper">
@@ -354,10 +357,10 @@ export default function ChannelPage() {
             <Link
               key={e.id}
               href={`/events/${e.id}`}
-              className="group rounded-xl border border-border bg-card/60 p-4 transition-colors hover:border-sky-500/40"
+              className="group rounded-xl bg-card/60 p-4 transition-colors hover:bg-card"
             >
-              <div className="mb-2 flex items-center gap-2 text-[10px] r text-muted-foreground">
-                <span className="rounded-md border border-sky-400/30 bg-sky-500/10 px-1.5 py-0.5 text-sky-300">
+              <div className="mb-2 flex items-center gap-2 text-[10px] text-muted-foreground">
+                <span className="rounded-md bg-sky-500/25 px-1.5 py-0.5 text-sky-100">
                   Tier {e.tier.toUpperCase()}
                 </span>
                 {new Date(e.startsAt).toLocaleDateString()}
