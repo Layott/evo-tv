@@ -7,6 +7,7 @@ import type { Clip } from "@/lib/types";
 import { listTrendingClips } from "@/lib/client";
 import { Badge } from "@/components/ui/badge";
 import { Flame, Play, Heart } from "@/components/icons";
+import { MediaImage } from "@/components/ui/media-image";
 
 function relTime(iso: string): string {
   const diff = Math.max(0, Date.now() - new Date(iso).getTime());
@@ -82,13 +83,7 @@ function ClipCard({ clip }: { clip: Clip }) {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      <Image
-        src={clip.thumbnailUrl}
-        alt={clip.title}
-        fill
-        className="object-cover"
-        sizes="(max-width:640px) 50vw, 20vw"
-      />
+      <MediaImage src={clip.thumbnailUrl} alt={clip.title} className="absolute inset-0 size-full object-cover" />
       {/* Hover state. A wash rather than the 2px sky ring it used to draw. */}
       {hovered && (
         <div className="pointer-events-none absolute inset-0 bg-sky-400/15" />

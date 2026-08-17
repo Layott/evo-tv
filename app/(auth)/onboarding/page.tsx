@@ -33,6 +33,7 @@ import { cn } from "@/lib/utils";
 import { listGames, listTeams } from "@/lib/client";
 import type { Game, Team, UserPrefs } from "@/lib/types";
 import { useAuth } from "@/components/providers";
+import { MediaImage } from "@/components/ui/media-image";
 
 type NotifKey = keyof UserPrefs["notifOptIn"];
 
@@ -323,13 +324,7 @@ function StepGames({
             )}
           >
             <div className="relative aspect-[16/9] w-full">
-              <Image
-                src={g.coverUrl}
-                alt={g.name}
-                fill
-                sizes="(max-width: 640px) 100vw, 240px"
-                className="object-cover"
-              />
+              <MediaImage src={g.coverUrl} alt={g.name} className="absolute inset-0 size-full object-cover" />
               {isSelected ? (
                 <div className="absolute right-2 top-2 flex size-6 items-center justify-center rounded-full bg-sky-500 text-ink">
                   <Check className="size-3.5" />
@@ -401,13 +396,7 @@ function StepTeams({
             )}
           >
             <div className="relative size-10 shrink-0 overflow-hidden rounded-md bg-muted">
-              <Image
-                src={t.logoUrl}
-                alt={t.name}
-                fill
-                sizes="40px"
-                className="object-cover"
-              />
+              <MediaImage src={t.logoUrl} alt={t.name} className="absolute inset-0 size-full object-cover" />
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">

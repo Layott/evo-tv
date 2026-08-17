@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { MediaImage } from "@/components/ui/media-image";
 
 import {
   getShowBySlug,
@@ -225,13 +225,7 @@ function LockedFrame({
   return (
     <div className="relative flex aspect-video w-full items-center justify-center">
       {posterUrl ? (
-        <Image
-          src={posterUrl}
-          alt=""
-          fill
-          sizes="100vw"
-          className="object-cover opacity-25"
-        />
+        <MediaImage src={posterUrl} alt="" className="absolute inset-0 size-full object-cover opacity-25" />
       ) : null}
       <div className="relative z-10 max-w-[38ch] px-6 text-center">
         <p className="text-lg font-semibold text-white">{copy.title}</p>

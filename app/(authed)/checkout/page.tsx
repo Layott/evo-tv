@@ -34,6 +34,7 @@ import {
   getCart,
 } from "@/components/shop/cart-store";
 import { formatNgn } from "@/components/profile/ngn";
+import { MediaImage } from "@/components/ui/media-image";
 
 const NG_STATES = [
   "Abia","Adamawa","Akwa Ibom","Anambra","Bauchi","Bayelsa","Benue","Borno","Cross River","Delta","Ebonyi","Edo","Ekiti","Enugu","Gombe","Imo","Jigawa","Kaduna","Kano","Katsina","Kebbi","Kogi","Kwara","Lagos","Nasarawa","Niger","Ogun","Ondo","Osun","Oyo","Plateau","Rivers","Sokoto","Taraba","Yobe","Zamfara","FCT Abuja"
@@ -185,7 +186,7 @@ export default function CheckoutPage() {
           variantLabel: r.variantLabel,
           qty: r.qty,
           unitPriceNgn: r.unit,
-          thumbnailUrl: r.product.images[0] ?? "/placeholder.svg",
+          thumbnailUrl: r.product.images[0] ?? "",
         }));
 
     const order: Order = {
@@ -405,13 +406,16 @@ export default function CheckoutPage() {
                   key={`${r.productId}-${r.variantId ?? ""}`}
                   className="flex items-center gap-3 py-3"
                 >
-                  <div className="relative size-14 shrink-0 overflow-hidden rounded-lg bg-muted">
-                    <Image
-                      src={r.product.images[0] ?? "/placeholder.svg"}
-                      alt=""
-                      fill
-                      className="object-cover"
-                      sizes="56px"
+                  <div className="size-14 shrink-0 overflow-hidden rounded-lg bg-muted">
+                    {/* MediaImage rather than next/image with a placeholder
+                        fallback: the stock placeholder is a near-white
+                        rectangle, and a product with no photo should get the
+                        branded tile like it does everywhere else. */}
+                    <MediaImage
+                      src={r.product.images[0]}
+                      alt={r.product.name}
+                      seed={r.product.id}
+                      className="size-full object-cover"
                     />
                   </div>
                   <div className="min-w-0 flex-1">

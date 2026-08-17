@@ -6,6 +6,7 @@ import Link from "next/link";
 import type { Team, Player } from "@/lib/types";
 import { Users } from "@/components/icons";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { MediaImage } from "@/components/ui/media-image";
 
 interface Props {
   teams: Team[];
@@ -39,13 +40,7 @@ export function FollowingGrid({ teams, players }: Props) {
                 href={`/team/${t.slug}`}
                 className="flex items-center gap-3 rounded-xl border border-border bg-card/60 p-3 transition hover:border-sky-500/40"
               >
-                <Image
-                  src={t.logoUrl}
-                  alt={t.name}
-                  width={48}
-                  height={48}
-                  className="size-12 rounded-lg bg-muted object-cover"
-                />
+                <MediaImage src={t.logoUrl} alt={t.name} className="size-12 rounded-lg bg-muted object-cover" />
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold">{t.name}</p>
                   <p className="text-xs text-muted-foreground">{t.tag}</p>

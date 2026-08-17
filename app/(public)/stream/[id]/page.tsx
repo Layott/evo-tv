@@ -323,7 +323,7 @@ function PaywallOverlay({
 }) {
   return (
     <div className="relative aspect-video w-full">
-      <Image src={thumb} alt={title} fill className="object-cover opacity-40" />
+      <MediaImage src={thumb} alt={title} className="absolute inset-0 size-full object-cover opacity-40" />
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/60 px-6 text-center">
         <Badge className="bg-amber-500 text-ink">
           <Lock className="size-3" />
@@ -356,7 +356,7 @@ function PrerollAd({
 }) {
   return (
     <div className="relative aspect-video w-full bg-black">
-      <Image src={ad.mediaUrl} alt={ad.advertiser} fill className="object-cover" />
+      <MediaImage src={ad.mediaUrl} alt={ad.advertiser} className="absolute inset-0 size-full object-cover" />
       <div className="absolute top-3 left-3 rounded bg-black/70 px-2 py-1 text-xs font-semibold text-white">
         Ad · {ad.advertiser}
       </div>

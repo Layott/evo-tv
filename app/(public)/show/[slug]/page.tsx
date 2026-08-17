@@ -14,6 +14,7 @@ import { listProducts } from "@/lib/api/products";
 import { Price } from "@/components/ui/price";
 import { LocalTime } from "@/components/ui/local-time";
 import { BackButton } from "@/components/shell/back-button";
+import { MediaImage } from "@/components/ui/media-image";
 
 /**
  * A show's own page, inside the app.
@@ -199,13 +200,10 @@ export default async function ShowPage({
         <div className="overflow-hidden rounded-2xl border border-border bg-card">
           {poster ? (
             <div className="relative aspect-[2/3] bg-background">
-              <Image
+              <MediaImage
                 src={poster}
                 alt={`${title} poster`}
-                fill
-                sizes="(min-width: 768px) 16rem, 100vw"
-                priority
-                className="object-cover"
+                className="absolute inset-0 size-full object-cover"
               />
             </div>
           ) : (
@@ -343,12 +341,11 @@ export default async function ShowPage({
                 >
                   {product.images[0] ? (
                     <div className="relative aspect-square bg-background">
-                      <Image
+                      <MediaImage
                         src={product.images[0]}
-                        alt=""
-                        fill
-                        sizes="(max-width: 640px) 45vw, 18vw"
-                        className="object-cover"
+                        alt={product.name}
+                        seed={product.id}
+                        className="absolute inset-0 size-full object-cover"
                       />
                     </div>
                   ) : (

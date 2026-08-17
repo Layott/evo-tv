@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
 import {
   Area,
@@ -21,6 +20,7 @@ import {
   UserPlus,
   Users,
 } from "@/components/icons";
+import { MediaImage } from "@/components/ui/media-image";
 
 import {
   adminListStreams,
@@ -255,13 +255,7 @@ export function OverviewPage() {
                 >
                   <div className="relative h-10 w-16 shrink-0 overflow-hidden rounded bg-background">
                     {s.thumbnailUrl ? (
-                      <Image
-                        src={s.thumbnailUrl}
-                        alt=""
-                        fill
-                        sizes="64px"
-                        className="object-cover"
-                      />
+                      <MediaImage src={s.thumbnailUrl} alt="" className="absolute inset-0 size-full object-cover" />
                     ) : null}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -290,13 +284,7 @@ export function OverviewPage() {
                 >
                   <div className="relative h-10 w-16 shrink-0 overflow-hidden rounded bg-background">
                     {v.thumbnailUrl ? (
-                      <Image
-                        src={v.thumbnailUrl}
-                        alt=""
-                        fill
-                        sizes="64px"
-                        className="object-cover"
-                      />
+                      <MediaImage src={v.thumbnailUrl} alt="" className="absolute inset-0 size-full object-cover" />
                     ) : null}
                   </div>
                   <div className="min-w-0 flex-1">

@@ -390,7 +390,7 @@ function AdForm({
     initial ?? {
       id: `ad_new_${Date.now()}`,
       placement: "home_banner",
-      mediaUrl: "/placeholder.svg?height=200&width=1200&text=New+Creative",
+      mediaUrl: "",
       clickUrl: "https://example.com",
       advertiser: "",
       active: true,
@@ -407,7 +407,7 @@ function AdForm({
         initial ?? {
           id: `ad_new_${Date.now()}`,
           placement: "home_banner",
-          mediaUrl: "/placeholder.svg?height=200&width=1200&text=New+Creative",
+          mediaUrl: "",
           clickUrl: "https://example.com",
           advertiser: "",
           active: true,

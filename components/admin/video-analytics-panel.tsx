@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import Image from "next/image";
 import {
   Area,
   AreaChart,
@@ -14,6 +13,7 @@ import {
   YAxis,
 } from "recharts";
 import { Clock, Eye, Gauge, Heart, PlayCircle, Users } from "@/components/icons";
+import { MediaImage } from "@/components/ui/media-image";
 
 import { useQuery } from "@tanstack/react-query";
 import { adminVideoAnalytics, adminVideoSummaries } from "@/lib/client";
@@ -311,13 +311,7 @@ function VideoList({
                 >
                   <div className="relative h-10 w-16 shrink-0 overflow-hidden rounded bg-background">
                     {v.thumbnailUrl ? (
-                      <Image
-                        src={v.thumbnailUrl}
-                        alt=""
-                        fill
-                        sizes="64px"
-                        className="object-cover"
-                      />
+                      <MediaImage src={v.thumbnailUrl} alt="" className="absolute inset-0 size-full object-cover" />
                     ) : null}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -359,13 +353,7 @@ function VideoHeader({
     <div className="flex items-center gap-4 rounded-xl bg-card/50 p-4">
       <div className="relative h-16 w-28 shrink-0 overflow-hidden rounded-lg bg-background">
         {video.thumbnailUrl ? (
-          <Image
-            src={video.thumbnailUrl}
-            alt=""
-            fill
-            sizes="112px"
-            className="object-cover"
-          />
+          <MediaImage src={video.thumbnailUrl} alt="" className="absolute inset-0 size-full object-cover" />
         ) : null}
       </div>
       <div className="min-w-0">

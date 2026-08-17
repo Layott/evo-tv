@@ -27,6 +27,7 @@ import {
   Eye,
 } from "@/components/icons";
 import { toast } from "sonner";
+import { MediaImage } from "@/components/ui/media-image";
 
 function relTime(iso: string): string {
   const diff = Math.max(0, Date.now() - new Date(iso).getTime());
@@ -296,7 +297,7 @@ function PaywallOverlay({
 }) {
   return (
     <div className="relative aspect-video w-full">
-      <Image src={thumb} alt={title} fill className="object-cover opacity-40" />
+      <MediaImage src={thumb} alt={title} className="absolute inset-0 size-full object-cover opacity-40" />
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/60 px-6 text-center">
         <Badge className="bg-amber-500 text-ink">
           <Lock className="size-3" />

@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatNgn } from "@/components/profile/ngn";
 import { cn } from "@/lib/utils";
+import { MediaImage } from "@/components/ui/media-image";
 
 const STATUS_LABEL: Record<OrderStatus, string> = {
   pending: "Pending",
@@ -185,13 +186,7 @@ export function OrderView({ id }: { id: string }) {
             {order.items.map((item, i) => (
               <li key={`${item.productId}-${i}`} className="flex items-center gap-3 py-3">
                 <div className="relative size-16 shrink-0 overflow-hidden rounded-lg bg-muted">
-                  <Image
-                    src={item.thumbnailUrl}
-                    alt={item.productName}
-                    fill
-                    className="object-cover"
-                    sizes="64px"
-                  />
+                  <MediaImage src={item.thumbnailUrl} alt={item.productName} className="absolute inset-0 size-full object-cover" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="line-clamp-1 text-sm font-semibold">{item.productName}</p>

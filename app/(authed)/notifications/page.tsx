@@ -28,6 +28,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { relativeTime } from "@/components/profile/ngn";
 import { cn } from "@/lib/utils";
+import { MediaImage } from "@/components/ui/media-image";
 
 const ICONS: Record<NotificationType, React.ElementType> = {
   stream_live: Play,
@@ -59,13 +60,7 @@ function Row({
     >
       <div className="relative shrink-0">
         {n.imageUrl ? (
-          <Image
-            src={n.imageUrl}
-            alt=""
-            width={48}
-            height={48}
-            className="size-12 rounded-lg bg-muted object-cover"
-          />
+          <MediaImage src={n.imageUrl} alt="" className="size-12 rounded-lg bg-muted object-cover" />
         ) : (
           <div className="flex size-12 items-center justify-center rounded-lg bg-muted">
             <Icon className="size-5 text-sky-400" />
