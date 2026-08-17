@@ -33,7 +33,7 @@ import { PremiumPaywallModal } from "@/components/shell/premium-paywall";
 export default function StreamPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const { role } = useAuth();
+  const { role, isPremium } = useAuth();
   const streamId = params?.id ?? "";
 
   const [stream, setStream] = React.useState<Stream | null | undefined>(undefined);
@@ -75,7 +75,7 @@ export default function StreamPage() {
 
   // Preroll ad
   React.useEffect(() => {
-    if (role === "premium") {
+    if (isPremium) {
       setAdDone(true);
       return;
     }
@@ -145,7 +145,7 @@ export default function StreamPage() {
     );
   }
 
-  const showPaywall = stream.isPremium && role !== "premium";
+  const showPaywall = stream.isPremium && !isPremium;
   const showAd = !showPaywall && ad && !adDone;
 
   return (

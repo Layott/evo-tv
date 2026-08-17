@@ -19,3 +19,4 @@ export * from "./fantasy";
 export * from "./creator_program";
 export * from "./marketing";
 export * from "./epg";
+export * from "./app_releases";

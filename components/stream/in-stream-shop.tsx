@@ -16,9 +16,9 @@ function ngn(n: number) {
 }
 
 export function InStreamShop() {
-  const { role } = useAuth();
+  const { isPremium } = useAuth();
   const [products, setProducts] = React.useState<Product[] | null>(null);
-  const isPremium = role === "premium";
+  
 
   React.useEffect(() => {
     let cancelled = false;
