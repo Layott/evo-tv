@@ -41,8 +41,8 @@ const FEATURES = [
 ];
 
 export default function ApiAccessLandingPage() {
-  const { role } = useAuth();
-  const isPremium = role === "premium" || role === "admin";
+  const { isPremium } = useAuth();
+  
 
   return (
     <ApiAccessShell>

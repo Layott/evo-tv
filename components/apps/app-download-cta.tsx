@@ -18,11 +18,22 @@ import { downloadFor, type AppPlatform } from "@/lib/app-download";
  *
  * `pinned` overrides detection so /apps/android and /apps/ios can each speak
  * about one platform regardless of the device reading the page.
+ *
+ * `androidHref` comes from the server, which reads the current release from the
+ * database. It is passed in rather than read here because this is a client
+ * component: the environment variable it used to rely on is inlined at image
+ * build time, so a newly published APK could not appear without a redeploy.
  */
-export function AppDownloadCta({ pinned }: { pinned?: AppPlatform }) {
+export function AppDownloadCta({
+  pinned,
+  androidHref,
+}: {
+  pinned?: AppPlatform;
+  androidHref?: string | null;
+}) {
   const detected = useAppPlatform();
   const platform = pinned ?? detected;
-  const download = downloadFor(platform);
+  const download = downloadFor(platform, androidHref ?? null);
 
   if (download.href) {
     return (

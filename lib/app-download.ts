@@ -82,13 +82,23 @@ export function detectPlatform(userAgent: string, maxTouchPoints = 0): AppPlatfo
  * there is no desktop build and there is no point sending someone at a phone
  * store from a laptop, so the caller falls back to the web app.
  */
-export function downloadFor(platform: AppPlatform): AppDownload {
+export function downloadFor(
+  platform: AppPlatform,
+  /**
+   * The current Android build, read from the database by the server and passed
+   * down. It takes precedence over `ANDROID_APK_URL`, which survives only as a
+   * manual override: being a `NEXT_PUBLIC_` value it is inlined at image build
+   * time, so it can never reflect a build published after the last deploy.
+   */
+  hostedAndroidUrl: string | null = null,
+): AppDownload {
   if (platform === "android") {
     if (PLAY_STORE_URL) {
       return { href: PLAY_STORE_URL, isDirectFile: false, label: "Get it on Google Play" };
     }
-    if (ANDROID_APK_URL) {
-      return { href: ANDROID_APK_URL, isDirectFile: true, label: "Download for Android" };
+    const apk = hostedAndroidUrl ?? ANDROID_APK_URL;
+    if (apk) {
+      return { href: apk, isDirectFile: true, label: "Download for Android" };
     }
     return NOTHING;
   }

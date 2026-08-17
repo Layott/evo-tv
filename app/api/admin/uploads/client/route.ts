@@ -10,6 +10,9 @@ import { presignPut } from "@/lib/storage/spaces";
 const MAX_BYTES = 512 * 1024 * 1024; // 512 MB
 
 const ALLOWED_CONTENT_TYPES = [
+  // The Android build. Here so a release can be published from whichever
+  // machine ran the build, without putting Spaces credentials on it.
+  "application/vnd.android.package-archive",
   "video/mp4",
   "video/quicktime",
   "video/webm",
