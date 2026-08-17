@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { MediaImage } from "@/components/ui/media-image";
 
 import {
   getShowBySlug,
@@ -106,6 +106,7 @@ export default async function EpisodePage({ params }: RouteParams) {
         <div className="mt-4 overflow-hidden rounded-2xl border border-border bg-black">
           {access.canWatch && ep.hlsUrl ? (
             <VideoPlayer
+              analytics={{ type: "episode", id: ep.id }}
               src={ep.hlsUrl}
               poster={ep.thumbnailUrl || show.heroUrl}
               mediaId={ep.id}
@@ -121,7 +122,7 @@ export default async function EpisodePage({ params }: RouteParams) {
         </div>
 
         <header className="mt-6">
-          <p className="text-xs font-semibold uppercase tracking-wide text-sky-400">
+          <p className="text-xs font-semibold text-sky-400">
             Season {seasonNumber}, episode {episodeNumber}
           </p>
           <h1 className="mt-1 text-2xl font-bold text-foreground sm:text-3xl">
@@ -224,13 +225,7 @@ function LockedFrame({
   return (
     <div className="relative flex aspect-video w-full items-center justify-center">
       {posterUrl ? (
-        <Image
-          src={posterUrl}
-          alt=""
-          fill
-          sizes="100vw"
-          className="object-cover opacity-25"
-        />
+        <MediaImage src={posterUrl} alt="" className="absolute inset-0 size-full object-cover opacity-25" />
       ) : null}
       <div className="relative z-10 max-w-[38ch] px-6 text-center">
         <p className="text-lg font-semibold text-white">{copy.title}</p>
@@ -243,7 +238,7 @@ function LockedFrame({
         {reason === "early_access" || reason === "premium_only" ? (
           <Link
             href="/upgrade"
-            className="mt-5 inline-block rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-black transition-colors hover:bg-sky-400"
+            className="mt-5 inline-block rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-sky-400"
           >
             See the plans
           </Link>

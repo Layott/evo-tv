@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Edit, MapPin, ShieldCheck, Star } from "lucide-react";
+import { Edit, MapPin, ShieldCheck, BadgeCheck } from "@/components/icons";
 import type { Profile } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -55,7 +55,7 @@ export function ProfileHeader({ profile, onEdit, canEdit = false }: Props) {
           </h1>
           {isPremium ? (
             <Badge className="border-amber-500/40 bg-amber-500/15 text-amber-300">
-              <Star className="size-3" /> Premium
+              <BadgeCheck className="size-3" /> Premium
             </Badge>
           ) : null}
           {isAdmin ? (

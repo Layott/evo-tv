@@ -12,7 +12,7 @@ import {
   Printer,
   ShoppingBag,
   Truck,
-} from "lucide-react";
+} from "@/components/icons";
 
 import { getOrderById } from "@/lib/client";
 import type { Order, OrderStatus } from "@/lib/types";
@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatNgn } from "@/components/profile/ngn";
 import { cn } from "@/lib/utils";
+import { MediaImage } from "@/components/ui/media-image";
 
 const STATUS_LABEL: Record<OrderStatus, string> = {
   pending: "Pending",
@@ -133,7 +134,7 @@ export function OrderView({ id }: { id: string }) {
       <div className="rounded-2xl border border-border bg-card/40 p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Order</p>
+            <p className="text-xs text-muted-foreground">Order</p>
             <h1 className="font-mono text-lg font-bold text-foreground">
               #{order.id.slice(-8).toUpperCase()}
             </h1>
@@ -162,7 +163,7 @@ export function OrderView({ id }: { id: string }) {
                 <div className="flex items-center gap-2">
                   <span
                     className={cn( "flex size-7 items-center justify-center rounded-full",
-                      active ? "bg-sky-500 text-black" : "bg-muted text-muted-foreground"
+                      active ? "bg-sky-500 text-ink" : "bg-muted text-muted-foreground"
                     )}
                   >
                     <Icon className="size-4" />
@@ -185,13 +186,7 @@ export function OrderView({ id }: { id: string }) {
             {order.items.map((item, i) => (
               <li key={`${item.productId}-${i}`} className="flex items-center gap-3 py-3">
                 <div className="relative size-16 shrink-0 overflow-hidden rounded-lg bg-muted">
-                  <Image
-                    src={item.thumbnailUrl}
-                    alt={item.productName}
-                    fill
-                    className="object-cover"
-                    sizes="64px"
-                  />
+                  <MediaImage src={item.thumbnailUrl} alt={item.productName} className="absolute inset-0 size-full object-cover" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="line-clamp-1 text-sm font-semibold">{item.productName}</p>
@@ -264,7 +259,7 @@ export function OrderView({ id }: { id: string }) {
             </Button>
             <Button
               asChild
-              className="flex-1 bg-sky-500 text-black hover:bg-sky-500/90"
+              className="flex-1 bg-sky-500 text-ink hover:bg-sky-500/90"
             >
               <Link href="/shop">
                 <ShoppingBag className="size-4" /> Continue

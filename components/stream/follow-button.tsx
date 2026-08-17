@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useAuth } from "@/components/providers";
 import { Button } from "@/components/ui/button";
-import { Heart, HeartOff } from "lucide-react";
+import { Heart, HeartOff } from "@/components/icons";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 

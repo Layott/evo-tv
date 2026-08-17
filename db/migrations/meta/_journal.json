@@ -281,6 +281,13 @@
       "when": 1781286400000,
       "tag": "0039_product_show_link",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1787011200000,
+      "tag": "0040_video_view_buckets",
+      "breakpoints": true
     }
   ]
 }

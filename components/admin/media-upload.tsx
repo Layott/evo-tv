@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Loader2, Upload, X } from "lucide-react";
+import { Loader2, Upload, X } from "@/components/icons";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 

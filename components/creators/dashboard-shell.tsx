@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { ArrowLeft, BarChart3, Coins, Film, Lock, Mic2, Sparkles, Users } from "lucide-react";
+import { ArrowLeft, BarChart3, Coins, Film, Lock, Mic2, Users } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/components/providers";
@@ -33,7 +33,7 @@ export function DashboardShell({ children, title, description, actions }: Dashbo
   if (!allowed) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-12">
-        <div className="rounded-3xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-fuchsia-500/10 p-10 text-center">
+        <div className="rounded-3xl bg-amber-500/15 p-10 text-center">
           <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-amber-500/20">
             <Lock className="size-6 text-amber-300" />
           </div>
@@ -70,8 +70,9 @@ export function DashboardShell({ children, title, description, actions }: Dashbo
                 <ArrowLeft className="size-4" />
               </Link>
             </Button>
+            {/* The page title is the page title. It had a gold sparkle in
+                front of it, which is decoration pretending to be meaning. */}
             <h1 className="text-xl font-bold text-foreground sm:text-2xl">
-              <Sparkles className="mr-2 inline size-5 text-amber-400" />
               {title}
             </h1>
             <Badge variant="outline" className="border-emerald-500/40 bg-emerald-500/10 text-emerald-200">
@@ -91,7 +92,7 @@ export function DashboardShell({ children, title, description, actions }: Dashbo
               <li key={t.href}>
                 <Link
                   href={t.href}
-                  className={cn( "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium uppercase tracking-wider transition",
+                  className={cn( "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium r transition",
                     active
                       ? "bg-muted text-foreground shadow-inner"
                       : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",

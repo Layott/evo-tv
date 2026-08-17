@@ -6,7 +6,8 @@ import Link from "next/link";
 import type { Clip } from "@/lib/types";
 import { listTrendingClips } from "@/lib/client";
 import { Badge } from "@/components/ui/badge";
-import { Flame, Play, Heart } from "lucide-react";
+import { Flame, Play, Heart } from "@/components/icons";
+import { MediaImage } from "@/components/ui/media-image";
 
 function relTime(iso: string): string {
   const diff = Math.max(0, Date.now() - new Date(iso).getTime());
@@ -78,17 +79,11 @@ function ClipCard({ clip }: { clip: Clip }) {
   return (
     <Link
       href={`/clips/${clip.id}`}
-      className="group relative overflow-hidden rounded-lg border border-border bg-card aspect-[9/16] block"
+      className="group relative overflow-hidden rounded-lg bg-card aspect-[9/16] block"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      <Image
-        src={clip.thumbnailUrl}
-        alt={clip.title}
-        fill
-        className="object-cover transition-transform duration-300 group-hover:scale-105"
-        sizes="(max-width:640px) 50vw, 20vw"
-      />
+      <MediaImage src={clip.thumbnailUrl} alt={clip.title} className="absolute inset-0 size-full object-cover" />
       {/* Hover state. A wash rather than the 2px sky ring it used to draw. */}
       {hovered && (
         <div className="pointer-events-none absolute inset-0 bg-sky-400/15" />
@@ -97,7 +92,7 @@ function ClipCard({ clip }: { clip: Clip }) {
         <p className="text-xs font-semibold text-white line-clamp-2">
           {clip.title}
         </p>
-        <div className="mt-1 flex items-center justify-between text-[10px] text-foreground/80">
+        <div className="mt-1 flex items-center justify-between text-[10px] text-paper/80">
           <span>@{clip.creatorHandle}</span>
           <span>{relTime(clip.createdAt)}</span>
         </div>

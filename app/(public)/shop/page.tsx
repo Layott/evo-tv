@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Loader2, ShoppingCart } from "lucide-react";
+import { Loader2, ShoppingCart } from "@/components/icons";
 
 import { listProducts } from "@/lib/client";
 import type { Product } from "@/lib/types";

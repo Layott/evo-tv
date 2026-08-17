@@ -6,7 +6,7 @@ import { listActivePolls, listPollsForStream, votePoll } from "@/lib/client";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Vote, CheckCircle2 } from "lucide-react";
+import { Vote, CheckCircle2 } from "@/components/icons";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -105,7 +105,7 @@ export function LivePolls({ streamId }: { streamId: string }) {
       ))}
       {closedPolls.length > 0 && (
         <div className="pt-2 border-t border-border">
-          <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-2 px-1">
+          <h4 className="text-xs r text-muted-foreground mb-2 px-1">
             Recent polls
           </h4>
           <div className="space-y-3">

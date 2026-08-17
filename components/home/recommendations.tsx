@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { MediaImage } from "@/components/ui/media-image";
-import { Sparkles, Clock } from "lucide-react";
+import { Clock } from "@/components/icons";
 import type { Vod, Game } from "@/lib/types";
 
 interface RecommendationsProps {
@@ -33,8 +33,10 @@ export function Recommendations({ vods, games, loading }: RecommendationsProps) 
   return (
     <section className="space-y-3">
       <div className="flex items-center justify-between">
-        <h2 className="flex items-center gap-2 text-xl font-semibold tracking-tight">
-          <Sparkles className="h-4 w-4 text-sky-400" />
+        {/* No icon. A section heading is a heading; the sparkle was there to
+            make a plain list of videos feel clever, which is the thing the
+            rule is aimed at. */}
+        <h2 className="text-xl font-semibold tracking-tight">
           Recommended for you
         </h2>
         <Link
@@ -69,9 +71,9 @@ export function Recommendations({ vods, games, loading }: RecommendationsProps) 
                     src={v.thumbnailUrl}
                     alt={v.title}
                     seed={v.id}
-                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    className="h-full w-full object-cover"
                   />
-                  <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] text-foreground">
+                  <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] text-paper">
                     <Clock className="h-3 w-3" /> {formatDuration(v.durationSec)}
                   </div>
                 </div>

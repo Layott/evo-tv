@@ -31,11 +31,25 @@ function sign(relativePath: string, expiry: number): string {
 }
 
 export const localStorage: StorageAdapter = {
+  /**
+   * Returns a URL, not the key.
+   *
+   * Every caller persists whatever `write` hands back and later puts it in an
+   * `<img src>`. The Spaces adapter returns a full public URL, so that is the
+   * contract; this one returned the bare key, which the browser then resolved
+   * against the current page. An avatar uploaded on a checkout with no Spaces
+   * credentials was stored as `avatars/<id>/<file>.png` and every page that
+   * tried to show it asked for `/admin/avatars/<id>/<file>.png` and got a 404.
+   *
+   * `url()` already knew the right answer and is reused so the two cannot
+   * drift, and `ownedKeyFromUrl` already expected this prefix when working
+   * backwards from a stored value.
+   */
   async write(relativePath, data) {
     const full = resolveSafe(relativePath);
     fs.mkdirSync(path.dirname(full), { recursive: true });
     await fs.promises.writeFile(full, data);
-    return relativePath;
+    return localStorage.url(relativePath);
   },
   async read(relativePath) {
     return fs.promises.readFile(resolveSafe(relativePath));

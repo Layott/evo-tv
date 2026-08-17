@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { Calendar, MapPin, Trophy } from "lucide-react";
+import { Calendar, MapPin, Trophy } from "@/components/icons";
 import { listEvents, listGames } from "@/lib/client";
 import type { EsportsEvent, EventTier } from "@/lib/types";
 
@@ -21,11 +21,11 @@ function formatNgn(n: number): string {
 function tierColor(t: string): string {
   switch (t) {
     case "s":
-      return "border-amber-500/40 bg-amber-500/10 text-amber-300";
+      return "bg-amber-500/25 text-amber-100";
     case "a":
-      return "border-sky-500/40 bg-sky-500/10 text-sky-300";
+      return "bg-sky-500/25 text-sky-100";
     case "b":
-      return "border-sky-500/40 bg-sky-500/10 text-sky-300";
+      return "bg-sky-500/25 text-sky-100";
     default:
       return "bg-muted text-foreground/80";
   }
@@ -33,7 +33,7 @@ function tierColor(t: string): string {
 
 function LiveBadge() {
   return (
-    <span className="flex items-center gap-1 rounded-md bg-red-500/20 px-2 py-0.5 text-[10px] uppercase tracking-wider text-red-400">
+    <span className="flex items-center gap-1 rounded-md bg-red-500/20 px-2 py-0.5 text-[10px] r text-red-400">
       <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
       Live
     </span>
@@ -47,9 +47,9 @@ function EventCard({ event, gameName }: { event: EsportsEvent; gameName?: string
       className="group flex overflow-hidden rounded-xl border border-border bg-card/60 transition-colors hover:bg-card"
     >
       <div className="relative aspect-square w-32 shrink-0 overflow-hidden sm:w-48">
-        <img src={event.bannerUrl} alt={event.title} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+        <img src={event.bannerUrl} alt={event.title} className="h-full w-full object-cover" />
         <span
-          className={`absolute left-2 top-2 rounded-md border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${tierColor(event.tier)}`}
+          className={`absolute left-2 top-2 rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase ${tierColor(event.tier)}`}
         >
           {event.tier.toUpperCase()}
         </span>
@@ -163,7 +163,7 @@ export default function EventsPage() {
               key={t}
               type="button"
               onClick={() => setTierFilter(tierFilter === t ? null : t)}
-              className={`rounded-full border px-2.5 py-0.5 text-[11px] font-semibold uppercase transition-colors ${
+              className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase ${
                 tierFilter === t
                   ? tierColor(t)
                   : "bg-card/70 text-muted-foreground hover:bg-card"
