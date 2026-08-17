@@ -39,8 +39,15 @@ export function MetricCard({ title, value, delta, deltaLabel, icon: Icon, hint }
             {Math.abs(delta!).toFixed(1)}%
           </span>
         ) : null}
-        {deltaLabel ? <span className="text-muted-foreground">{deltaLabel}</span> : null}
-        {hint && !deltaLabel ? <span className="text-muted-foreground">{hint}</span> : null}
+        {/* The label only means something next to the number it qualifies. On
+            its own it rendered as a bare "vs yesterday" under a figure with
+            nothing to compare it to. */}
+        {deltaLabel && showDelta ? (
+          <span className="text-muted-foreground">{deltaLabel}</span>
+        ) : null}
+        {hint && !(deltaLabel && showDelta) ? (
+          <span className="text-muted-foreground">{hint}</span>
+        ) : null}
       </div>
     </div>
   );

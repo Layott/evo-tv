@@ -1,6 +1,8 @@
 "use client";
 
 import * as React from "react";
+
+import { useWatchHeartbeat } from "@/hooks/use-watch-heartbeat";
 import {
   Play,
   Pause,
@@ -52,6 +54,12 @@ interface VideoPlayerProps {
   className?: string;
   /** id used for captions/AI track lookup; uses src if omitted */
   mediaId?: string;
+  /**
+   * Which catalogue row this playback belongs to, so watch time and audience
+   * retention can be recorded against it. Omitted for live, where there is no
+   * fixed duration to measure a percentage against.
+   */
+  analytics?: { type: "vod" | "episode"; id: string };
 }
 
 /**
@@ -123,9 +131,21 @@ export function VideoPlayer({
   onReady,
   className,
   mediaId,
+  analytics,
 }: VideoPlayerProps) {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const videoRef = React.useRef<HTMLVideoElement>(null);
+  /**
+   * The same element as `videoRef`, held in state as well.
+   *
+   * A ref does not re-render, so a hook depending on `videoRef.current` reads
+   * null on the first pass and never runs again. State gives the heartbeat
+   * something to wake up on.
+   */
+  const [videoEl, setVideoEl] = React.useState<HTMLVideoElement | null>(null);
+
+  // Records watch time and audience retention for on-demand playback.
+  useWatchHeartbeat(videoEl, analytics);
   const [hlsError, setHlsError] = React.useState<string | null>(null);
   /** The attached hls.js instance, so a re-run can tear the old one down. */
   const hlsRef = React.useRef<HlsType | null>(null);
@@ -678,7 +698,10 @@ export function VideoPlayer({
       )}
     >
       <video
-        ref={videoRef}
+        ref={(el) => {
+          videoRef.current = el;
+          setVideoEl(el);
+        }}
         /* No `src` here: the effect above assigns it, or hands the element to
            hls.js. Setting both makes the browser fetch the manifest twice and
            race hls.js for the media element. */

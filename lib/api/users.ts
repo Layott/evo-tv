@@ -8,7 +8,7 @@ import { firstNonEmpty, resolveAvatarUrl } from "@/lib/avatar";
 type UserRow = typeof schema.user.$inferSelect;
 type ProfileRow = typeof schema.profiles.$inferSelect;
 
-function toProfile(u: UserRow, p: ProfileRow | null | undefined): Profile {
+export function toProfile(u: UserRow, p: ProfileRow | null | undefined): Profile {
   const role: Role = ((u.role as Role | null) ?? "user") as Role;
   const createdAt =
     typeof u.createdAt === "string" ? u.createdAt : new Date(u.createdAt).toISOString();

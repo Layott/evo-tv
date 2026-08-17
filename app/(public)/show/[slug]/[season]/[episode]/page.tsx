@@ -106,6 +106,7 @@ export default async function EpisodePage({ params }: RouteParams) {
         <div className="mt-4 overflow-hidden rounded-2xl border border-border bg-black">
           {access.canWatch && ep.hlsUrl ? (
             <VideoPlayer
+              analytics={{ type: "episode", id: ep.id }}
               src={ep.hlsUrl}
               poster={ep.thumbnailUrl || show.heroUrl}
               mediaId={ep.id}

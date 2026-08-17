@@ -318,12 +318,31 @@ export async function adminMarkOrderShipped(id: string): Promise<void> {
   await apiSend("POST", `/api/admin/orders/${encodeURIComponent(id)}/mark-shipped`);
 }
 
+/**
+ * The rows carry more than a public `Profile`: the admin table needs the email,
+ * whether the account is suspended, and when it was last seen.
+ */
+export type AdminUserRow = Profile & {
+  email: string;
+  emailVerified: boolean;
+  suspended: boolean;
+  lastActive: string | null;
+  deletedAt: string | null;
+};
+
 export async function adminListUsers(
-  opts: AdminListOptions & { q?: string } = {},
-): Promise<{ users: Profile[]; total: number }> {
-  const res = await apiGet<{ users: Profile[]; total: number }>(
+  opts: AdminListOptions & { q?: string; role?: string } = {},
+): Promise<{ users: AdminUserRow[]; total: number }> {
+  const res = await apiGet<{ users: AdminUserRow[]; total: number }>(
     "/api/admin/users",
-    { q: opts.q, limit: opts.limit ?? 100, offset: opts.offset ?? 0 },
+    {
+      // The endpoint reads `search`. This sent `q`, so typing in the admin
+      // search box filtered nothing and quietly returned the unfiltered page.
+      search: opts.q,
+      role: opts.role,
+      limit: opts.limit ?? 100,
+      offset: opts.offset ?? 0,
+    },
   );
   return res ?? { users: [], total: 0 };
 }
@@ -555,4 +574,90 @@ export async function adminSaveEmailTemplate(
     subject,
     body,
   });
+}
+
+/* ── Per-video analytics ────────────────────────────────────────────────── */
+
+export interface AdminVideoSummary {
+  type: "vod" | "episode";
+  id: string;
+  title: string;
+  thumbnailUrl: string;
+  durationSec: number;
+  publishedAt: string | null;
+  views: number;
+  watchTimeSec: number;
+  avgPercentViewed: number;
+}
+
+export interface AdminVideoAnalytics {
+  video: {
+    type: "vod" | "episode";
+    id: string;
+    title: string;
+    thumbnailUrl: string;
+    durationSec: number;
+    publishedAt: string | null;
+  };
+  views: number;
+  uniqueViewers: number;
+  signedOutViews: number;
+  watchTimeSec: number;
+  avgViewDurationSec: number;
+  avgPercentViewed: number;
+  completionRate: number;
+  likes: number;
+  retention: number[];
+  viewsByDay: { date: string; views: number }[];
+  topCountries: { country: string; views: number }[];
+  devices: { device: string; views: number }[];
+}
+
+export async function adminVideoSummaries(
+  days = 28,
+): Promise<AdminVideoSummary[]> {
+  const res = await apiGet<{ videos: AdminVideoSummary[] }>(
+    "/api/admin/video-analytics",
+    { days },
+  );
+  return res?.videos ?? [];
+}
+
+export async function adminVideoAnalytics(
+  type: "vod" | "episode",
+  id: string,
+  days = 28,
+): Promise<AdminVideoAnalytics | null> {
+  return apiGet<AdminVideoAnalytics>("/api/admin/video-analytics", {
+    type,
+    id,
+    days,
+  });
+}
+
+/* ── Admin landing page ─────────────────────────────────────────────────── */
+
+export interface AdminOverviewData {
+  liveStreams: number;
+  liveViewers: number;
+  viewsToday: number;
+  viewsYesterday: number;
+  watchTimeSec7d: number;
+  signupsToday: number;
+  signups7d: number;
+  activePremiumSubs: number;
+  mrrNgn: number;
+  revenueThisMonthNgn: number;
+  viewsByDay: { date: string; views: number }[];
+  attention: {
+    id: string;
+    tone: "red" | "amber";
+    title: string;
+    body: string;
+    href: string;
+  }[];
+}
+
+export async function adminOverviewPage(): Promise<AdminOverviewData | null> {
+  return apiGet<AdminOverviewData>("/api/admin/overview");
 }
