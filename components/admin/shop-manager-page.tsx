@@ -78,6 +78,7 @@ interface ProductDraft {
   featured: boolean;
   active: boolean;
   teamId: string;
+  showId: string;
   inventory: string;
 }
 
@@ -93,6 +94,7 @@ function draftFrom(product: Product | null): ProductDraft {
     featured: product?.featured ?? false,
     active: product?.active ?? true,
     teamId: product?.teamId ?? "none",
+    showId: product?.showId ?? "none",
     inventory: product ? String(product.inventory) : "0",
   };
 }
@@ -127,9 +129,21 @@ export function ShopManagerPage() {
     queryKey: ["admin", "teams"],
     queryFn: () => adminListTeams(),
   });
+  // Linking a product to a show is what puts it on that show's page. The list
+  // is small and rarely changes, so it is fetched once with the form.
+  const showsQ = useQuery({
+    queryKey: ["admin", "shows", "for-products"],
+    queryFn: async (): Promise<{ id: string; title: string }[]> => {
+      const res = await fetch("/api/shows", { credentials: "include" });
+      if (!res.ok) return [];
+      const body = (await res.json()) as { shows?: { id: string; title: string }[] };
+      return body.shows ?? [];
+    },
+  });
 
   const products = productsQ.data ?? [];
   const teams = teamsQ.data ?? [];
+  const shows = showsQ.data ?? [];
 
   const filtered = React.useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -157,6 +171,7 @@ export function ShopManagerPage() {
         featured: input.featured,
         active: input.active,
         teamId: input.teamId === "none" ? null : input.teamId,
+        showId: input.showId === "none" ? null : input.showId,
         inventory: Math.max(0, Math.round(Number(input.inventory) || 0)),
       };
       return input.id
@@ -416,6 +431,29 @@ export function ShopManagerPage() {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="product-show">Show</Label>
+                  <Select
+                    value={draft.showId}
+                    onValueChange={(v) => setDraft({ ...draft, showId: v })}
+                  >
+                    <SelectTrigger id="product-show">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Not tied to a show</SelectItem>
+                      {shows.map((show) => (
+                        <SelectItem key={show.id} value={show.id}>
+                          {show.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Puts this product on that show&apos;s page.
+                  </p>
                 </div>
 
                 <div className="space-y-2">

@@ -16,6 +16,7 @@ function toProduct(r: typeof schema.products.$inferSelect): Product {
     featured: r.featured,
     active: r.active,
     teamId: r.teamId,
+    showId: r.showId ?? null,
     inventory: r.inventory,
   };
 }
@@ -24,6 +25,8 @@ export interface ListProductsFilter {
   featured?: boolean;
   category?: Product["category"];
   teamId?: string;
+  /** Everything in the shop that came out of one show. */
+  showId?: string;
 }
 
 export async function listProducts(
@@ -38,6 +41,9 @@ export async function listProducts(
   }
   if (filter.teamId) {
     conditions.push(eq(schema.products.teamId, filter.teamId));
+  }
+  if (filter.showId) {
+    conditions.push(eq(schema.products.showId, filter.showId));
   }
   return (
     await db
