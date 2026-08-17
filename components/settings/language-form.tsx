@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2 } from "@/components/icons";
 import { toast } from "sonner";
 
 import { SectionCard } from "./section-card";
@@ -55,7 +55,7 @@ export function LanguageForm() {
         <Button
           onClick={save}
           disabled={saving}
-          className="bg-sky-500 text-black hover:bg-sky-500/90"
+          className="bg-sky-500 text-ink hover:bg-sky-500/90"
         >
           {saving ? <Loader2 className="size-4 animate-spin" /> : null}
           Save language

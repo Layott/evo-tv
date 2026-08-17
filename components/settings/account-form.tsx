@@ -4,7 +4,7 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2 } from "lucide-react";
+import { Loader2 } from "@/components/icons";
 import { toast } from "sonner";
 
 import { SectionCard } from "./section-card";
@@ -109,7 +109,7 @@ export function AccountForm({ email }: { email: string }) {
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="bg-sky-500 text-black hover:bg-sky-500/90"
+            className="bg-sky-500 text-ink hover:bg-sky-500/90"
           >
             {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : null}
             Change password

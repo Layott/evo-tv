@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Download, Globe } from "lucide-react";
+import { Download, Globe } from "@/components/icons";
 
 import { Button } from "@/components/ui/button";
 import { useAppPlatform } from "@/hooks/use-app-platform";

@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { listShows } from "@/lib/api/shows";
 import { showArtBySlug } from "@/lib/epg/artwork";
+import { MediaImage } from "@/components/ui/media-image";
 
 /**
  * The catalogue.
@@ -71,7 +72,7 @@ export default async function ShowsPage() {
       ) : (
         groups.map((group) => (
           <section key={group.key} className="mb-10">
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            <h2 className="mb-3 text-sm font-semibold text-muted-foreground">
               {group.label}
             </h2>
 
@@ -90,13 +91,7 @@ export default async function ShowsPage() {
                           image, so the title carries the card instead. */}
                       {poster ? (
                         <div className="relative aspect-[2/3] overflow-hidden bg-background">
-                          <Image
-                            src={poster}
-                            alt=""
-                            fill
-                            sizes="(max-width: 640px) 45vw, 18vw"
-                            className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-                          />
+                          <MediaImage src={poster} alt="" className="absolute inset-0 size-full object-cover" />
                         </div>
                       ) : (
                         <div className="flex aspect-[4/3] items-end bg-background/60 p-3">

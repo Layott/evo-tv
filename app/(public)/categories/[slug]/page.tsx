@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { Users, Eye, Clock, Trophy, Calendar, ArrowLeft } from "lucide-react";
+import { Users, Eye, Clock, Trophy, Calendar, ArrowLeft } from "@/components/icons";
 import {
   getGameBySlug,
   listLiveStreams,
@@ -38,7 +38,7 @@ function formatNgn(n: number): string {
 
 function LiveBadge() {
   return (
-    <span className="flex items-center gap-1 rounded-md bg-red-500/20 px-2 py-0.5 text-[10px] uppercase tracking-wider text-red-400">
+    <span className="flex items-center gap-1 rounded-md bg-red-500/20 px-2 py-0.5 text-[10px] r text-red-400">
       <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
       Live
     </span>
@@ -182,7 +182,7 @@ export default function CategoryDetailPage() {
                     <div className="absolute left-2 top-2">
                       <LiveBadge />
                     </div>
-                    <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] text-foreground">
+                    <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] text-paper">
                       <Eye className="h-3 w-3" /> {formatViewers(s.viewerCount)}
                     </div>
                   </div>
@@ -323,7 +323,7 @@ export default function CategoryDetailPage() {
                 >
                   <div className="relative aspect-video overflow-hidden">
                     <img src={v.thumbnailUrl} alt={v.title} className="h-full w-full object-cover" />
-                    <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] text-foreground">
+                    <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] text-paper">
                       <Clock className="h-3 w-3" /> {formatDuration(v.durationSec)}
                     </div>
                   </div>

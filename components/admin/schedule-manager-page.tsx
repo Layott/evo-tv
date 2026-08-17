@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { AlertTriangle, Copy, Loader2, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, Copy, Loader2, Plus, Trash2 } from "@/components/icons";
 import { toast } from "sonner";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 

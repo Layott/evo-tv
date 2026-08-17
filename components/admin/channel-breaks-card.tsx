@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2 } from "@/components/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
@@ -177,7 +177,7 @@ export function ChannelBreaksCard() {
         <Button
           onClick={() => save.mutate(draft)}
           disabled={save.isPending}
-          className="bg-sky-500 text-black hover:bg-sky-500/90"
+          className="bg-sky-500 text-ink hover:bg-sky-500/90"
         >
           {save.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
           Save channel breaks

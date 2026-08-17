@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { toast } from "sonner";
-import { Download, Loader2 } from "lucide-react";
+import { Download, Loader2 } from "@/components/icons";
 
 import { SectionCard, SettingRow } from "./section-card";
 import { Switch } from "@/components/ui/switch";

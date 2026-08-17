@@ -1,4 +1,13 @@
-import { pgTable, text, integer, boolean, jsonb, primaryKey, index } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  integer,
+  boolean,
+  jsonb,
+  primaryKey,
+  index,
+  timestamp,
+} from "drizzle-orm/pg-core";
 import { games } from "./catalog";
 import { events } from "./events";
 import { user } from "./users";
@@ -331,5 +340,43 @@ export const likes = pgTable(
     primaryKey({ columns: [t.userId, t.targetType, t.targetId] }),
     index("likes_target_idx").on(t.targetType, t.targetId),
     index("likes_recent_idx").on(t.createdAt),
+  ],
+);
+
+/**
+ * Per-video playback analytics, one row per percent of a video a session
+ * reached.
+ *
+ * See migration 0040 for why the shape is (video, session, bucket): it bounds a
+ * viewer to 100 rows per video however long they watch, and re-watching a part
+ * collides on the primary key and costs nothing. It is the only table that can
+ * answer "where did people stop watching", which `episode_progress` and
+ * `vod_progress` cannot - those hold the latest position per viewer, so they
+ * describe the survivors and say nothing about who left.
+ */
+export const videoViewBuckets = pgTable(
+  "video_view_buckets",
+  {
+    /** "vod" or "episode". Two catalogues, one analytics table. */
+    videoType: text("video_type").notNull(),
+    videoId: text("video_id").notNull(),
+    /** Per playback, not per account, so signed-out viewing still counts. */
+    sessionId: text("session_id").notNull(),
+    /** 0-99, the percent of total duration this row represents. */
+    bucket: integer("bucket").notNull(),
+    userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+    country: text("country").notNull().default(""),
+    device: text("device").notNull().default(""),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    primaryKey({
+      columns: [t.videoType, t.videoId, t.sessionId, t.bucket],
+    }),
+    index("video_view_buckets_video_idx").on(t.videoType, t.videoId, t.createdAt),
+    index("video_view_buckets_created_idx").on(t.createdAt),
+    index("video_view_buckets_user_idx").on(t.userId),
   ],
 );

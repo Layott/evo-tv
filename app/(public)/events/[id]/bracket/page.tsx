@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "@/components/icons";
 import { getEventById, listMatchesForEvent, listTeams } from "@/lib/client";
 import BracketView from "@/components/events/bracket-view";
 import type { Team } from "@/lib/types";

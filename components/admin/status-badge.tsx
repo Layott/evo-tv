@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 
-type Tone = "emerald" | "amber" | "red" | "blue" | "neutral" | "violet";
+type Tone = "emerald" | "amber" | "red" | "blue" | "neutral";
 
 /**
  * Filled, not outlined.
@@ -10,6 +10,11 @@ type Tone = "emerald" | "amber" | "red" | "blue" | "neutral" | "violet";
  * These were a 10% wash held together by a `ring-1` hairline, which is the
  * outlined-chip shape banned product-wide. The fill carries the badge on its
  * own now, so it is doubled and the text lightened a step to keep contrast.
+ *
+ * There is no violet tone. It was carrying plain classification labels (ad
+ * placement, content category), which have no state to signal, and a colour
+ * with no meaning behind it is what turns a palette into a rainbow. Those call
+ * sites take the neutral fill.
  */
 const tones: Record<Tone, string> = {
   emerald: "bg-sky-500/25 text-sky-100",
@@ -17,7 +22,6 @@ const tones: Record<Tone, string> = {
   red: "bg-red-500/25 text-red-100",
   blue: "bg-blue-500/25 text-blue-100",
   neutral: "bg-muted/60 text-foreground/90",
-  violet: "bg-violet-500/25 text-violet-100",
 };
 
 export function StatusBadge({
@@ -49,7 +53,6 @@ export function StatusBadge({
             tone === "red" && "bg-red-400",
             tone === "blue" && "bg-blue-400",
             tone === "neutral" && "bg-muted-foreground",
-            tone === "violet" && "bg-violet-400",
           )}
         />
       ) : null}

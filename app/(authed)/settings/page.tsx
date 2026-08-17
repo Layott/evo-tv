@@ -11,7 +11,7 @@ import {
   Palette,
   Play,
   UserCog,
-} from "lucide-react";
+} from "@/components/icons";
 
 import { useAuth } from "@/components/providers";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";

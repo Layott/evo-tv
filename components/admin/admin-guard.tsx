@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ShieldAlert } from "lucide-react";
+import { ShieldAlert } from "@/components/icons";
 import { useAuth } from "@/components/providers";
 import { Button } from "@/components/ui/button";
 import { hasMinRole, roleLabel, type PlatformRole } from "@/lib/auth/role-catalog";

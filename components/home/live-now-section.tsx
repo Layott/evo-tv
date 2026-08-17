@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { MediaImage } from "@/components/ui/media-image";
-import { Eye } from "lucide-react";
+import { Eye } from "@/components/icons";
 import type { Stream, Game } from "@/lib/types";
 
 interface LiveNowProps {
@@ -19,7 +19,7 @@ function formatViewers(n: number): string {
 
 function LiveBadge() {
   return (
-    <span className="flex items-center gap-1 rounded-md bg-red-500/20 px-2 py-0.5 text-[10px] uppercase tracking-wider text-red-400">
+    <span className="flex items-center gap-1 rounded-md bg-red-500/20 px-2 py-0.5 text-[10px] r text-red-400">
       <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
       Live
     </span>
@@ -75,12 +75,12 @@ export function LiveNow({ streams, games, loading }: LiveNowProps) {
                     src={s.thumbnailUrl}
                     alt={s.title}
                     seed={s.id}
-                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    className="h-full w-full object-cover"
                   />
                   <div className="absolute left-2 top-2">
                     <LiveBadge />
                   </div>
-                  <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] text-foreground">
+                  <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] text-paper">
                     <Eye className="h-3 w-3" /> {formatViewers(s.viewerCount)}
                   </div>
                 </div>

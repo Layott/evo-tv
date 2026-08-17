@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Gauge, X } from "lucide-react";
+import { Gauge, X } from "@/components/icons";
 import { useLiteMode } from "@/lib/client/player-features";
 
 /**
@@ -22,7 +22,7 @@ export function LiteModeBanner() {
   return (
     <div
       role="status"
-      className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur"
+      className="sticky top-0 z-50 w-full bg-secondary"
     >
       <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-1.5 text-xs">
         <Gauge className="size-3.5 shrink-0 text-amber-300" aria-hidden />

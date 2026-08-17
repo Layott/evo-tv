@@ -14,6 +14,7 @@ import { listProducts } from "@/lib/api/products";
 import { Price } from "@/components/ui/price";
 import { LocalTime } from "@/components/ui/local-time";
 import { BackButton } from "@/components/shell/back-button";
+import { MediaImage } from "@/components/ui/media-image";
 
 /**
  * A show's own page, inside the app.
@@ -199,13 +200,10 @@ export default async function ShowPage({
         <div className="overflow-hidden rounded-2xl border border-border bg-card">
           {poster ? (
             <div className="relative aspect-[2/3] bg-background">
-              <Image
+              <MediaImage
                 src={poster}
                 alt={`${title} poster`}
-                fill
-                sizes="(min-width: 768px) 16rem, 100vw"
-                priority
-                className="object-cover"
+                className="absolute inset-0 size-full object-cover"
               />
             </div>
           ) : (
@@ -216,7 +214,7 @@ export default async function ShowPage({
         </div>
 
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-sky-400">
+          <p className="text-xs font-semibold text-sky-400">
             {PILLAR_LABEL[pillar] ?? pillar}
           </p>
           <h1 className="mt-1 text-2xl font-bold text-foreground sm:text-3xl">
@@ -232,7 +230,7 @@ export default async function ShowPage({
             <dl className="mt-5 flex flex-wrap gap-x-8 gap-y-3">
               {facts.map((fact) => (
                 <div key={fact.label}>
-                  <dt className="text-xs uppercase tracking-wide text-muted-foreground">
+                  <dt className="text-xs text-muted-foreground">
                     {fact.label}
                   </dt>
                   <dd className="text-sm font-semibold text-foreground">{fact.value}</dd>
@@ -293,7 +291,7 @@ export default async function ShowPage({
             .filter((s) => s.episodes.length > 0)
             .map(({ season, episodes }) => (
               <div key={season.id} className="mt-4">
-                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <h3 className="mb-2 text-xs font-semibold text-muted-foreground">
                   Season {season.seasonNumber}
                   {season.title ? ` · ${season.title}` : ""}
                 </h3>
@@ -343,12 +341,11 @@ export default async function ShowPage({
                 >
                   {product.images[0] ? (
                     <div className="relative aspect-square bg-background">
-                      <Image
+                      <MediaImage
                         src={product.images[0]}
-                        alt=""
-                        fill
-                        sizes="(max-width: 640px) 45vw, 18vw"
-                        className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                        alt={product.name}
+                        seed={product.id}
+                        className="absolute inset-0 size-full object-cover"
                       />
                     </div>
                   ) : (

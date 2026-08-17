@@ -4,6 +4,7 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Vod } from "@/lib/types";
+import { MediaImage } from "@/components/ui/media-image";
 
 function fmtDuration(sec: number) {
   const h = Math.floor(sec / 3600);
@@ -36,21 +37,15 @@ export function VodRelated({ vods }: { vods: Vod[] }) {
           <Link
             key={v.id}
             href={`/vod/${v.id}`}
-            className="group rounded-lg overflow-hidden border border-border bg-background hover:bg-card transition"
+            className="group rounded-lg overflow-hidden bg-background hover:bg-card"
           >
             <div className="relative aspect-video bg-card">
-              <Image
-                src={v.thumbnailUrl}
-                alt={v.title}
-                fill
-                className="object-cover group-hover:scale-[1.02] transition-transform"
-                sizes="(max-width:640px) 100vw, 33vw"
-              />
+              <MediaImage src={v.thumbnailUrl} alt={v.title} className="absolute inset-0 size-full object-cover" />
               <span className="absolute bottom-1.5 right-1.5 rounded bg-black/80 px-1.5 py-0.5 text-[10px] font-mono text-white">
                 {fmtDuration(v.durationSec)}
               </span>
               {v.isPremium && (
-                <span className="absolute top-1.5 left-1.5 rounded bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold text-black">
+                <span className="absolute top-1.5 left-1.5 rounded bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold text-ink">
                   PREMIUM
                 </span>
               )}

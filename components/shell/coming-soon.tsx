@@ -24,7 +24,7 @@ export function ComingSoon({
 }) {
   return (
     <div className="mx-auto flex min-h-[60vh] max-w-xl flex-col items-center justify-center px-6 py-16 text-center">
-      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-400">
+      <p className="text-xs font-semibold text-sky-400">
         Coming soon
       </p>
       <h1 className="mt-3 text-2xl font-bold tracking-tight text-foreground">

@@ -227,7 +227,7 @@ export function ChannelBreaks({ children, nowNext }: Props) {
           />
 
           <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between p-3">
-            <span className="rounded bg-black/70 px-2 py-1 text-[0.7rem] uppercase tracking-wide text-white/80">
+            <span className="rounded bg-black/70 px-2 py-1 text-[0.7rem] text-white/80">
               {adKind === "live_filler" ? "Back shortly" : "Ad"}
             </span>
             {ad.clickUrl ? (
@@ -235,7 +235,7 @@ export function ChannelBreaks({ children, nowNext }: Props) {
                 href={`/api/ads/click?adId=${encodeURIComponent(ad.id)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="pointer-events-auto rounded bg-white/90 px-3 py-1 text-[0.8rem] font-semibold text-black hover:bg-white"
+                className="pointer-events-auto rounded bg-sky-500 px-3 py-1 text-[0.8rem] font-semibold text-ink hover:bg-sky-600"
               >
                 {ad.advertiser ? `Visit ${ad.advertiser}` : "Learn more"}
               </a>
@@ -246,7 +246,7 @@ export function ChannelBreaks({ children, nowNext }: Props) {
             <button
               type="button"
               onClick={endAd}
-              className="absolute bottom-3 right-3 rounded bg-white/90 px-3 py-1.5 text-[0.8rem] font-semibold text-black hover:bg-white"
+              className="absolute bottom-3 right-3 rounded bg-sky-500 px-3 py-1.5 text-[0.8rem] font-semibold text-ink hover:bg-sky-600"
             >
               Back to live
             </button>
@@ -255,8 +255,8 @@ export function ChannelBreaks({ children, nowNext }: Props) {
       ) : null}
 
       {cardVisible && nowNext?.now ? (
-        <div className="pointer-events-none absolute bottom-4 left-4 z-10 max-w-[min(90%,26rem)] rounded-lg bg-black/80 p-3 backdrop-blur">
-          <p className="text-[0.7rem] uppercase tracking-wide text-[var(--brand,#46E3CE)]">
+        <div className="pointer-events-none absolute bottom-4 left-4 z-10 max-w-[min(90%,26rem)] rounded-lg bg-black/85 p-3">
+          <p className="text-[0.7rem] text-[var(--brand,#46E3CE)]">
             On now
           </p>
           <p className="text-sm font-semibold text-white">{nowNext.now.title}</p>

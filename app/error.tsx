@@ -18,11 +18,11 @@ export default function GlobalError({
     <div className="flex min-h-screen items-center justify-center bg-background px-6 text-foreground">
       <div className="w-full max-w-md text-center">
         <div className="mb-6 flex justify-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-rose-400 to-rose-600 text-xl font-black text-ink">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-500 text-xl font-black text-ink">
             !
           </div>
         </div>
-        <div className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-rose-400">
+        <div className="mb-2 text-[11px] font-semibold st text-rose-400">
           500 · Something broke
         </div>
         <h1 className="mb-3 text-3xl font-semibold tracking-tight">
@@ -47,7 +47,7 @@ export default function GlobalError({
           </Link>
         </div>
         {error.digest && (
-          <p className="mt-6 text-[10px] uppercase tracking-wider text-muted-foreground">
+          <p className="mt-6 text-[10px] r text-muted-foreground">
             ref: {error.digest}
           </p>
         )}

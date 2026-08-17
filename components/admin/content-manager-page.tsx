@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Plus, Search, Trash2, Upload } from "lucide-react";
+import { Plus, Search, Trash2, Upload } from "@/components/icons";
 import { toast } from "sonner";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -359,7 +359,7 @@ function GamesTable({
       header: "Category",
       sortable: true,
       accessor: (r) => r.category,
-      cell: (row) => <StatusBadge tone="violet">{row.category.toUpperCase()}</StatusBadge>,
+      cell: (row) => <StatusBadge>{row.category.toUpperCase()}</StatusBadge>,
     },
     {
       key: "platform",
@@ -647,7 +647,7 @@ function ImagePreview({ label, url, onChange }: { label: string; url: string; on
           <Input
             value={url}
             onChange={(e) => onChange(e.target.value)}
-            placeholder="/placeholder.svg?..."
+            placeholder="https://cdn.evotv.co/shows/otaku-hours/poster.jpg"
             className="border-border bg-card"
           />
           <Button
@@ -735,8 +735,8 @@ function GameForm({
       slug: "",
       name: "",
       shortName: "",
-      coverUrl: "/placeholder.svg?height=400&width=800&text=Cover",
-      iconUrl: "/placeholder.svg?height=80&width=80&text=New",
+      coverUrl: "",
+      iconUrl: "",
       category: "fps",
       platform: "mobile",
       activePlayers: 0,
@@ -844,7 +844,7 @@ function TeamForm({
       slug: "",
       name: "",
       tag: "",
-      logoUrl: "/placeholder.svg?height=120&width=120&text=NEW",
+      logoUrl: "",
       country: "NG",
       region: "West Africa",
       gameId: games[0]?.id ?? "",
@@ -978,7 +978,7 @@ function PlayerForm({
       id: `player_new_${Date.now()}`,
       handle: "",
       realName: "",
-      avatarUrl: "/placeholder.svg?height=96&width=96&text=NEW",
+      avatarUrl: "",
       teamId: teams[0]?.id ?? null,
       gameId: games[0]?.id ?? "",
       role: "IGL",
@@ -1110,8 +1110,8 @@ function EventForm({
       endsAt: new Date(Date.now() + 86_400_000).toISOString(),
       status: "scheduled",
       tier: "b",
-      bannerUrl: "/placeholder.svg?height=600&width=1600&text=Banner",
-      thumbnailUrl: "/placeholder.svg?height=400&width=600&text=Thumb",
+      bannerUrl: "",
+      thumbnailUrl: "",
       description: "",
       prizePoolNgn: 0,
       teamIds: [],

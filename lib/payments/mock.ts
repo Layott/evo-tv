@@ -20,6 +20,10 @@ export const mock: PaymentProvider = {
       status: "success",
       amountNgn: input.amountNgn,
       userId: input.userId,
+      // Mirror what Paystack gives back, so a flow that works against the mock
+      // is actually exercising the same shape in production.
+      plan:
+        typeof input.metadata?.plan === "string" ? input.metadata.plan : undefined,
       paidAt: new Date().toISOString(),
     });
     return {

@@ -14,7 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Share2, Flag, Loader2, Languages, Headphones, BadgeCheck } from "lucide-react";
+import { Share2, Flag, Loader2, Languages, Headphones, BadgeCheck } from "@/components/icons";
 import { toast } from "sonner";
 import { FollowButton } from "./follow-button";
 import { reportStream } from "@/lib/client";
@@ -165,7 +165,7 @@ export function StreamInfo({ stream, game }: StreamInfoProps) {
             <div className="text-sm font-semibold text-foreground">
               {stream.streamerName}
             </div>
-            <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
+            <div className="text-[11px] r text-muted-foreground">
               {stream.streamerType} streamer
             </div>
           </div>
@@ -209,7 +209,7 @@ export function StreamInfo({ stream, game }: StreamInfoProps) {
           {stream.language}
         </Badge>
         {stream.isPremium && (
-          <Badge className="bg-amber-500 text-black">Premium</Badge>
+          <Badge className="bg-amber-500 text-ink">Premium</Badge>
         )}
         {stream.tags.slice(0, 5).map((t) => (
           <Badge key={t} variant="outline" className="text-[10px]">

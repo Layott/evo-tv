@@ -4,7 +4,7 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, ImageIcon } from "lucide-react";
+import { Loader2, ImageIcon } from "@/components/icons";
 import { toast } from "sonner";
 
 import type { Profile } from "@/lib/types";
@@ -235,7 +235,7 @@ export function EditProfileModal({ open, onOpenChange, profile, onSave }: Props)
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting} className="bg-sky-500 hover:bg-sky-500/90 text-black">
+            <Button type="submit" disabled={isSubmitting} className="bg-sky-500 hover:bg-sky-500/90 text-ink">
               {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : null}
               Save changes
             </Button>

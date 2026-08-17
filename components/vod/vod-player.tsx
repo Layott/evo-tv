@@ -32,6 +32,7 @@ export function VodPlayer({ vod, onTimeUpdate, onReady, seekRef }: VodPlayerProp
       onTimeUpdate={onTimeUpdate}
       onReady={handleReady}
       mediaId={vod.id}
+      analytics={{ type: "vod", id: vod.id }}
     />
   );
 }

@@ -13,18 +13,20 @@ import {
   YAxis,
 } from "recharts";
 import {
-  AlertTriangle,
   CircleDollarSign,
+  Clock,
+  Eye,
   Radio,
-  Sparkles,
   UserPlus,
   Users,
-} from "lucide-react";
+} from "@/components/icons";
+import { MediaImage } from "@/components/ui/media-image";
+
 import {
   adminListStreams,
   adminListUsers,
-  adminOverviewMetrics,
-  adminViewsOverTime,
+  adminOverviewPage,
+  adminVideoSummaries,
 } from "@/lib/client";
 import { MetricCard } from "./metric-card";
 import { PageHeader } from "./page-header";
@@ -32,20 +34,41 @@ import { StatusBadge } from "./status-badge";
 import { formatCompact, formatNgn, formatNumber, timeAgo } from "./utils";
 import { UserAvatar } from "@/components/ui/user-avatar";
 
+/**
+ * The morning screen: what is happening now, what moved, what needs doing.
+ *
+ * Two things were wrong with it beyond the numbers. The headline chart plotted
+ * `day` while the endpoint returns `date`, so the x-axis was blank on every
+ * load. And the "Alerts" panel was an empty array behind a heading, so it drew
+ * a titled box containing nothing, for ever. Alerts are computed now and the
+ * panel only appears when something is actually wrong.
+ *
+ * Everything here is measured. Nothing carries a period-over-period badge it
+ * cannot compute: views compare today with yesterday because that comparison is
+ * real, and the rest carry a plain figure rather than an invented trend.
+ */
+
+const MINT = "#46E3CE";
+const AXIS = "#6f8f8f";
+
+const TOOLTIP_STYLE = {
+  backgroundColor: "#0d2b2e",
+  border: "none",
+  borderRadius: 10,
+  color: "#eaf6f5",
+  fontSize: 12,
+} as const;
+
+function formatWatch(totalSec: number): string {
+  if (totalSec >= 3600) return `${(totalSec / 3600).toFixed(1)}h`;
+  if (totalSec >= 60) return `${Math.round(totalSec / 60)}m`;
+  return `${Math.round(totalSec)}s`;
+}
+
 export function OverviewPage() {
-  /**
-   * Every number on this page used to be invented: the 30-day chart was random
-   * noise on a rising baseline, signups were `40 + random * 40`, and the
-   * subscriber count and MRR were a seeded constant. An operator reading this
-   * dashboard would have been reading fiction. It all comes out of Postgres now.
-   */
-  const metricsQ = useQuery({
-    queryKey: ["admin", "overview-metrics"],
-    queryFn: () => adminOverviewMetrics(),
-  });
-  const seriesQ = useQuery({
-    queryKey: ["admin", "views-30d"],
-    queryFn: () => adminViewsOverTime(30),
+  const overviewQ = useQuery({
+    queryKey: ["admin", "overview"],
+    queryFn: () => adminOverviewPage(),
   });
   const streamsQ = useQuery({
     queryKey: ["admin", "streams-all"],
@@ -55,157 +78,254 @@ export function OverviewPage() {
     queryKey: ["admin", "users"],
     queryFn: () => adminListUsers({ limit: 50 }),
   });
+  const topVideosQ = useQuery({
+    queryKey: ["admin", "video-summaries", 7],
+    queryFn: () => adminVideoSummaries(7),
+  });
 
-  const series = seriesQ.data ?? [];
+  const o = overviewQ.data ?? null;
   const liveStreams = (streamsQ.data?.streams ?? []).filter((s) => s.isLive);
-  const liveCount = metricsQ.data?.liveStreams ?? liveStreams.length;
-  const totalViewers = liveStreams.reduce((acc, s) => acc + s.viewerCount, 0);
-
-  const signupsToday = metricsQ.data?.todaySignups ?? 0;
-  const premiumSubs = metricsQ.data?.activePremiumSubs ?? 0;
-  const mrr = metricsQ.data?.mrrNgn ?? 0;
 
   const recentSignups = React.useMemo(
     () =>
       [...(usersQ.data?.users ?? [])]
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        )
         .slice(0, 5),
     [usersQ.data],
   );
 
-  /**
-   * The alert list was three hardcoded strings, one of them naming
-   * `stream_lagos_final`, a stream that no longer exists. There is no alerting
-   * backend, so showing nothing is the honest state.
-   */
-  const alerts: Array<{ id: string; tone: "amber" | "red" | "emerald"; title: string; body: string }> = [];
+  const topVideos = (topVideosQ.data ?? []).filter((v) => v.views > 0).slice(0, 5);
 
-  const topStreams = liveStreams.slice(0, 5);
+  // Only a real comparison, and only once yesterday had something to compare to.
+  const viewsDelta =
+    o && o.viewsYesterday > 0
+      ? ((o.viewsToday - o.viewsYesterday) / o.viewsYesterday) * 100
+      : undefined;
 
   return (
     <div className="space-y-8">
       <PageHeader
         title="Overview"
-        description="Operational snapshot across streams, subscriptions and revenue."
+        description="What is happening now, what moved, and what needs doing."
       />
 
-      {/* No `delta`: the four trend badges were hardcoded (+12.4% vs last hour,
-          +6.3% vs yesterday, +3.1% rolling 7d, +4.8% vs last month) and rendered
-          next to whatever the real figure happened to be, so a dashboard showing
-          0 live streams and 0 revenue still claimed both were climbing. Nothing
-          computes a period-over-period comparison yet, so the card omits it. */}
-      <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricCard title="Live streams" value={liveCount} icon={Radio} />
-        <MetricCard title="Signups today" value={signupsToday} icon={UserPlus} />
+      {o && o.attention.length > 0 ? (
+        <section className="space-y-2">
+          {o.attention.map((a) => (
+            <Link
+              key={a.id}
+              href={a.href}
+              className="flex items-center gap-3 rounded-xl bg-card/50 p-4 transition-colors hover:bg-card"
+            >
+              <StatusBadge tone={a.tone}>
+                {a.tone === "red" ? "Action" : "Check"}
+              </StatusBadge>
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-medium text-foreground">{a.title}</div>
+                <p className="text-xs text-muted-foreground">{a.body}</p>
+              </div>
+            </Link>
+          ))}
+        </section>
+      ) : null}
+
+      <section className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
         <MetricCard
-          title="Active premium subs"
-          value={formatNumber(premiumSubs)}
+          title="Live now"
+          value={o?.liveStreams ?? 0}
+          hint={
+            (o?.liveStreams ?? 0) > 0
+              ? `${formatNumber(o?.liveViewers ?? 0)} watching`
+              : "Nothing on air"
+          }
+          icon={Radio}
+        />
+        <MetricCard
+          title="Views today"
+          value={formatNumber(o?.viewsToday ?? 0)}
+          delta={viewsDelta}
+          deltaLabel="vs yesterday"
+          hint={`${formatNumber(o?.viewsYesterday ?? 0)} yesterday`}
+          icon={Eye}
+        />
+        <MetricCard
+          title="Watch time 7d"
+          value={formatWatch(o?.watchTimeSec7d ?? 0)}
+          icon={Clock}
+        />
+        <MetricCard
+          title="Signups today"
+          value={formatNumber(o?.signupsToday ?? 0)}
+          hint={`${formatNumber(o?.signups7d ?? 0)} this week`}
+          icon={UserPlus}
+        />
+        <MetricCard
+          title="Premium subs"
+          value={formatNumber(o?.activePremiumSubs ?? 0)}
+          hint={`${formatNgn(o?.mrrNgn ?? 0)} a month`}
           icon={Users}
         />
-        <MetricCard title="MRR" value={formatNgn(mrr)} icon={CircleDollarSign} />
+        <MetricCard
+          title="Shop this month"
+          value={formatNgn(o?.revenueThisMonthNgn ?? 0)}
+          icon={CircleDollarSign}
+        />
       </section>
 
-      <section className="rounded-xl border border-border bg-card/40 p-5">
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <h3 className="text-sm font-semibold text-foreground">Views (last 30 days)</h3>
-            <p className="text-xs text-muted-foreground">
-              {formatNumber(totalViewers)} viewers watching right now across {liveCount} live streams
-            </p>
+      <section className="rounded-xl bg-card/50 p-5">
+        <div className="mb-4">
+          <h3 className="text-sm font-semibold text-foreground">
+            Views, last 30 days
+          </h3>
+          <p className="text-xs text-muted-foreground">
+            One per playback, across recordings and episodes
+          </p>
+        </div>
+        {o && o.viewsByDay.every((p) => p.views === 0) ? (
+          <p className="py-16 text-center text-sm text-muted-foreground">
+            No views recorded yet. The player reports these as people watch.
+          </p>
+        ) : (
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart
+                data={o?.viewsByDay ?? []}
+                margin={{ top: 10, right: 12, left: 0, bottom: 0 }}
+              >
+                <CartesianGrid stroke="#123b3d" vertical={false} />
+                <XAxis
+                  dataKey="date"
+                  stroke={AXIS}
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(v) => String(v).slice(5)}
+                  minTickGap={24}
+                />
+                <YAxis
+                  stroke={AXIS}
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={false}
+                  allowDecimals={false}
+                  tickFormatter={(v) => formatCompact(v as number)}
+                />
+                <Tooltip
+                  contentStyle={TOOLTIP_STYLE}
+                  formatter={(v) => [formatNumber(v as number), "Views"]}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="views"
+                  stroke={MINT}
+                  strokeWidth={2}
+                  fill={MINT}
+                  fillOpacity={0.18}
+                  isAnimationActive={false}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
-          <StatusBadge tone="emerald" dot>
-            Live
-          </StatusBadge>
-        </div>
-        <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={series} margin={{ top: 10, right: 12, left: 0, bottom: 0 }}>
-              <defs>
-                <linearGradient id="overviewArea" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#10b981" stopOpacity={0.35} />
-                  <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid stroke="#262626" vertical={false} />
-              <XAxis dataKey="day" stroke="#525252" fontSize={11} tickLine={false} axisLine={false} />
-              <YAxis
-                stroke="#525252"
-                fontSize={11}
-                tickLine={false}
-                axisLine={false}
-                tickFormatter={(v) => formatCompact(v as number)}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#171717",
-                  border: "1px solid #262626",
-                  borderRadius: 8,
-                  color: "#e5e5e5",
-                }}
-                formatter={(v) => [formatNumber(v as number), "Views"]}
-              />
-              <Area
-                type="monotone"
-                dataKey="views"
-                stroke="#10b981"
-                strokeWidth={2}
-                fill="url(#overviewArea)"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
+        )}
       </section>
 
       <section className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="rounded-xl border border-border bg-card/40 lg:col-span-2">
-          <div className="flex items-center justify-between border-b border-border p-4">
-            <h3 className="text-sm font-semibold text-foreground">Top streams right now</h3>
-            <Link href="/admin/streams" className="text-xs text-sky-400 hover:text-sky-300">
-              View all
+        <div className="overflow-hidden rounded-xl bg-card/50 lg:col-span-2">
+          <div className="flex items-center justify-between p-4">
+            <h3 className="text-sm font-semibold text-foreground">
+              {liveStreams.length > 0 ? "On air now" : "Most watched this week"}
+            </h3>
+            <Link
+              href={liveStreams.length > 0 ? "/admin/streams" : "/admin/analytics"}
+              className="text-xs text-sky-400 hover:text-sky-300"
+            >
+              {liveStreams.length > 0 ? "All streams" : "All analytics"}
             </Link>
           </div>
-          <ul className="divide-y divide-border">
-            {topStreams.map((s) => (
-              <li key={s.id} className="flex items-center gap-3 p-3 hover:bg-accent">
-                <div className="h-10 w-16 overflow-hidden rounded bg-muted">
-                  {}
-                  <img src={s.thumbnailUrl} alt="" className="h-full w-full object-cover" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-medium text-foreground">{s.title}</div>
-                  <div className="text-xs text-muted-foreground">{s.streamerName}</div>
-                </div>
-                <StatusBadge tone="red" dot>
-                  LIVE
-                </StatusBadge>
-                <div className="w-20 text-right text-sm tabular-nums text-foreground/80">
-                  {formatCompact(s.viewerCount)}
-                </div>
-              </li>
-            ))}
-            {streamsQ.isLoading
-              ? Array.from({ length: 5 }).map((_, i) => (
-                  <li key={`sk-${i}`} className="flex items-center gap-3 p-3">
-                    <div className="h-10 w-16 rounded bg-muted" />
-                    <div className="flex-1">
-                      <div className="h-3 w-3/4 rounded bg-muted" />
-                      <div className="mt-1.5 h-2.5 w-1/3 rounded bg-muted" />
+
+          {liveStreams.length > 0 ? (
+            <ul>
+              {liveStreams.slice(0, 5).map((s) => (
+                <li
+                  key={s.id}
+                  className="flex items-center gap-3 p-3 transition-colors hover:bg-muted/40"
+                >
+                  <div className="relative h-10 w-16 shrink-0 overflow-hidden rounded bg-background">
+                    {s.thumbnailUrl ? (
+                      <MediaImage src={s.thumbnailUrl} alt="" className="absolute inset-0 size-full object-cover" />
+                    ) : null}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-medium text-foreground">
+                      {s.title}
                     </div>
-                  </li>
-                ))
-              : null}
-          </ul>
+                    <div className="text-xs text-muted-foreground">
+                      {s.streamerName}
+                    </div>
+                  </div>
+                  <StatusBadge tone="red" dot>
+                    LIVE
+                  </StatusBadge>
+                  <div className="w-20 text-right text-sm tabular-nums text-foreground/80">
+                    {formatCompact(s.viewerCount)}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : topVideos.length > 0 ? (
+            <ul>
+              {topVideos.map((v) => (
+                <li
+                  key={`${v.type}:${v.id}`}
+                  className="flex items-center gap-3 p-3"
+                >
+                  <div className="relative h-10 w-16 shrink-0 overflow-hidden rounded bg-background">
+                    {v.thumbnailUrl ? (
+                      <MediaImage src={v.thumbnailUrl} alt="" className="absolute inset-0 size-full object-cover" />
+                    ) : null}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-medium text-foreground">
+                      {v.title}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {v.avgPercentViewed}% viewed on average
+                    </div>
+                  </div>
+                  <div className="w-20 text-right text-sm tabular-nums text-foreground/80">
+                    {formatNumber(v.views)}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="px-4 pb-6 text-sm text-muted-foreground">
+              Nothing is on air and nothing has been watched this week.
+            </p>
+          )}
         </div>
 
-        <div className="space-y-6">
-          <div className="rounded-xl border border-border bg-card/40">
-            <div className="flex items-center justify-between border-b border-border p-4">
-              <h3 className="text-sm font-semibold text-foreground">Recent signups</h3>
-              <Link href="/admin/users" className="text-xs text-sky-400 hover:text-sky-300">
-                Users
-              </Link>
-            </div>
-            <ul className="divide-y divide-border">
+        <div className="overflow-hidden rounded-xl bg-card/50">
+          <div className="flex items-center justify-between p-4">
+            <h3 className="text-sm font-semibold text-foreground">
+              Newest accounts
+            </h3>
+            <Link
+              href="/admin/users"
+              className="text-xs text-sky-400 hover:text-sky-300"
+            >
+              Users
+            </Link>
+          </div>
+          {recentSignups.length === 0 ? (
+            <p className="px-4 pb-6 text-sm text-muted-foreground">
+              Nobody has signed up yet.
+            </p>
+          ) : (
+            <ul>
               {recentSignups.map((u) => (
                 <li key={u.id} className="flex items-center gap-3 p-3">
                   <UserAvatar
@@ -217,52 +337,17 @@ export function OverviewPage() {
                     className="h-8 w-8 shrink-0"
                   />
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm text-foreground">@{u.handle}</div>
-                    <div className="text-xs text-muted-foreground">{timeAgo(u.createdAt)}</div>
+                    <div className="truncate text-sm text-foreground">
+                      {u.displayName}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {timeAgo(u.createdAt)}
+                    </div>
                   </div>
                 </li>
               ))}
             </ul>
-          </div>
-
-          <div className="rounded-xl border border-border bg-card/40">
-            <div className="flex items-center gap-2 border-b border-border p-4">
-              <AlertTriangle className="h-4 w-4 text-amber-400" />
-              <h3 className="text-sm font-semibold text-foreground">Alerts</h3>
-            </div>
-            <ul className="divide-y divide-border">
-              {alerts.map((a) => (
-                <li key={a.id} className="p-3">
-                  <div className="flex items-center gap-2">
-                    <StatusBadge tone={a.tone} dot>
-                      {a.tone === "red" ? "Action" : a.tone === "amber" ? "Warn" : "Info"}
-                    </StatusBadge>
-                    <span className="text-sm font-medium text-foreground">{a.title}</span>
-                  </div>
-                  <p className="mt-1 pl-[3.75rem] text-xs text-muted-foreground">{a.body}</p>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      <section className="rounded-xl border border-border bg-card/40 p-4">
-        <div className="flex items-center gap-2 text-sm text-foreground/80">
-          <Sparkles className="h-4 w-4 text-sky-400" />
-          Quick actions:
-          <Link href="/admin/streams" className="rounded-md border border-border px-2 py-1 text-xs hover:bg-accent">
-            New stream
-          </Link>
-          <Link href="/admin/polls" className="rounded-md border border-border px-2 py-1 text-xs hover:bg-accent">
-            New poll
-          </Link>
-          <Link href="/admin/ads" className="rounded-md border border-border px-2 py-1 text-xs hover:bg-accent">
-            New ad
-          </Link>
-          <Link href="/admin/content" className="rounded-md border border-border px-2 py-1 text-xs hover:bg-accent">
-            New event
-          </Link>
+          )}
         </div>
       </section>
     </div>

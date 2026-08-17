@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDownRight, ArrowUpRight } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight } from "@/components/icons";
 import { cn } from "@/lib/utils";
 
 interface MetricCardProps {
@@ -9,14 +9,13 @@ interface MetricCardProps {
   hint?: string;
   delta?: number; // percentage
   icon?: React.ElementType;
-  accent?: "sky" | "amber" | "emerald" | "fuchsia" | "rose";
+  accent?: "sky" | "amber" | "emerald" | "rose";
 }
 
 const ACCENT: Record<NonNullable<MetricCardProps["accent"]>, string> = {
   sky: "text-sky-400 bg-sky-500/25",
   amber: "text-amber-300 bg-amber-500/25",
   emerald: "text-emerald-300 bg-emerald-500/25",
-  fuchsia: "text-fuchsia-300 bg-fuchsia-500/25",
   rose: "text-rose-300 bg-rose-500/25",
 };
 
@@ -25,7 +24,7 @@ export function MetricCard({ label, value, hint, delta, icon: Icon, accent = "sk
   return (
     <div className="rounded-2xl border border-border bg-card/40 p-4">
       <div className="flex items-start justify-between">
-        <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+        <div className="text-[10px] r text-muted-foreground">{label}</div>
         {Icon ? (
           <div className={cn("flex size-7 items-center justify-center rounded-lg", ACCENT[accent])}>
             <Icon className="size-4" />

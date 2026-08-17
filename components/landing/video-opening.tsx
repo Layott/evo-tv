@@ -64,13 +64,15 @@ export default function VideoOpening({ onAir }: Props) {
                 a thumb needs. */}
             <Link
               href="/signup"
-              className="landing-display flex min-h-12 w-full items-center justify-center bg-[var(--brand)] px-6 text-[1rem] text-[var(--ink)] transition-transform hover:-translate-y-0.5 active:translate-y-0 sm:w-auto"
+              className="landing-display flex min-h-12 w-full items-center justify-center bg-[var(--brand)] px-6 text-[1rem] text-[var(--ink)] hover:bg-[var(--brand-deep)] sm:w-auto"
             >
               Start watching
             </Link>
+            {/* Sits over the hero reel, so it needs its own ground rather than a
+                blur of whatever frame is playing behind it. */}
             <a
               href="#week"
-              className="landing-display flex min-h-12 w-full items-center justify-center bg-[var(--paper)]/10 px-6 text-[1rem] text-[var(--paper)] backdrop-blur-sm transition-colors hover:bg-[var(--paper)]/20 sm:w-auto"
+              className="landing-display flex min-h-12 w-full items-center justify-center bg-[var(--ink-high)] px-6 text-[1rem] text-[var(--paper)] hover:bg-[var(--ink-raised)] sm:w-auto"
             >
               See what&apos;s on
             </a>
