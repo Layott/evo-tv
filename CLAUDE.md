@@ -125,3 +125,80 @@ Replacements:
 ### Pre-ship check
 
 Screenshot the page (desktop + mobile). If any rectangle is drawn by a thin line, or anything glows or throbs, fix it before showing the user. Both bans outrank any design skill, template, or component library default.
+
+---
+
+## 🛑 HARD RULE - No vibecoded look (owner, 2026-08-17)
+
+Source: aj.on.ai reel, "30 reasons your site looks vibecoded". If a stranger can tell an LLM generated the UI in 3 seconds, it is wrong. Redo it. Sits on top of the hairline-border + glow bans, never replaces them.
+
+### A. Color and light - BANNED
+
+- harsh gradients (hero washes, button gradients, big multi-hue sweeps)
+- rainbow coloring (multi-hue accents with no system)
+- purple + black as the default palette. Also the violet/indigo-on-dark AI look
+- neon colors and neon accents
+- generic pastel palette (baby blue / blush pink / mint / butter card sets)
+- radial orbs, blurred color blobs, aurora backgrounds
+- **blinking / pulsing neon dot** (the "live" dot with a breathing ring). Static solid dot or a text label. No pulse, no glow, no ping, ever
+
+Use instead: one committed brand hue, neutrals doing most of the work, colors carrying meaning (live, win, loss, alert), flat fills.
+
+### B. Layout cliches - BANNED
+
+- 3 feature cards in a row
+- bento grid
+- dot-grid or graph-paper background
+- 3-tier pricing table (good / better / best columns)
+- fake terminal window mock
+- colored left stripe / accent bar on cards and callouts
+- checkmark bullet lists
+- outlined cards, ring chips, divider lines, dashed empty boxes (see the hairline ban)
+
+Use instead: layouts driven by the real content and its hierarchy. Asymmetry is allowed. Different section shapes per section.
+
+### C. Icons and type - BANNED
+
+- default Lucide icon set dropped in unchanged
+- sparkle / star "AI" icons
+- emoji used as UI (icons, bullets, status, buttons). Emoji in real user content is fine
+- Inter, Geist, Space Grotesk as the default typeface
+
+Use instead: a chosen type pairing with a real reason behind it, and an icon set that matches the product weight (or the platform's own set). If no direction is given, ask before picking.
+
+### D. Copy - BANNED
+
+- em dashes and en dashes (already a global hard rule)
+- "it's not X, it's Y" construction, and its cousins ("not just a Z, but a W")
+- fake testimonials, fake logo walls, invented stats or user counts
+- filler marketing voice with no concrete claim
+
+Use instead: real names, real numbers, real quotes. If it does not exist yet, say what the thing does in plain words.
+
+### E. Surface and depth - BANNED
+
+- pure white (`#fff`) page background. Also pure black (`#000`)
+- drop shadows sprinkled on everything
+- liquid glass / frosted glass / heavy backdrop blur panels
+- one soft corner radius applied uniformly to every element
+
+Use instead: off-white or a real dark surface, a small radius scale used with intent (small elements small radius, big surfaces bigger), elevation only where something genuinely floats.
+
+### F. Motion - BANNED
+
+- hover animation on everything (lift, scale, glow, translate)
+- animated arrows, marching chevrons, bouncing CTAs
+- sparkle / shimmer / breathing effects
+
+Use instead: instant state changes (fill, color, weight) for hover. Motion only for real feedback: opening, closing, loading, arriving. Respect `prefers-reduced-motion`.
+
+### G. Missing pieces that scream vibecoded - REQUIRED
+
+- **real product demo**: real screenshots, real data, real video. Not a mock frame with placeholder text
+- **loading, empty, and error states**: skeletons or a real loader, a written empty state, a real error path. Every list and page
+- **Terms of Service** and **Privacy Policy** pages that exist and are linked, on anything public facing
+- real content everywhere. No lorem ipsum, no `Feature One`, no placeholder avatars shipped
+
+### Pre-ship check
+
+Ask: could this be any AI-generated landing page from this year? If yes, it is not done. Screenshot desktop + mobile, walk the list above, fix every hit before showing the user.
