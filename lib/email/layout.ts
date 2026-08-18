@@ -33,6 +33,14 @@ const MUTED = "#9dbdb9";
 const MINT = "#46e3ce";
 const BLUE = "#42ace8";
 
+/**
+ * The mark, absolute because an email has no origin to resolve against.
+ *
+ * Points at the live site rather than the CDN bucket so it follows a brand
+ * change without a redeploy of anything that sends mail.
+ */
+const LOGO_URL = "https://evotv.co/evo-logo/evo-tv-152.png";
+
 const SANS =
   "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
 
@@ -118,7 +126,21 @@ function renderBlock(block: EmailBlock): string {
   return "";
 }
 
-/** The branded HTML for one message. */
+/**
+ * The branded HTML for one message.
+ *
+ * The mark is a remote image rather than an attachment or a data URI: remote is
+ * what every mail client expects, and a base64 PNG inflates the message toward
+ * the 102 KB where Gmail starts clipping. Its `alt` carries the wordmark for the
+ * common case where images are blocked by default, so a recipient who never
+ * loads them still sees who wrote. Width and height are attributes as well as
+ * styles, because Outlook ignores the CSS and would otherwise render it full
+ * size.
+ *
+ * Nothing here explains itself in an HTML comment. Comments ship inside the
+ * message, where they are dead weight in every send and readable by anyone who
+ * views source.
+ */
 export function renderEmailHtml(content: EmailContent): string {
   return `<!doctype html>
 <html>
@@ -139,8 +161,14 @@ export function renderEmailHtml(content: EmailContent): string {
             <tr>
               <td style="padding:36px 32px 30px;">
 
-                <p style="margin:0 0 26px;font-size:22px;line-height:1;color:${TEXT};font-weight:700;letter-spacing:-0.01em;font-family:${SANS};">
-                  EVO<span style="color:${MINT};">&nbsp;TV</span>
+                <p style="margin:0 0 26px;line-height:1;">
+                  <img
+                    src="${LOGO_URL}"
+                    alt="EVO TV"
+                    width="56"
+                    height="56"
+                    style="display:block;width:56px;height:56px;border:0;outline:none;text-decoration:none;"
+                  />
                 </p>
 
                 <p style="margin:0 0 22px;font-size:21px;line-height:1.3;color:${TEXT};font-weight:700;letter-spacing:-0.015em;font-family:${SANS};">

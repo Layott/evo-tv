@@ -5,6 +5,7 @@ import { Loader2 } from "@/components/icons";
 import { toast } from "sonner";
 
 import { getUserPrefs, updateUserPrefs } from "@/lib/client";
+import { useT } from "@/components/providers/i18n-provider";
 import type { UserPrefs } from "@/lib/types";
 
 import { SectionCard } from "./section-card";
@@ -41,6 +42,7 @@ export function LanguageForm() {
   const [lang, setLang] = React.useState<UserPrefs["language"]>("en");
   const [saving, setSaving] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
+  const { setLocale } = useT();
 
   React.useEffect(() => {
     let cancelled = false;
@@ -61,6 +63,9 @@ export function LanguageForm() {
     try {
       const saved = await updateUserPrefs({ language: lang });
       if (!saved) throw new Error("no response");
+      // Apply it now rather than on the next load. Saving a language and
+      // watching the page stay in English is how this looked broken before.
+      setLocale(lang);
       toast.success(
         `Language set to ${LANGS.find((l) => l.v === lang)?.label}`,
       );
