@@ -85,7 +85,7 @@ sessions. Changing it means sending a per-session id from both clients. Noted,
 not built, because consistency with the public number matters more than the
 edge case.
 
-## Schema: migration 0043
+## Schema: migration 0044
 
 Three nullable columns on `watch_events`, so existing rows stay valid:
 
@@ -120,12 +120,15 @@ coverage without an SDK bump is parsing nginx access logs for which variant
 playlist each viewer pulls. That has no account to join against and means
 shipping a log reader, so it is noted rather than planned.
 
+### Index
+
 One index: `(stream_id, minute_bucket)`. The existing index is channel scoped
 and every query on this screen is stream scoped.
 
 ## Endpoints
 
-All three require `requireMinRole("admin")` and all three write an audit row.
+All three require admin, through `requireAdminFromRequest()`. Only the roster
+writes an audit row, because only the roster names anybody.
 
 | Route | Returns |
 |---|---|
