@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getVodBySlugOrId } from "@/lib/api/vods";
 import { resolveViewer, stripVodPlayback } from "@/lib/api/playback";
+import { stripViewCount } from "@/lib/api/counts";
 
 /**
  * GET /api/vods/[id]
@@ -21,5 +22,8 @@ export async function GET(
   // Accepts either form, because the page can now be reached by slug.
   const vod = await getVodBySlugOrId(id);
   if (!vod) return new NextResponse("VOD not found", { status: 404 });
-  return NextResponse.json(stripVodPlayback(vod, await resolveViewer()));
+  const viewer = await resolveViewer();
+  return NextResponse.json(
+    stripViewCount(stripVodPlayback(vod, viewer), viewer.admin),
+  );
 }

@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 
 import { getStreamById } from "@/lib/api/streams";
 import { getCurrentUser } from "@/lib/auth/guards";
-import { stripPlayback } from "@/lib/api/playback";
+import { resolveViewer, stripPlayback } from "@/lib/api/playback";
+import { stripViewerCount } from "@/lib/api/counts";
 
 /**
  * A stream's public record. The playback URL is not part of it.
@@ -25,6 +26,8 @@ export async function GET(
   const stream = await getStreamById(id);
   if (!stream) return new NextResponse("Not found", { status: 404 });
 
-  const signedIn = Boolean(await getCurrentUser());
-  return NextResponse.json(stripPlayback(stream, signedIn));
+  const viewer = await resolveViewer();
+  return NextResponse.json(
+    stripViewerCount(stripPlayback(stream, viewer.signedIn), viewer.admin),
+  );
 }

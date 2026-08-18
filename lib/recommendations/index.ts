@@ -123,13 +123,13 @@ export async function recommendForUser(userId: string, limit = 20): Promise<Vod[
   const eligible = allVods.filter((v) => !fullyWatched.has(v.id));
 
   const maxViews =
-    eligible.reduce((m, v) => (v.viewCount > m ? v.viewCount : m), 0) || 1;
+    eligible.reduce((m, v) => ((v.viewCount ?? 0) > m ? (v.viewCount ?? 0) : m), 0) || 1;
 
   const scored = eligible.map((v) => {
     const sameGameBoost = v.gameId && likedGameIds.has(v.gameId) ? 1 : 0;
     const followSignalBoost = v.gameId && followedGameIds.has(v.gameId) ? 1 : 0;
     const recency = recencyScore(v.publishedAt);
-    const globalViewCountNorm = v.viewCount / maxViews;
+    const globalViewCountNorm = (v.viewCount ?? 0) / maxViews;
     const score =
       0.4 * sameGameBoost +
       0.3 * followSignalBoost +

@@ -159,8 +159,15 @@ export interface Stream {
   endedAt: ISODate | null;
   hlsUrl: string;
   thumbnailUrl: string;
-  viewerCount: number;
-  peakViewerCount: number;
+  /**
+   * Audience size, admin only.
+   *
+   * Absent means the caller is not allowed to know, which is different from 0,
+   * meaning nobody is watching. Stripped server-side in lib/api/counts.ts, so
+   * the number is not in the JSON at all rather than merely hidden in the UI.
+   */
+  viewerCount?: number;
+  peakViewerCount?: number;
   language: string;
   tags: string[];
   isPremium: boolean;
@@ -193,7 +200,14 @@ export interface Vod {
   thumbnailUrl: string;
   publishedAt: ISODate;
   chapters: VodChapter[];
-  viewCount: number;
+  /**
+   * Audience size, admin only.
+   *
+   * Absent means the caller is not allowed to know, which is different from 0,
+   * meaning nobody is watching. Stripped server-side in lib/api/counts.ts, so
+   * the number is not in the JSON at all rather than merely hidden in the UI.
+   */
+  viewCount?: number;
   likeCount: number;
   isPremium: boolean;
   pillar?: ContentPillar;
@@ -211,7 +225,14 @@ export interface Clip {
   durationSec: number;
   mp4Url: string;
   thumbnailUrl: string;
-  viewCount: number;
+  /**
+   * Audience size, admin only.
+   *
+   * Absent means the caller is not allowed to know, which is different from 0,
+   * meaning nobody is watching. Stripped server-side in lib/api/counts.ts, so
+   * the number is not in the JSON at all rather than merely hidden in the UI.
+   */
+  viewCount?: number;
   likeCount: number;
   createdAt: ISODate;
   gameId: UUID;

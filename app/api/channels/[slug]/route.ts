@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { and, desc, eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/guards";
+import { hasMinRole } from "@/lib/auth/roles";
 import { liveViewerCounts } from "@/lib/api/streams";
 
 /**
@@ -78,13 +79,22 @@ export async function GET(
   // Same read-time viewer-count refresh as /api/streams: never return the
   // seeded viewer_count column raw. Derive the live count from watch_events
   // heartbeats (last 90s) instead.
-  let liveStream = liveStreams[0] ?? null;
-  if (liveStream) {
-    const counts = await liveViewerCounts([liveStream.id]);
-    liveStream = {
-      ...liveStream,
-      viewerCount: counts.get(liveStream.id) ?? 0,
-    };
+  const row = liveStreams[0] ?? null;
+  let liveStream: (Omit<typeof row & object, "viewerCount"> & {
+    viewerCount?: number;
+  }) | null = null;
+  if (row) {
+    const counts = await liveViewerCounts([row.id]);
+    const admin = hasMinRole(
+      ((await getCurrentUser()) as { role?: string } | null)?.role,
+      "admin",
+    );
+    // Staff only. The key is dropped rather than zeroed, so nobody can tell an
+    // empty broadcast from a hidden number.
+    const { viewerCount: _dropped, ...rest } = row;
+    liveStream = admin
+      ? { ...rest, viewerCount: counts.get(row.id) ?? 0 }
+      : rest;
   }
 
   return NextResponse.json({

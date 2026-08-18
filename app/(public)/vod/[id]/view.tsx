@@ -215,11 +215,15 @@ export default function VodPage() {
               {vod.title}
             </h1>
             <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <Eye className="size-3.5" />
-                {vod.viewCount.toLocaleString()} views
-              </span>
-              <span>·</span>
+              {typeof vod.viewCount === "number" ? (
+                <>
+                  <span className="flex items-center gap-1">
+                    <Eye className="size-3.5" />
+                    {vod.viewCount.toLocaleString()} views
+                  </span>
+                  <span>·</span>
+                </>
+              ) : null}
               <span>{relTime(vod.publishedAt)}</span>
               {vod.isPremium && (
                 <Badge className="bg-amber-500 text-ink">Premium</Badge>

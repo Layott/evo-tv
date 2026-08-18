@@ -97,10 +97,12 @@ function ClipCard({ clip }: { clip: Clip }) {
           <span>{relTime(clip.createdAt)}</span>
         </div>
       </div>
-      <div className="absolute top-2 left-2 flex items-center gap-1 rounded bg-black/70 px-1.5 py-0.5 text-[10px] text-white">
-        <Play className="size-3" />
-        {clip.viewCount.toLocaleString()}
-      </div>
+      {typeof clip.viewCount === "number" ? (
+        <div className="absolute top-2 left-2 flex items-center gap-1 rounded bg-black/70 px-1.5 py-0.5 text-[10px] text-white">
+          <Play className="size-3" />
+          {clip.viewCount.toLocaleString()}
+        </div>
+      ) : null}
       <div className="absolute top-2 right-2 flex items-center gap-1 rounded bg-black/70 px-1.5 py-0.5 text-[10px] text-white">
         <Heart className="size-3" />
         {clip.likeCount.toLocaleString()}

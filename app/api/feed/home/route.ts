@@ -10,6 +10,10 @@ import {
   stripPlaybackAll,
   stripVodPlaybackAll,
 } from "@/lib/api/playback";
+import {
+  stripViewCountAll,
+  stripViewerCountAll,
+} from "@/lib/api/counts";
 
 /**
  * GET /api/feed/home
@@ -39,11 +43,15 @@ export async function GET() {
     : await trendingVods(20);
 
   return NextResponse.json({
-    hero: stripPlaybackAll(hero, viewer.signedIn),
-    live: stripPlaybackAll(live, viewer.signedIn),
+    hero: stripViewerCountAll(stripPlaybackAll(hero, viewer.signedIn), viewer.admin),
+    live: stripViewerCountAll(stripPlaybackAll(live, viewer.signedIn), viewer.admin),
     upcoming,
-    recommendations: stripVodPlaybackAll(recommendations, viewer),
-    // Clips carry no paywall and no manifest, only a short highlight mp4.
-    trendingClips,
+    recommendations: stripViewCountAll(
+      stripVodPlaybackAll(recommendations, viewer),
+      viewer.admin,
+    ),
+    // Clips carry no paywall and no manifest, only a short highlight mp4, but
+    // their play count is an audience number like any other.
+    trendingClips: stripViewCountAll(trendingClips, viewer.admin),
   });
 }

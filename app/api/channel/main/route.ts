@@ -3,6 +3,7 @@ import { and, eq, isNull } from "drizzle-orm";
 
 import { db, schema } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/guards";
+import { hasMinRole } from "@/lib/auth/roles";
 import { liveViewerCounts } from "@/lib/api/streams";
 import { listScheduleForDay, type EpgRow } from "@/lib/api/schedule";
 import { zonedDateKey } from "@/lib/epg/grid";
@@ -33,7 +34,8 @@ export interface MainChannelResponse {
     isLive: boolean;
     hlsUrl: string;
     requiresAuth?: true;
-    viewerCount: number;
+    /** Staff only. Absent for everyone else, see lib/api/counts.ts. */
+    viewerCount?: number;
     startedAt: string | null;
   } | null;
   /** The programme on air right now, from the guide. */
@@ -96,7 +98,10 @@ export async function GET() {
 
   // Same gate as every other stream endpoint: watching needs an account, so a
   // signed-out caller gets everything except the manifest.
-  const signedIn = Boolean(await getCurrentUser());
+  const user = await getCurrentUser();
+  const signedIn = Boolean(user);
+  // Audience size is staff only, same rule as every other public endpoint.
+  const admin = hasMinRole((user as { role?: string } | null)?.role, "admin");
 
   return NextResponse.json({
     channel: {
@@ -108,7 +113,7 @@ export async function GET() {
       isLive: row.isLive,
       hlsUrl: signedIn ? row.hlsPath : "",
       requiresAuth: signedIn ? undefined : (true as const),
-      viewerCount: counts.get(row.id) ?? 0,
+      viewerCount: admin ? (counts.get(row.id) ?? 0) : undefined,
       startedAt: row.startedAt ?? null,
     },
     onNow,
