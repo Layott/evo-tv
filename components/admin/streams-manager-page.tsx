@@ -628,6 +628,46 @@ export function StreamsManagerPage() {
                   </p>
                 </div>
 
+                {/*
+                  How long the broadcast survives losing its feed.
+
+                  Before this, the first disconnect ended the stream outright,
+                  so a blip on the encoder's uplink took the channel off air and
+                  it stayed off: `on_publish` only fires on connect, so a feed
+                  that came back on a connection which never dropped left the
+                  stream dead until somebody noticed.
+                */}
+                <div className="space-y-1.5">
+                  <Label>If the feed drops</Label>
+                  <Select
+                    value={String(
+                      (selected as Stream & { reconnectWindowSec?: number })
+                        .reconnectWindowSec ?? 300,
+                    )}
+                    onValueChange={(v) =>
+                      patchMut.mutate(
+                        { id: selected.id, patch: { reconnectWindowSec: Number(v) } },
+                        { onSuccess: () => toast.success("Reconnect window updated") },
+                      )
+                    }
+                  >
+                    <SelectTrigger className="w-full border-border bg-card">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="0">End the stream immediately</SelectItem>
+                      <SelectItem value="60">Wait 1 minute for it to come back</SelectItem>
+                      <SelectItem value="300">Wait 5 minutes</SelectItem>
+                      <SelectItem value="900">Wait 15 minutes</SelectItem>
+                      <SelectItem value="3600">Wait an hour</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Viewers keep their place while the encoder reconnects. Past
+                    the window the broadcast ends for real.
+                  </p>
+                </div>
+
                 <PlayoutFileField
                   stream={selected}
                   onSave={(path) =>

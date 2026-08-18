@@ -64,6 +64,25 @@ export const streams = pgTable(
     isLive: boolean("is_live").notNull().default(false),
     startedAt: text("started_at"),
     endedAt: text("ended_at"),
+    /**
+     * How long the feed may be gone before the broadcast is really over.
+     *
+     * Losing the feed used to end the stream outright on the first
+     * `on_publish_done`, so a dropped RTMP connection took the channel off air
+     * even when the encoder reconnected a second later. Zero restores that
+     * behaviour for anyone who wants it.
+     */
+    reconnectWindowSec: integer("reconnect_window_sec").notNull().default(300),
+    /** When the feed went, or null while it is healthy. Cleared on publish. */
+    feedLostAt: text("feed_lost_at"),
+    /**
+     * Somebody pressed "End broadcast".
+     *
+     * Kept apart from `endedAt` because the reconciler brings a stream back
+     * when the encoder is demonstrably still publishing, and without this it
+     * would undo an operator's decision within the minute.
+     */
+    offlineByOperator: boolean("offline_by_operator").notNull().default(false),
     // Phase MVP - EPG/schedule. Pre-announced airtime for upcoming streams.
     // NULL for live-only or unscheduled streams.
     scheduledStartAt: text("scheduled_start_at"),
