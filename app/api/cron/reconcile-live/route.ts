@@ -57,11 +57,40 @@ export async function GET(req: NextRequest) {
   // is gone.
   const STALE_AFTER_MS = 90_000;
 
+  /**
+   * Is this manifest still being written?
+   *
+   * nginx rewrites the playlist on every segment, so its `Last-Modified` is the
+   * only authoritative answer to "is the encoder still there". Null means the
+   * question could not be answered, which is never treated as an ending: an
+   * outage in our own nginx must not take a live broadcast off the schedule.
+   */
+  async function manifestFreshness(
+    url: string,
+  ): Promise<{ fresh: boolean } | null> {
+    try {
+      const res = await fetch(url, {
+        method: "HEAD",
+        cache: "no-store",
+        signal: AbortSignal.timeout(5_000),
+      });
+      if (res.status === 404) return { fresh: false };
+      if (!res.ok) return null;
+      const lastMod = res.headers.get("last-modified");
+      if (!lastMod) return null;
+      return { fresh: Date.now() - new Date(lastMod).getTime() <= STALE_AFTER_MS };
+    } catch {
+      return null;
+    }
+  }
+
   const rtmpRows = await db
     .select({
       id: schema.streams.id,
       hlsPath: schema.streams.hlsPath,
       startedAt: schema.streams.startedAt,
+      feedLostAt: schema.streams.feedLostAt,
+      reconnectWindowSec: schema.streams.reconnectWindowSec,
     })
     .from(schema.streams)
     .where(
@@ -78,38 +107,105 @@ export async function GET(req: NextRequest) {
       continue;
     }
 
-    let stale: boolean;
-    try {
-      const res = await fetch(row.hlsPath, {
-        method: "HEAD",
-        cache: "no-store",
-        signal: AbortSignal.timeout(5_000),
-      });
-      if (res.status === 404) {
-        stale = true;
-      } else if (!res.ok) {
-        // 5xx from our own nginx is an outage, not an ended broadcast.
-        continue;
-      } else {
-        const lastMod = res.headers.get("last-modified");
-        stale = lastMod
-          ? Date.now() - new Date(lastMod).getTime() > STALE_AFTER_MS
-          : false;
+    const freshness = await manifestFreshness(row.hlsPath);
+    if (!freshness) continue; // unanswerable; leave it alone
+    if (freshness.fresh) {
+      /*
+       * Still publishing. If a disconnect had started the reconnect clock, the
+       * feed evidently came back on a connection that never fired `on_publish`,
+       * so clear it here rather than letting a stale timer end a healthy
+       * broadcast later.
+       */
+      if (row.feedLostAt) {
+        await db
+          .update(schema.streams)
+          .set({ feedLostAt: null })
+          .where(eq(schema.streams.id, row.id));
+        changed.push({ id: row.id, isLive: true, via: "rtmp-feed-recovered" });
       }
-    } catch {
-      // Unreachable. Same reasoning as Cloudflare: leave it alone.
       continue;
     }
 
-    if (!stale) continue;
+    /*
+     * The manifest has stopped moving. That is a lost feed, not necessarily an
+     * ended broadcast: the stream is only over once its reconnect window has
+     * actually elapsed.
+     */
+    const windowMs = (row.reconnectWindowSec ?? 0) * 1000;
+    if (windowMs > 0) {
+      if (!row.feedLostAt) {
+        // The manifest went quiet without a disconnect callback, which happens
+        // if the encoder's machine dies rather than closing the connection.
+        await db
+          .update(schema.streams)
+          .set({ feedLostAt: nowIso })
+          .where(eq(schema.streams.id, row.id));
+        changed.push({ id: row.id, isLive: true, via: "rtmp-feed-lost" });
+        continue;
+      }
+      const goneFor = Date.now() - new Date(row.feedLostAt).getTime();
+      if (goneFor < windowMs) continue; // still inside the window
+    }
 
     await db
       .update(schema.streams)
-      .set({ isLive: false, endedAt: nowIso, viewerCount: 0 })
+      .set({
+        isLive: false,
+        endedAt: nowIso,
+        viewerCount: 0,
+        feedLostAt: null,
+      })
       .where(eq(schema.streams.id, row.id));
     emit(`stream:${row.id}:status`, { type: "ended", at: nowIso });
     emit("stream:live-now", { type: "ended", streamId: row.id });
     changed.push({ id: row.id, isLive: false, via: "rtmp-stale" });
+  }
+
+  /*
+   * The other direction: publishing, but marked off air.
+   *
+   * `on_publish` only fires when a connection is established, so once a stream
+   * is wrongly marked ended there is nothing to put it back. A single spurious
+   * `on_publish_done` was therefore permanent, which is exactly what happened
+   * to the flagship channel: ended at 01:11, still pushing all three rungs at
+   * 03:40, and off the site the whole time.
+   *
+   * `offlineByOperator` is respected. Somebody who pressed "End broadcast"
+   * while the encoder kept running meant it, and reviving the stream a minute
+   * later would make the button a lie.
+   */
+  const offlineRtmp = await db
+    .select({
+      id: schema.streams.id,
+      hlsPath: schema.streams.hlsPath,
+      startedAt: schema.streams.startedAt,
+    })
+    .from(schema.streams)
+    .where(
+      and(
+        eq(schema.streams.ingestKind, "rtmp"),
+        eq(schema.streams.isLive, false),
+        eq(schema.streams.offlineByOperator, false),
+      ),
+    );
+
+  for (const row of offlineRtmp) {
+    if (!row.hlsPath) continue;
+    const freshness = await manifestFreshness(row.hlsPath);
+    if (!freshness?.fresh) continue;
+
+    await db
+      .update(schema.streams)
+      .set({
+        isLive: true,
+        endedAt: null,
+        feedLostAt: null,
+        startedAt: row.startedAt ?? nowIso,
+      })
+      .where(eq(schema.streams.id, row.id));
+    emit(`stream:${row.id}:status`, { isLive: true, startedAt: nowIso });
+    emit("stream:live-now", { type: "live", streamId: row.id });
+    changed.push({ id: row.id, isLive: true, via: "rtmp-still-publishing" });
   }
 
   // ── Cloudflare ────────────────────────────────────────────────────────────

@@ -131,6 +131,8 @@ export async function adminUpdateStream(
     scheduledDurationMin?: number | null;
     /** The manifest viewers play, for a manually configured ingest. */
     hlsPath?: string;
+    /** Seconds a broadcast survives losing its feed. 0 ends it immediately. */
+    reconnectWindowSec?: number;
   },
 ): Promise<{ stream: Stream }> {
   return apiSend("PATCH", `/api/admin/streams/${encodeURIComponent(id)}`, patch);

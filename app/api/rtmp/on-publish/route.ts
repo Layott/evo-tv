@@ -200,6 +200,7 @@ export async function POST(req: NextRequest) {
       isLive: true,
       startedAt: nowIso,
       endedAt: null,
+      feedLostAt: null,
       hlsPath: hlsUrl,
       viewerCount: 0,
       peakViewerCount: 0,
@@ -248,6 +249,15 @@ export async function POST(req: NextRequest) {
       // make "on air 2h" read "on air 4s" after a blip.
       startedAt: legacy.startedAt ?? nowIso,
       endedAt: null,
+      /*
+       * The feed is back, so the reconnect clock stops.
+       *
+       * `offlineByOperator` clears too: an encoder publishing again is a
+       * deliberate act, and leaving the flag set would stop the reconciler
+       * ever reviving this stream after a genuine drop later on.
+       */
+      feedLostAt: null,
+      offlineByOperator: false,
       hlsPath: hlsUrl,
       viewerCount: 0,
     })
