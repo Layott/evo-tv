@@ -93,12 +93,32 @@ Three nullable columns on `watch_events`, so existing rows stay valid:
 |---|---|
 | `country` | Two letter code from `cf-ipcountry`. Live has no geography today; `video_view_buckets` already does this for VOD, and the derivation is copied from `/api/watch/heartbeat`. |
 | `device` | `mobile` / `tablet` / `tv` / `desktop`, same UA derivation as VOD. |
-| `rung` | Which ladder rung the player is pulling: `_low`, `_mid`, `_hi`. |
+| `rung` | Which ladder rung the player is pulling: `_low`, `_mid`, `_hi`. Website viewers only, see below. |
 
-`rung` is the one field that needs a change on the client side, and it is worth
-it: the quality ladder shipped on 2026-08-18 and there is currently no way to
-know which rung the audience actually sits on. That is the number that decides
-whether 1080p earns its bandwidth, which is now a committed piece of work.
+### `rung` is web only, and the page says so
+
+The quality ladder shipped on 2026-08-18 and nothing records which rung the
+audience actually sits on. That is the number that decides whether 1080p behind
+Premium earns its bandwidth, so it is worth collecting even partially.
+
+The website can report it. It plays through hls.js and already reads
+`hls.levels` for its quality selector, so the current level is available for
+about five lines of work.
+
+The app cannot. It runs `expo-video ~2.0.0` on Expo SDK 52, which has no
+video-track API. That arrived in a later expo-video, so app coverage means an
+Expo SDK bump, which is its own piece of work and not part of this.
+
+So the column is populated for website viewers and left null for the app, and
+**the split is labelled as covering website viewers only**. An unlabelled
+partial split would be a lie about the audience. A labelled one is a real
+sample. The app starts filling it in by itself the day expo-video is upgraded,
+with no schema change and no migration.
+
+If the website sample later looks unrepresentative, the way to get full
+coverage without an SDK bump is parsing nginx access logs for which variant
+playlist each viewer pulls. That has no account to join against and means
+shipping a log reader, so it is noted rather than planned.
 
 One index: `(stream_id, minute_bucket)`. The existing index is channel scoped
 and every query on this screen is stream scoped.
@@ -190,4 +210,4 @@ path on every panel, including the case where a broadcast has no viewers yet.
 1. Migration and the presence wiring, since every other piece reads them.
 2. Endpoints, with the role and audit tests.
 3. The page.
-4. `rung` reporting in both clients.
+4. `rung` reporting on the website.
