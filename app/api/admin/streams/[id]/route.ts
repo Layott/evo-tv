@@ -121,6 +121,11 @@ export async function PATCH(
   }
 
   const update: {
+    title?: string;
+    description?: string;
+    streamerName?: string;
+    eventId?: string | null;
+    isPremium?: boolean;
     scheduledStartAt?: string | null;
     scheduledDurationMin?: number | null;
     hlsPath?: string;
@@ -138,6 +143,70 @@ export async function PATCH(
     posterUrl?: string;
     tagline?: string;
   } = {};
+
+  /*
+   * The details an operator actually gets wrong.
+   *
+   * Title, description, streamer, event and tier were all fixed at creation and
+   * had no way back: a typo in a programme title stayed on air, and the only
+   * remedy was deleting the stream and issuing a new key, which means
+   * reconfiguring the encoder for a spelling mistake.
+   *
+   * The slug is deliberately left alone when the title changes. It is the
+   * public URL, it has already been shared, and renaming a show should not turn
+   * every existing link into a 404.
+   */
+  if ("title" in body) {
+    if (typeof body.title !== "string" || body.title.trim().length < 3) {
+      return NextResponse.json(
+        { error: "title must be at least 3 characters" },
+        { status: 400 },
+      );
+    }
+    update.title = body.title.trim().slice(0, 200);
+  }
+
+  if ("description" in body) {
+    if (typeof body.description !== "string") {
+      return NextResponse.json(
+        { error: "description must be a string" },
+        { status: 400 },
+      );
+    }
+    update.description = body.description.trim().slice(0, 2000);
+  }
+
+  if ("streamerName" in body) {
+    if (typeof body.streamerName !== "string") {
+      return NextResponse.json(
+        { error: "streamerName must be a string" },
+        { status: 400 },
+      );
+    }
+    // Blank falls back rather than showing an unattributed broadcast.
+    update.streamerName = body.streamerName.trim() || "EVO TV Official";
+  }
+
+  if ("eventId" in body) {
+    const v = body.eventId;
+    if (v !== null && typeof v !== "string") {
+      return NextResponse.json(
+        { error: "eventId must be a string or null" },
+        { status: 400 },
+      );
+    }
+    update.eventId = v === "" ? null : v;
+  }
+
+  if ("isPremium" in body) {
+    if (typeof body.isPremium !== "boolean") {
+      return NextResponse.json(
+        { error: "isPremium must be a boolean" },
+        { status: 400 },
+      );
+    }
+    update.isPremium = body.isPremium;
+  }
 
   // Pillar and game are editable, so a programme filed under the wrong one can
   // be corrected. Without these the only fix was to delete it and start again.
