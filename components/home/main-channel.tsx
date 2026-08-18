@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Radio, Lock } from "@/components/icons";
 
 import { useAuth } from "@/components/providers";
@@ -63,6 +63,7 @@ function clock(iso: string): string {
 export function MainChannelHero() {
   const { role } = useAuth();
   const signedIn = role !== "guest";
+  const queryClient = useQueryClient();
 
   const { data, isPending } = useQuery({
     queryKey: ["channel", "main"],
@@ -76,9 +77,51 @@ export function MainChannelHero() {
       return res.json();
     },
     // The on-air programme changes on the hour; this keeps the strip honest
-    // without the viewer reloading.
+    // without the viewer reloading. Going live is handled by the subscription
+    // below rather than by polling faster, so this only has to catch the slow
+    // stuff: a schedule edit, or an event the socket missed.
     refetchInterval: 60_000,
   });
+
+  /*
+   * Come on air without a reload.
+   *
+   * Polling alone meant a viewer sitting on the home page watched an "Off air"
+   * card through the first minute of a broadcast, then had to reload to see it,
+   * which reads as a broken page when the show has visibly started.
+   *
+   * `on-publish` already emitted `stream:live-now` and nothing on the web was
+   * listening. This subscribes to it and refetches, so the hero flips within a
+   * second of the encoder connecting, and costs no requests while the channel
+   * is quiet.
+   *
+   * The event is treated as a nudge, not as data: the refetch is what decides
+   * what is on air, so there is one source of truth rather than a partial
+   * object pushed down a pipe.
+   */
+  React.useEffect(() => {
+    if (typeof window === "undefined" || typeof EventSource === "undefined") {
+      return;
+    }
+    const source = new EventSource("/api/sse/channel");
+    const nudge = (event: MessageEvent) => {
+      // The opening frame only proves the connection is up; refetching on it
+      // would fire a pointless request on every page load and every reconnect.
+      if (typeof event.data === "string" && event.data.includes('"hello"')) {
+        return;
+      }
+      void queryClient.invalidateQueries({ queryKey: ["channel", "main"] });
+    };
+    source.addEventListener("message", nudge);
+    // A dropped connection is ordinary on mobile. EventSource reconnects by
+    // itself, and the poll above is the floor if it never does, so this only
+    // has to avoid logging noise.
+    source.addEventListener("error", () => {});
+    return () => {
+      source.removeEventListener("message", nudge);
+      source.close();
+    };
+  }, [queryClient]);
 
   if (isPending) {
     return <div className="mb-8 aspect-video w-full rounded-2xl bg-card" />;

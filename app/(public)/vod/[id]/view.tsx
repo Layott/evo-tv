@@ -102,7 +102,21 @@ export default function VodPage() {
     );
   }
 
-  const paywalled = vod.isPremium && !isPremium;
+  /*
+   * Two different walls, and they must not be confused for each other.
+   *
+   * `requiresAuth` comes from the server and means "sign in to watch anything",
+   * which now applies to the whole catalogue, free rows included. `paywalled`
+   * means "you are signed in, but this one needs a subscription".
+   *
+   * Reading the server's flag rather than re-deriving the rule here is the
+   * point: the server decides, and if it withheld the URL the page must say so
+   * rather than hand an empty source to the player and render a dead black box.
+   */
+  const requiresAuth = Boolean(
+    (vod as { requiresAuth?: boolean }).requiresAuth,
+  );
+  const paywalled = !requiresAuth && vod.isPremium && !isPremium;
 
   const onLike = () => {
     if (liked) {
@@ -170,7 +184,17 @@ export default function VodPage() {
             <BackButton fallbackHref="/library" />
           </div>
           <div className="overflow-hidden rounded-xl border border-border bg-black">
-            {paywalled ? (
+            {requiresAuth ? (
+              <SignInOverlay
+                thumb={vod.thumbnailUrl}
+                title={vod.title}
+                onSignIn={() =>
+                  router.push(
+                    `/login?next=${encodeURIComponent(window.location.pathname)}`,
+                  )
+                }
+              />
+            ) : paywalled ? (
               <PaywallOverlay
                 thumb={vod.thumbnailUrl}
                 title={vod.title}
@@ -284,6 +308,46 @@ function formatClock(sec: number) {
   const m = Math.floor(sec / 60);
   const s = Math.floor(sec % 60);
   return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+/**
+ * Sign in to watch, for a viewer who is not signed in at all.
+ *
+ * Deliberately not the premium overlay wearing different words. That one sells
+ * a subscription, and showing it to somebody who only needs an account would
+ * ask them for money to watch something free. This asks for the one thing that
+ * is actually missing and sends them back here afterwards.
+ */
+function SignInOverlay({
+  thumb,
+  title,
+  onSignIn,
+}: {
+  thumb: string;
+  title: string;
+  onSignIn: () => void;
+}) {
+  return (
+    <div className="relative aspect-video w-full">
+      <MediaImage
+        src={thumb}
+        alt={title}
+        className="absolute inset-0 size-full object-cover opacity-40"
+      />
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/60 px-6 text-center">
+        <h2 className="max-w-md text-xl font-bold text-white">{title}</h2>
+        <p className="max-w-md text-sm text-foreground/80">
+          Sign in to watch. It is free, and it keeps your place across devices.
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <Button onClick={onSignIn}>Sign in</Button>
+          <Button variant="ghost" asChild className="text-foreground/80">
+            <Link href="/signup">Create an account</Link>
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function PaywallOverlay({

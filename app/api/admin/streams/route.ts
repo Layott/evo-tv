@@ -120,6 +120,15 @@ const createSchema = z.object({
   eventId: z.string().nullable().optional(),
   streamerName: z.string().min(1).max(100),
   streamerAvatarUrl: z.string().default(""),
+  /*
+   * The poster for the stream, everywhere it is listed before it goes live.
+   *
+   * This was not in the schema and the insert hardcoded an empty string, so a
+   * newly created stream had no artwork and there was no way to give it any:
+   * the create form had no field, and the operator was left with a blank tile
+   * on the schedule and on every card that lists it.
+   */
+  thumbnailUrl: z.string().default(""),
   language: z.string().default("en"),
   tags: z.array(z.string()).default([]),
   isPremium: z.boolean().default(false),
@@ -185,7 +194,7 @@ export async function POST(req: NextRequest) {
       streamKeyHash: hashStreamKey(streamKey),
       isLive: false,
       hlsPath: details.hlsUrl,
-      thumbnailUrl: "",
+      thumbnailUrl: parsed.data.thumbnailUrl,
       viewerCount: 0,
       peakViewerCount: 0,
       language: parsed.data.language,
