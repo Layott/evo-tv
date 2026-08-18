@@ -60,27 +60,43 @@ export async function getMainChannel(): Promise<Stream | null> {
   return getStreamById("channel_main");
 }
 
+/** What a viewer can report, in their words rather than the schema's. */
+export const REPORT_REASONS = [
+  { value: "abuse", label: "Harassment or hate" },
+  { value: "illegal", label: "Violence or something illegal" },
+  { value: "csam", label: "Child sexual abuse material" },
+  { value: "copyright", label: "Copyright, not theirs to broadcast" },
+  { value: "impersonation", label: "Pretending to be someone else" },
+  { value: "spam", label: "Spam or a scam" },
+  { value: "other", label: "Something else" },
+] as const;
+
+export type ReportReason = (typeof REPORT_REASONS)[number]["value"];
+
 /**
- * `/api/reports` takes a `category` from a fixed enum plus free-text `details`,
- * where the mock took a single free-text `reason`. The reason is carried through
- * as the details so nothing the user typed is dropped.
+ * Report what is on screen.
+ *
+ * Every report used to be sent as `category: "other"` with the literal string
+ * `"user-reported"`, so the moderation queue received a row saying somebody
+ * objected to something, and nothing else. A moderator could not tell
+ * harassment from a copyright claim without watching the channel and guessing
+ * what had upset the reporter.
+ *
+ * The programme on air is deliberately NOT sent from here. The server resolves
+ * it from the schedule at submission time: a client claim could name a
+ * programme that was not running, and this page shows a player rather than a
+ * schedule so it does not reliably know what is on.
  */
 export async function reportStream(
   streamId: string,
-  reason = "user-reported",
-  /*
-   * The route answers `{ ok, reportId }`. This asked for `ticketId`, which no
-   * response has ever contained, so the caller destructured undefined and the
-   * confirmation read "Ticket: undefined". The report itself was always filed;
-   * only the receipt was broken, which is the kind of bug that makes a working
-   * feature look dead.
-   */
+  category: ReportReason,
+  details?: string,
 ): Promise<{ ok: boolean; reportId: string }> {
   return apiSend<{ ok: boolean; reportId: string }>("POST", "/api/reports", {
     targetType: "stream",
     targetId: streamId,
-    category: "other",
-    details: reason,
+    category,
+    details: details?.trim() || undefined,
   });
 }
 

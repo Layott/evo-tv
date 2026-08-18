@@ -4,6 +4,59 @@ import crypto from "node:crypto";
 import { and, count, eq, desc } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/guards";
+import { listScheduleForDay } from "@/lib/api/schedule";
+import { zonedDateKey } from "@/lib/epg/grid";
+import { getStreamById } from "@/lib/api/streams";
+
+/**
+ * What was on air, in the channel's own terms, at the moment of the report.
+ *
+ * A report against a 24/7 channel points at a stream that never stops, so the
+ * target alone tells a moderator nothing: by the time the queue is read the
+ * programme has moved on, possibly several times, and there is no way back to
+ * what the reporter actually saw.
+ *
+ * Resolved here rather than accepted from the client for two reasons. It cannot
+ * be spoofed to accuse a programme that was not running, and the client does not
+ * necessarily know: the stream page shows a player, not the schedule.
+ *
+ * Never throws. A report with no context is still a report, and losing one
+ * because a schedule lookup failed would be the wrong trade.
+ */
+async function onAirContext(
+  targetType: string,
+  targetId: string,
+): Promise<string | null> {
+  if (targetType !== "stream") return null;
+  try {
+    const stream = await getStreamById(targetId);
+    const now = new Date();
+    const rows = await listScheduleForDay({ date: zonedDateKey(now) });
+    const nowIso = now.toISOString();
+    const onNow = rows.find((r) => {
+      const end = new Date(
+        new Date(r.airsAt).getTime() + r.durationMin * 60_000,
+      ).toISOString();
+      return r.airsAt <= nowIso && nowIso < end;
+    });
+
+    const parts = [`Reported at ${nowIso}`];
+    if (stream) {
+      parts.push(`Stream: ${stream.title}${stream.isLive ? " (live)" : ""}`);
+    }
+    if (onNow) {
+      parts.push(
+        `On air: ${onNow.title}${onNow.subtitle ? ` - ${onNow.subtitle}` : ""}`,
+        `Slot: ${onNow.airsAt} for ${onNow.durationMin} min`,
+      );
+    } else {
+      parts.push("On air: nothing scheduled for this slot");
+    }
+    return parts.join("\n");
+  } catch {
+    return null;
+  }
+}
 
 const TARGET_TYPES = ["stream", "vod", "clip", "user", "chat_message", "party"] as const;
 const CATEGORIES = [
@@ -72,6 +125,7 @@ export async function POST(req: NextRequest) {
     targetId,
     category,
     details: details ?? null,
+    context: await onAirContext(targetType, targetId),
     status: "open",
     createdAt: new Date().toISOString(),
   });

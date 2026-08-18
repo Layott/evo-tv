@@ -23,6 +23,16 @@ export const contentReports = pgTable(
     /** 'spam' | 'abuse' | 'copyright' | 'illegal' | 'csam' | 'impersonation' | 'other' */
     category: text("category").notNull(),
     details: text("details"),
+    /**
+     * What was on air when the report was filed.
+     *
+     * A report against a 24/7 channel points at a stream that never stops, so
+     * "this stream" tells a moderator nothing: by the time anyone reads the
+     * queue the programme has moved on. Resolved server-side from the schedule
+     * at submission time, so it is authoritative and captured while it is still
+     * true.
+     */
+    context: text("context"),
     /** 'open' | 'resolved' | 'dismissed' */
     status: text("status").notNull().default("open"),
     resolvedBy: text("resolved_by").references(() => user.id),
