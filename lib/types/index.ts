@@ -12,6 +12,15 @@ export type MaturityRating = "kids" | "pg" | "teen" | "mature";
 export interface Profile {
   id: UUID;
   handle: string;
+  /**
+   * The address this account signs in with.
+   *
+   * Absent from this type until now, so the client dropped it when mapping
+   * `/api/users/me`, and the settings screen invented `${handle}@evo.tv` to
+   * fill the gap. It showed every user an address that does not exist and is
+   * not theirs.
+   */
+  email: string;
   displayName: string;
   avatarUrl: string;
   bio: string;

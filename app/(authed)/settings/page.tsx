@@ -38,7 +38,15 @@ export default function SettingsPage() {
   const search = useSearchParams();
   const tab = search.get("tab") ?? "account";
 
-  const email = user ? `${user.handle}@evo.tv` : "guest@evo.tv";
+  /*
+   * The address on the account, not one made up from the handle.
+   *
+   * This was `${user.handle}@evo.tv`, which is not an address anybody owns: the
+   * owner signs in with a Gmail account and this screen told him his email was
+   * layott@evo.tv. It read as a settings page showing the wrong data, which is
+   * exactly what it was.
+   */
+  const email = user?.email ?? "";
 
   function setTab(v: string) {
     const sp = new URLSearchParams(Array.from(search.entries()));

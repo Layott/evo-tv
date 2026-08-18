@@ -53,11 +53,27 @@ export default function BillingPage() {
     );
   }
 
+  /*
+   * Only payments that happened.
+   *
+   * This invented three rows whenever a subscription existed, with references
+   * "PS_2026_02", "PS_2026_01" and "PS_2025_12" and dates counted backwards
+   * from today, so a viewer who subscribed yesterday was shown two months of
+   * charges they never paid. On a billing page that is not a placeholder, it is
+   * a false financial record.
+   *
+   * There is no payments table: the platform keeps the subscription, and
+   * Paystack keeps the transactions. So the only payment we can honestly
+   * evidence is the one that created this subscription, and the receipt trail
+   * lives with the processor.
+   */
   const history = sub
     ? [
-        { date: new Date(sub.createdAt).toLocaleDateString(), amount: sub.priceNgn, ref: "PS_2026_02" },
-        { date: new Date(Date.now() - 31 * 86400000).toLocaleDateString(), amount: sub.priceNgn, ref: "PS_2026_01" },
-        { date: new Date(Date.now() - 62 * 86400000).toLocaleDateString(), amount: sub.priceNgn, ref: "PS_2025_12" },
+        {
+          date: new Date(sub.createdAt).toLocaleDateString(),
+          amount: sub.priceNgn,
+          ref: sub.providerSubId || sub.id,
+        },
       ]
     : [];
 
@@ -122,9 +138,25 @@ export default function BillingPage() {
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Keep Premium</AlertDialogCancel>
+                        {/* This showed a success toast and cancelled nothing.
+                            The endpoint has always existed. */}
                         <AlertDialogAction
                           className="bg-red-500 text-white hover:bg-red-500/90"
-                          onClick={() => toast.success("Subscription cancelled")}
+                          onClick={async () => {
+                            try {
+                              const res = await fetch("/api/subscriptions/cancel", {
+                                method: "POST",
+                                credentials: "include",
+                              });
+                              if (!res.ok) throw new Error(await res.text());
+                              setSub(null);
+                              toast.success(
+                                "Subscription cancelled. Premium runs to the end of the period you paid for.",
+                              );
+                            } catch {
+                              toast.error("Could not cancel. Try again in a moment.");
+                            }
+                          }}
                         >
                           Confirm cancel
                         </AlertDialogAction>
@@ -140,22 +172,45 @@ export default function BillingPage() {
         <div className="rounded-2xl border border-border bg-card/40 p-5">
           <h2 className="text-base font-semibold text-foreground">Payment method</h2>
           <p className="text-sm text-muted-foreground">Managed securely via Paystack.</p>
-          <div className="mt-4 flex items-center gap-3 rounded-xl border border-border bg-background p-4">
+          {/*
+            No invented card.
+
+            This printed "Visa 4242, expires 09 / 27" for every account,
+            including accounts that have never paid for anything. It is the test
+            card number, it was never read from anywhere, and a billing screen
+            that shows somebody a card they do not own is the last place to put
+            a placeholder.
+
+            The platform does not store card details at all: Paystack charges
+            per transaction and we keep the subscription, not the instrument. So
+            the honest answer is what happens at renewal, and that is what this
+            now says.
+          */}
+          <div className="mt-4 flex items-center gap-3 rounded-xl bg-background p-4">
             <CreditCard className="size-6 text-[#00C3F7]" />
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-foreground">
-                <span className="text-[#00C3F7]">Paystack</span> &middot; Visa
-                &bull;&bull;&bull;&bull; 4242
-              </p>
-              <p className="text-xs text-muted-foreground">Expires 09 / 27</p>
+              {sub ? (
+                <>
+                  <p className="text-sm font-semibold text-foreground">
+                    Charged through <span className="text-[#00C3F7]">Paystack</span>
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    You are asked for your card each renewal. Nothing is stored
+                    here.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm font-semibold text-foreground">
+                    No payment method needed
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    You are on the free tier. Paystack handles payment when you
+                    subscribe.
+                  </p>
+                </>
+              )}
             </div>
-            <Button
-              variant="outline"
-              className="border-border"
-              onClick={() => toast.info("Paystack portal coming soon")}
-            >
-              Update
-            </Button>
           </div>
         </div>
       </div>

@@ -15,6 +15,7 @@ export function toProfile(u: UserRow, p: ProfileRow | null | undefined): Profile
   return {
     id: u.id,
     handle: firstNonEmpty(u.handle, u.email.split("@")[0]) ?? u.id,
+    email: u.email,
     /**
      * The email is the last resort and it is a poor one: it puts an address on
      * screen next to a public handle. It is still better than a blank where a
