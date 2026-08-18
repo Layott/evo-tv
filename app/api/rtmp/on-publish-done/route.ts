@@ -76,6 +76,14 @@ export async function POST(req: NextRequest) {
   if (row.channelId) {
     emit(`channel:${row.channelId}:offline`, { streamId: row.id });
   }
+  /*
+   * The same topic the home page listens on, so the hero drops back to the
+   * off-air card the moment the encoder disconnects. `on-publish` has always
+   * emitted this on the way up; the way down only emitted the per-stream and
+   * per-channel topics, so a viewer on the home page kept seeing a live badge
+   * for a broadcast that had ended until the next poll.
+   */
+  emit("stream:live-now", { type: "ended", streamId: row.id });
   emit("stream:enqueue-transcode", { streamId: row.id });
 
   return new NextResponse("OK", { status: 200 });

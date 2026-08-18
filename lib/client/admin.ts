@@ -61,6 +61,8 @@ export interface CreateStreamInput {
   description?: string;
   eventId?: string | null;
   streamerAvatarUrl?: string;
+  /** Poster shown wherever the stream is listed before it goes live. */
+  thumbnailUrl?: string;
   language?: string;
   tags?: string[];
   isPremium?: boolean;
