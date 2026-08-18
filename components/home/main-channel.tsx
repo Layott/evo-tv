@@ -44,7 +44,6 @@ interface MainChannel {
   thumbnailUrl: string;
   isLive: boolean;
   hlsUrl: string;
-  viewerCount: number;
   startedAt: string | null;
   requiresAuth?: boolean;
 }
@@ -173,7 +172,6 @@ export function MainChannelHero() {
               poster={channel.thumbnailUrl || channel.posterUrl}
               autoPlay
               isLive
-              viewerCount={channel.viewerCount}
               mediaId={channel.id}
             />
           </ChannelBreaks>
