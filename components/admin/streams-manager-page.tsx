@@ -30,6 +30,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { MediaUpload, THUMBNAIL_SPEC } from "@/components/admin/media-upload";
 import {
   Select,
   SelectContent,
@@ -270,6 +271,7 @@ export function StreamsManagerPage() {
         eventId: payload.eventId || null,
         streamerName: payload.streamerName,
         isPremium: payload.isPremium,
+        thumbnailUrl: payload.thumbnailUrl,
       }),
     onSuccess: async (res) => {
       setCreateOpen(false);
@@ -778,6 +780,7 @@ interface NewStreamPayload {
   streamerName: string;
   isPremium: boolean;
   pillar: "esports" | "anime" | "lifestyle";
+  thumbnailUrl: string;
 }
 
 function CreateStreamDrawer({
@@ -798,6 +801,7 @@ function CreateStreamDrawer({
   // "none" rather than the first game. Defaulting to CoD Mobile silently filed
   // every programme as an esports broadcast, including anime and podcasts.
   const [gameId, setGameId] = React.useState<string>("none");
+  const [thumbnailUrl, setThumbnailUrl] = React.useState("");
   const [eventId, setEventId] = React.useState<string>("none");
   const [streamerName, setStreamerName] = React.useState("EVO TV Official");
   const [isPremium, setIsPremium] = React.useState(false);
@@ -911,6 +915,21 @@ function CreateStreamDrawer({
               className="border-border bg-card"
             />
           </div>
+          {/*
+            Artwork, which had no field at all. The create route hardcoded an
+            empty thumbnail, so every stream made here showed a blank tile on
+            the schedule and on every card listing it, and the only way to give
+            it a poster was to edit the row afterwards.
+          */}
+          <MediaUpload
+            label="Thumbnail"
+            value={thumbnailUrl}
+            onChange={setThumbnailUrl}
+            kind="image"
+            folder="streams"
+            hint="16:9. Shown on the schedule, the channel page and every card before the stream goes live."
+            spec={THUMBNAIL_SPEC}
+          />
           <div className="flex items-center justify-between rounded-lg border border-border bg-card/40 p-3">
             <div>
               <div className="text-sm font-medium text-foreground">Premium only</div>
@@ -939,6 +958,7 @@ function CreateStreamDrawer({
                 streamerName: streamerName.trim() || "EVO TV Official",
                 isPremium,
                 pillar,
+                thumbnailUrl,
               })
             }
           >

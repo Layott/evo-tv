@@ -72,12 +72,15 @@ export async function resolveViewer(): Promise<PlaybackViewer> {
  * copying the URL out of the network tab and pasting it into a new tab. The
  * subscription was, in effect, a suggestion not to look.
  *
- * Only premium rows are gated, and this is deliberate. Live streams withhold
- * playback from everyone signed out, because watching a broadcast requires an
- * account; the recorded catalogue does not work that way. Free VODs are public
- * by design, they live under a public route, they are what a shared link and a
- * search result point at, and making them require an account would be a product
- * change rather than a security fix. So a free VOD plays for anybody.
+ * Two gates, because they answer different questions.
+ *
+ * **Signed out gets nothing**, free or premium. Watching requires an account,
+ * which is the same rule live streams already follow (owner's decision,
+ * 2026-08-18). The catalogue is still browsable signed out and a shared link
+ * still opens to a real page; what it does not do is play without an account.
+ *
+ * **Signed in but not a subscriber gets nothing for premium rows.** The free
+ * catalogue plays as normal.
  *
  * Everything else stays public on purpose: title, thumbnail, duration, chapters
  * and view count are what a shared link needs to render a preview and what a
@@ -91,7 +94,10 @@ export function stripVodPlayback<
 >(
   vod: T,
   viewer: PlaybackViewer,
-): T & { requiresPremium?: true } {
+): T & { requiresAuth?: true; requiresPremium?: true } {
+  if (!viewer.signedIn) {
+    return { ...vod, hlsUrl: "", mp4Url: "", requiresAuth: true as const };
+  }
   if (vod.isPremium && !viewer.premium) {
     return { ...vod, hlsUrl: "", mp4Url: "", requiresPremium: true as const };
   }
@@ -103,6 +109,6 @@ export function stripVodPlaybackAll<
 >(
   vods: T[],
   viewer: PlaybackViewer,
-): Array<T & { requiresPremium?: true }> {
+): Array<T & { requiresAuth?: true; requiresPremium?: true }> {
   return vods.map((v) => stripVodPlayback(v, viewer));
 }
