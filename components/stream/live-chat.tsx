@@ -58,6 +58,32 @@ export function LiveChat({ streamId }: { streamId: string }) {
       setMessages((prev) => {
         // The sender already appended its own message optimistically.
         if (prev.some((m) => m.id === msg.id)) return prev;
+
+        /*
+         * The same message, still wearing its local id.
+         *
+         * Matching on id alone is only safe once the POST has come back and
+         * swapped the optimistic row for the server's. Until then the ids
+         * cannot match, so the copy arriving over SSE was appended and the
+         * sender saw their own line twice. That race is ordinary on a phone,
+         * where the round trip is slow enough for SSE to win.
+         *
+         * So an unsent row from the same author with the same text is treated
+         * as this message and upgraded in place, which also gives it the real
+         * id and lets the check above handle any later duplicate.
+         */
+        const pendingIndex = prev.findIndex(
+          (m) =>
+            m.id.startsWith("msg_local_") &&
+            m.userId === msg.userId &&
+            m.body === msg.body,
+        );
+        if (pendingIndex !== -1) {
+          const next = [...prev];
+          next[pendingIndex] = msg as ChatMessage;
+          return next;
+        }
+
         const next = [...prev, msg as ChatMessage];
         return next.length > MAX_MSGS ? next.slice(next.length - MAX_MSGS) : next;
       });
@@ -115,9 +141,18 @@ export function LiveChat({ streamId }: { streamId: string }) {
 
     try {
       const saved = await sendMessage(streamId, body);
-      if (saved) {
+      // A response missing an id is not a message. Replacing the optimistic row
+      // with one is what turned a just-sent line into a blank "viewer" entry,
+      // so the local row is kept and SSE reconciles it instead.
+      if (saved?.id) {
         setMessages((prev) =>
-          prev.map((m) => (m.id === optimisticId ? saved : m)),
+          prev.map((m) =>
+            m.id === optimisticId ? saved : m.id === saved.id ? saved : m,
+          ).filter(
+            // If SSE already delivered this message, dropping the optimistic
+            // twin here is what stops the pair from surviving the swap.
+            (m, i, arr) => arr.findIndex((o) => o.id === m.id) === i,
+          ),
         );
       }
     } catch {

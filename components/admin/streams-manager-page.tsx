@@ -11,6 +11,7 @@ import {
   Pin,
   Search,
   Trash2,
+  Edit,
 } from "@/components/icons";
 import { toast } from "sonner";
 import {
@@ -117,6 +118,8 @@ export function StreamsManagerPage() {
 
   const [selected, setSelected] = React.useState<Stream | null>(null);
   const [createOpen, setCreateOpen] = React.useState(false);
+  /** The stream open in the edit form, or null when not editing. */
+  const [editing, setEditing] = React.useState<Stream | null>(null);
   /**
    * OBS settings to show. Was a bare key string, which is half of what OBS
    * needs: without the Server URL an operator cannot configure anything, and
@@ -357,6 +360,43 @@ export function StreamsManagerPage() {
     createMut.mutate(payload);
   }
 
+  const editMut = useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: NewStreamPayload }) =>
+      adminUpdateStream(id, {
+        title: payload.title,
+        description: payload.description,
+        gameId: payload.gameId,
+        pillar: payload.pillar,
+        eventId: payload.eventId || null,
+        streamerName: payload.streamerName,
+        isPremium: payload.isPremium,
+        thumbnailUrl: payload.thumbnailUrl,
+      }),
+    onSuccess: async (_res, vars) => {
+      setEditing(null);
+      toast.success("Stream updated");
+      await queryClient.invalidateQueries({ queryKey: ["admin", "streams"] });
+      /*
+       * Re-read the row rather than trusting the response body.
+       *
+       * `adminUpdateStream` is typed as returning `{ stream }` and the route
+       * actually answers a flat `{ ok, streamId, ... }`, so reading `res.stream`
+       * here would have quietly left the sheet showing the values the operator
+       * had just replaced. The list is the source of truth and has just been
+       * invalidated, so this takes the row from there.
+       */
+      const fresh = await adminListStreams().catch(() => null);
+      const row = fresh?.streams.find((r) => r.id === vars.id) ?? null;
+      if (row) setSelected((cur) => (cur && cur.id === row.id ? row : cur));
+    },
+    onError: (err: Error) => toast.error(err.message || "Could not save the changes"),
+  });
+
+  function handleEdit(payload: NewStreamPayload) {
+    if (!editing) return;
+    editMut.mutate({ id: editing.id, payload });
+  }
+
   /**
    * Re-open the OBS settings for an existing stream.
    *
@@ -570,6 +610,18 @@ export function StreamsManagerPage() {
                         ? "Main channel"
                         : "Make main channel"}
                     </Button>
+                    {/* Correcting a stream used to mean deleting it and
+                        starting again, which issues a new key and means
+                        reconfiguring the encoder over a typo. */}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="bg-card text-foreground hover:bg-accent"
+                      onClick={() => setEditing(selected)}
+                    >
+                      <Edit className="h-3.5 w-3.5" />
+                      Edit details
+                    </Button>
                     <Button
                       variant="outline"
                       size="sm"
@@ -613,6 +665,18 @@ export function StreamsManagerPage() {
         onSubmit={handleCreate}
         games={games}
         events={events}
+      />
+
+      {/* The same form, correcting an existing stream. Keyed on the id so the
+          fields re-seed when a different stream is opened. */}
+      <CreateStreamDrawer
+        key={editing?.id ?? "edit"}
+        open={!!editing}
+        onOpenChange={(o) => !o && setEditing(null)}
+        onSubmit={handleEdit}
+        games={games}
+        events={events}
+        initial={editing}
       />
 
       {/* Reveal key */}
@@ -783,18 +847,30 @@ interface NewStreamPayload {
   thumbnailUrl: string;
 }
 
+/**
+ * One form, for creating a stream and for correcting one.
+ *
+ * Everything here was fixed at creation and had no way back, so a typo in a
+ * programme title stayed on air and the only remedy was deleting the stream,
+ * which issues a new key and means reconfiguring the encoder over a spelling
+ * mistake. Rather than write a second form that would drift from this one, the
+ * same fields serve both and `initial` decides which job it is doing.
+ */
 function CreateStreamDrawer({
   open,
   onOpenChange,
   onSubmit,
   games,
   events,
+  initial = null,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   onSubmit: (payload: NewStreamPayload) => void;
   games: Game[];
   events: EsportsEvent[];
+  /** The stream being edited, or null when creating a new one. */
+  initial?: Stream | null;
 }) {
   const [title, setTitle] = React.useState("");
   const [description, setDescription] = React.useState("");
@@ -808,17 +884,22 @@ function CreateStreamDrawer({
   const [pillar, setPillar] =
     React.useState<NewStreamPayload["pillar"]>("esports");
 
+  // Seeded from the stream when correcting one, blank when creating. Keyed on
+  // `open` so reopening always reflects the row as it stands, not what was
+  // typed and abandoned last time.
   React.useEffect(() => {
-    if (open) {
-      setTitle("");
-      setDescription("");
-      setGameId("none");
-      setEventId("none");
-      setStreamerName("EVO TV Official");
-      setIsPremium(false);
-      setPillar("esports");
-    }
-  }, [open]);
+    if (!open) return;
+    setTitle(initial?.title ?? "");
+    setDescription(initial?.description ?? "");
+    setGameId(initial?.gameId ?? "none");
+    setThumbnailUrl(initial?.thumbnailUrl ?? "");
+    setEventId(initial?.eventId ?? "none");
+    setStreamerName(initial?.streamerName ?? "EVO TV Official");
+    setIsPremium(initial?.isPremium ?? false);
+    setPillar(
+      (initial?.pillar as NewStreamPayload["pillar"] | undefined) ?? "esports",
+    );
+  }, [open, initial]);
 
   // Only the title is genuinely required. A game is meaningless for two of the
   // three pillars, so requiring it blocked entering them at all.
@@ -828,8 +909,12 @@ function CreateStreamDrawer({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full overflow-y-auto border-border bg-background text-foreground sm:max-w-lg">
         <SheetHeader>
-          <SheetTitle>New stream</SheetTitle>
-          <SheetDescription>Configure an official broadcast. A stream key will be generated.</SheetDescription>
+          <SheetTitle>{initial ? "Edit stream" : "New stream"}</SheetTitle>
+          <SheetDescription>
+            {initial
+              ? "Changes apply immediately, everywhere this stream is listed. The stream key and the public link are untouched."
+              : "Configure an official broadcast. A stream key will be generated."}
+          </SheetDescription>
         </SheetHeader>
         <div className="space-y-4 px-4 pb-4">
           <div className="space-y-1.5">
@@ -962,7 +1047,7 @@ function CreateStreamDrawer({
               })
             }
           >
-            Create stream
+            {initial ? "Save changes" : "Create stream"}
           </Button>
         </SheetFooter>
       </SheetContent>
