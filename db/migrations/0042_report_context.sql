@@ -1,0 +1,11 @@
+-- What was on air when a report was filed.
+--
+-- A report against a 24/7 channel points at a stream that runs continuously, so
+-- "this stream" tells a moderator nothing: by the time anyone reads it the
+-- programme has changed, possibly several times. Without this the queue could
+-- only say that somebody objected to the channel at some point.
+--
+-- Resolved server-side from the schedule at the moment the report is filed, so
+-- it is authoritative rather than something the client claims, and written once
+-- rather than re-derived later when the answer would already be wrong.
+ALTER TABLE "content_reports" ADD COLUMN IF NOT EXISTS "context" text;

@@ -13,11 +13,17 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Share2, Flag, Loader2, Languages, Headphones, BadgeCheck } from "@/components/icons";
 import { toast } from "sonner";
 import { FollowButton } from "./follow-button";
-import { reportStream } from "@/lib/client";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  reportStream,
+  REPORT_REASONS,
+  type ReportReason,
+} from "@/lib/client";
 import {
   listCommentaryTracks,
   type CommentaryTrack,
@@ -40,6 +46,9 @@ function streamerIdFromStream(s: Stream): string {
 export function StreamInfo({ stream, game }: StreamInfoProps) {
   const streamerId = streamerIdFromStream(stream);
   const [reporting, setReporting] = React.useState(false);
+  const [reportOpen, setReportOpen] = React.useState(false);
+  const [reason, setReason] = React.useState<ReportReason | null>(null);
+  const [reportDetails, setReportDetails] = React.useState("");
   /** Set only when both share and clipboard failed, so the URL can be copied by hand. */
   const [shareUrl, setShareUrl] = React.useState<string | null>(null);
 
@@ -74,11 +83,25 @@ export function StreamInfo({ stream, game }: StreamInfoProps) {
     toast.success(`Switched to ${track.languageLabel} commentary`);
   }
 
-  async function handleReport() {
-    if (reporting) return;
+  /**
+   * Report, with a reason.
+   *
+   * The button used to file the report immediately, always as "other", so a
+   * viewer could not say what was wrong and a moderator could not tell
+   * harassment from a copyright claim. It now opens a dialog and asks.
+   *
+   * What was on air is not collected here. The server reads it from the
+   * schedule when the report arrives, which is both harder to falsify and more
+   * likely to be right: this page shows a player, not a schedule.
+   */
+  async function submitReport() {
+    if (reporting || !reason) return;
     setReporting(true);
     try {
-      const { reportId } = await reportStream(stream.id, "user-reported");
+      const { reportId } = await reportStream(stream.id, reason, reportDetails);
+      setReportOpen(false);
+      setReason(null);
+      setReportDetails("");
       toast.success(`Report sent to moderators. Reference ${reportId}`);
     } catch {
       toast.error("Could not submit report");
@@ -207,7 +230,7 @@ export function StreamInfo({ stream, game }: StreamInfoProps) {
           <Button
             variant="outline"
             size="sm"
-            onClick={handleReport}
+            onClick={() => setReportOpen(true)}
             disabled={reporting}
           >
             {reporting ? <Loader2 className="size-3.5 animate-spin" /> : <Flag className="size-3.5" />}
@@ -238,6 +261,72 @@ export function StreamInfo({ stream, game }: StreamInfoProps) {
             nobody had started one for. Watch parties have no backend, so there
             is nothing honest to put here. */}
       </div>
+
+      {/*
+        Report, with a reason.
+
+        The reasons are worded for a viewer rather than named after the enum
+        they map to: nobody watching a broadcast thinks "impersonation", they
+        think "that is not who they say they are". The values still line up with
+        what `/api/reports` accepts, so the moderation queue can sort by them.
+      */}
+      <Dialog open={reportOpen} onOpenChange={setReportOpen}>
+        <DialogContent className="border-border bg-background text-foreground">
+          <DialogHeader>
+            <DialogTitle>Report this stream</DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              What is wrong with it? Moderators see your answer along with
+              whatever was on air when you reported it.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-1">
+            {REPORT_REASONS.map((r) => (
+              <button
+                key={r.value}
+                type="button"
+                onClick={() => setReason(r.value)}
+                className={cn(
+                  "rounded-lg px-3 py-2.5 text-left text-sm transition-colors",
+                  reason === r.value
+                    ? "bg-sky-500/25 text-sky-100"
+                    : "bg-card/60 text-foreground/80 hover:bg-card",
+                )}
+              >
+                {r.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="space-y-1.5">
+            <label htmlFor="report-details" className="text-xs text-muted-foreground">
+              Anything else? Optional.
+            </label>
+            <Textarea
+              id="report-details"
+              value={reportDetails}
+              onChange={(e) => setReportDetails(e.target.value)}
+              maxLength={2000}
+              placeholder="What did you see, and roughly when?"
+              className="min-h-[80px] border-border bg-card"
+            />
+          </div>
+
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setReportOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={submitReport}
+              disabled={!reason || reporting}
+              className="bg-sky-600 hover:bg-sky-500"
+            >
+              {reporting ? <Loader2 className="size-4 animate-spin" /> : null}
+              Send report
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Last resort. Reached only when the share sheet and the clipboard both
           refused, which is rare but leaves the button doing nothing otherwise. */}
