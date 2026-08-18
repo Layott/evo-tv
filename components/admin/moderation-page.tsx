@@ -19,14 +19,59 @@ import { StatusBadge } from "./status-badge";
 import { formatDate, timeAgo } from "./utils";
 import { UserAvatar } from "@/components/ui/user-avatar";
 
+/**
+ * A report, as `/api/admin/reports` actually returns it.
+ *
+ * This was declared with `message`, `reason`, `reportedBy`, `reportedAt` and
+ * `state`, and the response was cast to it without mapping. The API returns
+ * none of those names, so every field on every card rendered `undefined`: the
+ * queue showed a reason of nothing, reported by nobody, quoting a message that
+ * was not there. That is why filing a report appeared to do nothing beyond
+ * sending a notification.
+ */
 interface Report {
   id: string;
-  message: ChatMessage;
-  reason: "spam" | "harassment" | "off-topic";
-  reportedBy: string;
-  reportedAt: string;
-  state: "open" | "approved" | "removed" | "escalated";
+  targetType: "stream" | "vod" | "clip" | "user" | "chat_message" | "party";
+  targetId: string;
+  category:
+    | "spam"
+    | "abuse"
+    | "copyright"
+    | "illegal"
+    | "csam"
+    | "impersonation"
+    | "other";
+  details: string | null;
+  /** What was on air when the report was filed. Resolved server-side. */
+  context: string | null;
+  status: "open" | "resolved" | "dismissed";
+  reporterUserId: string | null;
+  createdAt: string;
+  /** Only present for chat_message targets, so the body can be quoted inline. */
+  targetPreview: { body: string; streamId: string; userId: string } | null;
 }
+
+/** Viewer-facing wording for the enum a report is filed under. */
+const CATEGORY_LABEL: Record<Report["category"], string> = {
+  abuse: "Harassment or hate",
+  illegal: "Violence or illegal",
+  csam: "Child sexual abuse material",
+  copyright: "Copyright",
+  impersonation: "Impersonation",
+  spam: "Spam or scam",
+  other: "Something else",
+};
+
+/** Red for the ones that cannot wait, amber for the rest. */
+const CATEGORY_TONE: Record<Report["category"], "red" | "amber" | "blue"> = {
+  csam: "red",
+  illegal: "red",
+  abuse: "red",
+  copyright: "amber",
+  impersonation: "amber",
+  spam: "amber",
+  other: "blue",
+};
 
 interface BannedUser {
   id: string;
@@ -117,7 +162,7 @@ export function ModerationPage() {
     toast.error("Appeals are not implemented yet");
   }
 
-  const openReports = reports.filter((r) => r.state === "open");
+  const openReports = reports.filter((r) => r.status === "open");
 
   return (
     <div className="space-y-6">
@@ -146,46 +191,54 @@ export function ModerationPage() {
         <TabsContent value="reports" className="mt-4">
           <div className="space-y-3">
             {reports.map((r) => {
-              const reasonTone = r.reason === "harassment" ? "red" : r.reason === "spam" ? "amber" : "blue";
               return (
-                <div
-                  key={r.id}
-                  className="rounded-xl border border-border bg-card/40 p-4"
-                >
+                <div key={r.id} className="rounded-xl bg-card/40 p-4">
                   <div className="flex flex-wrap items-center gap-2">
-                    <StatusBadge tone={reasonTone as "red" | "amber" | "blue"}>{r.reason}</StatusBadge>
+                    <StatusBadge tone={CATEGORY_TONE[r.category] ?? "blue"}>
+                      {CATEGORY_LABEL[r.category] ?? r.category}
+                    </StatusBadge>
                     <div className="text-xs text-muted-foreground">
-                      Reported by @{r.reportedBy} · {timeAgo(r.reportedAt)}
+                      {r.targetType} · {timeAgo(r.createdAt)}
                     </div>
-                    {r.state !== "open" ? (
+                    {r.status !== "open" ? (
                       <StatusBadge tone="neutral" className="ml-auto">
-                        {r.state}
+                        {r.status}
                       </StatusBadge>
                     ) : (
-                      <span className="ml-auto text-xs text-muted-foreground">
-                        {/* Was a hardcoded "stream_lagos_final", a stream that
-                            has not existed for months, printed next to every
-                            report that had no state. */}
-                        {r.message?.streamId ?? "-"}
+                      <span className="ml-auto font-mono text-xs text-muted-foreground">
+                        {r.targetId}
                       </span>
                     )}
                   </div>
-                  <div className="mt-3 flex items-start gap-3">
-                    <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-muted">
-                      {}
-                      <img src={r.message.userAvatarUrl} alt="" className="h-full w-full object-cover" />
+
+                  {/* What the reporter typed, when they typed anything. */}
+                  {r.details ? (
+                    <p className="mt-3 rounded-md bg-background p-2 text-sm text-foreground">
+                      {r.details}
+                    </p>
+                  ) : null}
+
+                  {/*
+                    What was on air at the time. The whole point of capturing it:
+                    a report against a 24/7 channel is unactionable without it,
+                    because by the time this is read the programme has changed.
+                  */}
+                  {r.context ? (
+                    <pre className="mt-2 whitespace-pre-wrap rounded-md bg-background p-2 font-mono text-xs text-muted-foreground">
+                      {r.context}
+                    </pre>
+                  ) : null}
+
+                  {/* A reported chat message is quoted inline, which is the one
+                      target type the API enriches. */}
+                  {r.targetPreview ? (
+                    <div className="mt-2 rounded-md bg-background p-2 text-sm text-foreground">
+                      <MessageSquare className="mr-1 inline h-3 w-3 text-muted-foreground" />
+                      {r.targetPreview.body}
                     </div>
-                    <div className="flex-1">
-                      <div className="text-xs text-muted-foreground">
-                        @{r.message.userHandle} · {timeAgo(r.message.createdAt)}
-                      </div>
-                      <div className="mt-1 rounded-md border border-border bg-background p-2 text-sm text-foreground">
-                        <MessageSquare className="mr-1 inline h-3 w-3 text-muted-foreground" />
-                        {r.message.body}
-                      </div>
-                    </div>
-                  </div>
-                  {r.state === "open" ? (
+                  ) : null}
+
+                  {r.status === "open" ? (
                     <div className="mt-3 flex flex-wrap gap-2">
                       <Button
                         size="sm"
