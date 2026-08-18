@@ -309,6 +309,13 @@
       "when": 1787097600002,
       "tag": "0043_stream_reconnect_window",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1787097600003,
+      "tag": "0044_live_telemetry",
+      "breakpoints": true
     }
   ]
 }
