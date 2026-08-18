@@ -21,6 +21,7 @@ import {
   adminListGames,
   adminListStreams,
   adminRegenerateStreamKey,
+  adminRestoreStream,
   adminGetStreamIngest,
   type IngestDetails,
   adminUpdateStream,
@@ -83,10 +84,24 @@ export function StreamsManagerPage() {
     queryFn: () => adminListEvents(),
   });
 
+  const [statusFilter, setStatusFilter] = React.useState<string>("all");
+
   // Admin sees every stream, live or not, unlike the public list.
   const streamsQ = useQuery({
-    queryKey: ["admin", "streams-all"],
-    queryFn: () => adminListStreams({ limit: 200 }),
+    queryKey: ["admin", "streams-all", statusFilter === "deleted"],
+    /*
+     * Deleted rows are a different query, not a filter over the same list: the
+     * API excludes them by default and returns them only when asked. Without
+     * this the web admin had no way to see a deleted stream at all, so the
+     * restore endpoint that already existed was unreachable, while the app's
+     * admin could do it.
+     */
+    queryFn: () =>
+      adminListStreams(
+        statusFilter === "deleted"
+          ? { limit: 200, deleted: "only" as const }
+          : { limit: 200 },
+      ),
   });
 
   const games = gamesQ.data ?? [];
@@ -100,7 +115,6 @@ export function StreamsManagerPage() {
 
   const [search, setSearch] = React.useState("");
   const [gameFilter, setGameFilter] = React.useState<string>("all");
-  const [statusFilter, setStatusFilter] = React.useState<string>("all");
 
   const filtered = React.useMemo(() => {
     let rows = all;
@@ -113,6 +127,7 @@ export function StreamsManagerPage() {
     if (gameFilter !== "all") rows = rows.filter((s) => s.gameId === gameFilter);
     if (statusFilter === "live") rows = rows.filter((s) => s.isLive);
     if (statusFilter === "offline") rows = rows.filter((s) => !s.isLive);
+    // "deleted" is served by the query above, so nothing is filtered here.
     return rows;
   }, [all, search, gameFilter, statusFilter]);
 
@@ -375,7 +390,7 @@ export function StreamsManagerPage() {
     onSuccess: async (_res, vars) => {
       setEditing(null);
       toast.success("Stream updated");
-      await queryClient.invalidateQueries({ queryKey: ["admin", "streams"] });
+      await queryClient.invalidateQueries({ queryKey: ["admin", "streams-all"] });
       /*
        * Re-read the row rather than trusting the response body.
        *
@@ -395,6 +410,48 @@ export function StreamsManagerPage() {
   function handleEdit(payload: NewStreamPayload) {
     if (!editing) return;
     editMut.mutate({ id: editing.id, payload });
+  }
+
+  /*
+   * Controls the app's admin has had and this one did not.
+   *
+   * The two screens run the same platform, so an operator on a laptop could not
+   * do things they could do on a phone: force-end a broadcast that was stuck
+   * live, set a maturity rating, point a stream at a playout file, or bring
+   * back one they had deleted. All four were already accepted by the API; only
+   * the web UI was missing.
+   */
+  const patchMut = useMutation({
+    mutationFn: ({
+      id,
+      patch,
+    }: {
+      id: string;
+      patch: Parameters<typeof adminUpdateStream>[1];
+    }) => adminUpdateStream(id, patch),
+    onSuccess: async (_res, vars) => {
+      await queryClient.invalidateQueries({ queryKey: ["admin", "streams-all"] });
+      const fresh = await adminListStreams().catch(() => null);
+      const row = fresh?.streams.find((r) => r.id === vars.id) ?? null;
+      if (row) setSelected((cur) => (cur && cur.id === row.id ? row : cur));
+    },
+    onError: (err: Error) => toast.error(err.message || "Could not save that"),
+  });
+
+  const restoreMut = useMutation({
+    mutationFn: (id: string) => adminRestoreStream(id),
+    onSuccess: async () => {
+      toast.success("Stream restored");
+      await queryClient.invalidateQueries({ queryKey: ["admin", "streams-all"] });
+    },
+    onError: (err: Error) => toast.error(err.message || "Could not restore it"),
+  });
+
+  function endBroadcast(row: Stream) {
+    patchMut.mutate(
+      { id: row.id, patch: { isLive: false, endedAt: new Date().toISOString() } },
+      { onSuccess: () => toast.success("Broadcast ended") },
+    );
   }
 
   /**
@@ -469,6 +526,7 @@ export function StreamsManagerPage() {
             <SelectItem value="all">All status</SelectItem>
             <SelectItem value="live">Live</SelectItem>
             <SelectItem value="offline">Offline</SelectItem>
+            <SelectItem value="deleted">Deleted</SelectItem>
           </SelectContent>
         </Select>
 
@@ -537,6 +595,48 @@ export function StreamsManagerPage() {
                   <div className="mb-1 text-xs text-muted-foreground">Description</div>
                   <p className="text-sm text-foreground/80">{selected.description}</p>
                 </div>
+
+                {/*
+                  Ratings and playout, both of which the app's admin has had and
+                  this screen did not. The API already accepted them; only the
+                  web UI was missing, so an operator on a laptop could not do
+                  what they could do on a phone.
+                */}
+                <div className="space-y-1.5">
+                  <Label>Maturity rating</Label>
+                  <Select
+                    value={selected.maturityRating ?? "pg"}
+                    onValueChange={(v) =>
+                      patchMut.mutate(
+                        { id: selected.id, patch: { maturityRating: v as "kids" | "pg" | "teen" | "mature" } },
+                        { onSuccess: () => toast.success("Rating updated") },
+                      )
+                    }
+                  >
+                    <SelectTrigger className="w-full border-border bg-card">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="kids">Kids</SelectItem>
+                      <SelectItem value="pg">PG</SelectItem>
+                      <SelectItem value="teen">Teen</SelectItem>
+                      <SelectItem value="mature">Mature</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Drives the parental controls a viewer sets on their account.
+                  </p>
+                </div>
+
+                <PlayoutFileField
+                  stream={selected}
+                  onSave={(path) =>
+                    patchMut.mutate(
+                      { id: selected.id, patch: { playoutFilePath: path || null } },
+                      { onSuccess: () => toast.success("Playout file updated") },
+                    )
+                  }
+                />
 
                 <div className="rounded-lg border border-border bg-card/40 p-4">
                   <div className="mb-3 flex items-center gap-2">
@@ -610,6 +710,20 @@ export function StreamsManagerPage() {
                         ? "Main channel"
                         : "Make main channel"}
                     </Button>
+                    {/* Force-end a broadcast. The app's admin has always had
+                        this; on the web a stream stuck live could only be
+                        cleared by deleting it. */}
+                    {selected.isLive ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="bg-card text-foreground hover:bg-accent"
+                        onClick={() => endBroadcast(selected)}
+                      >
+                        <Radio className="h-3.5 w-3.5" />
+                        End broadcast
+                      </Button>
+                    ) : null}
                     {/* Correcting a stream used to mean deleting it and
                         starting again, which issues a new key and means
                         reconfiguring the encoder over a typo. */}
@@ -644,14 +758,31 @@ export function StreamsManagerPage() {
                 </div>
               </div>
               <SheetFooter>
-                <Button
-                  variant="destructive"
-                  className="bg-red-600 text-white hover:bg-red-500"
-                  onClick={() => setConfirmDelete(selected)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                  Delete stream
-                </Button>
+                {/* Deleting is a soft delete, so a stream removed by mistake is
+                    recoverable. The endpoint has always existed; the web admin
+                    had no way to reach it because deleted rows were never
+                    listed, which the Deleted filter now fixes. */}
+                {(selected as Stream & { deletedAt?: string | null }).deletedAt ? (
+                  <Button
+                    className="bg-sky-600 text-white hover:bg-sky-500"
+                    onClick={() => {
+                      restoreMut.mutate(selected.id);
+                      setSelected(null);
+                    }}
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    Restore stream
+                  </Button>
+                ) : (
+                  <Button
+                    variant="destructive"
+                    className="bg-red-600 text-white hover:bg-red-500"
+                    onClick={() => setConfirmDelete(selected)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Delete stream
+                  </Button>
+                )}
               </SheetFooter>
             </>
           ) : null}
@@ -831,6 +962,53 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
     <div className="flex items-center justify-between gap-3">
       <span className="text-muted-foreground">{label}</span>
       <span className="truncate text-foreground/80">{children}</span>
+    </div>
+  );
+}
+
+/**
+ * Where the scheduled playout reads this programme's file from.
+ *
+ * Held locally and saved on demand rather than on every keystroke: a path is
+ * typed, not picked, and firing a PATCH per character would write dozens of
+ * half-finished paths to a live row.
+ */
+function PlayoutFileField({
+  stream,
+  onSave,
+}: {
+  stream: Stream & { playoutFilePath?: string | null };
+  onSave: (path: string) => void;
+}) {
+  const saved = stream.playoutFilePath ?? "";
+  const [value, setValue] = React.useState(saved);
+  React.useEffect(() => setValue(saved), [saved, stream.id]);
+  const dirty = value.trim() !== saved.trim();
+
+  return (
+    <div className="space-y-1.5">
+      <Label htmlFor="playout">Playout file</Label>
+      <div className="flex gap-2">
+        <Input
+          id="playout"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          placeholder="/media/shows/episode-01.mp4"
+          className="border-border bg-card"
+        />
+        <Button
+          variant="outline"
+          className="bg-card hover:bg-accent"
+          disabled={!dirty}
+          onClick={() => onSave(value.trim())}
+        >
+          Save
+        </Button>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        The file the scheduler plays for this slot. Leave empty for a live
+        broadcast, which comes from the encoder instead.
+      </p>
     </div>
   );
 }

@@ -123,6 +123,14 @@ export async function adminUpdateStream(
     isMainChannel?: boolean;
     posterUrl?: string;
     tagline?: string;
+    /** Force-end a broadcast, or bring one back on air. */
+    endedAt?: string | null;
+    /** Where the scheduled playout reads the file from. */
+    playoutFilePath?: string | null;
+    scheduledStartAt?: string | null;
+    scheduledDurationMin?: number | null;
+    /** The manifest viewers play, for a manually configured ingest. */
+    hlsPath?: string;
   },
 ): Promise<{ stream: Stream }> {
   return apiSend("PATCH", `/api/admin/streams/${encodeURIComponent(id)}`, patch);
