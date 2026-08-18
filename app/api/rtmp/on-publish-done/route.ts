@@ -67,9 +67,40 @@ export async function POST(req: NextRequest) {
   if (!row) return new NextResponse("No active stream for key", { status: 404 });
 
   const nowIso = new Date().toISOString();
+
+  /*
+   * Losing the feed starts a clock; it does not end the broadcast.
+   *
+   * This used to set `is_live = false` on the first disconnect, so a dropped
+   * RTMP connection took the channel off air even when the encoder came
+   * straight back. And because `on_publish` only fires on connect, a feed that
+   * returned on a connection which never dropped left the stream dead until
+   * somebody noticed: EVO TV LIVE 24/7 was marked ended at 01:11 while all
+   * three rungs were still publishing at 03:40.
+   *
+   * So the disconnect is recorded and the reconciler decides, once the window
+   * has actually elapsed and the manifest has stopped moving. A reconnect
+   * inside the window clears `feedLostAt` and nobody watching sees anything.
+   *
+   * A window of zero is the old behaviour, for a stream that should end the
+   * moment its encoder does.
+   */
+  const windowSec = row.reconnectWindowSec ?? 0;
+  if (windowSec > 0) {
+    await db
+      .update(schema.streams)
+      .set({ feedLostAt: nowIso })
+      .where(eq(schema.streams.id, row.id));
+    // Deliberately no `stream:live-now` here: the channel has not gone off air,
+    // it has gone quiet, and telling the home page otherwise would flip the
+    // hero to "Off air" for a blip the viewer would never have noticed.
+    emit(`stream:${row.id}:status`, { isLive: true, feedLostAt: nowIso });
+    return new NextResponse("OK", { status: 200 });
+  }
+
   await db
     .update(schema.streams)
-    .set({ isLive: false, endedAt: nowIso })
+    .set({ isLive: false, endedAt: nowIso, feedLostAt: null })
     .where(eq(schema.streams.id, row.id));
 
   emit(`stream:${row.id}:status`, { isLive: false, endedAt: nowIso });

@@ -136,6 +136,9 @@ export async function PATCH(
     isLive?: boolean;
     startedAt?: string;
     endedAt?: string | null;
+    offlineByOperator?: boolean;
+    feedLostAt?: string | null;
+    reconnectWindowSec?: number;
     viewerCount?: number;
     pillar?: "esports" | "anime" | "lifestyle";
     gameId?: string | null;
@@ -286,10 +289,40 @@ export async function PATCH(
     if (body.isLive) {
       update.startedAt = new Date().toISOString();
       update.endedAt = null;
+      // Putting a stream back on air is also a decision to let it run, so the
+      // reconciler is free to manage it again.
+      update.offlineByOperator = false;
+      update.feedLostAt = null;
     } else {
       update.endedAt = new Date().toISOString();
       update.viewerCount = 0;
+      /*
+       * Somebody meant this. The reconciler revives an rtmp stream whose
+       * encoder is still publishing, which is what stops a dropped connection
+       * killing a channel permanently; without this flag that same rule would
+       * undo an operator ending a broadcast, a minute after they ended it.
+       */
+      update.offlineByOperator = true;
+      update.feedLostAt = null;
     }
+  }
+
+  /*
+   * How long a broadcast survives losing its feed.
+   *
+   * Zero ends it the moment the encoder disconnects, which is what the platform
+   * used to do unconditionally. Anything above that gives the encoder a window
+   * to come back before viewers are told the channel is off air.
+   */
+  if ("reconnectWindowSec" in body) {
+    const v = Number(body.reconnectWindowSec);
+    if (!Number.isFinite(v) || v < 0 || v > 3600) {
+      return NextResponse.json(
+        { error: "reconnectWindowSec must be between 0 and 3600 seconds" },
+        { status: 400 },
+      );
+    }
+    update.reconnectWindowSec = Math.trunc(v);
   }
 
   if ("scheduledStartAt" in body) {
