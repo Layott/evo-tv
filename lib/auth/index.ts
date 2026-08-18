@@ -121,6 +121,35 @@ export const auth = betterAuth({
       "/reset-password": { window: 60, max: 5 },
     },
   },
+  /**
+   * Verification links, which the platform had no configuration for at all.
+   *
+   * Sign-up deliberately does not require a verified address, and that stays
+   * true. But `changeEmail` refuses to run without this block, so asking to
+   * change your email answered "Verification email isn't enabled" and nothing
+   * happened, which is a strange thing to tell somebody who never asked for
+   * verification.
+   *
+   * `sendEmail` logs to the console when RESEND_API_KEY is unset, so this works
+   * in development without a mail provider.
+   */
+  emailVerification: {
+    async sendVerificationEmail({
+      user,
+      url,
+    }: {
+      user: { email: string };
+      url: string;
+    }) {
+      await sendEmail({
+        to: user.email,
+        subject: "Verify your EVO TV email",
+        text: `Confirm this address for your EVO TV account: ${url}`,
+        html: `<p>Confirm this address for your EVO TV account.</p><p><a href="${url}">Verify email</a></p>`,
+      });
+    },
+  },
+
   user: {
     additionalFields: {
       role: {
@@ -132,6 +161,61 @@ export const auth = betterAuth({
       handle: {
         type: "string",
         required: false,
+      },
+    },
+    /**
+     * Let somebody correct the address they sign in with.
+     *
+     * Settings displayed an email at all, so not being able to change it was
+     * already odd; worse, the address it displayed was fabricated from the
+     * handle, so people were looking at one they had never used. With the real
+     * one now on screen, the obvious next question is how to change it.
+     *
+     * Verification is deliberately not required here, matching
+     * `emailAndPassword.requireEmailVerification: false` above. Turning it on
+     * for this one flow would leave somebody signed in with an address they can
+     * no longer use if the mail never arrives, which is a worse failure than
+     * the one it guards against on a platform that does not verify at sign-up.
+     */
+    changeEmail: {
+      enabled: true,
+      /**
+       * Confirmation goes to the address currently on the account.
+       *
+       * That is the one that matters: if somebody else has the session, the
+       * person who owns the account is the one who should hear about it, and
+       * they still hold the old inbox. Sending to the new address instead would
+       * ask the person making the change to approve their own change.
+       *
+       * `sendEmail` falls back to a console log when RESEND_API_KEY is unset,
+       * so this works in development without a mail provider.
+       */
+      async sendChangeEmailVerification({
+        user,
+        newEmail,
+        url,
+      }: {
+        user: { email: string };
+        newEmail: string;
+        url: string;
+      }) {
+        await sendEmail({
+          to: user.email,
+          subject: "Confirm your new EVO TV email",
+          text:
+            `Someone asked to change the email on your EVO TV account to ${newEmail}.
+
+` +
+            `If that was you, confirm it here: ${url}
+
+` +
+            `If it was not, ignore this message and change your password. ` +
+            `Nothing changes until the link is opened.`,
+          html:
+            `<p>Someone asked to change the email on your EVO TV account to <strong>${newEmail}</strong>.</p>` +
+            `<p><a href="${url}">Confirm the change</a></p>` +
+            `<p>If it was not you, ignore this message and change your password. Nothing changes until the link is opened.</p>`,
+        });
       },
     },
   },
