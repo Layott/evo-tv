@@ -11,6 +11,7 @@ import {
   User,
 } from "@/components/icons";
 import { useAuth } from "@/components/providers";
+import { useT } from "@/components/providers/i18n-provider";
 import { countUnread } from "@/lib/client";
 import { BrandMark } from "@/components/shell/brand-mark";
 import { UserAvatar } from "@/components/ui/user-avatar";
@@ -29,19 +30,22 @@ import { UserAvatar } from "@/components/ui/user-avatar";
  * actually put in. Restore an entry here when its backend lands, not before.
  */
 const links = [
-  { href: "/home", label: "Home" },
-  { href: "/schedule", label: "Schedule" },
-  { href: "/channel", label: "Channel" },
-  { href: "/shows", label: "Shows" },
-  { href: "/discover", label: "Discover" },
-  { href: "/events", label: "Events" },
-  { href: "/shop", label: "Shop" },
+  // `key` is what the dictionary looks up; `label` is the English fallback and
+  // what renders while a translation is missing.
+  { href: "/home", label: "Home", key: "nav.home" },
+  { href: "/schedule", label: "Schedule", key: "nav.schedule" },
+  { href: "/channel", label: "Channel", key: "nav.channel" },
+  { href: "/shows", label: "Shows", key: "nav.shows" },
+  { href: "/discover", label: "Discover", key: "nav.discover" },
+  { href: "/events", label: "Events", key: "nav.events" },
+  { href: "/shop", label: "Shop", key: "nav.shop" },
 ];
 
 export function TopNav() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, role, logout } = useAuth();
+  const { t } = useT();
   const [menu, setMenu] = React.useState(false);
   const [unread, setUnread] = React.useState(0);
 
@@ -72,7 +76,7 @@ export function TopNav() {
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                {l.label}
+                {t(l.key, l.label)}
               </Link>
             );
           })}
