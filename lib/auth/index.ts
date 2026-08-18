@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import * as schema from "@/db/schema";
 import { isAccountBlocked } from "@/lib/sanctions";
 import { sendEmail } from "@/lib/email/send";
+import { changeEmailRequested, verifyEmail } from "@/lib/email/messages";
 import { renderOtpEmail } from "@/lib/email/templates";
 import { SESSION_MAX_AGE_SEC, SESSION_UPDATE_AGE_SEC } from "./idle";
 
@@ -141,12 +142,8 @@ export const auth = betterAuth({
       user: { email: string };
       url: string;
     }) {
-      await sendEmail({
-        to: user.email,
-        subject: "Verify your EVO TV email",
-        text: `Confirm this address for your EVO TV account: ${url}`,
-        html: `<p>Confirm this address for your EVO TV account.</p><p><a href="${url}">Verify email</a></p>`,
-      });
+      const mail = verifyEmail({ url });
+      await sendEmail({ to: user.email, ...mail });
     },
   },
 
@@ -199,23 +196,8 @@ export const auth = betterAuth({
         newEmail: string;
         url: string;
       }) {
-        await sendEmail({
-          to: user.email,
-          subject: "Confirm your new EVO TV email",
-          text:
-            `Someone asked to change the email on your EVO TV account to ${newEmail}.
-
-` +
-            `If that was you, confirm it here: ${url}
-
-` +
-            `If it was not, ignore this message and change your password. ` +
-            `Nothing changes until the link is opened.`,
-          html:
-            `<p>Someone asked to change the email on your EVO TV account to <strong>${newEmail}</strong>.</p>` +
-            `<p><a href="${url}">Confirm the change</a></p>` +
-            `<p>If it was not you, ignore this message and change your password. Nothing changes until the link is opened.</p>`,
-        });
+  const mail = changeEmailRequested({ newEmail, url });
+        await sendEmail({ to: user.email, ...mail });
       },
     },
   },

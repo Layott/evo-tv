@@ -3,6 +3,9 @@
 import * as React from "react";
 import { toast } from "sonner";
 
+import { getUserPrefs, updateUserPrefs } from "@/lib/client";
+import type { UserPrefs } from "@/lib/types";
+
 import { SectionCard, SettingRow } from "./section-card";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -15,11 +18,53 @@ import {
 import { useLiteMode } from "@/lib/client/player-features";
 import { listCaptionLanguages } from "@/lib/client/player-features";
 
+/**
+ * Playback defaults, which now survive a reload.
+ *
+ * Quality, captions and autoplay each fired a toast and changed a piece of
+ * React state that died with the page, so a viewer who set 480p to save data
+ * was back on auto the next time they opened the app. `/api/users/me/prefs`
+ * has held a `playback` object the whole time and this form never touched it.
+ *
+ * Lite mode is deliberately left on its own hook: it is a device decision
+ * rather than an account one, and somebody on a cheap phone should not have it
+ * follow them onto a desktop.
+ */
 export function PlaybackForm() {
-  const [quality, setQuality] = React.useState("auto");
+  const [quality, setQuality] =
+    React.useState<UserPrefs["playback"]["defaultQuality"]>("auto");
   const [captions, setCaptions] = React.useState(false);
   const [autoplay, setAutoplay] = React.useState(true);
   const [liteMode, setLite] = useLiteMode();
+
+  React.useEffect(() => {
+    let cancelled = false;
+    getUserPrefs().then((p) => {
+      if (cancelled || !p?.playback) return;
+      setQuality(p.playback.defaultQuality ?? "auto");
+      setCaptions(Boolean(p.playback.captions));
+      setAutoplay(p.playback.autoplay !== false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  /** Patch one field without clobbering the other two. */
+  const savePlayback = React.useCallback(
+    async (patch: Partial<UserPrefs["playback"]>, message: string) => {
+      try {
+        const saved = await updateUserPrefs({
+          playback: { defaultQuality: quality, captions, autoplay, ...patch },
+        });
+        if (!saved) throw new Error("no response");
+        toast.success(message);
+      } catch {
+        toast.error("Could not save that. Try again in a moment.");
+      }
+    },
+    [quality, captions, autoplay],
+  );
 
   const captionLangs = React.useMemo(() => listCaptionLanguages(), []);
 
@@ -31,8 +76,9 @@ export function PlaybackForm() {
             <Select
               value={quality}
               onValueChange={(v) => {
-                setQuality(v);
-                toast.success(`Default quality ${v}`);
+                const next = v as UserPrefs["playback"]["defaultQuality"];
+                setQuality(next);
+                void savePlayback({ defaultQuality: next }, `Default quality ${v}`);
               }}
             >
               <SelectTrigger className="w-36">
@@ -52,7 +98,10 @@ export function PlaybackForm() {
               checked={captions}
               onCheckedChange={(v) => {
                 setCaptions(v);
-                toast.success(`Captions ${v ? "enabled" : "disabled"}`);
+                void savePlayback(
+                  { captions: v },
+                  `Captions ${v ? "enabled" : "disabled"}`,
+                );
               }}
             />
           </SettingRow>
@@ -61,7 +110,7 @@ export function PlaybackForm() {
               checked={autoplay}
               onCheckedChange={(v) => {
                 setAutoplay(v);
-                toast.success(`Autoplay ${v ? "on" : "off"}`);
+                void savePlayback({ autoplay: v }, `Autoplay ${v ? "on" : "off"}`);
               }}
             />
           </SettingRow>
