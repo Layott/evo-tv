@@ -78,6 +78,9 @@ export async function getCurrentUser(): Promise<Profile | null> {
   return {
     id: u.id,
     handle: u.handle ?? "",
+    // The endpoint has always returned this; the mapping dropped it, which is
+    // why the settings screen fabricated an address from the handle.
+    email: u.email ?? "",
     displayName: u.name ?? u.handle ?? "",
     avatarUrl: u.image ?? "",
     bio: u.bio ?? "",

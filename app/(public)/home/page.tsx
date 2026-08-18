@@ -52,18 +52,31 @@ export default function HomePage() {
     enabled: isPremium,
   });
 
+  /*
+   * The flagship appears once.
+   *
+   * It has prime position at the top of this page, and it was also arriving in
+   * the featured carousel and the Live now rail, so the same channel was on
+   * screen three times before a viewer had scrolled. Filtering here rather than
+   * in the endpoints keeps those lists correct for every other page that uses
+   * them: the channel genuinely is live and genuinely is featured, it just does
+   * not need saying three times in one column.
+   */
+  const withoutFlagship = <T extends { isMainChannel?: boolean }>(rows: T[]) =>
+    rows.filter((s) => !s.isMainChannel);
+
   return (
     <div className="mx-auto max-w-7xl space-y-8 px-4 py-6">
       {/* Fixed prime position. The channel comes before the catalogue, and
           stays put whether or not it is broadcasting. */}
       <MainChannelHero />
 
-      <HeroCarousel streams={featured.data ?? []} />
+      <HeroCarousel streams={withoutFlagship(featured.data ?? [])} />
 
       {!isPremium && <AdBanner />}
 
       <LiveNow
-        streams={live.data ?? []}
+        streams={withoutFlagship(live.data ?? [])}
         games={games.data ?? []}
         loading={live.isPending || games.isPending}
       />
