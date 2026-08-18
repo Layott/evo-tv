@@ -20,15 +20,32 @@ export async function listInitialMessages(
   return res?.messages ?? [];
 }
 
+/**
+ * Post a message and return the server's row.
+ *
+ * The response is `{ message }`, and this used to hand the wrapper back as if
+ * it were the message. Every field the caller read was therefore undefined, and
+ * because the chat replaces its optimistic row with whatever comes back, the
+ * message you had just typed turned into a blank line attributed to "viewer"
+ * the instant the request completed.
+ *
+ * It also caused the duplicates. The chat dedupes the copy arriving over SSE by
+ * comparing ids, and the replaced row had `id: undefined`, so nothing matched
+ * and the same message was appended a second time. It showed up most on phones
+ * simply because a slower round trip gives SSE more chances to win the race.
+ *
+ * The list endpoint unwraps `{ messages }` correctly; only this one forgot.
+ */
 export async function sendMessage(
   streamId: string,
   body: string,
 ): Promise<ChatMessage | null> {
-  return apiSend<ChatMessage>(
+  const res = await apiSend<{ message: ChatMessage }>(
     "POST",
     `/api/streams/${encodeURIComponent(streamId)}/chat`,
     { body },
   );
+  return res?.message ?? null;
 }
 
 /** Moderation. All three require a moderator session and 403 otherwise. */
