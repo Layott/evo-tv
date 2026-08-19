@@ -174,6 +174,14 @@ export interface Stream {
   pillar?: ContentPillar;
   maturityRating?: MaturityRating;
   contentTags?: string[];
+  /**
+   * How long a broadcast survives losing its feed, in seconds. Admin only.
+   *
+   * Typed here rather than cast at the call site, which is how the admin screen
+   * came to read a field the list endpoint never sent: the cast made it look
+   * present and the fallback quietly answered for it.
+   */
+  reconnectWindowSec?: number;
   /** Pre-announced airtime for EPG. NULL for unscheduled or live-only streams. */
   scheduledStartAt?: ISODate | null;
   /** Pre-announced duration in minutes. Pairs with scheduledStartAt. */
