@@ -116,9 +116,13 @@ export const ROLE_CATALOG: RoleInfo[] = [
   {
     value: "creator",
     label: "Creator",
-    summary: "A content partner. Their own channel and clips, nothing of anybody else's.",
+    summary:
+      "A content partner. Not assignable: every creator screen is still Coming Soon, so granting it changes nothing a person can see.",
     isStaff: false,
-    assignable: true,
+    // Deliberately off the list. The creator dashboard, its clips, audience and
+    // earnings pages are all ComingSoon, so this role was an option that did
+    // nothing, which is worse than an option that is absent.
+    assignable: false,
   },
   {
     value: "support_admin",
@@ -131,7 +135,7 @@ export const ROLE_CATALOG: RoleInfo[] = [
     value: "programmer",
     label: "Programmer",
     summary:
-      "Plans what airs: shows, episodes, library and the schedule. No streams, no money, no roles.",
+      "Plans what airs: shows, episodes, library, calendar and the schedule. No streams, no money, no roles.",
     isStaff: true,
     assignable: true,
   },

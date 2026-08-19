@@ -1,15 +1,15 @@
 /**
- * Four rooms, not four rungs.
+ * What a role can open, as sections rather than rank.
  *
  * The ladder in `role-catalog.ts` says a finance admin can do everything a
  * moderator can, and a moderator everything support can, because a higher rank
  * satisfies every requirement below it. That is right for seniority and wrong
  * for jobs: money, moderation, editorial and broadcast are four different
- * rooms, and somebody who plans the week has no business ending a broadcast or
+ * jobs, and somebody who plans the week has no business ending a broadcast or
  * reading order history.
  *
  * So rank keeps doing what it is good at, which is deciding who may grant what,
- * and a capability decides who may open which room. A role holds a set of them.
+ * and a capability decides who may open which section. A role holds a set of them.
  * Nothing is inherited: `programmer` does not get moderation for being ranked
  * above support.
  *
@@ -21,7 +21,7 @@ import { type PlatformRole } from "./role-catalog";
 export type Capability =
   /** Shows, episodes, library, schedule, the EPG grid. Planning the week. */
   | "editorial"
-  /** Streams, ingest keys, playout, End broadcast. The control room. */
+  /** Streams, ingest keys, playout, End broadcast. Running the channel. */
   | "broadcast"
   /** Orders, subscriptions, refunds, price windows, ads. */
   | "commerce"
@@ -34,14 +34,14 @@ export type Capability =
   /** The audit log in full, including head admin's own rows. */
   | "audit_full";
 
-export interface RoomInfo {
+export interface SectionInfo {
   value: Capability;
   label: string;
   /** What it unlocks, in the words somebody granting it would use. */
   summary: string;
 }
 
-export const ROOMS: RoomInfo[] = [
+export const SECTIONS: SectionInfo[] = [
   {
     value: "editorial",
     label: "Editorial",
@@ -51,7 +51,7 @@ export const ROOMS: RoomInfo[] = [
     value: "broadcast",
     label: "Broadcast",
     summary:
-      "Streams, ingest keys, playout files and ending a broadcast. The control room.",
+      "Streams, ingest keys, playout files and ending a broadcast.",
   },
   {
     value: "commerce",
@@ -80,7 +80,7 @@ export const ROOMS: RoomInfo[] = [
   },
 ];
 
-const ALL_ROOMS: Capability[] = [
+const ALL_SECTIONS: Capability[] = [
   "editorial",
   "broadcast",
   "commerce",
@@ -92,8 +92,8 @@ const ALL_ROOMS: Capability[] = [
 /**
  * What each role can open.
  *
- * `admin` holds every room; `head_admin` adds the full audit log. The two new
- * roles hold exactly one room each, which is the entire point of them: a
+ * `admin` holds every section; `head_admin` adds the full audit log. The two new
+ * roles hold exactly one section each, which is the entire point of them: a
  * programmer cannot rotate a stream key and a broadcast operator cannot cancel
  * somebody's subscription.
  */
@@ -102,15 +102,15 @@ export const CAPABILITIES: Record<PlatformRole, Capability[]> = {
   user: [],
   premium: [],
   // A creator's reach is their own channel, scoped per publisher in guards.ts
-  // rather than here. None of these rooms is theirs.
+  // rather than here. None of these sections is theirs.
   creator: [],
   support_admin: ["support"],
   programmer: ["editorial"],
   broadcast_op: ["broadcast"],
   moderator: ["community"],
   finance_admin: ["commerce", "support"],
-  admin: ALL_ROOMS,
-  head_admin: [...ALL_ROOMS, "audit_full"],
+  admin: ALL_SECTIONS,
+  head_admin: [...ALL_SECTIONS, "audit_full"],
 };
 
 export function capabilitiesFor(role: string | null | undefined): Capability[] {
@@ -126,7 +126,7 @@ export function hasCapability(
   return capabilitiesFor(role).includes(capability);
 }
 
-/** True for anyone who can open any room at all, so the dashboard is worth showing. */
+/** True for anyone who can open any section at all, so the dashboard is worth showing. */
 export function isStaffRole(role: string | null | undefined): boolean {
   return capabilitiesFor(role).length > 0;
 }

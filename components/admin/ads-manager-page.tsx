@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Plus, Search, Trash2, Upload } from "@/components/icons";
+import { Plus, Search, Trash2 } from "@/components/icons";
 import { toast } from "sonner";
 import {
   CartesianGrid,
@@ -22,6 +22,7 @@ import {
 import type { Ad, AdPlacement } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { MediaUpload } from "@/components/admin/media-upload";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
@@ -68,6 +69,50 @@ const PLACEMENTS: { value: AdPlacement; label: string }[] = [
 function placementLabel(p: AdPlacement) {
   return PLACEMENTS.find((x) => x.value === p)?.label ?? p;
 }
+
+/**
+ * What a creative should be, per placement.
+ *
+ * The form asked for an image and said nothing about shape or size, so what
+ * arrived was whatever the advertiser sent and it was cropped by the slot at
+ * render time. A wrong-shaped banner is not a design problem to fix later: it
+ * is the ad, on the page, cut in half.
+ */
+const PLACEMENT_SPECS: Record<
+  string,
+  { size: string; ratio: string; note: string }
+> = {
+  home_banner: {
+    size: "1600 by 400",
+    ratio: "4:1",
+    note: "Wide strip between the rails on the home page.",
+  },
+  stream_preroll: {
+    size: "1920 by 1080",
+    ratio: "16:9",
+    note: "Plays full-frame before the video starts, so it wants video dimensions.",
+  },
+  mid_roll: {
+    size: "1920 by 1080",
+    ratio: "16:9",
+    note: "Fills the player during a channel break.",
+  },
+  live_filler: {
+    size: "1920 by 1080",
+    ratio: "16:9",
+    note: "Fills the player while a dropped feed reconnects.",
+  },
+  sidebar: {
+    size: "600 by 500",
+    ratio: "6:5",
+    note: "Beside the player on desktop, under it on a phone.",
+  },
+  between_content: {
+    size: "1200 by 300",
+    ratio: "4:1",
+    note: "Between rows on the browse pages.",
+  },
+};
 
 export function AdsManagerPage() {
   const queryClient = useQueryClient();
@@ -422,7 +467,6 @@ function AdForm({
   }, [open, initial]);
 
   const disabled = !form.advertiser.trim() || !form.clickUrl.trim();
-  const mediaInput = React.useRef<HTMLInputElement>(null);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -432,43 +476,27 @@ function AdForm({
           <SheetDescription>Upload creative, set placement and weight.</SheetDescription>
         </SheetHeader>
         <div className="space-y-4 px-4 pb-4">
-          <div className="space-y-1.5">
-            <Label>Creative preview</Label>
-            <div className="overflow-hidden rounded-lg border border-border bg-card">
-              {}
-              <img src={form.mediaUrl} alt="" className="w-full object-cover" />
-            </div>
-            <div className="flex gap-2">
-              <Input
-                value={form.mediaUrl}
-                onChange={(e) => setForm({ ...form, mediaUrl: e.target.value })}
-                className="border-border bg-card"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                className="bg-card hover:bg-accent"
-                onClick={() => mediaInput.current?.click()}
-              >
-                <Upload className="h-4 w-4" />
-              </Button>
-              <input
-                ref={mediaInput}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) {
-                    const reader = new FileReader();
-                    reader.onload = (ev) => setForm((prev) => ({ ...prev, mediaUrl: String(ev.target?.result ?? "") }));
-                    reader.readAsDataURL(f);
-                  }
-                }}
-              />
-            </div>
-          </div>
+          {/*
+            The creative, uploaded properly.
+            
+            This used to FileReader the chosen file into a data URL and store
+            that in `mediaUrl`, so the whole image went into the database row
+            as base64: megabytes per ad, served out of Postgres on every page
+            that shows the slot, and never cached at the edge. It presigns to
+            Spaces now, like every other upload on the platform.
+          */}
+          <MediaUpload
+            label="Creative"
+            value={form.mediaUrl}
+            onChange={(url) => setForm({ ...form, mediaUrl: url })}
+            kind="image"
+            folder="ads"
+            hint={
+              PLACEMENT_SPECS[form.placement]
+                ? `${PLACEMENT_SPECS[form.placement]!.size} recommended (${PLACEMENT_SPECS[form.placement]!.ratio})`
+                : undefined
+            }
+          />
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
@@ -496,6 +524,13 @@ function AdForm({
                   ))}
                 </SelectContent>
               </Select>
+              {PLACEMENT_SPECS[form.placement] ? (
+                <p className="text-xs text-muted-foreground">
+                  {PLACEMENT_SPECS[form.placement]!.note} Wants{" "}
+                  {PLACEMENT_SPECS[form.placement]!.size} (
+                  {PLACEMENT_SPECS[form.placement]!.ratio}).
+                </p>
+              ) : null}
             </div>
           </div>
 
