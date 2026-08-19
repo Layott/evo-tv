@@ -130,7 +130,7 @@ const createSchema = z.object({
   // the pillar filters on /schedule and the landing week grid could never see
   // an anime or lifestyle programme. This is the field that classifies a
   // programme now that a game is optional.
-  pillar: z.enum(["esports", "anime", "lifestyle"]).default("esports"),
+  pillar: z.enum(["esports", "anime", "lifestyle"]).nullish(),
   eventId: z.string().nullable().optional(),
   streamerName: z.string().min(1).max(100),
   streamerAvatarUrl: z.string().default(""),

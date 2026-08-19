@@ -56,7 +56,8 @@ export interface CreateStreamInput {
   /** Null for anime, lifestyle and podcast programmes, which have no game. */
   gameId?: string | null;
   /** What the programme is. Drives the schedule and week-grid filters. */
-  pillar?: "esports" | "anime" | "lifestyle";
+  /** Null means unfiled: none of the three, rather than defaulted to esports. */
+  pillar?: "esports" | "anime" | "lifestyle" | null;
   streamerName: string;
   description?: string;
   eventId?: string | null;

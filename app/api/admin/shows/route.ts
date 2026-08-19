@@ -85,7 +85,7 @@ export async function GET(req: NextRequest) {
 const createSchema = z.object({
   title: z.string().trim().min(2).max(200),
   synopsis: z.string().max(4000).default(""),
-  pillar: z.enum(["esports", "anime", "lifestyle"]).default("esports"),
+  pillar: z.enum(["esports", "anime", "lifestyle"]).nullish(),
   originType: z
     .enum(["evo_original", "licensed", "syndicated"])
     .default("evo_original"),

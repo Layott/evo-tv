@@ -96,7 +96,8 @@ interface ShowDraft {
   id: string | null;
   title: string;
   synopsis: string;
-  pillar: ShowPillar;
+  /** Null means unfiled. */
+  pillar: ShowPillar | null;
   originType: ShowOriginType;
   socialLinks: SocialLink[];
   posterUrl: string;
@@ -633,13 +634,23 @@ export function ShowsManagerPage() {
                 <div className="space-y-2">
                   <Label htmlFor="show-pillar">Pillar</Label>
                   <Select
-                    value={draft.pillar}
-                    onValueChange={(v) => setDraft({ ...draft, pillar: v as ShowPillar })}
+                    value={draft.pillar ?? "none"}
+                    onValueChange={(v) =>
+                      setDraft({
+                        ...draft,
+                        pillar: v === "none" ? null : (v as ShowPillar),
+                      })
+                    }
                   >
                     <SelectTrigger id="show-pillar">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
+                    {/* Radix cannot hold an empty value, so "none" is the
+                        sentinel and null is what reaches the API. A programme
+                        that is none of the three used to be filed as esports
+                        because the field had no way to say otherwise. */}
+                      <SelectItem value="none">No pillar</SelectItem>
                       {PILLARS.map((p) => (
                         <SelectItem key={p} value={p} className="capitalize">
                           {p}

@@ -122,9 +122,15 @@ export async function listRelatedVods(vodId: string, limit = 6): Promise<Vod[]> 
           // Same game when there is one. An anime or lifestyle recording has
           // no game, so the pillar is what makes another VOD related; without
           // this fallback "related" would mean the entire library.
+          // An unfiled recording has neither a game nor a pillar to match on,
+          // so it gets the rest of the library rather than nothing: a related
+          // rail with one row in it looks broken, and "no pillar" is not a
+          // statement that these two are unrelated.
           base.gameId
             ? eq(schema.vods.gameId, base.gameId)
-            : eq(schema.vods.pillar, base.pillar),
+            : base.pillar
+              ? eq(schema.vods.pillar, base.pillar)
+              : undefined,
           ne(schema.vods.id, vodId),
           isNull(schema.vods.deletedAt),
         ),

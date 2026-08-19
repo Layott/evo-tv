@@ -92,7 +92,8 @@ interface VodDraft {
   hlsUrl: string;
   thumbnailUrl: string;
   durationMin: string;
-  pillar: ShowPillar;
+  /** Null means unfiled. */
+  pillar: ShowPillar | null;
   maturityRating: MaturityRating;
   isPremium: boolean;
 }
@@ -104,7 +105,8 @@ interface ClipDraft {
   thumbnailUrl: string;
   durationSec: string;
   creatorHandle: string;
-  pillar: ShowPillar;
+  /** Null means unfiled. */
+  pillar: ShowPillar | null;
   maturityRating: MaturityRating;
   /** "none" | "vod:<id>" | "show:<id>" | "episode:<id>" */
   source: string;
@@ -664,15 +666,23 @@ export function LibraryManagerPage() {
                 <div className="space-y-2">
                   <Label htmlFor="vod-pillar">Pillar</Label>
                   <Select
-                    value={vodDraft.pillar}
+                    value={vodDraft.pillar ?? "none"}
                     onValueChange={(v) =>
-                      setVodDraft({ ...vodDraft, pillar: v as ShowPillar })
+                      setVodDraft({
+                        ...vodDraft,
+                        pillar: v === "none" ? null : (v as ShowPillar),
+                      })
                     }
                   >
                     <SelectTrigger id="vod-pillar">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
+                    {/* Radix cannot hold an empty value, so "none" is the
+                        sentinel and null is what reaches the API. A programme
+                        that is none of the three used to be filed as esports
+                        because the field had no way to say otherwise. */}
+                      <SelectItem value="none">No pillar</SelectItem>
                       {PILLARS.map((p) => (
                         <SelectItem key={p} value={p} className="capitalize">
                           {p}
@@ -842,15 +852,19 @@ export function LibraryManagerPage() {
                 <div className="space-y-2">
                   <Label htmlFor="clip-pillar">Pillar</Label>
                   <Select
-                    value={clipDraft.pillar}
+                    value={clipDraft.pillar ?? "none"}
                     onValueChange={(v) =>
-                      setClipDraft({ ...clipDraft, pillar: v as ShowPillar })
+                      setClipDraft({
+                        ...clipDraft,
+                        pillar: v === "none" ? null : (v as ShowPillar),
+                      })
                     }
                   >
                     <SelectTrigger id="clip-pillar">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="none">No pillar</SelectItem>
                       {PILLARS.map((p) => (
                         <SelectItem key={p} value={p} className="capitalize">
                           {p}
