@@ -605,7 +605,10 @@ export function StreamsManagerPage() {
                 <div className="space-y-1.5">
                   <Label>Maturity rating</Label>
                   <Select
-                    value={selected.maturityRating ?? "pg"}
+                    /* "teen" is the column default, so a row nobody has rated
+                       reads the same here as it does in the database. This said
+                       "pg", which disagreed with every unrated row on screen. */
+                    value={selected.maturityRating ?? "teen"}
                     onValueChange={(v) =>
                       patchMut.mutate(
                         { id: selected.id, patch: { maturityRating: v as "kids" | "pg" | "teen" | "mature" } },
@@ -640,10 +643,7 @@ export function StreamsManagerPage() {
                 <div className="space-y-1.5">
                   <Label>If the feed drops</Label>
                   <Select
-                    value={String(
-                      (selected as Stream & { reconnectWindowSec?: number })
-                        .reconnectWindowSec ?? 300,
-                    )}
+                    value={String(selected.reconnectWindowSec ?? 300)}
                     onValueChange={(v) =>
                       patchMut.mutate(
                         { id: selected.id, patch: { reconnectWindowSec: Number(v) } },
