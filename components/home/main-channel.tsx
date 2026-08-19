@@ -9,6 +9,7 @@ import { useAuth } from "@/components/providers";
 import { VideoPlayer } from "@/components/stream/video-player";
 import { ChannelBreaks } from "@/components/stream/channel-breaks";
 import { MediaImage } from "@/components/ui/media-image";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 /**
@@ -248,10 +249,26 @@ export function MainChannelHero() {
       </div>
 
       {/* What is next, on the channel it belongs to. */}
+      {/*
+        The first row is what comes on when this programme ends, and nothing on
+        the list said so: three times and three titles read as a list, not as a
+        queue, so a viewer had to compare the clock against the current time to
+        work out which one was imminent.
+
+        The rows are ordered by airtime, so index 0 is the answer.
+      */}
       {upNext.length > 0 ? (
-        <ul className="mt-4 divide-y divide-border rounded-xl bg-card/40">
-          {upNext.map((row) => (
-            <li key={row.id} className="flex items-baseline gap-4 px-4 py-3">
+        <ul className="mt-4 space-y-0.5">
+          {upNext.map((row, i) => (
+            <li
+              key={row.id}
+              className={cn(
+                "flex items-baseline gap-4 px-4 py-3",
+                // Fill, not a rule between rows. The first row sits one step
+                // brighter so the queue reads top-down without a line.
+                i === 0 ? "rounded-xl bg-card" : "rounded-xl bg-card/40",
+              )}
+            >
               <span className="w-12 shrink-0 font-mono text-sm tabular-nums text-muted-foreground">
                 {clock(row.airsAt)}
               </span>
@@ -265,6 +282,11 @@ export function MainChannelHero() {
                   </span>
                 ) : null}
               </span>
+              {i === 0 ? (
+                <span className="shrink-0 rounded-md bg-sky-400/20 px-2 py-1 text-xs font-medium text-sky-300">
+                  Up next
+                </span>
+              ) : null}
             </li>
           ))}
         </ul>
