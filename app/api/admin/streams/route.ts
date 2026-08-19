@@ -72,6 +72,20 @@ export async function GET(req: NextRequest) {
         language: schema.streams.language,
         tags: schema.streams.tags,
         isPremium: schema.streams.isPremium,
+        /*
+         * Three columns the editor writes and could not read back.
+         *
+         * The list is what the admin screen renders from, so a field missing
+         * here reads as its fallback no matter what is stored. Setting the
+         * reconnect window to an hour wrote 3600 to the row and the dropdown
+         * went back to "Wait 5 minutes" on the next render, which looks exactly
+         * like a save that failed. Maturity rating did the same, and worse: the
+         * UI fell back to "PG" while the column defaults to "teen", so the
+         * screen disagreed with the database even on an untouched row.
+         */
+        maturityRating: schema.streams.maturityRating,
+        reconnectWindowSec: schema.streams.reconnectWindowSec,
+        pillar: schema.streams.pillar,
         scheduledStartAt: schema.streams.scheduledStartAt,
         scheduledDurationMin: schema.streams.scheduledDurationMin,
         createdAt: schema.streams.createdAt,
