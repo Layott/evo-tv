@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { getCurrentUser } from "@/lib/auth/guards";
+import { requireMinRole } from "@/lib/auth/guards";
 import { getMessageById, pinMessage } from "@/lib/api/chat";
 
 export async function POST(
@@ -8,13 +8,14 @@ export async function POST(
     params,
   }: { params: Promise<{ id: string; messageId: string }> }
 ) {
-  const user = await getCurrentUser();
-  if (!user) return new NextResponse("Auth required", { status: 401 });
-
-  const role = (user as { role?: string }).role ?? "user";
-  if (role !== "admin") {
-    return new NextResponse("Admin required", { status: 403 });
-  }
+  /*
+   * `role !== "admin"` was the test here, and it is false for a head_admin and
+   * for the moderators this action exists for, so the two people most likely to
+   * be moderating a live chat were the two who could not. The ladder answers
+   * this properly: moderator and everything above it.
+   */
+  const guard = await requireMinRole("moderator");
+  if (!guard.ok) return guard.response;
 
   const { id, messageId } = await params;
   const row = await getMessageById(messageId);
