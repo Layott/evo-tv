@@ -16,8 +16,9 @@ import { Clock, Eye, Gauge, Heart, PlayCircle, Users } from "@/components/icons"
 import { MediaImage } from "@/components/ui/media-image";
 
 import { useQuery } from "@tanstack/react-query";
+import { RangePicker } from "./range-picker";
 import { adminVideoAnalytics, adminVideoSummaries } from "@/lib/client";
-import type { AdminVideoSummary } from "@/lib/client";
+import type { AdminAnalyticsRange, AdminVideoSummary } from "@/lib/client";
 import { cn } from "@/lib/utils";
 import { MetricCard } from "./metric-card";
 import { formatCompact, formatNumber } from "./utils";
@@ -65,13 +66,6 @@ function formatWatchTime(totalSec: number): string {
   return formatDuration(totalSec);
 }
 
-const RANGES = [
-  { value: 7, label: "7 days" },
-  { value: 28, label: "28 days" },
-  { value: 90, label: "90 days" },
-  { value: 365, label: "1 year" },
-];
-
 const REGION = new Intl.DisplayNames(["en"], { type: "region" });
 function countryName(code: string): string {
   try {
@@ -89,15 +83,15 @@ const DEVICE_LABEL: Record<string, string> = {
 };
 
 export function VideoAnalyticsPanel() {
-  const [days, setDays] = React.useState(28);
+  const [range, setRange] = React.useState<AdminAnalyticsRange>({ days: 28 });
   const [selected, setSelected] = React.useState<{
     type: "vod" | "episode";
     id: string;
   } | null>(null);
 
   const listQ = useQuery({
-    queryKey: ["admin", "video-summaries", days],
-    queryFn: () => adminVideoSummaries(days),
+    queryKey: ["admin", "video-summaries", range],
+    queryFn: () => adminVideoSummaries(range),
   });
 
   const videos = listQ.data ?? [];
@@ -110,9 +104,9 @@ export function VideoAnalyticsPanel() {
   }, [videos, selected]);
 
   const detailQ = useQuery({
-    queryKey: ["admin", "video-analytics", selected?.type, selected?.id, days],
+    queryKey: ["admin", "video-analytics", selected?.type, selected?.id, range],
     queryFn: () =>
-      selected ? adminVideoAnalytics(selected.type, selected.id, days) : null,
+      selected ? adminVideoAnalytics(selected.type, selected.id, range) : null,
     enabled: Boolean(selected),
   });
 
@@ -142,23 +136,7 @@ export function VideoAnalyticsPanel() {
             {totalViews === 1 ? "" : "s"} in range
           </p>
         </div>
-        <div className="flex gap-1 rounded-lg bg-card p-1">
-          {RANGES.map((r) => (
-            <button
-              key={r.value}
-              type="button"
-              onClick={() => setDays(r.value)}
-              className={cn(
-                "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
-                days === r.value
-                  ? "bg-sky-500/25 text-sky-100"
-                  : "text-muted-foreground hover:bg-muted/50",
-              )}
-            >
-              {r.label}
-            </button>
-          ))}
-        </div>
+        <RangePicker value={range} onChange={setRange} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">

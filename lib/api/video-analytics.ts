@@ -1,6 +1,12 @@
 import "server-only";
-import { and, eq, gte, inArray, isNull, sql } from "drizzle-orm";
+import { and, eq, gte, inArray, isNull, lt, sql } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
+import {
+  daysInRange,
+  resolveRange,
+  type RangeInput,
+  type ResolvedRange,
+} from "@/lib/analytics/range";
 
 /**
  * Per-video analytics, in the shape a creator expects from YouTube Studio.
@@ -60,19 +66,18 @@ export interface VideoAnalytics {
 }
 
 /**
- * Midnight UTC, `days - 1` days ago.
+ * The window, resolved.
  *
- * UTC and not local, because the day keys the chart is bucketed into come from
- * `toISOString()`. Snapping to local midnight instead shifts the whole series
- * by the server's offset: in Lagos every key landed a day early, today never
- * appeared in the range at all, and the chart totalled zero views next to a
- * headline reading 24.
+ * `lib/analytics/range.ts` owns the arithmetic so the route, the screen and
+ * these queries cannot disagree about which days are being counted. It is UTC
+ * throughout, matching the day keys the chart buckets into: snapping to local
+ * midnight shifted the whole series by the server's offset, and in Lagos every
+ * key landed a day early, today never appeared, and the chart totalled zero
+ * next to a headline reading 24.
  */
-function rangeStart(days: number): string {
-  const safe = Math.max(1, Math.min(365, Math.trunc(days)));
-  const d = new Date(Date.now() - (safe - 1) * 86_400_000);
-  d.setUTCHours(0, 0, 0, 0);
-  return d.toISOString();
+function windowFor(input: RangeInput | number | undefined): ResolvedRange {
+  if (typeof input === "number") return resolveRange({ days: input });
+  return resolveRange(input ?? {});
 }
 
 /* ------------------------------------------------------------------ */
@@ -85,8 +90,10 @@ function rangeStart(days: number): string {
  * Two catalogues are unioned rather than kept apart because an operator asking
  * "what is working" does not care which table a title lives in.
  */
-export async function listVideoSummaries(days = 28): Promise<VideoSummary[]> {
-  const since = rangeStart(days);
+export async function listVideoSummaries(
+  range: RangeInput | number = 28,
+): Promise<VideoSummary[]> {
+  const window = windowFor(range);
 
   /**
    * Grouped per session, not per video, so this list can use the same two
@@ -106,7 +113,12 @@ export async function listVideoSummaries(days = 28): Promise<VideoSummary[]> {
       maxBucket: sql<number>`max(${schema.videoViewBuckets.bucket})`,
     })
     .from(schema.videoViewBuckets)
-    .where(gte(schema.videoViewBuckets.createdAt, since))
+    .where(
+      and(
+        gte(schema.videoViewBuckets.createdAt, window.since),
+        lt(schema.videoViewBuckets.createdAt, window.until),
+      ),
+    )
     .groupBy(
       schema.videoViewBuckets.videoType,
       schema.videoViewBuckets.videoId,
@@ -272,16 +284,17 @@ async function loadVideo(type: VideoType, id: string) {
 export async function videoAnalytics(
   type: VideoType,
   id: string,
-  days = 28,
+  range: RangeInput | number = 28,
 ): Promise<VideoAnalytics | null> {
   const video = await loadVideo(type, id);
   if (!video) return null;
 
-  const since = rangeStart(days);
+  const window = windowFor(range);
   const scope = and(
     eq(schema.videoViewBuckets.videoType, type),
     eq(schema.videoViewBuckets.videoId, id),
-    gte(schema.videoViewBuckets.createdAt, since),
+    gte(schema.videoViewBuckets.createdAt, window.since),
+    lt(schema.videoViewBuckets.createdAt, window.until),
   );
 
   const [totals, perDay, perCountry, perDevice, sessionDepth, likeRow] =
@@ -402,19 +415,14 @@ export async function videoAnalytics(
 
   // Zero-fill the range so a quiet week is a flat line rather than a gap the
   // chart interpolates across.
-  const safeDays = Math.max(1, Math.min(365, Math.trunc(days)));
   const counts = new Map<string, number>();
   for (const r of perDay) {
     if (r.date) counts.set(r.date, (counts.get(r.date) ?? 0) + 1);
   }
-  const start = new Date(since);
-  const viewsByDay: { date: string; views: number }[] = [];
-  for (let i = 0; i < safeDays; i++) {
-    const key = new Date(start.getTime() + i * 86_400_000)
-      .toISOString()
-      .slice(0, 10);
-    viewsByDay.push({ date: key, views: counts.get(key) ?? 0 });
-  }
+  const viewsByDay = daysInRange(window).map((date) => ({
+    date,
+    views: counts.get(date) ?? 0,
+  }));
 
   return {
     video,
