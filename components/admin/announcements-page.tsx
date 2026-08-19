@@ -3,12 +3,14 @@
 import * as React from "react";
 import { Bell, Loader2, Send } from "@/components/icons";
 import { toast } from "sonner";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
 import {
+  adminListDestinations,
   adminPreviewAnnouncement,
   adminSendAnnouncement,
   type AnnouncementAudience,
+  type AnnouncementDestination,
   type AnnouncementPreview,
 } from "@/lib/client";
 import { ASSIGNABLE_ROLES } from "@/lib/auth/role-catalog";
@@ -48,32 +50,84 @@ import { PageHeader } from "./page-header";
 export function AnnouncementsPage() {
   const [title, setTitle] = React.useState("");
   const [body, setBody] = React.useState("");
-  const [linkUrl, setLinkUrl] = React.useState("");
-  const [audienceKind, setAudienceKind] = React.useState<"everyone" | "role" | "user">(
-    "everyone",
-  );
+  /*
+   * Where it goes, picked from real things.
+   *
+   * `destKind` is the shape and `destId` is which one. A path is never typed:
+   * the server composes it from the choice, so a renamed route cannot leave a
+   * dead link inside a message that was already sent.
+   */
+  const [destKind, setDestKind] = React.useState<
+    "none" | "page" | "show" | "stream" | "video" | "external"
+  >("none");
+  const [destPage, setDestPage] = React.useState("home");
+  const [destId, setDestId] = React.useState("");
+  const [destUrl, setDestUrl] = React.useState("");
+
+  const [audienceKind, setAudienceKind] = React.useState<
+    "everyone" | "role" | "user" | "users" | "subscribers" | "free"
+  >("everyone");
   const [audienceRole, setAudienceRole] = React.useState("user");
   const [audienceEmail, setAudienceEmail] = React.useState("");
+  const [audienceEmails, setAudienceEmails] = React.useState("");
+  const [sendPush, setSendPush] = React.useState(true);
+  const [sendEmail, setSendEmail] = React.useState(false);
+
+  const destinationsQ = useQuery({
+    queryKey: ["admin", "destinations"],
+    queryFn: () => adminListDestinations(),
+  });
+  const destinations = destinationsQ.data;
   const [confirming, setConfirming] = React.useState<AnnouncementPreview | null>(null);
+
+  const emailList = audienceEmails
+    .split(/[\s,;]+/)
+    .map((e) => e.trim())
+    .filter((e) => e.includes("@"));
 
   const audience: AnnouncementAudience =
     audienceKind === "role"
       ? { kind: "role", role: audienceRole }
       : audienceKind === "user"
         ? { kind: "user", email: audienceEmail.trim() }
-        : { kind: "everyone" };
+        : audienceKind === "users"
+          ? { kind: "users", emails: emailList }
+          : audienceKind === "subscribers"
+            ? { kind: "subscribers" }
+            : audienceKind === "free"
+              ? { kind: "free" }
+              : { kind: "everyone" };
+
+  const destination: AnnouncementDestination =
+    destKind === "page"
+      ? { kind: "page", page: destPage }
+      : destKind === "show" && destId
+        ? { kind: "show", id: destId }
+        : destKind === "stream" && destId
+          ? { kind: "stream", id: destId }
+          : destKind === "video" && destId
+            ? { kind: "video", id: destId }
+            : destKind === "external" && destUrl.trim()
+              ? { kind: "external", url: destUrl.trim() }
+              : { kind: "none" };
 
   const payload = {
     title: title.trim(),
     body: body.trim(),
-    linkUrl: linkUrl.trim(),
+    destination,
     audience,
+    channels: { push: sendPush, email: sendEmail },
   };
 
   const ready =
     payload.title.length >= 3 &&
     payload.body.length >= 3 &&
-    (audienceKind !== "user" || audienceEmail.trim().length > 3);
+    (audienceKind !== "user" || audienceEmail.trim().length > 3) &&
+    (audienceKind !== "users" || emailList.length > 0) &&
+    (destKind !== "show" || Boolean(destId)) &&
+    (destKind !== "stream" || Boolean(destId)) &&
+    (destKind !== "video" || Boolean(destId)) &&
+    (destKind !== "external" || destUrl.trim().startsWith("http"));
 
   const preview = useMutation({
     mutationFn: () => adminPreviewAnnouncement(payload),
@@ -88,12 +142,14 @@ export function AnnouncementsPage() {
       toast.success(
         `Sent to ${result.recipients} account${result.recipients === 1 ? "" : "s"}. ` +
           `${result.expoDelivered} app push${result.expoDelivered === 1 ? "" : "es"}, ` +
-          `${result.webDelivered} browser.`,
+          `${result.webDelivered} browser${result.emailed ? `, ${result.emailed} emails` : ""}.`,
       );
       setConfirming(null);
       setTitle("");
       setBody("");
-      setLinkUrl("");
+      setDestKind("none");
+      setDestId("");
+      setDestUrl("");
     },
     onError: (err: unknown) =>
       toast.error(err instanceof Error ? err.message : "Could not send it"),
@@ -132,17 +188,84 @@ export function AnnouncementsPage() {
             <p className="text-xs text-muted-foreground">{body.length} of 500</p>
           </div>
 
+          {/*
+            Where tapping it goes, picked rather than typed.
+            
+            This was a box asking for "/channel", which needs the operator to
+            know the route table and ships a dead link the day a route is
+            renamed. The path is composed on the server from whatever is chosen
+            here.
+          */}
           <div className="space-y-2">
-            <Label htmlFor="ann-link">Where tapping it goes</Label>
-            <Input
-              id="ann-link"
-              value={linkUrl}
-              onChange={(e) => setLinkUrl(e.target.value)}
-              placeholder="/channel"
-            />
-            <p className="text-xs text-muted-foreground">
-              An in-app path starting with a slash. Leave blank to open the app.
-            </p>
+            <Label htmlFor="ann-dest">Where tapping it goes</Label>
+            <Select
+              value={destKind}
+              onValueChange={(v) => {
+                setDestKind(v as typeof destKind);
+                setDestId("");
+              }}
+            >
+              <SelectTrigger id="ann-dest">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Just open the app</SelectItem>
+                <SelectItem value="page">A page</SelectItem>
+                <SelectItem value="show">A show</SelectItem>
+                <SelectItem value="stream">A broadcast</SelectItem>
+                <SelectItem value="video">A video</SelectItem>
+                <SelectItem value="external">Somewhere off EVO TV</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {destKind === "page" ? (
+              <Select value={destPage} onValueChange={setDestPage}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {(destinations?.pages ?? []).map((p) => (
+                    <SelectItem key={p.value} value={p.value}>
+                      {p.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : null}
+
+            {destKind === "show" || destKind === "stream" || destKind === "video" ? (
+              <Select value={destId} onValueChange={setDestId}>
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder={
+                      destinationsQ.isPending ? "Loading…" : "Pick one"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent className="max-h-72">
+                  {((destKind === "show"
+                    ? destinations?.shows
+                    : destKind === "stream"
+                      ? destinations?.streams
+                      : destinations?.videos) ?? []
+                  ).map((thing) => (
+                    <SelectItem key={thing.id} value={thing.id}>
+                      {thing.label}
+                      {thing.detail ? (
+                        <span className="text-muted-foreground"> · {thing.detail}</span>
+                      ) : null}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : null}
+
+            {destKind === "external" ? (
+              <Input
+                value={destUrl}
+                onChange={(e) => setDestUrl(e.target.value)}
+                placeholder="https://example.com/something"
+                inputMode="url"
+              />
+            ) : null}
           </div>
 
           <div className="space-y-2">
@@ -156,8 +279,11 @@ export function AnnouncementsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="everyone">Everyone with an account</SelectItem>
+                <SelectItem value="subscribers">Everyone who is paying</SelectItem>
+                <SelectItem value="free">Everyone who is not paying</SelectItem>
                 <SelectItem value="role">Everyone with a role</SelectItem>
                 <SelectItem value="user">One person</SelectItem>
+                <SelectItem value="users">A list of people</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -192,6 +318,61 @@ export function AnnouncementsPage() {
               />
             </div>
           ) : null}
+
+          {audienceKind === "users" ? (
+            <div className="space-y-2">
+              <Label htmlFor="ann-emails">The people</Label>
+              <Textarea
+                id="ann-emails"
+                rows={4}
+                value={audienceEmails}
+                onChange={(e) => setAudienceEmails(e.target.value)}
+                placeholder="one@example.com, two@example.com"
+              />
+              <p className="text-xs text-muted-foreground">
+                {emailList.length} address{emailList.length === 1 ? "" : "es"}{" "}
+                recognised. Separate them with commas, spaces or new lines.
+                Addresses with no account are simply skipped, and the preview
+                says how many were found.
+              </p>
+            </div>
+          ) : null}
+
+          {/*
+            How it reaches them.
+            
+            The notification list is always written, because it is the only
+            channel that survives a failure: a push that is refused leaves
+            nothing behind, and somebody with no device would never see the
+            message at all.
+          */}
+          <div className="space-y-2">
+            <Label>How it reaches them</Label>
+            <div className="space-y-2 rounded-lg bg-card/60 p-3">
+              <label className="flex items-center gap-3 text-sm text-foreground/80">
+                <input type="checkbox" checked disabled className="h-4 w-4" />
+                Their notifications list (always)
+              </label>
+              <label className="flex items-center gap-3 text-sm text-foreground/80">
+                <input
+                  type="checkbox"
+                  checked={sendPush}
+                  onChange={(e) => setSendPush(e.target.checked)}
+                  className="h-4 w-4"
+                />
+                A push, to anyone with the app or browser notifications
+              </label>
+              <label className="flex items-center gap-3 text-sm text-foreground/80">
+                <input
+                  type="checkbox"
+                  checked={sendEmail}
+                  onChange={(e) => setSendEmail(e.target.checked)}
+                  className="h-4 w-4"
+                />
+                An email
+              </label>
+            </div>
+          </div>
 
           <div className="flex justify-end pt-2">
             <Button
@@ -244,7 +425,7 @@ export function AnnouncementsPage() {
               {confirming
                 ? `This reaches ${confirming.recipients} account${
                     confirming.recipients === 1 ? "" : "s"
-                  } (${confirming.description}). ${confirming.withPushTokens} of them can receive a push right now. There is no unsend.`
+                  } (${confirming.description}). ${confirming.withPushTokens} of them can receive a push right now. Tapping it opens ${confirming.destination}. There is no unsend.`
                 : ""}
             </DialogDescription>
           </DialogHeader>
