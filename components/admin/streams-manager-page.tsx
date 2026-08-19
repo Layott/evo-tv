@@ -716,18 +716,54 @@ export function StreamsManagerPage() {
                         Shown once on creation. Regenerate to get a new one.
                       </span>
                     </Row>
-                    {/* These read as facts about the stream but nothing
-                        measures them: they were a hardcoded 1080p/6000kbps/60fps
-                        claim on a stream that might be anything. They are
-                        recommendations, so they say so, and the numbers now
-                        match what the self-hosted path actually handles. */}
-                    <Row label="Recommended video">
-                      720p · 2500 kbps · H.264 · 30 fps
-                    </Row>
-                    <Row label="Recommended audio">128 kbps · AAC</Row>
                     <Row label="Keyframe interval">
                       2 sec (required, not optional)
                     </Row>
+                  </div>
+
+                  {/*
+                    One publish per rung, which is what the ladder is.
+                    
+                    The panel showed a single key, and the encoder has to send
+                    four separate publishes whose names carry the rung suffix.
+                    Nothing on this screen said so, so an operator had to know
+                    it, and 1080p had no line at all. `<secret>` is a
+                    placeholder: the key is stored as a hash, and rotating it is
+                    the only moment it exists in readable form.
+                  */}
+                  <div className="mt-4 space-y-2">
+                    <h5 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      One publish per quality
+                    </h5>
+                    {(selectedIngest?.rungs ?? []).map((rung) => (
+                      <div
+                        key={rung.label}
+                        className="rounded-lg bg-background/60 p-2.5"
+                      >
+                        <div className="flex flex-wrap items-baseline justify-between gap-2">
+                          <span className="text-xs font-medium text-foreground">
+                            {rung.label}
+                            {rung.premiumOnly ? (
+                              <span className="ml-2 rounded bg-sky-400/20 px-1.5 py-0.5 text-[10px] text-sky-200">
+                                Premium only
+                              </span>
+                            ) : null}
+                          </span>
+                          <span className="text-[11px] tabular-nums text-muted-foreground">
+                            {rung.resolution} · {rung.videoKbps} kbps video ·{" "}
+                            {rung.audioKbps} kbps audio
+                          </span>
+                        </div>
+                        <code className="mt-1 block break-all rounded bg-background px-2 py-1 font-mono text-[11px] text-foreground/80">
+                          {rung.streamKey}
+                        </code>
+                      </div>
+                    ))}
+                    <p className="text-[11px] text-muted-foreground">
+                      Same server for all four. The bitrates are what the player
+                      is promised, so an encoder that overshoots makes the
+                      playlist lie and phones stall on a rung they cannot hold.
+                    </p>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">
                     {/* The flagship. Exactly one stream can hold it; the API

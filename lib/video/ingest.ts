@@ -39,6 +39,19 @@ export interface IngestDetails {
    * be shown twice.
    */
   keyRetrievable: boolean;
+  /**
+   * One publish name per rung, in the exact form the OBS Stream Key field
+   * wants. `<secret>` is a placeholder when the key cannot be shown again:
+   * rotating the key returns these filled in.
+   */
+  rungs?: Array<{
+    label: string;
+    resolution: string;
+    videoKbps: number;
+    audioKbps: number;
+    premiumOnly: boolean;
+    streamKey: string;
+  }>;
 }
 
 /**
@@ -91,7 +104,37 @@ export function rtmpHlsUrlFor(streamKey: string): string {
  * what a variant is from that config; this list only teaches the app to
  * recognise the same names coming back through the publish callbacks.
  */
-export const HLS_VARIANT_SUFFIXES = ["_low", "_mid", "_hi"] as const;
+export const HLS_VARIANT_SUFFIXES = ["_low", "_mid", "_hi", "_fhd"] as const;
+
+/**
+ * What an operator has to set up in OBS, vMix or ffplayout, per rung.
+ *
+ * The admin screen showed one server and one key, and the ladder needs one
+ * publish per rung, so an operator had to know to append `_low`, `_mid` and
+ * `_hi` themselves. Nothing on the screen said so, and 1080p had no line at
+ * all.
+ *
+ * The bitrates are what nginx advertises in `hls_variant BANDWIDTH`, and that
+ * number comes from the config rather than from the stream: an encoder that
+ * overshoots makes the playlist lie to players, which is worse than no ladder.
+ * These are the targets to set, not suggestions.
+ */
+export interface RungSpec {
+  suffix: (typeof HLS_VARIANT_SUFFIXES)[number];
+  label: string;
+  resolution: string;
+  videoKbps: number;
+  audioKbps: number;
+  /** Premium-only rungs cost roughly seven times a 360p viewer against the allowance. */
+  premiumOnly: boolean;
+}
+
+export const RUNGS: RungSpec[] = [
+  { suffix: "_low", label: "360p", resolution: "640x360", videoKbps: 800, audioKbps: 96, premiumOnly: false },
+  { suffix: "_mid", label: "480p", resolution: "854x480", videoKbps: 1400, audioKbps: 128, premiumOnly: false },
+  { suffix: "_hi", label: "720p", resolution: "1280x720", videoKbps: 2800, audioKbps: 128, premiumOnly: false },
+  { suffix: "_fhd", label: "1080p", resolution: "1920x1080", videoKbps: 5000, audioKbps: 160, premiumOnly: true },
+];
 
 /**
  * The stream's real name, with any quality suffix removed.
@@ -260,6 +303,7 @@ export async function ingestDetailsFor(streamId: string): Promise<IngestDetails 
       streamKey: null,
       hlsUrl: row.hlsPath,
       keyRetrievable: false,
+      rungs: rungKeys(row.id, null),
     };
   }
 
@@ -270,4 +314,26 @@ export async function ingestDetailsFor(streamId: string): Promise<IngestDetails 
     hlsUrl: row.hlsPath,
     keyRetrievable: false,
   };
+}
+
+/**
+ * The four publish names, with the secret if it is known.
+ *
+ * `<secret>` stays as a placeholder when it is not: pretending to know a key
+ * would be worse than saying so, and rotating is the one path that can show it
+ * again.
+ */
+export function rungKeys(
+  streamId: string,
+  secret: string | null,
+): NonNullable<IngestDetails["rungs"]> {
+  const key = secret ?? "<secret>";
+  return RUNGS.map((rung) => ({
+    label: rung.label,
+    resolution: rung.resolution,
+    videoKbps: rung.videoKbps,
+    audioKbps: rung.audioKbps,
+    premiumOnly: rung.premiumOnly,
+    streamKey: `${streamId}${rung.suffix}?key=${key}`,
+  }));
 }

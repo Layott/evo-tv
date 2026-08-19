@@ -1,6 +1,7 @@
 import {
   BarChart3,
   Bell,
+  Calendar,
   CalendarRange,
   CreditCard,
   FileText,
@@ -58,6 +59,7 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { href: "/admin", label: "Overview", Icon: LayoutDashboard, exact: true },
   { href: "/admin/shows", label: "Shows", Icon: Tv, capability: "editorial" },
   { href: "/admin/schedule", label: "Schedule", Icon: CalendarRange, capability: "editorial" },
+  { href: "/admin/calendar", label: "Calendar", Icon: Calendar, capability: "editorial" },
   { href: "/admin/library", label: "Library", Icon: Film, capability: "editorial" },
   { href: "/admin/streams", label: "Streams", Icon: Radio, capability: "broadcast" },
   { href: "/admin/content", label: "Content", Icon: FileText, capability: "editorial" },
