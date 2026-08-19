@@ -101,6 +101,7 @@ export async function POST(req: NextRequest) {
       showId: input.showId,
       title: show.title,
       pillar: show.pillar,
+      subtitle: input.subtitle,
       parentalRating: input.parentalRating,
       isActive: true,
     });

@@ -69,6 +69,8 @@ interface SlotDraft {
   durationMin: string;
   /** The show being scheduled. Its title and pillar come with it. */
   showId: string;
+  /** The second line on air. Blank means the programme name stands alone. */
+  subtitle: string;
   parentalRating: string;
 }
 
@@ -79,6 +81,7 @@ function draftFrom(slot: AdminEpgSlot | null, dayOfWeek: number): SlotDraft {
     start: minuteLabel(slot?.startMinute ?? 18 * 60),
     durationMin: String(slot?.durationMin ?? 60),
     showId: slot?.showId ?? "",
+    subtitle: slot?.subtitle ?? "",
     parentalRating:
       slot?.parentalRating === null || slot?.parentalRating === undefined
         ? "none"
@@ -209,6 +212,7 @@ export function ScheduleManagerPage() {
         startMinute,
         durationMin,
         showId: input.showId,
+        subtitle: input.subtitle.trim() || null,
         parentalRating:
           input.parentalRating === "none" ? null : Number(input.parentalRating),
       };
@@ -261,6 +265,7 @@ export function ScheduleManagerPage() {
             startMinute: slot.startMinute,
             durationMin: slot.durationMin,
             showId: slot.showId,
+            subtitle: slot.subtitle,
             parentalRating: slot.parentalRating,
           });
           copied++;
@@ -387,9 +392,9 @@ export function ScheduleManagerPage() {
                   <p className="truncate text-sm text-foreground">
                     {slot.title.split("\\")[0]!.trim()}
                   </p>
-                  {slot.title.includes("\\") ? (
-                    <p className="truncate text-xs text-amber-300">
-                      Second line on air: {slot.title.split("\\")[1]!.trim()}
+                  {slot.subtitle ? (
+                    <p className="truncate text-xs text-muted-foreground">
+                      {slot.subtitle}
                     </p>
                   ) : null}
                   <p className="text-xs capitalize text-muted-foreground">
@@ -490,6 +495,30 @@ export function ScheduleManagerPage() {
                     : draft.showId
                       ? `Filed under ${showById.get(draft.showId)?.pillar ?? ""}, from the show.`
                       : "Programming is picked from the shows catalogue."}
+                </p>
+              </div>
+
+              {/*
+                The second line, as a field.
+                
+                It was the half of the slot title after a backslash, so it could
+                not be edited: renaming the show left "NEED FOR SPEED" on air
+                with nowhere to go and change it. The programme name belongs to
+                the show and updates everywhere the moment the show is renamed;
+                this line belongs to the hour.
+              */}
+              <div className="space-y-2">
+                <Label htmlFor="slot-subtitle">Second line on air</Label>
+                <Input
+                  id="slot-subtitle"
+                  value={draft.subtitle}
+                  maxLength={120}
+                  placeholder="Which game, whose session. Leave blank for none."
+                  onChange={(e) => setDraft({ ...draft, subtitle: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Shown under the programme name on the player, the guide and the
+                  home page. The name itself comes from the show.
                 </p>
               </div>
 

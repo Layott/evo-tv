@@ -263,6 +263,8 @@ export interface AdminEpgSlot {
   startMinute: number;
   durationMin: number;
   title: string;
+  /** The second line on air. The slot's own field, editable in the schedule. */
+  subtitle: string | null;
   pillar: ShowPillar;
   parentalRating: number | null;
   genreId: number | null;
@@ -283,6 +285,8 @@ export interface SlotInput {
   startMinute: number;
   durationMin: number;
   showId: string;
+  /** The second line on air: which game this hour is, whose session it is. */
+  subtitle: string | null;
   parentalRating: number | null;
 }
 
