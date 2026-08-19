@@ -108,6 +108,13 @@ interface VodDraft {
    * filed at all.
    */
   belongsTo: string;
+  /**
+   * When it should appear, as a datetime-local value. Empty means now.
+   *
+   * `publishedAt` was never a gate: it sorted the library and nothing read it
+   * as a condition, so a video dated next Friday was on the site today.
+   */
+  publishAt: string;
   seasonNumber: string;
   /** Blank takes the next free number in that season. */
   episodeNumber: string;
@@ -143,6 +150,7 @@ const emptyVod: VodDraft = {
   maturityRating: "teen",
   isPremium: false,
   belongsTo: "standalone",
+  publishAt: "",
   seasonNumber: "1",
   episodeNumber: "",
   newShowTitle: "",
@@ -252,6 +260,9 @@ export function LibraryManagerPage() {
           isPremium: input.isPremium,
           maturityRating: input.maturityRating,
           pillar: input.pillar,
+          publishAt: input.publishAt
+            ? new Date(input.publishAt).toISOString()
+            : null,
           seasonNumber: Number(input.seasonNumber || 1),
           episodeNumber: input.episodeNumber
             ? Number(input.episodeNumber)
@@ -283,6 +294,10 @@ export function LibraryManagerPage() {
         pillar: input.pillar,
         maturityRating: input.maturityRating,
         isPremium: input.isPremium,
+        // The picker is local time; the column is an instant.
+        publishAt: input.publishAt
+          ? new Date(input.publishAt).toISOString()
+          : null,
       };
       // Editing sends the same shape. Replacing `mp4Url` swaps what viewers
       // watch on the next play; the old object stays in the bucket, which is
@@ -319,6 +334,10 @@ export function LibraryManagerPage() {
       // filed, and the sheet hides them when `id` is set.
       ...emptyVod,
       id: vod.id,
+      // datetime-local wants "YYYY-MM-DDTHH:mm" in local time.
+      publishAt: vod.publishAt
+        ? new Date(vod.publishAt).toISOString().slice(0, 16)
+        : "",
       title: vod.title,
       description: vod.description ?? "",
       gameId: vod.gameId ?? "",
@@ -418,10 +437,31 @@ export function LibraryManagerPage() {
       key: "published",
       header: "Published",
       sortable: true,
-      accessor: (row) => new Date(row.publishedAt).getTime(),
-      cell: (row) => (
-        <span className="text-xs text-muted-foreground">{formatDate(row.publishedAt)}</span>
-      ),
+      accessor: (row) => new Date(row.publishAt ?? row.publishedAt).getTime(),
+      cell: (row) => {
+        // A date in the future is the whole story about this row: it is not on
+        // the site, and saying "Published 24 Aug" about something nobody can
+        // watch would be the same lie the old column told.
+        const scheduled =
+          row.publishAt && new Date(row.publishAt).getTime() > Date.now();
+        if (scheduled) {
+          return (
+            <span className="block">
+              <span className="block text-xs font-medium text-sky-300">
+                Scheduled
+              </span>
+              <span className="block text-xs text-muted-foreground">
+                {formatDate(row.publishAt!)}
+              </span>
+            </span>
+          );
+        }
+        return (
+          <span className="text-xs text-muted-foreground">
+            {formatDate(row.publishedAt)}
+          </span>
+        );
+      },
     },
     {
       key: "access",
@@ -873,6 +913,43 @@ export function LibraryManagerPage() {
                   ) : null}
                 </div>
               ) : null}
+
+              {/*
+                When it goes live.
+                
+                Empty means now, which is what every video did before this
+                existed. A date in the future keeps it out of every list and
+                gives its page a "coming soon" state instead of a 404, so a
+                link shared early still lands somewhere sensible.
+              */}
+              <div className="space-y-2">
+                <Label htmlFor="vod-publish-at">Goes live</Label>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Input
+                    id="vod-publish-at"
+                    type="datetime-local"
+                    value={vodDraft.publishAt}
+                    onChange={(e) =>
+                      setVodDraft({ ...vodDraft, publishAt: e.target.value })
+                    }
+                    className="w-64"
+                  />
+                  {vodDraft.publishAt ? (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => setVodDraft({ ...vodDraft, publishAt: "" })}
+                    >
+                      Publish now
+                    </Button>
+                  ) : null}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {vodDraft.publishAt
+                    ? "Hidden everywhere until this moment, then it appears on its own."
+                    : "Live as soon as you save."}
+                </p>
+              </div>
 
                 <DurationField
                   id="vod-duration"

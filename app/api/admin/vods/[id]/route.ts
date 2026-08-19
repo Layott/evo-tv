@@ -43,6 +43,11 @@ const patchSchema = z
     chapters: z.array(chapter).max(100),
     maturityRating: z.enum(["kids", "pg", "teen", "mature"]),
     contentTags: z.array(z.string().trim().min(1).max(40)).max(30),
+    /**
+     * When it should appear. Null publishes it now, which is what the
+     * "Publish now" button sends.
+     */
+    publishAt: z.string().datetime().nullable(),
   })
   .partial();
 
