@@ -48,41 +48,55 @@ export async function sendMessage(
   return res?.message ?? null;
 }
 
-/** Moderation. All three require a moderator session and 403 otherwise. */
-export async function pinMessage(
-  streamId: string,
-  messageId: string,
-): Promise<void> {
-  await apiSend<void>(
+/**
+ * Moderation, with named arguments on purpose.
+ *
+ * These took `(streamId, messageId)` positionally and the chat called them
+ * `(messageId, handle)`. Two strings, so nothing failed to compile: the request
+ * went to `/api/streams/<messageId>/chat/<handle>/pin`, which is a 404, and
+ * every click answered "Could not pin message". An object cannot be passed in
+ * the wrong order.
+ */
+export async function pinMessage(args: {
+  streamId: string;
+  messageId: string;
+}): Promise<{ isPinned: boolean } | null> {
+  return apiSend<{ isPinned: boolean }>(
     "POST",
-    `/api/streams/${encodeURIComponent(streamId)}/chat/${encodeURIComponent(messageId)}/pin`,
+    `/api/streams/${encodeURIComponent(args.streamId)}/chat/${encodeURIComponent(args.messageId)}/pin`,
   );
 }
 
-export async function deleteMessage(
-  streamId: string,
-  messageId: string,
-): Promise<void> {
+export async function deleteMessage(args: {
+  streamId: string;
+  messageId: string;
+}): Promise<void> {
   await apiSend<void>(
     "POST",
-    `/api/streams/${encodeURIComponent(streamId)}/chat/${encodeURIComponent(messageId)}/delete`,
+    `/api/streams/${encodeURIComponent(args.streamId)}/chat/${encodeURIComponent(args.messageId)}/delete`,
   );
 }
 
 /**
- * Banning is a channel-level moderator action, served by
- * `/api/partner/channels/[id]/chat/mod`, so it needs the channel rather than
- * the stream.
+ * Ban the author of a message from chat for a while.
+ *
+ * This used to post `{ action: "ban" }` at the partner channel endpoint with
+ * the stream id in the channel's place. That endpoint has no "ban" action, it
+ * has "timeout", and a timeout only emits an event: nothing was written, so a
+ * banned viewer was talking again after a reload. It now writes the same
+ * `chat_banned` sanction the moderation queue writes, which `isChatBlocked`
+ * enforces on the next message and which expires on its own.
  */
-export async function banUser(
-  channelId: string,
-  userId: string,
-  durationHours = 24,
-): Promise<void> {
-  await apiSend<void>(
+export async function banFromChat(args: {
+  streamId: string;
+  messageId: string;
+  hours?: number;
+  reason?: string;
+}): Promise<{ expiresAt: string } | null> {
+  return apiSend<{ expiresAt: string }>(
     "POST",
-    `/api/partner/channels/${encodeURIComponent(channelId)}/chat/mod`,
-    { action: "ban", userId, durationHours },
+    `/api/streams/${encodeURIComponent(args.streamId)}/chat/${encodeURIComponent(args.messageId)}/ban`,
+    { hours: args.hours ?? 24, ...(args.reason ? { reason: args.reason } : {}) },
   );
 }
 
