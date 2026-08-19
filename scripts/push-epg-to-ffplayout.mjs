@@ -19,7 +19,8 @@
  *   DRY_RUN=1 node scripts/push-epg-to-ffplayout.mjs  # print, don't upload
  *
  * Env (set in the office server's environment or a .env you source first):
- *   EVOTV_API_BASE        e.g. https://evo-tv.vercel.app
+ *   EVOTV_API_BASE        https://api.evotv.co (the Vercel host in this line
+ *                         until today has been dead since the DigitalOcean move)
  *   FFPLAYOUT_URL         e.g. http://127.0.0.1:8787
  *   FFPLAYOUT_USER        ffplayout admin username
  *   FFPLAYOUT_PASS        ffplayout admin password
