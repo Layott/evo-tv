@@ -38,12 +38,55 @@ interface AuditEntry {
   action: string;
   targetType: string;
   targetId: string;
+  /** What the target is called now, or null when it no longer exists. */
+  targetName: string | null;
   before: Record<string, unknown> | null;
   after: Record<string, unknown> | null;
   ip: string | null;
   userAgent: string | null;
   meta: Record<string, unknown> | null;
   createdAt: string;
+}
+
+/**
+ * `show.update` as a sentence.
+ *
+ * The log is read by people deciding whether something was meant, and a
+ * dotted identifier is a thing to decode before that can start.
+ */
+function actionLabel(action: string): string {
+  const [subject, verb] = action.split(".");
+  if (!verb) return action;
+  const verbs: Record<string, string> = {
+    create: "Created",
+    create_with_episode: "Created, with an episode",
+    update: "Edited",
+    delete: "Deleted",
+    restore: "Restored",
+    grant: "Granted",
+    approve: "Approved",
+    ban: "Banned",
+    remove: "Removed",
+    escalate: "Escalated",
+    dismissed: "Dismissed",
+    resolved: "Resolved",
+    schedule_update: "Rescheduled",
+  };
+  const subjects: Record<string, string> = {
+    show: "show",
+    stream: "stream",
+    vod: "video",
+    clip: "clip",
+    episode: "episode",
+    role: "role",
+    ad: "ad",
+    report: "report",
+    order: "order",
+    product: "product",
+    game: "game",
+    event: "event",
+  };
+  return `${verbs[verb] ?? verb} ${subjects[subject] ?? subject}`;
 }
 
 function timeLabel(iso: string): string {
@@ -56,10 +99,63 @@ function timeLabel(iso: string): string {
   });
 }
 
-function valueLabel(v: unknown): string {
+/**
+ * Column names as the screens write them.
+ *
+ * `reconnectWindowSec` is a column. "If the feed drops" is what the person who
+ * changed it saw, and matching the log to the screen is what makes it readable
+ * by somebody who was not the one who changed it.
+ */
+const FIELD_LABELS: Record<string, string> = {
+  reconnectWindowSec: "If the feed drops",
+  maturityRating: "Maturity rating",
+  isPremium: "Behind the paywall",
+  publishAt: "Goes live",
+  premiereAt: "Premiere",
+  scheduledStartAt: "Scheduled start",
+  scheduledDurationMin: "Scheduled length",
+  playoutFilePath: "Playout file",
+  thumbnailUrl: "Thumbnail",
+  hlsPath: "Video file",
+  streamerName: "Streamer",
+  pillar: "Pillar",
+  role: "Role",
+  status: "Status",
+  title: "Title",
+  slug: "Address",
+  weight: "Weight",
+  active: "Active",
+  clickUrl: "Click-through",
+  mediaUrl: "Creative",
+};
+
+function fieldLabel(key: string): string {
+  if (FIELD_LABELS[key]) return FIELD_LABELS[key]!;
+  // camelCase to words, so an unmapped column still reads as English.
+  return key
+    .replace(/([A-Z])/g, " $1")
+    .replace(/^./, (c) => c.toUpperCase())
+    .trim();
+}
+
+/** Seconds, as the dropdown that set them says it. */
+function reconnectLabel(v: unknown): string | null {
+  if (typeof v !== "number") return null;
+  if (v < 0) return "Wait for it, however long";
+  if (v === 0) return "End the stream immediately";
+  if (v % 3600 === 0) return `Wait ${v / 3600} hour${v === 3600 ? "" : "s"}`;
+  return `Wait ${Math.round(v / 60)} minutes`;
+}
+
+function valueLabel(v: unknown, key?: string): string {
+  if (key === "reconnectWindowSec") {
+    const label = reconnectLabel(v);
+    if (label) return label;
+  }
   if (v === null || v === undefined) return "empty";
+  if (typeof v === "boolean") return v ? "yes" : "no";
   if (typeof v === "string") return v === "" ? "empty" : v;
-  if (typeof v === "number" || typeof v === "boolean") return String(v);
+  if (typeof v === "number") return String(v);
   return JSON.stringify(v);
 }
 
@@ -129,11 +225,13 @@ export function AuditLogPage() {
       header: "Did what",
       cell: (r) => (
         <span className="block">
-          <span className="block font-mono text-xs text-foreground">
-            {r.action}
+          <span className="block text-sm text-foreground">
+            {actionLabel(r.action)}
           </span>
-          <span className="block text-xs text-muted-foreground">
-            {r.targetType} {r.targetId}
+          <span className="block truncate text-xs text-muted-foreground">
+            {/* The name, with the id kept only when there is no name to show:
+                a deleted record still has to be identifiable. */}
+            {r.targetName ?? `${r.targetType} ${r.targetId}`}
           </span>
         </span>
       ),
@@ -247,8 +345,14 @@ function ChangeDetail({ entry }: { entry: AuditEntry | null }) {
   return (
     <div className="mt-4 rounded-xl bg-card p-5">
       <h3 className="text-sm font-semibold text-foreground">
-        {entry.action} on {entry.targetType} {entry.targetId}
+        {actionLabel(entry.action)}:{" "}
+        {entry.targetName ?? `${entry.targetType} ${entry.targetId}`}
       </h3>
+      {entry.targetName ? (
+        <p className="mt-0.5 font-mono text-[11px] text-muted-foreground/70">
+          {entry.targetType} {entry.targetId}
+        </p>
+      ) : null}
       <p className="mt-1 text-xs text-muted-foreground">
         {timeLabel(entry.createdAt)}
         {entry.ip ? ` · from ${entry.ip}` : ""}
@@ -267,14 +371,14 @@ function ChangeDetail({ entry }: { entry: AuditEntry | null }) {
               key={key}
               className="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-lg bg-background/60 px-3 py-2"
             >
-              <span className="font-mono text-xs text-muted-foreground">
-                {key}
+              <span className="text-xs text-muted-foreground">
+                {fieldLabel(key)}
               </span>
               <span className="text-sm text-foreground/70 line-through">
-                {valueLabel(entry.before?.[key])}
+                {valueLabel(entry.before?.[key], key)}
               </span>
               <span className="text-sm text-sky-300">
-                {valueLabel(entry.after?.[key])}
+                {valueLabel(entry.after?.[key], key)}
               </span>
             </div>
           ))}

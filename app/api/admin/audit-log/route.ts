@@ -3,6 +3,7 @@ import { z } from "zod";
 import { and, desc, eq, gte, like, lte, type SQL } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { requireAdminFromRequest } from "@/lib/api/admin";
+import { resolveTargetNames } from "@/lib/api/audit-names";
 
 const querySchema = z.object({
   actorId: z.string().optional(),
@@ -95,5 +96,21 @@ export async function GET(req: NextRequest) {
     .limit(limit)
     .offset(offset);
 
-  return NextResponse.json(rows);
+  /*
+   * Names, not ids.
+   *
+   * A row that says `ad_a0c8b70c397eeff5` makes the reader copy an id into
+   * another screen to find out which ad it was. Resolved at read time rather
+   * than copied in at write time: a rename does not change what somebody did,
+   * so the row shows what the thing is called when you look at it, and keeps
+   * the id for the case where the record is gone.
+   */
+  const names = await resolveTargetNames(rows);
+
+  return NextResponse.json(
+    rows.map((row) => ({
+      ...row,
+      targetName: names[`${row.targetType}:${row.targetId}`] ?? null,
+    })),
+  );
 }
