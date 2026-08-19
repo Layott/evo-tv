@@ -3,7 +3,7 @@
 import * as React from "react";
 import { Mail, Palette, Save, ToggleLeft, Upload } from "@/components/icons";
 import { toast } from "sonner";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   adminListFlags as listFlags,
   adminSaveEmailTemplate,
@@ -84,7 +84,10 @@ Watch: {{streamUrl}}`,
 export function AdminSettingsPage() {
   return (
     <div className="space-y-6">
-      <PageHeader title="Settings" description="Feature flags, branding and email templates." />
+      <PageHeader
+        title="Settings"
+        description="Feature flags, branding, email templates and uploaded files."
+      />
 
       <Tabs defaultValue="flags">
         <TabsList className="bg-card">
@@ -100,6 +103,10 @@ export function AdminSettingsPage() {
             <Mail className="mr-1 h-3.5 w-3.5" />
             Email templates
           </TabsTrigger>
+          <TabsTrigger value="storage">
+            <Upload className="mr-1 h-3.5 w-3.5" />
+            Uploads
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="flags" className="mt-4">
@@ -110,6 +117,9 @@ export function AdminSettingsPage() {
         </TabsContent>
         <TabsContent value="email" className="mt-4">
           <EmailTemplatesSection />
+        </TabsContent>
+        <TabsContent value="storage" className="mt-4">
+          <UploadsSection />
         </TabsContent>
       </Tabs>
     </div>
@@ -335,6 +345,95 @@ function EmailTemplatesSection() {
       <p className="mt-2 text-xs text-muted-foreground">
         Use <code className="rounded bg-muted px-1">{`{{variables}}`}</code> to substitute at send-time.
       </p>
+    </div>
+  );
+}
+
+/**
+ * Republish files the bucket kept private.
+ *
+ * The presigned upload asked for `public-read` in its query string and the
+ * bucket ignored it, so every image the CMS uploaded landed unreadable: the
+ * stream thumbnail was a broken rectangle and so was every poster uploaded the
+ * same way. New uploads are checked at the source now. This is for the ones
+ * already up there, and it lives here so fixing them does not need a terminal
+ * on the droplet.
+ */
+function UploadsSection() {
+  const [result, setResult] = React.useState<{
+    checked: number;
+    broken: number;
+    repaired: number;
+    stillBroken: { key: string; status: number }[];
+    truncated: boolean;
+  } | null>(null);
+
+  const repair = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/admin/uploads/repair", {
+        method: "POST",
+        credentials: "include",
+      });
+      const body = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+      if (!res.ok) {
+        throw new Error(
+          typeof body.error === "string" ? body.error : `Repair failed (${res.status})`,
+        );
+      }
+      return body as unknown as NonNullable<typeof result>;
+    },
+    onSuccess: (data) => {
+      setResult(data);
+      if (data.broken === 0) toast.success("Every uploaded file is publicly readable");
+      else if (data.repaired > 0) toast.success(`Republished ${data.repaired} file${data.repaired === 1 ? "" : "s"}`);
+      else toast.error("Files are still unreadable after setting their permissions");
+    },
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : "Could not repair the uploads"),
+  });
+
+  return (
+    <div className="overflow-hidden rounded-xl bg-card/40">
+      <div className="p-4">
+        <h3 className="text-sm font-semibold text-foreground">Uploaded files</h3>
+        <p className="text-xs text-muted-foreground">
+          Checks every file the dashboard has uploaded and fixes the ones that
+          cannot be opened. A broken thumbnail or poster is almost always this.
+        </p>
+      </div>
+
+      <div className="px-4 pb-4">
+        <Button
+          onClick={() => repair.mutate()}
+          disabled={repair.isPending}
+          className="bg-sky-600 text-white hover:bg-sky-500"
+        >
+          {repair.isPending ? "Checking files" : "Check and repair"}
+        </Button>
+
+        {result ? (
+          <div className="mt-3 rounded-lg bg-background/60 p-3 text-xs text-muted-foreground">
+            <p>
+              {result.checked} file{result.checked === 1 ? "" : "s"} checked ·{" "}
+              {result.broken} unreadable · {result.repaired} repaired
+              {result.truncated ? " · more to go, run it again" : ""}
+            </p>
+            {result.stillBroken.length > 0 ? (
+              <div className="mt-2 space-y-1">
+                <p className="text-red-300">
+                  These are still unreadable after setting their permissions,
+                  which points at the bucket rather than the files:
+                </p>
+                {result.stillBroken.slice(0, 5).map((f) => (
+                  <code key={f.key} className="block break-all text-[11px] text-foreground/60">
+                    {f.status} · {f.key}
+                  </code>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }
