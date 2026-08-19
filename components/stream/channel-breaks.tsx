@@ -201,10 +201,13 @@ export function ChannelBreaks({ children, nowNext }: Props) {
       let resumeMark = v.currentTime;
       retry ??= setInterval(() => {
         // Moving again, not merely "ready": a stalled element keeps a healthy
-        // readyState while the picture sits still.
+        // readyState while the picture sits still. A feed that was never up
+        // comes back as data arriving at all, which `currentTime` alone would
+        // miss because it is still sitting at zero.
         const moving = v.currentTime > resumeMark + 0.25;
+        const arrived = v.buffered.length > 0 && v.readyState >= 3;
         resumeMark = v.currentTime;
-        if (moving && !v.error) {
+        if ((moving || arrived) && !v.error) {
           setAdKind((current) => {
             if (current === "live_filler") endAd();
             return current;
@@ -230,12 +233,28 @@ export function ChannelBreaks({ children, nowNext }: Props) {
     let lastTime = v.currentTime;
     let stuckFor = 0;
     const watchdog = setInterval(() => {
-      if (v.paused || v.seeking) {
+      /*
+       * Never started counts as dropped.
+       *
+       * The first version of this only caught a picture that froze, so it did
+       * nothing in the commonest case of all: arriving at the page while the
+       * feed is already down. The manifest 404s, hls.js retries the network
+       * error forever, and the element sits at `readyState` 0 holding no data,
+       * paused, with a play button over a poster. That is not a viewer's pause
+       * and it is exactly what the filler exists to cover.
+       *
+       * A viewer's pause always has data behind it, because they paused
+       * something that was playing. Nothing buffered and nothing decoded is a
+       * feed that never arrived.
+       */
+      const hasNothing = v.buffered.length === 0 && v.readyState < 2;
+      if (v.paused && !hasNothing) {
         lastTime = v.currentTime;
         stuckFor = 0;
         return;
       }
-      if (v.currentTime > lastTime + 0.25) {
+      if (v.seeking) return;
+      if (!hasNothing && v.currentTime > lastTime + 0.25) {
         lastTime = v.currentTime;
         stuckFor = 0;
         return;
