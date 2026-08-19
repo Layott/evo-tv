@@ -136,6 +136,15 @@ export interface MediaUploadProps {
   spec?: ImageSpec;
   /** Overrides the backend's ceiling. Images are held to 2 MB. */
   maxBytes?: number;
+  /**
+   * Narrow the accepted video types.
+   *
+   * Ads default to MP4 and WebM only. A `.mov` uploads without complaint,
+   * previews here because Chrome usually decodes H.264 inside QuickTime, and
+   * then refuses to play for a viewer on Firefox. For a creative that covers a
+   * dropped feed, an outage is the worst possible time to discover that.
+   */
+  videoTypes?: string[];
 }
 
 // GIF is here for ad creatives, which are often animated. Posters and
@@ -222,6 +231,7 @@ export function MediaUpload({
   disabled,
   spec,
   maxBytes: maxBytesProp,
+  videoTypes,
 }: MediaUploadProps) {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [progress, setProgress] = React.useState<number | null>(null);
@@ -237,10 +247,11 @@ export function MediaUpload({
   });
   const backend = backendQ.data ?? null;
   const uploading = progress !== null;
-  const accept = (kind === "image" ? IMAGE_TYPES : VIDEO_TYPES).join(",");
+  const videoAccepted = videoTypes ?? VIDEO_TYPES;
+  const accept = (kind === "image" ? IMAGE_TYPES : videoAccepted).join(",");
 
   async function handleFile(file: File) {
-    const allowed = kind === "image" ? IMAGE_TYPES : VIDEO_TYPES;
+    const allowed = kind === "image" ? IMAGE_TYPES : videoAccepted;
     if (!allowed.includes(file.type)) {
       toast.error(`${file.type || "That file"} is not accepted here. Use ${allowed.join(", ")}.`);
       return;
@@ -412,7 +423,11 @@ export function MediaUpload({
             spec ? `${spec.label}, up to ${formatMb(IMAGE_MAX_BYTES)}` : null,
             // What the file dialog will actually accept. Finding this out by
             // being rejected is a poor way to learn it.
-            kind === "image" ? "JPG, PNG, WebP or GIF" : "MP4, MOV or WebM",
+            kind === "image"
+              ? "JPG, PNG, WebP or GIF"
+              : videoAccepted
+                  .map((t) => ({ "video/mp4": "MP4", "video/quicktime": "MOV", "video/webm": "WebM" })[t] ?? t)
+                  .join(", "),
           ]
             .filter(Boolean)
             .join(" · ")}
