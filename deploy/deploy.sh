@@ -51,12 +51,16 @@ cd "$ROOT"
 # autodeploy.sh, nginx-rtmp.conf and cloudflare-firewall.sh ended up committed,
 # pulled, and absent from the droplet.
 echo "==> syncing deploy files from the repo"
-for f in Caddyfile docker-compose.yml cron.sh autodeploy.sh nginx-rtmp.conf cloudflare-firewall.sh deploy.sh; do
+for f in Caddyfile docker-compose.yml cron.sh autodeploy.sh nginx-rtmp.conf cloudflare-firewall.sh maintenance.html deploy.sh; do
 	if ! cmp -s "$ROOT/api/deploy/$f" "$ROOT/$f"; then
 		cp "$ROOT/api/deploy/$f" "$ROOT/$f.tmp"
 		mv "$ROOT/$f.tmp" "$ROOT/$f"
 		echo "    updated $f"
 		[ "$f" = "Caddyfile" ] && CADDY_CHANGED=1
+		# The page Caddy serves when nothing answers. It is bind mounted, so a
+		# new file is picked up without a reload, but the mount itself only
+		# exists once the compose change has been applied.
+		[ "$f" = "docker-compose.yml" ] && COMPOSE_CHANGED=1
 		[ "$f" = "nginx-rtmp.conf" ] && RTMP_CONF_CHANGED=1
 		[ "$f" = "deploy.sh" ] && echo "    (deploy.sh changed; the new version runs next deploy)"
 	fi
@@ -114,6 +118,14 @@ if [ "$RTMP_CONF_CHANGED" = "1" ] && [ -n "$(docker compose ps -q nginx-rtmp 2>/
 	# Interrupts any broadcast in progress. There is no reload for the RTMP
 	# module, so this is the honest cost of changing that file.
 	docker compose --profile rtmp up -d --no-deps --force-recreate nginx-rtmp
+fi
+
+# A changed compose file can add or move a mount, which a reload cannot pick up:
+# the maintenance page is bind mounted into caddy, and without this the config
+# that points at it would be live while the file it points at was not there.
+if [ "$COMPOSE_CHANGED" = "1" ]; then
+	echo "==> recreating caddy (compose changed)"
+	docker compose up -d --no-deps caddy
 fi
 
 if [ "$CADDY_CHANGED" = "1" ]; then
