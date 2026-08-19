@@ -8,6 +8,7 @@ import { Radio, Lock } from "@/components/icons";
 import { useAuth } from "@/components/providers";
 import { VideoPlayer } from "@/components/stream/video-player";
 import { ChannelBreaks } from "@/components/stream/channel-breaks";
+import { FillerScreen } from "@/components/stream/filler-screen";
 import { MediaImage } from "@/components/ui/media-image";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -177,6 +178,13 @@ export function MainChannelHero() {
             />
           </ChannelBreaks>
         ) : (
+          /*
+           * Off air, or signed out. The filler covers the first of those: an
+           * always-on channel showing a poster and the words "Off air" is the
+           * situation the filler creative exists for, and it was only ever
+           * wired to a feed that dropped while still marked live.
+           */
+          <FillerScreen enabled={!(channel.isLive && !signedIn)}>
           <div className="relative flex aspect-video w-full items-center justify-center">
             <MediaImage
               src={channel.posterUrl || channel.thumbnailUrl}
@@ -222,6 +230,7 @@ export function MainChannelHero() {
               )}
             </div>
           </div>
+          </FillerScreen>
         )}
       </div>
 

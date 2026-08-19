@@ -12,6 +12,8 @@ import {
 } from "@/lib/client";
 import { useAuth } from "@/components/providers";
 import { VideoPlayer } from "@/components/stream/video-player";
+import { FillerScreen } from "@/components/stream/filler-screen";
+import { ChannelBreaks } from "@/components/stream/channel-breaks";
 import { useStreamHeartbeat } from "@/hooks/use-stream-heartbeat";
 import { LiveChat } from "@/components/stream/live-chat";
 import { LivePolls } from "@/components/stream/live-polls";
@@ -184,13 +186,31 @@ export default function StreamPage() {
                * the actual broadcast. The URL is whatever an admin set on the
                * stream: a Cloudflare .m3u8, or a path served by our own origin.
                */
-              <VideoPlayer
-                src={stream.hlsUrl}
-                poster={stream.thumbnailUrl}
-                autoPlay={stream.isLive}
-                isLive={stream.isLive}
-                mediaId={stream.id}
-              />
+              /*
+               * The always-on channel gets breaks, the on-air card and filler
+               * here as well as on the home page. Watching the channel from
+               * /stream is the same act as watching it from the hero, and only
+               * one of the two behaved like a channel.
+               */
+              stream.isMainChannel ? (
+                <ChannelBreaks nowNext={null}>
+                  <VideoPlayer
+                    src={stream.hlsUrl}
+                    poster={stream.thumbnailUrl}
+                    autoPlay
+                    isLive
+                    mediaId={stream.id}
+                  />
+                </ChannelBreaks>
+              ) : (
+                <VideoPlayer
+                  src={stream.hlsUrl}
+                  poster={stream.thumbnailUrl}
+                  autoPlay={stream.isLive}
+                  isLive={stream.isLive}
+                  mediaId={stream.id}
+                />
+              )
             ) : requiresAuth ? (
               /*
                * A guest with the link. The API withholds the manifest URL from
@@ -237,16 +257,24 @@ export default function StreamPage() {
                 </div>
               </div>
             ) : (
-              <div className="flex aspect-video w-full flex-col items-center justify-center gap-2 bg-background text-center">
-                <p className="text-sm font-semibold text-foreground">
-                  {stream.isLive ? "This stream has no video source yet" : "Not currently live"}
-                </p>
-                <p className="max-w-sm text-xs text-muted-foreground">
-                  {stream.isLive
-                    ? "An admin needs to set the playback URL on this stream."
-                    : "Check the schedule for what is on next."}
-                </p>
-              </div>
+              /*
+               * Nothing to play. On the always-on channel that is exactly what
+               * the filler exists for, and until now this said "Not currently
+               * live" instead: the filler was mounted on the home page hero
+               * only, and only for a feed that dropped while still marked live.
+               */
+              <FillerScreen>
+                <div className="flex aspect-video w-full flex-col items-center justify-center gap-2 bg-background text-center">
+                  <p className="text-sm font-semibold text-foreground">
+                    {stream.isLive ? "This stream has no video source yet" : "Not currently live"}
+                  </p>
+                  <p className="max-w-sm text-xs text-muted-foreground">
+                    {stream.isLive
+                      ? "An admin needs to set the playback URL on this stream."
+                      : "Check the schedule for what is on next."}
+                  </p>
+                </div>
+              </FillerScreen>
             )}
           </div>
 
