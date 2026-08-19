@@ -4,7 +4,7 @@ import { PollsManagerPage } from "@/components/admin/polls-manager-page";
 export default function AdminPollsRoute() {
   return (
     <div className="p-6 lg:p-8">
-      <AdminGuard>
+      <AdminGuard capability="editorial">
         <PollsManagerPage />
       </AdminGuard>
     </div>

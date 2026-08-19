@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
-import { requireAdminFromRequest } from "@/lib/api/admin";
+import { requireCapability } from "@/lib/api/admin";
 import { writeAudit } from "@/lib/api/audit";
 
 /**
@@ -20,7 +20,7 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const guard = await requireAdminFromRequest();
+  const guard = await requireCapability("commerce");
   if (!guard.ok) return guard.response;
   const { id } = await params;
   const row = (
@@ -38,7 +38,7 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const guard = await requireAdminFromRequest();
+  const guard = await requireCapability("commerce");
   if (!guard.ok) return guard.response;
   const { id } = await params;
 
@@ -73,6 +73,8 @@ export async function POST(
 
   void writeAudit({
     actorId: guard.user.id,
+    actorRole: guard.role,
+    capability: "commerce",
     action: "update",
     targetType: "ad",
     targetId: id,

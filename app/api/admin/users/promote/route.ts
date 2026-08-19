@@ -124,15 +124,14 @@ export async function POST(req: NextRequest) {
 
   await writeAudit({
     actorId: guard.user.id,
+    actorRole: guard.role,
+    capability: "roster",
     action: "role.grant",
     targetType: "user",
     targetId: target.id,
-    meta: {
-      actorRole: guard.role,
-      previousRole: currentRole,
-      newRole: targetRole,
-      byEmail: true,
-    },
+    before: { role: currentRole },
+    after: { role: targetRole },
+    meta: { byEmail: true },
   });
 
   return NextResponse.json({

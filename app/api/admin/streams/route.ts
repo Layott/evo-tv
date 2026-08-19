@@ -4,7 +4,7 @@ import { and, count, desc, eq, isNotNull, isNull } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { generateStreamKey, hashStreamKey } from "@/lib/video/stream-key";
 import { getCurrentUser } from "@/lib/auth/guards";
-import { requireAdminFromRequest } from "@/lib/api/admin";
+import { requireCapability } from "@/lib/api/admin";
 import {
   defaultChannelId,
   defaultIngestKind,
@@ -29,7 +29,7 @@ const listQuerySchema = z.object({
  * Optional filters: ?gameId=&isLive=true|false&limit=&offset=
  */
 export async function GET(req: NextRequest) {
-  const guard = await requireAdminFromRequest();
+  const guard = await requireCapability("broadcast");
   if (!guard.ok) return guard.response;
 
   const url = new URL(req.url);

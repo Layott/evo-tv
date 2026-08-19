@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { and, desc, eq, isNull } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
-import { requireAdminFromRequest } from "@/lib/api/admin";
+import { requireMinRole } from "@/lib/auth/guards";
 
 function genId(): string {
   return (
@@ -43,7 +43,15 @@ const createSchema = z.object({
  * prefix, lastUsedAt, createdAt, revokedAt.
  */
 export async function GET() {
-  const guard = await requireAdminFromRequest();
+  /*
+   * Head admin, not admin.
+   *
+   * A key authenticates as an admin on every route that accepts one, does not
+   * die when somebody signs out, and is visible in full exactly once. That is
+   * a credential rather than a setting, and minting one should take the
+   * highest role on the platform.
+   */
+  const guard = await requireMinRole("head_admin");
   if (!guard.ok) return guard.response;
   const user = guard.user;
 
@@ -72,7 +80,15 @@ export async function GET() {
  * Limit: 10 active (non-revoked) keys per user.
  */
 export async function POST(req: NextRequest) {
-  const guard = await requireAdminFromRequest();
+  /*
+   * Head admin, not admin.
+   *
+   * A key authenticates as an admin on every route that accepts one, does not
+   * die when somebody signs out, and is visible in full exactly once. That is
+   * a credential rather than a setting, and minting one should take the
+   * highest role on the platform.
+   */
+  const guard = await requireMinRole("head_admin");
   if (!guard.ok) return guard.response;
   const user = guard.user;
 

@@ -2,14 +2,19 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { generateStreamKey, hashStreamKey } from "@/lib/video/stream-key";
-import { getCurrentUser } from "@/lib/auth/guards";
+import { requireCapability } from "@/lib/api/admin";
 
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const user = await getCurrentUser();
-  const role = (user as { role?: string } | null)?.role;
-  if (!user || role !== "admin") {
-    return new NextResponse("Admin required", { status: 403 });
-  }
+  /*
+   * Broadcast, and not by equality.
+   *
+   * `role !== "admin"` was false for a head_admin, so the highest role on the
+   * platform could not rotate a key. It is also the control room's job rather
+   * than an editorial one: rotating mid-broadcast takes the channel off air
+   * until every encoder is updated.
+   */
+  const guard = await requireCapability("broadcast");
+  if (!guard.ok) return guard.response;
 
   const { id } = await params;
   const row = (await db.select().from(schema.streams).where(eq(schema.streams.id, id)).limit(1))[0];

@@ -1,14 +1,14 @@
 import { NextResponse, type NextRequest } from "next/server";
 import {
   generateId,
-  requireAdminFromRequest,
+  requireCapability,
   writeAudit,
 } from "@/lib/api/admin";
 import { db, schema } from "@/lib/db";
 import { parseTeamsCsv, type ParseError } from "@/lib/api/import";
 
 export async function POST(req: NextRequest) {
-  const guard = await requireAdminFromRequest();
+  const guard = await requireCapability("editorial");
   if (!guard.ok) return guard.response;
 
   const url = new URL(req.url);

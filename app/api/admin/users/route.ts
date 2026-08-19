@@ -3,7 +3,7 @@ import { z } from "zod";
 import { and, count, desc, eq, ilike, inArray, isNull, or, sql } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { toProfile } from "@/lib/api/users";
-import { requireAdminFromRequest } from "@/lib/api/admin";
+import { requireCapability } from "@/lib/api/admin";
 import { requireMinRole } from "@/lib/auth/guards";
 import { canGrantRole, roleRank, type PlatformRole } from "@/lib/auth/roles";
 import { writeAudit } from "@/lib/api/audit";

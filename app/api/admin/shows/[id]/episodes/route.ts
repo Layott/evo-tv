@@ -4,7 +4,7 @@ import { and, asc, eq, isNull } from "drizzle-orm";
 
 import { db, schema } from "@/lib/db";
 import { requireMinRole } from "@/lib/auth/guards";
-import { generateId, requireAdminFromRequest } from "@/lib/api/admin";
+import { generateId, requireCapability } from "@/lib/api/admin";
 import { writeAudit } from "@/lib/api/audit";
 import {
   nextEpisodeNumber,
@@ -76,7 +76,7 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const guard = await requireAdminFromRequest();
+  const guard = await requireCapability("editorial");
   if (!guard.ok) return guard.response;
   const { id } = await params;
 
@@ -180,6 +180,8 @@ export async function POST(
 
   await writeAudit({
     actorId: guard.user.id,
+    actorRole: guard.role,
+    capability: "editorial",
     action: "episode.create",
     targetType: "episode",
     targetId: episodeId,

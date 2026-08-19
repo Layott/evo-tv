@@ -4,7 +4,7 @@ import { and, asc, count, desc, eq, ilike, isNotNull, isNull, or } from "drizzle
 
 import { db, schema } from "@/lib/db";
 import { requireMinRole } from "@/lib/auth/guards";
-import { generateId, requireAdminFromRequest } from "@/lib/api/admin";
+import { generateId, requireCapability } from "@/lib/api/admin";
 import { writeAudit } from "@/lib/api/audit";
 import { getShowById } from "@/lib/api/shows";
 import { priceWindow, socialLink, urlOrPath } from "@/lib/api/shows-admin";
@@ -125,7 +125,7 @@ const createSchema = z.object({
  * it straight into the same list the read endpoints fill.
  */
 export async function POST(req: NextRequest) {
-  const guard = await requireAdminFromRequest();
+  const guard = await requireCapability("editorial");
   if (!guard.ok) return guard.response;
 
   let body: unknown;
@@ -176,6 +176,8 @@ export async function POST(req: NextRequest) {
 
   await writeAudit({
     actorId: guard.user.id,
+    actorRole: guard.role,
+    capability: "editorial",
     action: "show.create",
     targetType: "show",
     targetId: id,
