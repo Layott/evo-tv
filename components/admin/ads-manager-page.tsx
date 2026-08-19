@@ -506,9 +506,48 @@ function AdForm({
       <SheetContent className="w-full overflow-y-auto border-border bg-background text-foreground sm:max-w-lg">
         <SheetHeader>
           <SheetTitle>{initial ? "Edit ad" : "New ad"}</SheetTitle>
-          <SheetDescription>Upload creative, set placement and weight.</SheetDescription>
+          <SheetDescription>
+            Choose the slot, upload what plays in it, set how often it runs.
+          </SheetDescription>
         </SheetHeader>
         <div className="space-y-4 px-4 pb-4">
+          {/*
+            Placement first, creative second.
+            
+            The creative field was at the top, so the natural way down the form
+            was to upload and then choose where it goes, by which point the
+            picker had already offered the wrong kind of file: three of these
+            placements play inside the player and take a video, and the field
+            cannot know which until the placement is set. Choosing the slot
+            first makes the upload field arrive already asking for the right
+            thing, and says what that thing is.
+          */}
+          <div className="space-y-1.5">
+            <Label>Placement</Label>
+            <Select
+              value={form.placement}
+              onValueChange={(v) => setForm({ ...form, placement: v as AdPlacement })}
+            >
+              <SelectTrigger className="w-full border-border bg-card">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PLACEMENTS.map((p) => (
+                  <SelectItem key={p.value} value={p.value}>
+                    {p.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {PLACEMENT_SPECS[form.placement] ? (
+              <p className="text-xs text-muted-foreground">
+                {PLACEMENT_SPECS[form.placement]!.note} Wants{" "}
+                {PLACEMENT_SPECS[form.placement]!.size} (
+                {PLACEMENT_SPECS[form.placement]!.ratio}).
+              </p>
+            ) : null}
+          </div>
+
           {/*
             The creative, uploaded properly.
             
@@ -539,40 +578,13 @@ function AdForm({
             </p>
           ) : null}
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label>Advertiser</Label>
-              <Input
-                value={form.advertiser}
-                onChange={(e) => setForm({ ...form, advertiser: e.target.value })}
-                className="border-border bg-card"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Placement</Label>
-              <Select
-                value={form.placement}
-                onValueChange={(v) => setForm({ ...form, placement: v as AdPlacement })}
-              >
-                <SelectTrigger className="w-full border-border bg-card">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {PLACEMENTS.map((p) => (
-                    <SelectItem key={p.value} value={p.value}>
-                      {p.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {PLACEMENT_SPECS[form.placement] ? (
-                <p className="text-xs text-muted-foreground">
-                  {PLACEMENT_SPECS[form.placement]!.note} Wants{" "}
-                  {PLACEMENT_SPECS[form.placement]!.size} (
-                  {PLACEMENT_SPECS[form.placement]!.ratio}).
-                </p>
-              ) : null}
-            </div>
+          <div className="space-y-1.5">
+            <Label>Advertiser</Label>
+            <Input
+              value={form.advertiser}
+              onChange={(e) => setForm({ ...form, advertiser: e.target.value })}
+              className="border-border bg-card"
+            />
           </div>
 
           <div className="space-y-1.5">
