@@ -6,7 +6,7 @@ import { useAuth } from "@/components/providers";
 import { Button } from "@/components/ui/button";
 import { hasMinRole, roleLabel, type PlatformRole } from "@/lib/auth/role-catalog";
 import {
-  ROOMS,
+  SECTIONS,
   hasCapability,
   type Capability,
 } from "@/lib/auth/capabilities";
@@ -29,9 +29,9 @@ export function AdminGuard({
   capability,
 }: {
   children: React.ReactNode;
-  /** Legacy seniority gate. Prefer `capability`: a room is what a job needs. */
+  /** Legacy seniority gate. Prefer `capability`: a section is what a job needs. */
   minRole?: PlatformRole;
-  /** The room this screen belongs to. */
+  /** The section this screen belongs to. */
   capability?: Capability;
 }) {
   const { role, ready } = useAuth();
@@ -52,10 +52,10 @@ export function AdminGuard({
     : hasMinRole(role, minRole ?? "admin");
 
   if (!allowed) {
-    const roomLabel = capability
-      ? (ROOMS.find((r) => r.value === capability)?.label ?? capability)
+    const sectionLabel = capability
+      ? (SECTIONS.find((r) => r.value === capability)?.label ?? capability)
       : null;
-    if (roomLabel) {
+    if (sectionLabel) {
       return (
         <div className="flex min-h-[60vh] items-center justify-center p-8">
           <div className="w-full max-w-md rounded-xl bg-card/50 p-6 text-center">
@@ -63,11 +63,11 @@ export function AdminGuard({
               <ShieldAlert className="h-5 w-5" />
             </div>
             <h2 className="text-lg font-semibold text-foreground">
-              {roomLabel} access required
+              {sectionLabel} access required
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              This page belongs to the {roomLabel.toLowerCase()} room. You are
-              signed in as {roleLabel(role)}, which does not hold it.
+              This page is part of {sectionLabel.toLowerCase()}, which the
+              {roleLabel(role)} role does not cover.
             </p>
             <Button asChild className="mt-4 bg-sky-600 hover:bg-sky-500">
               <Link href="/home">Back to home</Link>
