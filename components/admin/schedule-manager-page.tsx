@@ -375,11 +375,28 @@ export function ScheduleManagerPage() {
                   </span>
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm text-foreground">{slot.title}</p>
+                  {/*
+                    The imported grid stores a compound title, `A \ B`, and the
+                    site renders the half after the backslash as the line under
+                    the programme name. On air that reads as "UNCUT AND
+                    UNCENSORED / NEED FOR SPEED" and there was nothing here to
+                    say where that second line came from, so an operator went
+                    looking for it in Shows, which is a different record and
+                    changed nothing.
+                  */}
+                  <p className="truncate text-sm text-foreground">
+                    {slot.title.split("\\")[0]!.trim()}
+                  </p>
+                  {slot.title.includes("\\") ? (
+                    <p className="truncate text-xs text-amber-300">
+                      Second line on air: {slot.title.split("\\")[1]!.trim()}
+                    </p>
+                  ) : null}
                   <p className="text-xs capitalize text-muted-foreground">
                     {slot.pillar}
                     {slot.parentalRating ? ` · ${slot.parentalRating}+` : ""}
                     {` · ${slot.durationMin} min`}
+                    {slot.showId ? "" : " · from the imported grid, not linked to a show"}
                   </p>
                 </div>
                 <div className="flex items-center gap-1">
