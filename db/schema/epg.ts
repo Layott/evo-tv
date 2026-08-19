@@ -40,6 +40,14 @@ export const epgSlots = pgTable(
 
     title: text("title").notNull(),
     /**
+     * The second line on air: which game, which episode, whose session.
+     *
+     * Was the half of `title` after a backslash, parsed on every read, so it
+     * could not be edited and did not belong to anything. A slot's own field
+     * now, while `title` belongs to the show the slot points at.
+     */
+    subtitle: text("subtitle"),
+    /**
      * The show being scheduled.
      *
      * Programming used to be a typed string, so the grid and the shows catalogue
