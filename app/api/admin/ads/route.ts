@@ -11,7 +11,14 @@ import {
 
 const createSchema = z.object({
   placement: z.enum(["home_banner", "stream_preroll", "mid_roll", "live_filler", "sidebar", "between_content"]),
-  mediaUrl: z.string(),
+  /*
+   * A creative is the ad.
+   *
+   * This was `z.string()`, so an empty one saved happily, and a filler row with
+   * no file went on being the row the channel picked when the feed dropped:
+   * nothing played, and the screen the filler exists to cover stayed empty.
+   */
+  mediaUrl: z.string().trim().min(1, "Upload the creative first"),
   clickUrl: z.string(),
   advertiser: z.string().min(1).max(200),
   active: z.boolean(),
