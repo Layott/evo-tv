@@ -51,9 +51,52 @@ export function LiveChat({ streamId }: { streamId: string }) {
       } catch {
         return;
       }
-      // The stream opens with a { type: "hello" } frame; only messages follow.
-      const msg = payload as Partial<ChatMessage> & { type?: string };
-      if (msg.type === "hello" || !msg.id || !msg.body) return;
+
+      /*
+       * The bus publishes four shapes and this read only one of them, wrongly.
+       *
+       * A new message arrives as `{ type: "message", message }`, and this cast
+       * the envelope itself to a ChatMessage: `id` and `body` were undefined on
+       * the envelope, so the guard below dropped every frame. Nothing anybody
+       * else typed ever appeared; only your own optimistic line did, which is
+       * why a room with two people in it looked like a room with one.
+       *
+       * A deletion (`deleted`) and a pin (`pinned`) were dropped for the same
+       * reason, so a moderator deleting a message saw it vanish for themselves
+       * alone and it stayed on screen for everybody watching.
+       */
+      const frame = payload as {
+        type?: string;
+        message?: ChatMessage;
+        messageId?: string;
+        isPinned?: boolean;
+      };
+
+      if (frame.type === "deleted" && frame.messageId) {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === frame.messageId ? { ...m, isDeleted: true } : m,
+          ),
+        );
+        return;
+      }
+
+      if (frame.type === "pinned" && frame.messageId) {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === frame.messageId
+              ? { ...m, isPinned: frame.isPinned ?? !m.isPinned }
+              : m,
+          ),
+        );
+        return;
+      }
+
+      // `hello` opens the stream and `timeout` is aimed at one viewer, who
+      // finds out by being refused the next time they send.
+      if (frame.type !== "message") return;
+      const msg = frame.message;
+      if (!msg?.id || !msg.body) return;
 
       setMessages((prev) => {
         // The sender already appended its own message optimistically.
@@ -80,11 +123,11 @@ export function LiveChat({ streamId }: { streamId: string }) {
         );
         if (pendingIndex !== -1) {
           const next = [...prev];
-          next[pendingIndex] = msg as ChatMessage;
+          next[pendingIndex] = msg;
           return next;
         }
 
-        const next = [...prev, msg as ChatMessage];
+        const next = [...prev, msg];
         return next.length > MAX_MSGS ? next.slice(next.length - MAX_MSGS) : next;
       });
     };

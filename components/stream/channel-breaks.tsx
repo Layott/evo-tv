@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { looksLikeVideo } from "@/lib/media/file-kind";
 
 /**
  * The channel's rhythm, wrapped around the player.
@@ -55,7 +56,6 @@ interface Props {
   nowNext?: NowNext | null;
 }
 
-const VIDEO_EXT = /\.(mp4|webm|m3u8|mov)(\?|$)/i;
 
 async function fetchAd(placement: "mid_roll" | "live_filler"): Promise<Ad | null> {
   try {
@@ -99,7 +99,10 @@ export function ChannelBreaks({ children, nowNext }: Props) {
   const showAd = React.useCallback(
     async (kind: "mid_roll" | "live_filler") => {
       const next = await fetchAd(kind);
-      if (!next || !VIDEO_EXT.test(next.mediaUrl)) return false;
+      // A still cannot play here, and the ads form now refuses to save one
+      // against these placements. This stays as the backstop for the rows that
+      // were saved before it did.
+      if (!next || !looksLikeVideo(next.mediaUrl)) return false;
       const v = liveVideo();
       // Muted, not paused: a paused live stream falls behind and has to be
       // dragged back to the edge afterwards, and some players fight a pause.
