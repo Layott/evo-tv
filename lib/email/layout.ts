@@ -188,7 +188,7 @@ export function renderEmailHtml(content: EmailContent): string {
           </table>
 
           <p style="margin:20px 0 0;font-size:12px;line-height:1.5;color:${MUTED};font-family:${SANS};">
-            EVO TV, Lagos &middot; <span style="color:${BLUE};">evotv.co</span>
+            EVO TV, Nigeria &middot; <span style="color:${BLUE};">evotv.co</span>
           </p>
 
         </td>
@@ -216,7 +216,7 @@ export function renderEmailText(content: EmailContent): string {
     if (block.cta) lines.push(`${block.cta.label}: ${block.cta.url}`, "");
   }
   if (content.footnote) lines.push(stripTags(content.footnote), "");
-  lines.push("EVO TV, Lagos");
+  lines.push("EVO TV, Nigeria");
   return lines.join("\n");
 }
 
