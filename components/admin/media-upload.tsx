@@ -138,7 +138,9 @@ export interface MediaUploadProps {
   maxBytes?: number;
 }
 
-const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+// GIF is here for ad creatives, which are often animated. Posters and
+// thumbnails are held to a shape and a size by `spec`, not by format.
+const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const VIDEO_TYPES = ["video/mp4", "video/quicktime", "video/webm"];
 
 /** `Otaku & Chillz S1E2.mp4` -> `otaku-chillz-s1e2.mp4`, so a key never needs escaping. */
@@ -223,6 +225,10 @@ export function MediaUpload({
 }: MediaUploadProps) {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [progress, setProgress] = React.useState<number | null>(null);
+  // A preview that fails is worth saying out loud. Reset when the URL changes,
+  // or a new upload inherits the previous one's failure.
+  const [broken, setBroken] = React.useState(false);
+  React.useEffect(() => setBroken(false), [value]);
 
   const backendQ = useQuery({
     queryKey: ["admin", "uploads", "backend"],
@@ -370,22 +376,55 @@ export function MediaUpload({
         </p>
       ) : (
         <p className="text-xs text-muted-foreground">
-          {[hint, spec ? `${spec.label}, up to ${formatMb(IMAGE_MAX_BYTES)}` : null]
+          {[
+            hint,
+            spec ? `${spec.label}, up to ${formatMb(IMAGE_MAX_BYTES)}` : null,
+            // What the file dialog will actually accept. Finding this out by
+            // being rejected is a poor way to learn it.
+            kind === "image" ? "JPG, PNG, WebP or GIF" : "MP4, MOV or WebM",
+          ]
             .filter(Boolean)
             .join(" · ")}
         </p>
       )}
 
-      {kind === "image" && value ? (
-        // eslint-disable-next-line @next/next/no-img-element -- an admin preview of an
-        // arbitrary URL, which next/image would need a remotePatterns entry for.
-        <img
+      {/*
+        What was actually uploaded, not just its URL.
+        
+        The preview used to hide itself on an error, so a broken or private URL
+        left an empty space that looked identical to no upload at all. It says
+        so now. Video gets a real player: an operator checking they uploaded the
+        right episode cannot tell from a filename.
+      */}
+      {value && kind === "image" ? (
+        broken ? (
+          <div className="rounded-md bg-card p-3">
+            <p className="text-xs text-muted-foreground">
+              This link did not load. It may be private, or the file may not be
+              there any more.
+            </p>
+            <code className="mt-1 block break-all text-[11px] text-foreground/60">
+              {value}
+            </code>
+          </div>
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element -- an admin preview of an
+          // arbitrary URL, which next/image would need a remotePatterns entry for.
+          <img
+            src={value}
+            alt=""
+            className="h-24 w-auto rounded-md object-cover"
+            onError={() => setBroken(true)}
+          />
+        )
+      ) : null}
+
+      {value && kind === "video" ? (
+        <video
           src={value}
-          alt=""
-          className="h-24 w-auto rounded-md border border-border object-cover"
-          onError={(e) => {
-            (e.currentTarget as HTMLImageElement).style.display = "none";
-          }}
+          controls
+          preload="metadata"
+          className="h-40 w-full rounded-md bg-black object-contain"
         />
       ) : null}
     </div>

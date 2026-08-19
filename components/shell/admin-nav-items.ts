@@ -39,6 +39,15 @@ export interface AdminNavItem {
    * being told off for it.
    */
   capability?: Capability;
+  /**
+   * Sections that belong under this one.
+   *
+   * Orders are the shop's orders and subscriptions are part of billing, so
+   * they read as three unrelated top-level entries when they are two subjects.
+   * A child inherits nothing: it carries its own capability, because reading
+   * orders is a support job and changing prices is not.
+   */
+  children?: AdminNavItem[];
 }
 
 /**
@@ -68,11 +77,35 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { href: "/admin/ads", label: "Ads", Icon: Megaphone, capability: "commerce" },
   { href: "/admin/users", label: "Users & roles", Icon: Users, capability: "support" },
   { href: "/admin/analytics", label: "Analytics", Icon: BarChart3 },
-  { href: "/admin/shop", label: "Shop", Icon: Store, capability: "commerce" },
-  { href: "/admin/orders", label: "Orders", Icon: ShoppingBag, capability: "support" },
-  { href: "/admin/subscriptions", label: "Subscriptions", Icon: CreditCard, capability: "commerce" },
+  {
+    href: "/admin/shop",
+    label: "Shop",
+    Icon: Store,
+    capability: "commerce",
+    children: [
+      {
+        href: "/admin/orders",
+        label: "Orders",
+        Icon: ShoppingBag,
+        capability: "support",
+      },
+    ],
+  },
   { href: "/admin/moderation", label: "Moderation", Icon: Shield, capability: "community" },
-  { href: "/admin/billing", label: "Billing & USSD", Icon: Landmark, capability: "commerce" },
+  {
+    href: "/admin/billing",
+    label: "Billing & USSD",
+    Icon: Landmark,
+    capability: "commerce",
+    children: [
+      {
+        href: "/admin/subscriptions",
+        label: "Subscriptions",
+        Icon: CreditCard,
+        capability: "commerce",
+      },
+    ],
+  },
   { href: "/admin/forensic", label: "Forensic", Icon: Fingerprint, capability: "broadcast" },
   { href: "/admin/audit", label: "Audit log", Icon: ClipboardText, capability: "roster" },
   { href: "/admin/settings", label: "Settings", Icon: Settings },
@@ -82,7 +115,24 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
 export function adminNavFor(role: string | null | undefined): AdminNavItem[] {
   return ADMIN_NAV_ITEMS.filter((item) =>
     hasCapability(role, item.capability ?? "roster"),
+  ).map((item) =>
+    item.children
+      ? {
+          ...item,
+          // A child is filtered on its own capability: a support role sees
+          // Orders under a Shop entry it cannot open, which would be a door to
+          // nowhere, so the parent is filtered first and the children after.
+          children: item.children.filter((child) =>
+            hasCapability(role, child.capability ?? "roster"),
+          ),
+        }
+      : item,
   );
+}
+
+/** Every entry, parents and children, for the "what is this page called" lookup. */
+export function flattenNav(items: AdminNavItem[]): AdminNavItem[] {
+  return items.flatMap((item) => [item, ...(item.children ?? [])]);
 }
 
 /** Shared so the sidebar and the drawer cannot disagree about what is active. */
@@ -99,7 +149,7 @@ export function isAdminNavItemActive(
 export function adminNavTitle(pathname: string | null): string {
   // Longest href first, so /admin/users/roles prefers "Users & roles" over the
   // exact-match Overview entry.
-  const match = [...ADMIN_NAV_ITEMS]
+  const match = [...flattenNav(ADMIN_NAV_ITEMS)]
     .sort((a, b) => b.href.length - a.href.length)
     .find((item) => isAdminNavItemActive(item, pathname));
   return match?.label ?? "Admin";

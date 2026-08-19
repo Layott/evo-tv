@@ -7,6 +7,7 @@ import { ChevronLeft } from "@/components/icons";
 
 import {
   adminNavFor,
+  type AdminNavItem,
   isAdminNavItemActive,
 } from "@/components/shell/admin-nav-items";
 import { useAuth } from "@/components/providers";
@@ -39,29 +40,21 @@ export function AdminSidebar() {
       </div>
 
       <nav className="flex-1 overflow-y-auto px-2 py-3">
-        {items.map((item) => {
-          const { href, label, Icon } = item;
-          const active = isAdminNavItemActive(item, pathname);
-          return (
-            <Link
-              key={href}
-              href={href}
-              aria-current={active ? "page" : undefined}
-              className={`mb-0.5 flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
-                active
-                  // `accent`, not `card`: the sidebar ground is `background`,
-                  // and in the light theme a card is white, which on near-white
-                  // leaves the active row invisible. Accent is a step away from
-                  // the ground in both themes, which is the whole job here.
-                  ? "bg-accent text-sky-300"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
-              }`}
-            >
-              <Icon className="h-4 w-4" />
-              {label}
-            </Link>
-          );
-        })}
+        {items.map((item) => (
+          <React.Fragment key={item.href}>
+            <NavLink item={item} pathname={pathname} />
+            {/* Children sit under their parent, indented, because Orders are
+                the shop's orders and Subscriptions are part of billing. */}
+            {(item.children ?? []).map((child) => (
+              <NavLink
+                key={child.href}
+                item={child}
+                pathname={pathname}
+                nested
+              />
+            ))}
+          </React.Fragment>
+        ))}
       </nav>
 
       <div className="border-t border-border p-3">
@@ -74,5 +67,37 @@ export function AdminSidebar() {
         </Link>
       </div>
     </aside>
+  );
+}
+
+function NavLink({
+  item,
+  pathname,
+  nested = false,
+}: {
+  item: AdminNavItem;
+  pathname: string | null;
+  nested?: boolean;
+}) {
+  const { href, label, Icon } = item;
+  const active = isAdminNavItemActive(item, pathname);
+  return (
+    <Link
+      href={href}
+      aria-current={active ? "page" : undefined}
+      className={`mb-0.5 flex items-center gap-3 rounded-md py-2 text-sm transition-colors ${
+        nested ? "pl-9 pr-3" : "px-3"
+      } ${
+        active
+          ? // `accent`, not `card`: the sidebar ground is `background`, and in
+            // the light theme a card is white, which on near-white leaves the
+            // active row invisible. Accent is a step away in both themes.
+            "bg-accent text-sky-300"
+          : "text-muted-foreground hover:bg-accent hover:text-foreground"
+      }`}
+    >
+      <Icon className={nested ? "h-3.5 w-3.5" : "h-4 w-4"} />
+      {label}
+    </Link>
   );
 }
