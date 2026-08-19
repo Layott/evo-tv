@@ -118,6 +118,17 @@ export default function VodPage() {
   );
   const paywalled = !requiresAuth && vod.isPremium && !isPremium;
 
+  /*
+   * Not out yet beats both walls.
+   *
+   * The server sets this and withholds the manifest with it, so the page must
+   * not offer a sign-in or a subscription for something that does not exist
+   * yet. A link shared early lands here rather than on a 404, which is the
+   * point of answering at all.
+   */
+  const comingSoon = Boolean((vod as { comingSoon?: boolean }).comingSoon);
+  const releaseAt = (vod as { publishAt?: string | null }).publishAt ?? null;
+
   const onLike = () => {
     if (liked) {
       setLiked(false);
@@ -173,7 +184,7 @@ export default function VodPage() {
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-background">
       <PremiumPaywallModal
-        open={paywalled}
+        open={paywalled && !comingSoon}
         kind="vod"
         title={vod.title}
       />
@@ -184,7 +195,13 @@ export default function VodPage() {
             <BackButton fallbackHref="/library" />
           </div>
           <div className="overflow-hidden rounded-xl border border-border bg-black">
-            {requiresAuth ? (
+            {comingSoon ? (
+              <ComingSoonOverlay
+                thumb={vod.thumbnailUrl}
+                title={vod.title}
+                at={releaseAt}
+              />
+            ) : requiresAuth ? (
               <SignInOverlay
                 thumb={vod.thumbnailUrl}
                 title={vod.title}
@@ -312,6 +329,54 @@ function formatClock(sec: number) {
   const m = Math.floor(sec / 60);
   const s = Math.floor(sec % 60);
   return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+/**
+ * Not out yet.
+ *
+ * Deliberately not a countdown to the second: a stopwatch on something a week
+ * away is not information, and it would re-render this page every second for
+ * nobody's benefit. The date, in the viewer's own time, is the answer.
+ */
+function ComingSoonOverlay({
+  thumb,
+  title,
+  at,
+}: {
+  thumb: string;
+  title: string;
+  at: string | null;
+}) {
+  const when = at
+    ? new Date(at).toLocaleString(undefined, {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : null;
+  return (
+    <div className="relative aspect-video w-full">
+      {thumb ? (
+        // eslint-disable-next-line @next/next/no-img-element -- admin-entered URL
+        <img
+          src={thumb}
+          alt=""
+          className="h-full w-full object-cover opacity-40"
+        />
+      ) : null}
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/60 px-6 text-center">
+        <p className="text-sm font-medium text-sky-300">Coming soon</p>
+        <p className="text-lg font-semibold text-white">{title}</p>
+        {when ? (
+          <p className="text-sm text-white/70">Arrives {when}</p>
+        ) : (
+          <p className="text-sm text-white/70">A date has not been set yet.</p>
+        )}
+      </div>
+    </div>
+  );
 }
 
 /**

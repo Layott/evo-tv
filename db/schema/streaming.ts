@@ -177,6 +177,15 @@ export const vods = pgTable(
     mp4Path: text("mp4_path").notNull().default(""),
     thumbnailUrl: text("thumbnail_url").notNull().default(""),
     publishedAt: text("published_at").notNull(),
+    /**
+     * When this becomes visible. Null means it already is.
+     *
+     * `publishedAt` was never a gate: it sorted the library and nothing read it
+     * as a condition, so a row dated next Friday was on the site now. This one
+     * is filtered on, and the detail page answers "coming soon" rather than a
+     * 404 so a link shared early still lands somewhere.
+     */
+    publishAt: text("publish_at"),
     chapters: jsonb("chapters")
       .$type<{ label: string; startSec: number }[]>()
       .notNull()
