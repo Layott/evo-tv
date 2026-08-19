@@ -24,3 +24,34 @@ Corrections from user that should not recur. One line per lesson: rule + why.
 - **[2026-05-05] Tsconfig `noUncheckedIndexedAccess: true` breaks ported web mocks.** Why: web's mock layer assumes `arr[i]!` non-null after `pick()` calls; flipping the strict-index option in the app's tsconfig surfaces dozens of false positives in ported code. How to apply: keep `strict: true` but skip `noUncheckedIndexedAccess` in app tsconfig until web mocks are rewritten with that strictness in mind.
 - **[2026-05-05] "Port everything" means EVERY screen, not seed screens + stubs.** Why: user said "the ui and everything should match" + "no way for it to be on vercel" + "port and deploy" — sequence implied full-feature parity end-to-end. I shipped 5 fully-built screens + 84 "Coming soon — port from web" stubs and considered it done; user corrected after seeing stubs render in browser. How to apply: when user asks to port a UI, NEVER ship placeholder stubs unless they explicitly say "stub the rest." Default: every screen renders real content via `lib/mock/*` data, matching the web's flow. If timeline pressure exists, surface it as a question BEFORE stubbing — "this is 95 screens, want me to ship 5 anchors first or all-or-nothing?" — don't unilaterally choose stubs.
 - **[2026-08-14] Never write source files with PowerShell `Set-Content`.** Why: Windows PowerShell 5.1 `Get-Content` reads as ANSI, not UTF-8, so a read-modify-write round trip turns every non-ASCII character into mojibake and `-Encoding utf8` adds a BOM on top. I inserted one import line into 11 files and silently corrupted every ellipsis and dash in them; it only showed up because a tool result echoed `playersâ€¦` back at me. How to apply: use the Edit and Write tools for source files, always. If a bulk edit genuinely needs a script, do the whole read-write in .NET with an explicit `UTF8Encoding($false)` on both ends, and `git diff` afterwards looking for changed lines you did not intend. The reverse transform, if it happens again, is: read the bytes as UTF-8, re-encode that string to cp1252, write those bytes.
+
+## 2026-08-19, from walking production
+
+**An operation reporting success is not evidence of the outcome.** Every CMS
+upload had been landing private for weeks: the presigned PUT returned 200, the
+URL was saved to the row, and the only symptom was a broken image on a screen
+nobody connected to an upload. The fix is not a better ACL call, it is reading
+the file back over its public URL before treating the upload as done. Apply the
+same shape anywhere the result is only observable elsewhere: publish then fetch,
+write then read, send then confirm.
+
+**Two strings in the same order type-check and still mean different things.**
+`pinMessage(streamId, messageId)` was called as `pinMessage(messageId, handle)`
+and produced a 404 on every click. That is the third argument-or-wrapper bug in
+two days on this codebase. Where a function takes two or more values of the same
+type, take a named object instead; where one already exists, read the call site
+against the signature rather than trusting that it compiles.
+
+**A hardcoded id is a guess about data.** `channel_main` was written as the
+flagship channel's "stable id" in four places and no such row exists, so the
+channel page said Off air while the channel was live. The flag on the row is the
+truth; resolve it.
+
+**Config that advertises something the source does not produce is a lie the
+player believes.** nginx advertises a 1080p rung the encoder does not publish,
+so a viewer with headroom picks it and gets a 404. Either produce it or stop
+advertising it, and never leave the two out of step "for now".
+
+**Check the viewport, do not trust the resize.** `resize_window` reports success
+against a maximized Chrome window and `window.innerWidth` stays 1920. Read
+`window.innerWidth` before believing any mobile screenshot.
