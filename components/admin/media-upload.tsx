@@ -292,12 +292,43 @@ export function MediaUpload({
         const body = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(body.error ?? `Could not start the upload (${res.status})`);
       }
-      const signed = (await res.json()) as { uploadUrl: string; publicUrl: string };
-      // Only Content-Type goes up. The presign hoists the ACL into the query
-      // string and signs `host` alone, checked against the production bucket on
-      // 2026-08-16, so adding x-amz-acl here would be noise rather than needed.
+      const signed = (await res.json()) as {
+        uploadUrl: string;
+        publicUrl: string;
+        key: string;
+      };
       await putWithProgress(signed.uploadUrl, file, file.type, setProgress);
-      onChange(signed.publicUrl);
+
+      /*
+       * An upload is not finished until the file can be fetched.
+       *
+       * The ACL travels in the presigned query string and the bucket ignored
+       * it, so every image landed private. The URL was saved to the row all the
+       * same, and the first anybody knew of it was a broken thumbnail on a
+       * screen nobody thought to connect to an upload that had said "uploaded".
+       * This sets the ACL server-side and reads the file back over the public
+       * URL before the value is handed to the form.
+       */
+      const done = await fetch("/api/admin/uploads/finalize", {
+        method: "POST",
+        credentials: "include",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ key: signed.key }),
+      });
+      const published = (await done.json().catch(() => ({}))) as {
+        url?: string;
+        publiclyReadable?: boolean;
+        status?: number;
+        error?: string;
+      };
+      if (!done.ok || !published.publiclyReadable) {
+        throw new Error(
+          published.error ??
+            `The file uploaded but is not publicly readable (${published.status ?? done.status}). Nothing was saved.`,
+        );
+      }
+
+      onChange(published.url ?? signed.publicUrl);
       toast.success(`${label} uploaded`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Upload failed");

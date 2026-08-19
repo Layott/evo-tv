@@ -19,6 +19,10 @@ const ALLOWED_CONTENT_TYPES = [
   "image/jpeg",
   "image/png",
   "image/webp",
+  // Ad creatives are often animated, and the upload field has always offered
+  // GIF. Leaving it out here meant the picker accepted the file and the
+  // presign refused it with a 415.
+  "image/gif",
 ];
 
 /**
