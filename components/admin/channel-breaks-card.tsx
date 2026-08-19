@@ -120,7 +120,8 @@ export function ChannelBreaksCard() {
             Applies to the always-on channel only. Ads come from the{" "}
             <strong>Channel break</strong> placement, and whatever covers a dropped
             feed comes from <strong>Filler</strong>. Anyone on a paid plan sees
-            neither.
+            neither. With this off, ad breaks and the on-air card stop; the
+            dropped-feed filler keeps working on its own switch below.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -163,14 +164,23 @@ export function ChannelBreaksCard() {
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
+          {/*
+            Not disabled with the rest.
+            
+            Covering an outage is not advertising on a schedule, and gating it
+            behind the master switch meant an operator with a filler creative
+            uploaded and breaks off got a black rectangle when the feed died.
+          */}
           <Switch
             id="filler-on-drop"
             checked={draft.fillerOnDrop}
-            disabled={!draft.enabled}
             onCheckedChange={(v) => set("fillerOnDrop", v)}
           />
           <Label htmlFor="filler-on-drop" className="text-sm">
             Cover a dropped feed with filler
+            <span className="ml-1 text-xs text-muted-foreground">
+              (works even with breaks off)
+            </span>
           </Label>
         </div>
 

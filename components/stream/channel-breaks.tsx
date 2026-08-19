@@ -172,7 +172,16 @@ export function ChannelBreaks({ children, nowNext }: Props) {
 
   // ------------------------------------------------------------ filler
   React.useEffect(() => {
-    if (!config?.enabled || !config.fillerOnDrop) return;
+    /*
+     * The filler does not wait for the master switch.
+     *
+     * "Cover a dropped feed with filler" was gated behind Channel breaks being
+     * on, so an operator who uploaded a filler creative, left ad breaks off and
+     * then lost the feed saw a black rectangle and an error. The two are
+     * different jobs: breaks are advertising on a schedule, this is what covers
+     * an outage, and nobody turns on advertising in order to handle an outage.
+     */
+    if (!config?.fillerOnDrop) return;
     const v = liveVideo();
     if (!v) return;
 
