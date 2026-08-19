@@ -27,6 +27,7 @@ import { MINUTES_PER_DAY, minuteLabel } from "@/lib/epg/grid";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DurationField } from "@/components/admin/duration-field";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -505,15 +506,19 @@ export function ScheduleManagerPage() {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="slot-duration">Duration, minutes</Label>
-                  <Input
-                    id="slot-duration"
-                    inputMode="numeric"
-                    value={draft.durationMin}
-                    onChange={(e) => setDraft({ ...draft, durationMin: e.target.value })}
-                  />
-                </div>
+                <DurationField
+                  id="slot-duration"
+                  label="Duration"
+                  value={Number(draft.durationMin || 0) * 60}
+                  onChange={(sec) =>
+                    setDraft({ ...draft, durationMin: String(Math.round(sec / 60)) })
+                  }
+                  /* A slot is a block on a grid, and the grid is minute-based:
+                     offering seconds here would invite a length the schedule
+                     cannot represent. */
+                  showSeconds={false}
+                  hint="How long the slot holds the grid."
+                />
 
               </div>
 

@@ -34,7 +34,8 @@ export interface AdminShow {
   synopsis: string;
   heroUrl: string;
   posterUrl: string;
-  pillar: ShowPillar;
+  /** Null means unfiled: none of the three, rather than defaulted to esports. */
+  pillar: ShowPillar | null;
   originType: ShowOriginType;
   status: ShowStatus;
   primaryCreatorHandle: string;
@@ -135,7 +136,7 @@ export async function adminGetShow(id: string): Promise<AdminShowDetail | null> 
 export interface CreateShowInput {
   title: string;
   synopsis?: string;
-  pillar?: ShowPillar;
+  pillar?: ShowPillar | null;
   originType?: ShowOriginType;
   primaryCreatorHandle?: string;
   socialLinks?: SocialLink[];
@@ -325,7 +326,7 @@ export interface CreateVodInput {
   thumbnailUrl: string;
   durationSec: number;
   description?: string;
-  pillar?: ShowPillar;
+  pillar?: ShowPillar | null;
   maturityRating?: MaturityRating;
   isPremium?: boolean;
   contentTags?: string[];
@@ -388,7 +389,7 @@ export interface CreateClipInput {
   durationSec: number;
   creatorHandle: string;
   creatorAvatarUrl?: string;
-  pillar?: ShowPillar;
+  pillar?: ShowPillar | null;
   maturityRating?: MaturityRating;
   contentTags?: string[];
   /** What it was cut from. An episode fills in its own show server-side. */

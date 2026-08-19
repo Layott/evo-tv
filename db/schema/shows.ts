@@ -30,11 +30,10 @@ export const shows = pgTable(
     synopsis: text("synopsis").notNull().default(""),
     heroUrl: text("hero_url").notNull().default(""),
     posterUrl: text("poster_url").notNull().default(""),
+    /** Null means unfiled. See the note on `streams.pillar`. */
     pillar: text("pillar", {
       enum: ["esports", "anime", "lifestyle"],
-    })
-      .notNull()
-      .default("esports"),
+    }),
     originType: text("origin_type", {
       enum: ["evo_original", "licensed", "syndicated"],
     })

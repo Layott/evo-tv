@@ -313,12 +313,20 @@ export async function PATCH(
    * Zero ends it the moment the encoder disconnects, which is what the platform
    * used to do unconditionally. Anything above that gives the encoder a window
    * to come back before viewers are told the channel is off air.
+   *
+   * -1 waits forever. An always-on channel that loses its uplink overnight
+   * should still be the channel in the morning, and the hour cap meant somebody
+   * had to notice and restart it. Nothing ends a stream on -1 except an
+   * operator pressing End broadcast, which is the point.
    */
   if ("reconnectWindowSec" in body) {
     const v = Number(body.reconnectWindowSec);
-    if (!Number.isFinite(v) || v < 0 || v > 3600) {
+    if (!Number.isFinite(v) || v < -1 || v > 3600) {
       return NextResponse.json(
-        { error: "reconnectWindowSec must be between 0 and 3600 seconds" },
+        {
+          error:
+            "reconnectWindowSec must be -1 (wait indefinitely) or between 0 and 3600 seconds",
+        },
         { status: 400 },
       );
     }

@@ -89,7 +89,7 @@ const createSchema = z.object({
   /** Whose clip it is. Shown on the card, so it is required rather than defaulted. */
   creatorHandle: z.string().trim().min(1).max(100),
   creatorAvatarUrl: z.string().trim().max(2048).default(""),
-  pillar: z.enum(["esports", "anime", "lifestyle"]).default("esports"),
+  pillar: z.enum(["esports", "anime", "lifestyle"]).nullish(),
   maturityRating: z.enum(["kids", "pg", "teen", "mature"]).default("teen"),
   contentTags: z.array(z.string().trim().min(1).max(40)).max(30).default([]),
   /** What it was cut from. All optional, and at most one source is meaningful. */

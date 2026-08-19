@@ -124,3 +124,57 @@ rest of the ad work sits on: pre-roll and filler are both "play a creative",
 and building them before the library exists would mean building the library
 twice. 4 follows 2 and 3 immediately rather than being left as a phase that
 never happens. 5 is independent and can go whenever the encoder is free.
+
+---
+
+## Correction: most of the ad layer already exists
+
+Written before reading the code. What is already there, on both surfaces:
+
+- `ads` table (`db/schema/ops.ts`) with placements `home_banner`,
+  `stream_preroll`, `mid_roll`, `live_filler`, `sidebar`, `between_content`,
+  plus weight, active, start and end dates, and impression and click counters.
+- `/api/ads/serve`, `/api/ads/impression`, `/api/ads/click`.
+- `/admin/ads` with create, edit, delete, activate and a CTR column. Web and
+  app both have this screen.
+- `AdBanner` on the home page, which renders nothing when the slot is empty,
+  and a real pre-roll on the stream page.
+
+So phase 2 is not "build the library". The gaps are narrower:
+
+1. **Video and GIF creatives.** `AdBanner` renders an `<img>`, so a video ad
+   cannot be shown, and there is no per-creative duration for one that could.
+2. **Views, distinct from impressions.** Counters live on the row, so there is
+   no per-day history and nothing separating "rendered" from "watched". Day
+   buckets, the way `video_view_buckets` does it.
+3. **Slots that exist but are never rendered:** `sidebar`, `between_content`,
+   `mid_roll`, `live_filler`. The placements are in the enum and nothing on the
+   pages asks for them.
+4. **Filler on a dropped feed.** `live_filler` is named and unwired.
+5. **Upload.** The admin sheet says "Upload creative"; confirm it presigns
+   rather than only taking a URL.
+
+## Phase 1.5: scheduled release, and Coming soon
+
+Owner's question: set a launch date and time for an episode or a video, and it
+goes live then. Does that work with the schedule already?
+
+**No.** The schedule (`epg_slots`) is the channel's grid: it announces what is
+playing and when, and it holds nothing back. `vods.published_at` exists but
+only ever sorts, and `episodes.released_at` is nullable and read by nothing, so
+a row dated tomorrow is on the site now and plays now.
+
+What it needs:
+
+- `publish_at` on `vods` and `episodes`. Null means published, which leaves
+  every existing row exactly as it is.
+- Public lists filter `publish_at is null or publish_at <= now()`. The detail
+  page answers **Coming soon** with the date rather than a 404, so a link
+  shared early still lands somewhere sensible.
+- Admin: a date and time on the episode and VOD forms, a Scheduled badge in the
+  library list, and a Publish now button for when plans change.
+- The reminder bell the schedule already has, pointed at the release, so a
+  viewer is told when it lands instead of having to come back and look.
+- Optionally write an `epg_slots` row from the publish time, which is what puts
+  it on /schedule as well. That is the link the question assumed was there.
+- The same states in the app.
