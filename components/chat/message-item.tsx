@@ -146,8 +146,14 @@ export function MessageItem({
         </span>
         <span className="text-sm text-foreground break-words">{msg.body}</span>
       </div>
+      {/*
+        Hover-to-reveal is a desktop idea, and a phone has no hover: these three
+        buttons were `opacity-0` with no way to bring them back, so a moderator
+        on a phone could not pin, delete or ban at all. Devices that really do
+        hover keep the quiet version; everything else shows them.
+      */}
       {isAdmin && (
-        <div className="flex-shrink-0 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex-shrink-0 flex gap-0.5 opacity-100 transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100">
           <Button
             size="icon-sm"
             variant="ghost"
