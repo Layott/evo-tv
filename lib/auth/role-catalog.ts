@@ -23,6 +23,8 @@ export type PlatformRole =
   | "premium"
   | "creator"
   | "support_admin"
+  | "programmer"
+  | "broadcast_op"
   | "moderator"
   | "finance_admin"
   | "admin"
@@ -35,6 +37,16 @@ export const RANK: Record<PlatformRole, number> = {
   // Creator is a content-producer role, above premium but not an admin tier.
   creator: 5,
   support_admin: 10,
+  /*
+   * The two room roles sit above support and below moderator on purpose.
+   *
+   * Rank is seniority: who may grant what, and who outranks whom. It is no
+   * longer what opens a room, because a ladder would hand a programmer every
+   * moderation power for being ranked above it. Rooms come from
+   * `capabilities.ts`, and these two hold exactly one each.
+   */
+  programmer: 15,
+  broadcast_op: 15,
   moderator: 20,
   finance_admin: 30,
   admin: 40,
@@ -112,6 +124,22 @@ export const ROLE_CATALOG: RoleInfo[] = [
     value: "support_admin",
     label: "Support",
     summary: "Reads accounts and orders to answer tickets. Changes nothing that a viewer sees.",
+    isStaff: true,
+    assignable: true,
+  },
+  {
+    value: "programmer",
+    label: "Programmer",
+    summary:
+      "Plans what airs: shows, episodes, library and the schedule. No streams, no money, no roles.",
+    isStaff: true,
+    assignable: true,
+  },
+  {
+    value: "broadcast_op",
+    label: "Broadcast",
+    summary:
+      "The control room: streams, ingest keys, playout and ending a broadcast. Nothing editorial.",
     isStaff: true,
     assignable: true,
   },

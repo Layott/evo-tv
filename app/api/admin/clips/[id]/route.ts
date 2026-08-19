@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { requireMinRole } from "@/lib/auth/guards";
 import { writeAudit } from "@/lib/api/audit";
-import { requireAdminFromRequest } from "@/lib/api/admin";
+import { requireCapability } from "@/lib/api/admin";
 import { getClipById } from "@/lib/api/vods";
 
 const patchSchema = z
@@ -25,7 +25,7 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const guard = await requireAdminFromRequest();
+  const guard = await requireCapability("editorial");
   if (!guard.ok) return guard.response;
   const { id } = await params;
 
@@ -82,6 +82,8 @@ export async function DELETE(
 
   await writeAudit({
     actorId: guard.user.id,
+    actorRole: guard.role,
+    capability: "editorial",
     action: "clip.delete",
     targetType: "clip",
     targetId: id,

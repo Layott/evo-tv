@@ -3,7 +3,7 @@ import { z } from "zod";
 import { and, count, desc, eq, isNotNull, isNull } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { requireMinRole } from "@/lib/auth/guards";
-import { generateId, requireAdminFromRequest } from "@/lib/api/admin";
+import { generateId, requireCapability } from "@/lib/api/admin";
 import { writeAudit } from "@/lib/api/audit";
 import { slugForClip } from "@/lib/api/slugs";
 
@@ -110,7 +110,7 @@ const createSchema = z.object({
  * episode three of a series it is not filed under.
  */
 export async function POST(req: NextRequest) {
-  const guard = await requireAdminFromRequest();
+  const guard = await requireCapability("editorial");
   if (!guard.ok) return guard.response;
 
   let body: unknown;
@@ -187,6 +187,8 @@ export async function POST(req: NextRequest) {
 
   await writeAudit({
     actorId: guard.user.id,
+    actorRole: guard.role,
+    capability: "editorial",
     action: "clip.create",
     targetType: "clip",
     targetId: id,

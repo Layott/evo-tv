@@ -5,7 +5,7 @@ import { db, schema } from "@/lib/db";
 import {
   generateId,
   mapSqliteUniqueError,
-  requireAdminFromRequest,
+  requireCapability,
   writeAudit,
 } from "@/lib/api/admin";
 
@@ -38,7 +38,7 @@ const listQuerySchema = z.object({
  * Optional filters: ?placement=&active=true|false&limit=&offset=
  */
 export async function GET(req: NextRequest) {
-  const guard = await requireAdminFromRequest();
+  const guard = await requireCapability("commerce");
   if (!guard.ok) return guard.response;
 
   const url = new URL(req.url);
@@ -78,7 +78,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const guard = await requireAdminFromRequest();
+  const guard = await requireCapability("commerce");
   if (!guard.ok) return guard.response;
 
   let body: unknown;
@@ -103,6 +103,8 @@ export async function POST(req: NextRequest) {
 
   writeAudit({
     actorId: guard.user.id,
+    actorRole: guard.role,
+    capability: "commerce",
     action: "create",
     targetType: "ad",
     targetId: id,

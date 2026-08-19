@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import {
   mapSqliteUniqueError,
-  requireAdminFromRequest,
+  requireCapability,
   writeAudit,
 } from "@/lib/api/admin";
 
@@ -25,7 +25,7 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const guard = await requireAdminFromRequest();
+  const guard = await requireCapability("commerce");
   if (!guard.ok) return guard.response;
 
   const { id } = await params;
@@ -72,6 +72,8 @@ export async function PATCH(
 
   writeAudit({
     actorId: guard.user.id,
+    actorRole: guard.role,
+    capability: "commerce",
     action: "update",
     targetType: "ad",
     targetId: id,
@@ -85,7 +87,7 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const guard = await requireAdminFromRequest();
+  const guard = await requireCapability("commerce");
   if (!guard.ok) return guard.response;
 
   const { id } = await params;
@@ -106,6 +108,8 @@ export async function DELETE(
 
   writeAudit({
     actorId: guard.user.id,
+    actorRole: guard.role,
+    capability: "commerce",
     action: "delete",
     targetType: "ad",
     targetId: id,

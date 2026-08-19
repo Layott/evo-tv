@@ -4,7 +4,7 @@ import { db, schema } from "@/lib/db";
 import {
   generateId,
   mapSqliteUniqueError,
-  requireAdminFromRequest,
+  requireCapability,
   writeAudit,
 } from "@/lib/api/admin";
 
@@ -21,7 +21,7 @@ const createSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  const guard = await requireAdminFromRequest();
+  const guard = await requireCapability("editorial");
   if (!guard.ok) return guard.response;
 
   let body: unknown;
@@ -54,6 +54,8 @@ export async function POST(req: NextRequest) {
 
   writeAudit({
     actorId: guard.user.id,
+    actorRole: guard.role,
+    capability: "editorial",
     action: "create",
     targetType: "player",
     targetId: id,

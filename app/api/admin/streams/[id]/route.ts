@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
-import { requireMinRole } from "@/lib/auth/guards";
+import { requireCapability } from "@/lib/api/admin";
 import { writeAudit } from "@/lib/api/audit";
 import { emit } from "@/lib/sse/bus";
 
@@ -19,7 +19,7 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const guard = await requireMinRole("admin");
+  const guard = await requireCapability("broadcast");
   if (!guard.ok) return guard.response;
   const { id } = await params;
 
@@ -52,6 +52,8 @@ export async function DELETE(
 
   await writeAudit({
     actorId: guard.user.id,
+    actorRole: guard.role,
+    capability: "broadcast",
     action: "stream.delete",
     targetType: "stream",
     targetId: id,
@@ -97,7 +99,7 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const guard = await requireMinRole("support_admin");
+  const guard = await requireCapability("broadcast");
   if (!guard.ok) return guard.response;
   const { id } = await params;
 
@@ -490,19 +492,22 @@ export async function PATCH(
 
   await writeAudit({
     actorId: guard.user.id,
-    action: "stream.schedule_update",
+    actorRole: guard.role,
+    capability: "broadcast",
+    action: "stream.update",
     targetType: "stream",
     targetId: id,
+    /*
+     * The whole row before, and the row as it will be. The helper keeps only
+     * the fields that actually moved, so this hand-picked list of five columns
+     * is no longer the limit of what the log can explain: a title change, a
+     * rating change and a reconnect window change are all recorded now, and
+     * each says what the value was.
+     */
+    before: existing as unknown as Record<string, unknown>,
+    after: { ...existing, ...update } as unknown as Record<string, unknown>,
     meta: {
-      role: guard.role,
-      prev: {
-        scheduledStartAt: existing.scheduledStartAt,
-        scheduledDurationMin: existing.scheduledDurationMin,
-        hlsPath: existing.hlsPath,
-        playoutFilePath: existing.playoutFilePath,
-        thumbnailUrl: existing.thumbnailUrl,
-      },
-      next: update,
+      fields: Object.keys(update),
     },
   });
 

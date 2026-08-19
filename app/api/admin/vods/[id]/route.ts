@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { requireMinRole } from "@/lib/auth/guards";
 import { writeAudit } from "@/lib/api/audit";
-import { requireAdminFromRequest } from "@/lib/api/admin";
+import { requireCapability } from "@/lib/api/admin";
 import { getVodById } from "@/lib/api/vods";
 
 /** http(s) URL or an absolute /path. "" clears the field. */
@@ -62,7 +62,7 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const guard = await requireAdminFromRequest();
+  const guard = await requireCapability("editorial");
   if (!guard.ok) return guard.response;
   const { id } = await params;
 
@@ -94,6 +94,8 @@ export async function PATCH(
 
     await writeAudit({
       actorId: guard.user.id,
+      actorRole: guard.role,
+      capability: "editorial",
       action: "vod.update",
       targetType: "vod",
       targetId: id,
@@ -134,6 +136,8 @@ export async function DELETE(
 
   await writeAudit({
     actorId: guard.user.id,
+    actorRole: guard.role,
+    capability: "editorial",
     action: "vod.delete",
     targetType: "vod",
     targetId: id,

@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
-import { requireMinRole } from "@/lib/auth/guards";
+import { requireCapability } from "@/lib/api/admin";
 import { writeAudit } from "@/lib/api/audit";
 import { emit } from "@/lib/sse/bus";
 
@@ -19,7 +19,7 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const guard = await requireMinRole("moderator");
+  const guard = await requireCapability("broadcast");
   if (!guard.ok) return guard.response;
   const { id } = await params;
 
@@ -52,6 +52,8 @@ export async function POST(
 
   await writeAudit({
     actorId: guard.user.id,
+    actorRole: guard.role,
+    capability: "broadcast",
     action: "stream.force_end",
     targetType: "stream",
     targetId: id,
