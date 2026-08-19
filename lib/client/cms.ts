@@ -583,3 +583,69 @@ export async function adminGrantRoleByEmail(
 ): Promise<{ id: string; email: string; role: string }> {
   return apiSend("POST", "/api/admin/users/promote", { email, role });
 }
+
+/* ── Publishing an upload ──────────────────────────────────────────────── */
+
+export interface PublishVideoInput {
+  /** The file, already PUT to storage by the browser. */
+  hlsUrl: string;
+  title: string;
+  synopsis?: string;
+  thumbnailUrl?: string;
+  runtimeSec?: number;
+  isPremium?: boolean;
+  maturityRating?: MaturityRating;
+  pillar?: ShowPillar | null;
+  /** When it should appear. Null means now. */
+  publishAt?: string | null;
+  /** File it on a show that already exists. */
+  showId?: string;
+  /** Or describe one, and it is created with this upload as its first episode. */
+  newShow?: {
+    title: string;
+    synopsis?: string;
+    pillar?: ShowPillar | null;
+    originType?: ShowOriginType;
+    posterUrl?: string;
+    heroUrl?: string;
+    isPremium?: boolean;
+    maturityRating?: MaturityRating;
+  };
+  seasonNumber?: number;
+  /** Omit for the next free number in that season. */
+  episodeNumber?: number;
+}
+
+export interface PublishVideoResult {
+  kind: "vod" | "episode";
+  vodId?: string;
+  showId?: string;
+  episodeId?: string;
+  seasonNumber?: number;
+  episodeNumber?: number;
+  createdShow?: boolean;
+}
+
+/**
+ * One call for the upload form.
+ *
+ * Filing a video on a series used to mean making the show, then a season, then
+ * the episode, on a different screen, with the URL pasted twice. The server
+ * does all three in one transaction now, so a half-made show cannot be left
+ * behind by somebody who stopped halfway.
+ */
+export async function publishVideo(
+  input: PublishVideoInput,
+): Promise<PublishVideoResult> {
+  const res = await fetch("/api/admin/library/publish", {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) {
+    const body = (await res.json().catch(() => null)) as { error?: string } | null;
+    throw new Error(body?.error ?? "Could not publish the video");
+  }
+  return res.json();
+}
