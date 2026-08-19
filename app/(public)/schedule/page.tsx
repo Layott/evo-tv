@@ -112,6 +112,26 @@ export default function SchedulePage() {
     return rows.find((r) => r.airsAt <= now && now < endsAt(r))?.id ?? null;
   }, [rows, now]);
 
+  /**
+   * The programme that starts next, which "On now" alone never answered.
+   *
+   * A column of times is a list until something says which one is imminent,
+   * and the viewer was left comparing each row against their own clock. The
+   * first row that has not started yet is the answer, including when nothing
+   * is on air at all, which is most of the day.
+   *
+   * Only on a day that contains now: on tomorrow's page every row is in the
+   * future, and tagging the 06:00 one as next while today is still running
+   * would be wrong.
+   */
+  const upNextId = React.useMemo(() => {
+    if (!now) return null;
+    const first = rows.find((r) => r.airsAt > now);
+    if (!first) return null;
+    const dayHasNow = rows.some((r) => r.airsAt <= now);
+    return dayHasNow ? first.id : null;
+  }, [rows, now]);
+
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 sm:py-8">
       <header>
@@ -220,7 +240,12 @@ export default function SchedulePage() {
         ) : (
           <ul>
             {rows.map((row) => (
-              <SlotRow key={row.id} row={row} onAir={row.id === onAirId} />
+              <SlotRow
+                key={row.id}
+                row={row}
+                onAir={row.id === onAirId}
+                upNext={row.id === upNextId}
+              />
             ))}
           </ul>
         )}
@@ -229,7 +254,15 @@ export default function SchedulePage() {
   );
 }
 
-function SlotRow({ row, onAir }: { row: EpgRow; onAir: boolean }) {
+function SlotRow({
+  row,
+  onAir,
+  upNext,
+}: {
+  row: EpgRow;
+  onAir: boolean;
+  upNext: boolean;
+}) {
   const body = (
     <div
       className={[
@@ -260,6 +293,13 @@ function SlotRow({ row, onAir }: { row: EpgRow; onAir: boolean }) {
           {onAir ? (
             <span className="rounded-sm bg-red-600 px-1.5 py-px text-[10px] font-bold text-white">
               On now
+            </span>
+          ) : null}
+          {/* Quieter than On now on purpose: one thing is happening, the other
+              is only about to. Same shape, no red. */}
+          {upNext ? (
+            <span className="rounded-sm bg-sky-400/20 px-1.5 py-px text-[10px] font-bold text-sky-300">
+              Up next
             </span>
           ) : null}
         </span>
