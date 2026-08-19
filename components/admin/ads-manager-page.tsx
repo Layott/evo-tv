@@ -94,6 +94,18 @@ const VIDEO_PLACEMENTS: AdPlacement[] = [
   "live_filler",
 ];
 
+/**
+ * A container the web cannot be relied on to play.
+ *
+ * `.mov` uploads without complaint, previews in the admin because Chrome will
+ * usually decode H.264 inside QuickTime, and then does not play for a viewer on
+ * Firefox. For a filler that covers a dropped feed that is the worst possible
+ * time to find out, so the row says so rather than waiting for the outage.
+ */
+function mayNotPlay(url: string): boolean {
+  return /\.mov(\?|$)/i.test(url);
+}
+
 function creativeKind(placement: AdPlacement): "image" | "video" {
   return VIDEO_PLACEMENTS.includes(placement) ? "video" : "image";
 }
@@ -215,13 +227,38 @@ export function AdsManagerPage() {
       header: "Creative",
       cell: (row) => (
         <div className="flex items-center gap-3">
+          {/*
+            A video creative in an `<img>` is a broken-image icon.
+            
+            The three player placements take video now, and this cell still
+            asked the browser to decode an MP4 as a picture, so the first ad
+            uploaded for downtime looked like a failed upload. A muted video
+            seeked to the first frame is the thumbnail.
+          */}
           <div className="h-10 w-20 overflow-hidden rounded bg-muted">
-            {}
-            <img src={row.mediaUrl} alt="" className="h-full w-full object-cover" />
+            {looksLikeVideo(row.mediaUrl) ? (
+              <video
+                src={`${row.mediaUrl}#t=0.1`}
+                muted
+                playsInline
+                preload="metadata"
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element -- an arbitrary
+              // creative URL, which next/image would need a remotePatterns entry for.
+              <img src={row.mediaUrl} alt="" className="h-full w-full object-cover" />
+            )}
           </div>
           <div>
             <div className="text-sm font-medium text-foreground">{row.advertiser}</div>
             <div className="text-xs text-muted-foreground">{row.clickUrl}</div>
+            {mayNotPlay(row.mediaUrl) ? (
+              <div className="mt-0.5 text-xs text-amber-300">
+                QuickTime file. Some browsers refuse to play it, so upload an MP4
+                for anything that has to run on air.
+              </div>
+            ) : null}
           </div>
         </div>
       ),
@@ -562,6 +599,9 @@ function AdForm({
             value={form.mediaUrl}
             onChange={(url) => setForm({ ...form, mediaUrl: url })}
             kind={creativeKind(form.placement)}
+            // MP4 or WebM only: a QuickTime creative plays in the admin preview
+            // and then refuses to play for a viewer on Firefox.
+            videoTypes={["video/mp4", "video/webm"]}
             folder="ads"
             hint={
               PLACEMENT_SPECS[form.placement]
