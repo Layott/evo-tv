@@ -20,10 +20,12 @@ export async function getGridSlots(): Promise<GridSlot[]> {
       startMinute: schema.epgSlots.startMinute,
       durationMin: schema.epgSlots.durationMin,
       title: schema.epgSlots.title,
+      subtitle: schema.epgSlots.subtitle,
       pillar: schema.epgSlots.pillar,
       parentalRating: schema.epgSlots.parentalRating,
       slotCode: schema.epgSlots.slotCode,
       showId: schema.epgSlots.showId,
+      showTitle: schema.shows.title,
       showSlug: schema.shows.slug,
       showPosterUrl: schema.shows.posterUrl,
     })

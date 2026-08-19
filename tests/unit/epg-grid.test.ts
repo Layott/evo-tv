@@ -38,6 +38,10 @@ function slot(
     startMinute,
     durationMin,
     title,
+    // A slot with no show and no subtitle of its own still has to render, and
+    // the compound `A \ B` titles from the import are what these tests feed.
+    subtitle: null,
+    showTitle: null,
     pillar: "esports",
     parentalRating: 16,
     slotCode: null,
