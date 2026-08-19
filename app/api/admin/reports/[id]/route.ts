@@ -4,11 +4,37 @@ import { eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { requireMinRole } from "@/lib/auth/guards";
 import { writeAudit } from "@/lib/api/audit";
+import { generateId } from "@/lib/api/admin";
 
-const patchSchema = z.object({
-  status: z.enum(["resolved", "dismissed"]),
-  notes: z.string().max(2000).optional(),
-});
+/**
+ * What the queue's four buttons mean.
+ *
+ * The screen has always sent `action`, and this route has always wanted
+ * `status`, so every button answered 422 and the toast printed the validation
+ * object as "[object Object]". Nothing in the moderation queue worked, and the
+ * error said nothing about why.
+ *
+ * `status` is still accepted, because the bulk endpoint speaks it.
+ */
+const patchSchema = z
+  .object({
+    action: z.enum(["approve", "remove", "ban", "escalate"]).optional(),
+    status: z.enum(["resolved", "dismissed"]).optional(),
+    notes: z.string().max(2000).optional(),
+    /** How long a ban lasts, in hours. Omitted means permanent. */
+    banHours: z.number().int().min(1).max(24 * 365).optional(),
+  })
+  .refine((v) => v.action || v.status, {
+    message: "Say what to do: action or status",
+  });
+
+/** Approving a report dismisses it: the thing reported was fine. */
+const STATUS_FOR: Record<string, string> = {
+  approve: "dismissed",
+  remove: "resolved",
+  ban: "resolved",
+  escalate: "escalated",
+};
 
 /**
  * PATCH /api/admin/reports/[id]
@@ -30,7 +56,8 @@ export async function PATCH(
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 });
   }
-  const { status, notes } = parsed.data;
+  const { action, notes, banHours } = parsed.data;
+  const status = action ? STATUS_FOR[action]! : parsed.data.status!;
 
   const row = (
     await db
@@ -48,6 +75,74 @@ export async function PATCH(
   }
 
   const nowIso = new Date().toISOString();
+
+  /*
+   * The side effects, which is the part that was missing entirely.
+   *
+   * Marking a report resolved does nothing to the message that was reported or
+   * to the person who sent it, so "Delete message" and "Ban user" were labels
+   * on a button that only closed the report.
+   */
+  let removedMessage = false;
+  let bannedUserId: string | null = null;
+
+  if (action === "remove" && row.targetType === "chat_message") {
+    await db
+      .update(schema.chatMessages)
+      .set({ isDeleted: true })
+      .where(eq(schema.chatMessages.id, row.targetId));
+    removedMessage = true;
+  }
+
+  if (action === "ban") {
+    // Who to ban: the author of the reported message, or the reported account
+    // itself. Anything else has no person attached and the ban is refused
+    // rather than guessed at.
+    let targetUserId: string | null = null;
+    if (row.targetType === "user") {
+      targetUserId = row.targetId;
+    } else if (row.targetType === "chat_message") {
+      const msg = (
+        await db
+          .select({ userId: schema.chatMessages.userId })
+          .from(schema.chatMessages)
+          .where(eq(schema.chatMessages.id, row.targetId))
+          .limit(1)
+      )[0];
+      targetUserId = msg?.userId ?? null;
+      if (msg) {
+        await db
+          .update(schema.chatMessages)
+          .set({ isDeleted: true })
+          .where(eq(schema.chatMessages.id, row.targetId));
+        removedMessage = true;
+      }
+    }
+
+    if (!targetUserId) {
+      return NextResponse.json(
+        {
+          error:
+            "This report is not against a person, so there is nobody to ban. Delete the message instead.",
+        },
+        { status: 409 },
+      );
+    }
+
+    await db.insert(schema.userSanctions).values({
+      id: generateId("sanction"),
+      userId: targetUserId,
+      kind: "chat_ban",
+      reason: notes?.trim() || `Report ${id}: ${row.category}`,
+      issuedBy: guard.user.id,
+      expiresAt: banHours
+        ? new Date(Date.now() + banHours * 3_600_000).toISOString()
+        : null,
+      createdAt: nowIso,
+    });
+    bannedUserId = targetUserId;
+  }
+
   await db
     .update(schema.contentReports)
     .set({
@@ -60,17 +155,29 @@ export async function PATCH(
 
   await writeAudit({
     actorId: guard.user.id,
-    action: `report.${status}`,
+    actorRole: guard.role,
+    capability: "community",
+    action: `report.${action ?? status}`,
     targetType: "report",
     targetId: id,
+    before: { status: row.status },
+    after: { status },
     meta: {
-      role: guard.role,
       reportTargetType: row.targetType,
       reportTargetId: row.targetId,
       category: row.category,
       notes,
+      removedMessage,
+      bannedUserId,
+      banHours: banHours ?? null,
     },
   });
 
-  return NextResponse.json({ ok: true, reportId: id, status });
+  return NextResponse.json({
+    ok: true,
+    reportId: id,
+    status,
+    removedMessage,
+    bannedUserId,
+  });
 }
