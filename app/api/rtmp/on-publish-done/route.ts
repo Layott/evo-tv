@@ -83,10 +83,11 @@ export async function POST(req: NextRequest) {
    * inside the window clears `feedLostAt` and nobody watching sees anything.
    *
    * A window of zero is the old behaviour, for a stream that should end the
-   * moment its encoder does.
+   * moment its encoder does. -1 waits forever, so it takes the same path as a
+   * positive window and simply never times out.
    */
   const windowSec = row.reconnectWindowSec ?? 0;
-  if (windowSec > 0) {
+  if (windowSec !== 0) {
     await db
       .update(schema.streams)
       .set({ feedLostAt: nowIso })

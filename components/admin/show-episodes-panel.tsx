@@ -20,6 +20,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DurationField } from "@/components/admin/duration-field";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -454,16 +455,16 @@ export function ShowEpisodesPanel({ show }: { show: AdminShow }) {
                   </p>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="episode-runtime">Runtime, minutes</Label>
-                  <Input
-                    id="episode-runtime"
-                    inputMode="numeric"
-                    value={draft.runtimeMin}
-                    onChange={(e) => setDraft({ ...draft, runtimeMin: e.target.value })}
-                    placeholder="24"
-                  />
-                </div>
+                <DurationField
+                  id="episode-runtime"
+                  label="Runtime"
+                  value={Number(draft.runtimeMin || 0) * 60}
+                  onChange={(sec) =>
+                    setDraft({ ...draft, runtimeMin: String(Math.round(sec / 60)) })
+                  }
+                  showSeconds={false}
+                  hint="Shown on the episode row and used by the schedule."
+                />
                 <div className="space-y-2">
                   <Label htmlFor="episode-tier">Access</Label>
                   <Select

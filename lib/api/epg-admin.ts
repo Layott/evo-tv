@@ -50,7 +50,11 @@ export const slotPatchSchema = slotBodySchema.partial();
  */
 export async function showFacts(
   showId: string,
-): Promise<{ title: string; pillar: "esports" | "anime" | "lifestyle" } | null> {
+): Promise<{
+  title: string;
+  /** Null when the show is unfiled, which a slot copies as-is. */
+  pillar: "esports" | "anime" | "lifestyle" | null;
+} | null> {
   const row = (
     await db
       .select({ title: schema.shows.title, pillar: schema.shows.pillar })

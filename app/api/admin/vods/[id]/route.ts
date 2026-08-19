@@ -34,7 +34,7 @@ const patchSchema = z
     title: z.string().trim().min(3).max(200),
     description: z.string().max(2000),
     gameId: z.string().min(1),
-    pillar: z.enum(["esports", "anime", "lifestyle"]),
+    pillar: z.enum(["esports", "anime", "lifestyle"]).nullable(),
     isPremium: z.boolean(),
     durationSec: z.number().int().positive().max(24 * 60 * 60),
     hlsUrl: urlOrPath,

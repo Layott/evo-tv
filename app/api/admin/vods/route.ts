@@ -97,7 +97,7 @@ const createSchema = z.object({
   thumbnailUrl: z.string().min(1),
   durationSec: z.number().int().positive(),
   description: z.string().max(2000).default(""),
-  pillar: z.enum(["esports", "anime", "lifestyle"]).default("esports"),
+  pillar: z.enum(["esports", "anime", "lifestyle"]).nullish(),
   maturityRating: z.enum(["kids", "pg", "teen", "mature"]).default("teen"),
   isPremium: z.boolean().default(false),
   contentTags: z.array(z.string()).default([]),

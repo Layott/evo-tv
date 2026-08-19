@@ -108,12 +108,17 @@ export const streams = pgTable(
     language: text("language").notNull().default("en"),
     tags: jsonb("tags").$type<string[]>().notNull().default([]),
     isPremium: boolean("is_premium").notNull().default(false),
-    // Phase 9a - top-level content pillar. Defaults to esports for legacy rows.
+    /**
+     * Top-level content pillar, or nothing.
+     *
+     * Null means unfiled: it appears under Everything and under no pillar
+     * filter. This was NOT NULL defaulting to esports, so a programme that was
+     * none of the three was filed as esports and showed up under that filter,
+     * and an operator had no way to say otherwise.
+     */
     pillar: text("pillar", {
       enum: ["esports", "anime", "lifestyle"],
-    })
-      .notNull()
-      .default("esports"),
+    }),
     // Content maturity rating (kids<pg<teen<mature). Defaults to teen for legacy rows.
     maturityRating: text("maturity_rating").notNull().default("teen"),
     // Free-form content descriptors (e.g. "violence", "esports", "fps").
@@ -179,12 +184,17 @@ export const vods = pgTable(
     viewCount: integer("view_count").notNull().default(0),
     likeCount: integer("like_count").notNull().default(0),
     isPremium: boolean("is_premium").notNull().default(false),
-    // Phase 9a - top-level content pillar. Defaults to esports for legacy rows.
+    /**
+     * Top-level content pillar, or nothing.
+     *
+     * Null means unfiled: it appears under Everything and under no pillar
+     * filter. This was NOT NULL defaulting to esports, so a programme that was
+     * none of the three was filed as esports and showed up under that filter,
+     * and an operator had no way to say otherwise.
+     */
     pillar: text("pillar", {
       enum: ["esports", "anime", "lifestyle"],
-    })
-      .notNull()
-      .default("esports"),
+    }),
     // Content maturity rating (kids<pg<teen<mature). Defaults to teen for legacy rows.
     maturityRating: text("maturity_rating").notNull().default("teen"),
     // Free-form content descriptors.
@@ -232,12 +242,17 @@ export const clips = pgTable(
     gameId: text("game_id")
       .notNull()
       .references(() => games.id, { onDelete: "cascade" }),
-    // Phase 9a - top-level content pillar. Defaults to esports for legacy rows.
+    /**
+     * Top-level content pillar, or nothing.
+     *
+     * Null means unfiled: it appears under Everything and under no pillar
+     * filter. This was NOT NULL defaulting to esports, so a programme that was
+     * none of the three was filed as esports and showed up under that filter,
+     * and an operator had no way to say otherwise.
+     */
     pillar: text("pillar", {
       enum: ["esports", "anime", "lifestyle"],
-    })
-      .notNull()
-      .default("esports"),
+    }),
     // Content maturity rating (kids<pg<teen<mature). Defaults to teen for legacy rows.
     maturityRating: text("maturity_rating").notNull().default("teen"),
     // Free-form content descriptors.

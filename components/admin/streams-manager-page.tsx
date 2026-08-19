@@ -660,11 +660,17 @@ export function StreamsManagerPage() {
                       <SelectItem value="300">Wait 5 minutes</SelectItem>
                       <SelectItem value="900">Wait 15 minutes</SelectItem>
                       <SelectItem value="3600">Wait an hour</SelectItem>
+                      <SelectItem value="-1">
+                        Wait for it, however long
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">
                     Viewers keep their place while the encoder reconnects. Past
-                    the window the broadcast ends for real.
+                    the window the broadcast ends for real. Waiting for it
+                    never ends the broadcast by itself, so an always-on channel
+                    that loses its uplink overnight is still the channel in the
+                    morning; End broadcast is then the only way off air.
                   </p>
                 </div>
 
@@ -1061,7 +1067,8 @@ interface NewStreamPayload {
   eventId: string;
   streamerName: string;
   isPremium: boolean;
-  pillar: "esports" | "anime" | "lifestyle";
+  /** Null means unfiled: none of the three pillars. */
+  pillar: "esports" | "anime" | "lifestyle" | null;
   thumbnailUrl: string;
 }
 
@@ -1099,8 +1106,11 @@ function CreateStreamDrawer({
   const [eventId, setEventId] = React.useState<string>("none");
   const [streamerName, setStreamerName] = React.useState("EVO TV Official");
   const [isPremium, setIsPremium] = React.useState(false);
-  const [pillar, setPillar] =
-    React.useState<NewStreamPayload["pillar"]>("esports");
+  // "none" is the sentinel for unfiled: Radix Select cannot carry an empty
+  // value, and null is what the API is sent.
+  const [pillar, setPillar] = React.useState<
+    NonNullable<NewStreamPayload["pillar"]> | "none"
+  >("none");
 
   // Seeded from the stream when correcting one, blank when creating. Keyed on
   // `open` so reopening always reflects the row as it stands, not what was
@@ -1193,12 +1203,15 @@ function CreateStreamDrawer({
             <Label>Pillar</Label>
             <Select
               value={pillar}
-              onValueChange={(v) => setPillar(v as NewStreamPayload["pillar"])}
+              onValueChange={(v) =>
+                setPillar(v as NonNullable<NewStreamPayload["pillar"]> | "none")
+              }
             >
               <SelectTrigger className="w-full border-border bg-card">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="none">No pillar</SelectItem>
                 <SelectItem value="esports">Esports</SelectItem>
                 <SelectItem value="anime">Anime</SelectItem>
                 <SelectItem value="lifestyle">Lifestyle</SelectItem>
@@ -1206,7 +1219,8 @@ function CreateStreamDrawer({
             </Select>
             <p className="text-xs text-muted-foreground">
               What the programme is. Drives the filters on the schedule and the
-              week grid.
+              week grid. Leave it as No pillar for anything that is none of the
+              three: it will show under Everything and under no filter.
             </p>
           </div>
           <div className="space-y-1.5">
@@ -1260,7 +1274,7 @@ function CreateStreamDrawer({
                 eventId: eventId === "none" ? "" : eventId,
                 streamerName: streamerName.trim() || "EVO TV Official",
                 isPremium,
-                pillar,
+                pillar: pillar === "none" ? null : pillar,
                 thumbnailUrl,
               })
             }
