@@ -531,13 +531,53 @@ export async function adminRemoveProduct(
 export type AnnouncementAudience =
   | { kind: "everyone" }
   | { kind: "role"; role: string }
-  | { kind: "user"; email: string };
+  | { kind: "user"; email: string }
+  /** A named set, pasted in. */
+  | { kind: "users"; emails: string[] }
+  /** Read from the subscriptions table, not the role column. */
+  | { kind: "subscribers" }
+  | { kind: "free" };
+
+/**
+ * Where tapping it goes, chosen rather than typed.
+ *
+ * The path is composed server-side from whatever is picked here, so nobody
+ * ever writes a route by hand and a renamed route cannot leave a dead link
+ * behind in a message.
+ */
+export type AnnouncementDestination =
+  | { kind: "none" }
+  | { kind: "page"; page: string }
+  | { kind: "show"; id: string }
+  | { kind: "stream"; id: string }
+  | { kind: "video"; id: string }
+  | { kind: "external"; url: string };
+
+export interface AnnouncementChannels {
+  /** The notification list is always written; these are the extras. */
+  push: boolean;
+  email: boolean;
+}
 
 export interface AnnouncementInput {
   title: string;
   body: string;
-  linkUrl?: string;
+  destination: AnnouncementDestination;
   audience: AnnouncementAudience;
+  channels: AnnouncementChannels;
+}
+
+export interface DestinationOptions {
+  pages: Array<{ value: string; label: string }>;
+  shows: Array<{ id: string; label: string; detail?: string }>;
+  streams: Array<{ id: string; label: string; detail?: string }>;
+  videos: Array<{ id: string; label: string; detail?: string }>;
+}
+
+/** Everything a message can point at, by name. */
+export async function adminListDestinations(): Promise<DestinationOptions> {
+  const data = await apiGet<DestinationOptions>("/api/admin/destinations");
+  return data ?? { pages: [], shows: [], streams: [], videos: [] };
 }
 
 export interface AnnouncementPreview {
@@ -546,6 +586,8 @@ export interface AnnouncementPreview {
   description: string;
   /** How many of them have a device that could receive a push at all. */
   withPushTokens: number;
+  /** Where tapping it will take them, in words. */
+  destination: string;
 }
 
 export interface AnnouncementResult {
@@ -554,7 +596,9 @@ export interface AnnouncementResult {
   notified: number;
   expoDelivered: number;
   webDelivered: number;
+  emailed: number;
   description: string;
+  destination: string;
 }
 
 /** Counts who it would reach and sends nothing. There is no unsend. */
