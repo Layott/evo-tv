@@ -71,9 +71,11 @@ export function HeroCarousel({ streams }: HeroCarouselProps) {
                       <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
                       Live
                     </span>
-                    <span className="flex items-center gap-1 text-xs text-paper/80">
-                      <Eye className="h-3 w-3" /> {formatViewers(s.viewerCount)}
-                    </span>
+                    {typeof s.viewerCount === "number" ? (
+                      <span className="flex items-center gap-1 text-xs text-paper/80">
+                        <Eye className="h-3 w-3" /> {formatViewers(s.viewerCount)}
+                      </span>
+                    ) : null}
                   </div>
                   <h2 className="text-lg font-bold leading-tight text-white sm:text-2xl">
                     {s.title}

@@ -38,6 +38,26 @@ const passwordSchema = z
 
 type PwValues = z.infer<typeof passwordSchema>;
 
+/**
+ * The sentence out of a Better-Auth error response.
+ *
+ * It answers `{"code":"INVALID_PASSWORD","message":"Invalid password"}`, and
+ * showing that raw in a toast is worse than showing nothing. Falls back to the
+ * caller's wording when the body is not the shape we expect.
+ */
+async function authErrorMessage(res: Response, fallback: string): Promise<string> {
+  try {
+    const body = await res.text();
+    if (!body) return fallback;
+    const parsed = JSON.parse(body) as { message?: unknown };
+    return typeof parsed.message === "string" && parsed.message.trim()
+      ? parsed.message
+      : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export function AccountForm({ email }: { email: string }) {
   const [emailValue, setEmailValue] = React.useState(email);
   const [savingEmail, setSavingEmail] = React.useState(false);
@@ -69,10 +89,46 @@ export function AccountForm({ email }: { email: string }) {
     }
   }
 
-  async function onSubmit(_values: PwValues) {
-    await new Promise((r) => setTimeout(r, 700));
-    toast.success("Password changed");
-    reset();
+  /**
+   * Actually change the password.
+   *
+   * This form waited 700ms and said "Password changed". It did not, and the
+   * old password kept working, which is the worst possible shape for this
+   * particular lie: somebody who believes they have rotated a compromised
+   * password stops worrying about it.
+   *
+   * `revokeOtherSessions` is on for the same reason the app sends it: a
+   * password is usually changed because somebody else might have the old one,
+   * and leaving their session alive defeats the change.
+   */
+  async function onSubmit(values: PwValues) {
+    try {
+      const res = await fetch("/api/auth/change-password", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          currentPassword: values.current,
+          newPassword: values.next,
+          revokeOtherSessions: true,
+        }),
+      });
+      if (!res.ok) {
+        // The case that actually happens is a wrong current password, and
+        // Better-Auth says so in a sentence worth showing.
+        throw new Error(
+          await authErrorMessage(res, "Could not change your password"),
+        );
+      }
+      toast.success("Password changed. Other devices have been signed out.");
+      reset();
+    } catch (err) {
+      toast.error(
+        err instanceof Error && err.message.length < 160
+          ? err.message
+          : "Could not change your password",
+      );
+    }
   }
 
   return (
@@ -118,10 +174,11 @@ export function AccountForm({ email }: { email: string }) {
                     body: JSON.stringify({ newEmail: next }),
                   });
                   if (!res.ok) {
-                    const body = await res.text();
                     // Better-Auth answers with a readable message for the case
                     // that actually happens: the address is already taken.
-                    throw new Error(body || "Could not change your email");
+                    throw new Error(
+                      await authErrorMessage(res, "Could not change your email"),
+                    );
                   }
                   // Not done yet, and saying so matters: the change only
                   // applies once the link in the confirmation email is opened,

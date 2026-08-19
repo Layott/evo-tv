@@ -40,7 +40,7 @@ export async function trendingVods(limit = 20): Promise<Vod[]> {
   const rows = (await db.select().from(schema.vods)).map(toVod);
   const scored = rows.map((v) => ({
     vod: v,
-    score: v.viewCount * (0.5 + 0.5 * decayFactor(v.publishedAt)),
+    score: (v.viewCount ?? 0) * (0.5 + 0.5 * decayFactor(v.publishedAt)),
   }));
   scored.sort((a, b) => b.score - a.score);
   return scored.slice(0, limit).map((s) => s.vod);

@@ -189,7 +189,6 @@ export default function StreamPage() {
                 poster={stream.thumbnailUrl}
                 autoPlay={stream.isLive}
                 isLive={stream.isLive}
-                viewerCount={stream.viewerCount}
                 mediaId={stream.id}
               />
             ) : requiresAuth ? (

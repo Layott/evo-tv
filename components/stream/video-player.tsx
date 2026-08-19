@@ -74,7 +74,6 @@ interface VideoPlayerProps {
   poster?: string;
   autoPlay?: boolean;
   isLive?: boolean;
-  viewerCount?: number;
   chapters?: { label: string; startSec: number }[];
   onTimeUpdate?: (currentSec: number) => void;
   onReady?: (video: HTMLVideoElement) => void;
@@ -152,7 +151,6 @@ export function VideoPlayer({
   poster,
   autoPlay,
   isLive,
-  viewerCount,
   chapters,
   onTimeUpdate,
   onReady,
@@ -827,12 +825,10 @@ export function VideoPlayer({
           /*
            * Below the live badge on a phone, beside it from `sm` up.
            *
-           * Centring it at `top-4` put it straight through the "0 watching"
-           * counter at 390px: the badge row starts at the left edge and the
-           * pill is centred, and at that width the two overlap into unreadable
-           * stacked text. There is room on a desktop player and none on a
-           * phone, so the pill drops below the badge row rather than fighting
-           * it for the same line.
+           * Centring it at `top-4` used to run it straight through the viewer
+           * counter at 390px. That counter is gone, but the offset stays: the
+           * badge row still starts at the left edge and a centred pill still
+           * crowds it on a narrow screen.
            */
           className="absolute left-1/2 top-14 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full bg-black/80 px-4 py-2 text-sm font-medium text-white hover:bg-black sm:top-4"
         >
@@ -841,18 +837,21 @@ export function VideoPlayer({
         </button>
       ) : null}
 
-      {/* Live badge + viewers + AI badge */}
+      {/*
+        Live badge.
+       *
+       * The audience counter that used to sit beside it is gone. Viewers do not
+       * get audience numbers at all now, and for the staff who do, "0 watching"
+       * over the player is the worst version of the information: it is the
+       * number at its least flattering, shown to the one audience that cannot
+       * act on it. Staff read the real figures in the live control room.
+       */}
       {isLive && (
         <div className="absolute top-3 left-3 z-20 flex items-center gap-2">
           <div className="flex items-center gap-1.5 rounded-md bg-red-600 px-2 py-0.5 text-xs font-bold text-white">
             <span className="size-2 rounded-full bg-paper" />
             Live
           </div>
-          {typeof viewerCount === "number" && (
-            <div className="rounded-md bg-black/80 px-2 py-0.5 text-xs text-white">
-              {viewerCount.toLocaleString()} watching
-            </div>
-          )}
         </div>
       )}
 

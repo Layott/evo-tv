@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { listVods, listTrendingClips } from "@/lib/api/vods";
 import { parseMaxRating, filterByMaxRating } from "@/lib/api/maturity";
 import { resolveViewer, stripVodPlaybackAll } from "@/lib/api/playback";
+import { stripViewCountAll } from "@/lib/api/counts";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -12,10 +13,13 @@ export async function GET(req: NextRequest) {
   if (trendingClips) {
     const limit = Number.parseInt(searchParams.get("limit") ?? "10", 10);
     return NextResponse.json(
-      // Clips are deliberately untouched. They carry no `isPremium` and no
-      // manifest, only a short mp4 of a highlight, so there is no paywall here
-      // to enforce and stripping them would break sharing for no gain.
-      filterByMaxRating(await listTrendingClips(limit), maxRating),
+      // No paywall on a clip: no `isPremium`, no manifest, just a short mp4
+      // of a highlight. The play count is stripped all the same, because that
+      // is an audience number and those are staff only.
+      stripViewCountAll(
+        filterByMaxRating(await listTrendingClips(limit), maxRating),
+        viewer.admin,
+      ),
     );
   }
 
@@ -26,9 +30,12 @@ export async function GET(req: NextRequest) {
     ? Number.parseInt(searchParams.get("limit")!, 10)
     : undefined;
   return NextResponse.json(
-    stripVodPlaybackAll(
-      filterByMaxRating(await listVods({ gameId, isPremium, limit }), maxRating),
-      viewer,
+    stripViewCountAll(
+      stripVodPlaybackAll(
+        filterByMaxRating(await listVods({ gameId, isPremium, limit }), maxRating),
+        viewer,
+      ),
+      viewer.admin,
     ),
   );
 }

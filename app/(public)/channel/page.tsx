@@ -159,7 +159,7 @@ export default function ChannelPage() {
               </div>
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-              {channel?.isLive ? (
+              {channel?.isLive && typeof channel.viewerCount === "number" ? (
                 <span className="inline-flex items-center gap-1">
                   <Eye className="h-3.5 w-3.5" /> {fmtViewers(channel.viewerCount)} watching
                 </span>
@@ -308,9 +308,11 @@ export default function ChannelPage() {
                     <div className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-md bg-red-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-red-400">
                       <span className="h-1 w-1 rounded-full bg-red-500" /> Live
                     </div>
-                    <div className="absolute right-2 top-2 rounded-md bg-black/70 px-1.5 py-0.5 text-[10px] text-paper">
-                      {fmtViewers(s.viewerCount)}
-                    </div>
+                    {typeof s.viewerCount === "number" ? (
+                      <div className="absolute right-2 top-2 rounded-md bg-black/70 px-1.5 py-0.5 text-[10px] text-paper">
+                        {fmtViewers(s.viewerCount)}
+                      </div>
+                    ) : null}
                   </div>
                   <div className="p-3">
                     <div className="line-clamp-1 text-sm font-medium text-foreground group-hover:text-sky-300">
