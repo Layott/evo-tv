@@ -2,6 +2,7 @@ import "server-only";
 import { and, asc, desc, eq, isNull } from "drizzle-orm";
 
 import { db, schema } from "@/lib/db";
+import { releasedCondition } from "@/lib/api/release";
 import type {
   ContentPillar,
   Episode,
@@ -125,6 +126,10 @@ export async function listEpisodesForSeason(seasonId: string): Promise<Episode[]
       and(
         eq(schema.episodes.seasonId, seasonId),
         isNull(schema.episodes.deletedAt),
+        // An episode with a premiere date in the future is not on the show page
+        // yet. `premiereAt` has existed since the shows build and was read by
+        // nothing, so a date on a row meant nothing at all.
+        releasedCondition(schema.episodes.premiereAt),
       ),
     )
     .orderBy(asc(schema.episodes.episodeNumber));

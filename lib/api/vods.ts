@@ -1,6 +1,7 @@
 import "server-only";
 import { and, desc, eq, isNull, ne } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
+import { releasedCondition } from "@/lib/api/release";
 import type { Vod, Clip } from "@/lib/types";
 import { looksLikeId } from "@/lib/slug";
 
@@ -17,6 +18,7 @@ function toVod(r: typeof schema.vods.$inferSelect): Vod {
     mp4Url: r.mp4Path,
     thumbnailUrl: r.thumbnailUrl,
     publishedAt: r.publishedAt,
+    publishAt: r.publishAt ?? null,
     chapters: r.chapters,
     viewCount: r.viewCount,
     likeCount: r.likeCount,
@@ -53,7 +55,13 @@ export async function listVods(filter?: {
   isPremium?: boolean;
   limit?: number;
 }): Promise<Vod[]> {
-  const conds = [isNull(schema.vods.deletedAt)];
+  const conds = [
+    isNull(schema.vods.deletedAt),
+    // Scheduled rows are not in the library until their date arrives. A rail
+    // that shows next week's release is a leak whichever way the click goes:
+    // either it plays early or it errors.
+    releasedCondition(schema.vods.publishAt),
+  ];
   if (filter?.gameId) conds.push(eq(schema.vods.gameId, filter.gameId));
   if (typeof filter?.isPremium === "boolean")
     conds.push(eq(schema.vods.isPremium, filter.isPremium));

@@ -329,6 +329,8 @@ export interface CreateVodInput {
   pillar?: ShowPillar | null;
   maturityRating?: MaturityRating;
   isPremium?: boolean;
+  /** When it should appear. Null or absent means now. */
+  publishAt?: string | null;
   contentTags?: string[];
 }
 
