@@ -50,8 +50,15 @@ function slotLabel(row: EpgRow): string {
 export default function ChannelPage() {
   const router = useRouter();
   const { role, toggleFollow, isFollowing } = useAuth();
-  const following = isFollowing("streamer", "channel_main");
+  /*
+   * The flagship is whichever stream carries `isMainChannel`, not a stream
+   * called `channel_main`. Nothing by that id exists, so this page said "Off
+   * air" while the channel was live and its Watch now button led to the Stream
+   * not found page.
+   */
   const channelQ = useQuery({ queryKey: ["channel", "main"], queryFn: getMainChannel });
+  const mainChannelId = channelQ.data?.id ?? null;
+  const following = isFollowing("streamer", mainChannelId ?? "");
   const liveQ = useQuery({
     queryKey: ["streams", "live", "ex-channel"],
     queryFn: () => listLiveStreams(),
@@ -177,7 +184,7 @@ export default function ChannelPage() {
             </div>
             <div className="mt-6 flex gap-3">
               <Link
-                href="/stream/channel_main"
+                href={mainChannelId ? `/stream/${mainChannelId}` : "/schedule"}
                 /* sky-500/600 are the two fill steps that are NOT theme-indirected,
                    so the hover darkens the same way on paper and on ink. */
                 className="inline-flex items-center gap-2 rounded-full bg-sky-500 px-5 py-2.5 text-sm font-semibold text-ink hover:bg-sky-600"
@@ -195,7 +202,8 @@ export default function ChannelPage() {
                     router.push("/login?next=/channel");
                     return;
                   }
-                  toggleFollow("streamer", "channel_main");
+                  if (!mainChannelId) return;
+                  toggleFollow("streamer", mainChannelId);
                 }}
                 aria-pressed={following}
                 /* Both states are fills. Followed used to be an outline while
@@ -294,7 +302,7 @@ export default function ChannelPage() {
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {(liveQ.data ?? [])
-              .filter((s) => s.id !== "channel_main")
+              .filter((s) => s.id !== mainChannelId)
               .slice(0, 6)
               .map((s) => (
                 <Link
