@@ -25,12 +25,18 @@ import { redisClient } from "./bus";
 const KEY_PREFIX = "evo:presence:";
 
 /**
- * How long a connection counts for without being refreshed. The SSE routes
- * refresh on their 30s heartbeat, so this is three missed beats. Long enough
- * that a slow tick does not drop a real viewer, short enough that a container
- * killed mid-deploy stops inflating the count within a minute and a half.
+ * How long a viewer counts for without being refreshed.
+ *
+ * The heartbeat beats every 60s, so this is one missed beat plus 15 seconds of
+ * slack. It only governs the case where a viewer vanishes without telling us:
+ * a killed tab, a force-quit app, a phone that lost signal. A clean arrival or
+ * departure moves the count immediately, because the client calls POST on
+ * mount and DELETE on unmount.
+ *
+ * Configurable so the window can be tightened without a deploy. Tightening it
+ * below one beat interval would start dropping viewers who are still watching.
  */
-const STALE_MS = 90_000;
+const STALE_MS = Number(process.env.PRESENCE_STALE_MS ?? 75_000);
 
 /** In-process fallback: streamId -> viewerId -> last seen (ms). */
 const local = new Map<string, Map<string, number>>();
@@ -118,4 +124,50 @@ export async function count(topic: string): Promise<number> {
   const viaRedis = await withRedis(topic, () => {});
   if (viaRedis !== null) return viaRedis;
   return localCount(topic, Date.now());
+}
+
+/** The presence topic for one stream. One place, so callers cannot drift. */
+export function presenceTopic(streamId: string): string {
+  return `stream:${streamId}`;
+}
+
+/**
+ * Who is present, with the time each was last seen.
+ *
+ * This is what makes a roster cheap. Without it the only way to ask "who is
+ * watching" is a GROUP BY over watch_events, which for a three hour show with
+ * a thousand viewers means grouping roughly 180,000 rows on every tick.
+ */
+export async function members(
+  topic: string,
+): Promise<Array<{ key: string; seenAt: number }>> {
+  const redis = redisClient();
+  const now = Date.now();
+  if (!redis) {
+    const set = localSet(topic);
+    const out: Array<{ key: string; seenAt: number }> = [];
+    for (const [key, seenAt] of set) {
+      if (now - seenAt <= STALE_MS) out.push({ key, seenAt });
+    }
+    return out.sort((a, b) => b.seenAt - a.seenAt);
+  }
+  try {
+    const raw = await redis.zrangebyscore(
+      `${KEY_PREFIX}${topic}`,
+      now - STALE_MS,
+      "+inf",
+      "WITHSCORES",
+    );
+    const out: Array<{ key: string; seenAt: number }> = [];
+    for (let i = 0; i < raw.length; i += 2) {
+      out.push({ key: raw[i]!, seenAt: Number(raw[i + 1]) });
+    }
+    return out.sort((a, b) => b.seenAt - a.seenAt);
+  } catch (err) {
+    console.error(
+      "[presence] members failed:",
+      err instanceof Error ? err.message : err,
+    );
+    return [];
+  }
 }

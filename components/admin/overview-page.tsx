@@ -270,7 +270,7 @@ export function OverviewPage() {
                     LIVE
                   </StatusBadge>
                   <div className="w-20 text-right text-sm tabular-nums text-foreground/80">
-                    {formatCompact(s.viewerCount)}
+                    {formatCompact(s.viewerCount ?? 0)}
                   </div>
                 </li>
               ))}

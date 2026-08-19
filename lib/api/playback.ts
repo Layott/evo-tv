@@ -3,6 +3,7 @@ import "server-only";
 import type { Stream, Vod } from "@/lib/types";
 import { getCurrentUser } from "@/lib/auth/guards";
 import { getEntitlements, NO_ENTITLEMENTS } from "@/lib/api/entitlements";
+import { hasMinRole } from "@/lib/auth/roles";
 
 /**
  * Watching requires an account, so the playback URL is not public.
@@ -52,15 +53,21 @@ export interface PlaybackViewer {
   signedIn: boolean;
   /** Entitled to premium content, by subscription or by being staff. */
   premium: boolean;
+  /** Staff. Audience numbers are theirs and nobody else's. */
+  admin: boolean;
 }
 
 export async function resolveViewer(): Promise<PlaybackViewer> {
   const user = await getCurrentUser();
-  if (!user) return { signedIn: false, premium: false };
+  if (!user) return { signedIn: false, premium: false, admin: false };
   const entitlements = await getEntitlements(user.id, user.role).catch(
     () => NO_ENTITLEMENTS,
   );
-  return { signedIn: true, premium: entitlements.premiumContent };
+  return {
+    signedIn: true,
+    premium: entitlements.premiumContent,
+    admin: hasMinRole((user as { role?: string }).role, "admin"),
+  };
 }
 
 /**
@@ -82,9 +89,10 @@ export async function resolveViewer(): Promise<PlaybackViewer> {
  * **Signed in but not a subscriber gets nothing for premium rows.** The free
  * catalogue plays as normal.
  *
- * Everything else stays public on purpose: title, thumbnail, duration, chapters
- * and view count are what a shared link needs to render a preview and what a
- * search engine needs to index, and none of it is the video.
+ * Everything else stays public on purpose: title, thumbnail, duration and
+ * chapters are what a shared link needs to render a preview and what a search
+ * engine needs to index, and none of it is the video. View count is not among
+ * them any more, see lib/api/counts.ts.
  *
  * `maxHeight` in the entitlements endpoint is a data-saving cap on the quality
  * ladder and was never a security boundary. This is the boundary.

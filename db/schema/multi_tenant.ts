@@ -180,12 +180,19 @@ export const watchEvents = pgTable(
     userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
     minuteBucket: text("minute_bucket").notNull(),
     ipHash: text("ip_hash").notNull().default(""),
+    /** Two letter code from cf-ipcountry. Null on rows written before 0044. */
+    country: text("country"),
+    /** mobile / tablet / tv / desktop, from the user agent. */
+    device: text("device"),
+    /** Ladder rung the player pulled: _low, _mid, _hi. Website viewers only. */
+    rung: text("rung"),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
       .notNull()
       .defaultNow(),
   },
   (t) => [
     index("watch_events_channel_bucket_idx").on(t.channelId, t.minuteBucket),
+    index("watch_events_stream_bucket_idx").on(t.streamId, t.minuteBucket),
     index("watch_events_created_idx").on(t.createdAt),
   ],
 );

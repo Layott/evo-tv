@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { listRelatedVods } from "@/lib/api/vods";
 import { resolveViewer, stripVodPlaybackAll } from "@/lib/api/playback";
+import { stripViewCountAll } from "@/lib/api/counts";
 
 /**
  * GET /api/vods/[id]/related?limit=6
@@ -19,7 +20,11 @@ export async function GET(
     10,
   );
   const limit = Math.max(1, Math.min(50, Number.isFinite(raw) ? raw : 6));
+  const viewer = await resolveViewer();
   return NextResponse.json(
-    stripVodPlaybackAll(await listRelatedVods(id, limit), await resolveViewer()),
+    stripViewCountAll(
+      stripVodPlaybackAll(await listRelatedVods(id, limit), viewer),
+      viewer.admin,
+    ),
   );
 }

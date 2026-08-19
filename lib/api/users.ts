@@ -163,7 +163,8 @@ export interface PublicProfileClip {
   title: string;
   thumbnailUrl: string;
   durationSec: number;
-  viewCount: number;
+  /** Staff only, stripped server-side. Absent is not the same as 0. */
+  viewCount?: number;
   createdAt: string;
 }
 
@@ -172,7 +173,8 @@ export interface PublicProfileVod {
   title: string;
   thumbnailUrl: string;
   durationSec: number;
-  viewCount: number;
+  /** Staff only, stripped server-side. Absent is not the same as 0. */
+  viewCount?: number;
   publishedAt: string;
 }
 
