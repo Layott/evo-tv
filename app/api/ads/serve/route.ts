@@ -46,7 +46,15 @@ export async function GET(req: NextRequest) {
       ),
     );
 
-  if (rows.length === 0) {
+  /*
+   * A row with no creative cannot be shown, and picking one is worse than
+   * picking nothing: the caller gets an ad, renders an empty player and stops
+   * looking. One saved without a file is exactly how the dropped-feed filler
+   * came to show a black screen.
+   */
+  const playable = rows.filter((r) => r.mediaUrl.trim().length > 0);
+
+  if (playable.length === 0) {
     return NextResponse.json(
       { ad: null },
       { headers: { "Cache-Control": "no-store" } },
@@ -54,10 +62,10 @@ export async function GET(req: NextRequest) {
   }
 
   // Weighted random selection.
-  const totalWeight = rows.reduce((acc, r) => acc + Math.max(1, r.weight), 0);
+  const totalWeight = playable.reduce((acc, r) => acc + Math.max(1, r.weight), 0);
   let pick = Math.random() * totalWeight;
-  let chosen = rows[0];
-  for (const r of rows) {
+  let chosen = playable[0];
+  for (const r of playable) {
     pick -= Math.max(1, r.weight);
     if (pick <= 0) {
       chosen = r;
