@@ -80,7 +80,7 @@ export function OverviewPage() {
   });
   const topVideosQ = useQuery({
     queryKey: ["admin", "video-summaries", 7],
-    queryFn: () => adminVideoSummaries(7),
+    queryFn: () => adminVideoSummaries({ days: 7 }),
   });
 
   const o = overviewQ.data ?? null;
