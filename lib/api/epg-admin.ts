@@ -31,6 +31,15 @@ export const slotBodySchema = z.object({
    * this". The title and pillar are copied from the show rather than sent.
    */
   showId: z.string().trim().min(1),
+  /**
+   * The second line on air, and the slot's own property.
+   *
+   * Which game this hour is, whose session it is. It used to be the half of the
+   * title after a backslash, which meant it could not be edited: an operator
+   * renamed the show, the second line stayed, and there was nowhere to change
+   * it because it was not a field.
+   */
+  subtitle: z.string().trim().max(120).nullable().default(null),
   /** 16 | 18 in the source grid. Null is unrated, which is not "all ages". */
   parentalRating: z.number().int().min(0).max(21).nullable().default(null),
 });

@@ -76,6 +76,8 @@ export async function PATCH(
     showId: parsed.data.showId ?? existing.showId,
     title,
     pillar,
+    subtitle:
+      parsed.data.subtitle === undefined ? existing.subtitle : parsed.data.subtitle,
     parentalRating:
       parsed.data.parentalRating === undefined
         ? existing.parentalRating

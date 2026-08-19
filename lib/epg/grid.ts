@@ -32,9 +32,21 @@ export interface GridSlot {
   startMinute: number;
   durationMin: number;
   title: string;
+  /** The second line on air. A slot's own field, not parsed out of the title. */
+  subtitle: string | null;
   pillar: EpgPillar;
   parentalRating: number | null;
   slotCode: string | null;
+  /**
+   * The show's current name, read on every request.
+   *
+   * The slot carries a copy of the title for the case where it points at no
+   * show, and a copy drifts: the owner renamed a show and the grid kept the old
+   * name, because the copy was only refreshed when a rename happened to pass
+   * through the one endpoint that syncs it. Preferring the join makes the
+   * question "what is this programme called" have one answer.
+   */
+  showTitle: string | null;
   /**
    * The show this slot programmes, read live rather than copied.
    *
@@ -310,7 +322,8 @@ export function materializeDay(
   const entries = sortGrid(slots.filter((s) => s.dayOfWeek === dow)).map((slot) => {
     const startsAt = zonedToUtc(y, m, d, slot.startMinute);
     const endsAt = new Date(startsAt.getTime() + slot.durationMin * 60_000);
-    const [title, subtitle] = splitTitle(slot.title);
+    const title = slot.showTitle?.trim() || splitTitle(slot.title)[0];
+    const subtitle = slot.subtitle?.trim() || splitTitle(slot.title)[1];
     return {
       source: "grid" as const,
       id: slot.id,
