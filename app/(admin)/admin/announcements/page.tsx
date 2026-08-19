@@ -4,7 +4,7 @@ import { AnnouncementsPage } from "@/components/admin/announcements-page";
 export default function AdminAnnouncementsRoute() {
   return (
     <div className="p-6 lg:p-8">
-      <AdminGuard>
+      <AdminGuard capability="editorial">
         <AnnouncementsPage />
       </AdminGuard>
     </div>

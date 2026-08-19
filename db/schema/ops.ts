@@ -162,11 +162,32 @@ export const auditLog = pgTable(
   {
     id: text("id").primaryKey(),
     actorId: text("actor_id").references(() => user.id, { onDelete: "set null" }),
+    /**
+     * The role the actor held at the time, not the one they hold now.
+     *
+     * A promotion or a demotion after the fact must not rewrite history, and
+     * "which hat were they wearing" is the first question asked of any log
+     * entry that looks wrong.
+     */
+    actorRole: text("actor_role"),
+    /** Which room the action belonged to: editorial, broadcast, commerce, community, roster. */
+    capability: text("capability"),
     action: text("action").notNull(),
     targetType: text("target_type").notNull(),
     targetId: text("target_id").notNull(),
+    /** The fields that changed, as they were. Only the changed ones. */
+    before: jsonb("before").$type<Record<string, unknown>>(),
+    /** The same fields, as they became. */
+    after: jsonb("after").$type<Record<string, unknown>>(),
+    ip: text("ip"),
+    userAgent: text("user_agent"),
     meta: jsonb("meta").$type<Record<string, unknown>>(),
     createdAt: text("created_at").notNull(),
   },
-  (t) => [index("audit_created_idx").on(t.createdAt)],
+  (t) => [
+    index("audit_created_idx").on(t.createdAt),
+    index("audit_actor_idx").on(t.actorId, t.createdAt),
+    index("audit_target_idx").on(t.targetType, t.targetId),
+    index("audit_capability_idx").on(t.capability, t.createdAt),
+  ],
 );

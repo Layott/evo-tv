@@ -3,7 +3,7 @@ import { z } from "zod";
 import { and, eq, ne } from "drizzle-orm";
 
 import { db, schema } from "@/lib/db";
-import { requireAdminFromRequest } from "@/lib/api/admin";
+import { requireCapability } from "@/lib/api/admin";
 import { writeAudit } from "@/lib/api/audit";
 import { recountShow, urlOrPath } from "@/lib/api/shows-admin";
 import { refreshShowStatus } from "@/lib/api/show-state";
@@ -40,7 +40,7 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const guard = await requireAdminFromRequest();
+  const guard = await requireCapability("editorial");
   if (!guard.ok) return guard.response;
   const { id } = await params;
 
@@ -101,6 +101,8 @@ export async function PATCH(
 
     await writeAudit({
       actorId: guard.user.id,
+      actorRole: guard.role,
+      capability: "editorial",
       action: "episode.update",
       targetType: "episode",
       targetId: id,
@@ -135,7 +137,7 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const guard = await requireAdminFromRequest();
+  const guard = await requireCapability("editorial");
   if (!guard.ok) return guard.response;
   const { id } = await params;
 
@@ -162,6 +164,8 @@ export async function DELETE(
 
   await writeAudit({
     actorId: guard.user.id,
+    actorRole: guard.role,
+    capability: "editorial",
     action: "episode.delete",
     targetType: "episode",
     targetId: id,

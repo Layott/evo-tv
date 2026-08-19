@@ -4,7 +4,7 @@ import { ShowsManagerPage } from "@/components/admin/shows-manager-page";
 export default function AdminShowsRoute() {
   return (
     <div className="p-6 lg:p-8">
-      <AdminGuard>
+      <AdminGuard capability="editorial">
         <ShowsManagerPage />
       </AdminGuard>
     </div>

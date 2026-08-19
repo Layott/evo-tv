@@ -4,7 +4,7 @@ import { and, asc, eq, isNull } from "drizzle-orm";
 
 import { db, schema } from "@/lib/db";
 import { requireMinRole } from "@/lib/auth/guards";
-import { requireAdminFromRequest } from "@/lib/api/admin";
+import { requireCapability } from "@/lib/api/admin";
 import { writeAudit } from "@/lib/api/audit";
 import { priceWindow, socialLink, urlOrPath } from "@/lib/api/shows-admin";
 import {
@@ -94,7 +94,7 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const guard = await requireAdminFromRequest();
+  const guard = await requireCapability("editorial");
   if (!guard.ok) return guard.response;
   const { id } = await params;
 
@@ -131,13 +131,20 @@ export async function PATCH(
 
     await writeAudit({
       actorId: guard.user.id,
+      actorRole: guard.role,
+      capability: "editorial",
       action: "show.update",
       targetType: "show",
       targetId: id,
+      before: existing as unknown as Record<string, unknown>,
+      after: {
+        ...existing,
+        ...columns,
+        ...(nextSlug ? { slug: nextSlug } : {}),
+      } as unknown as Record<string, unknown>,
       meta: {
         fields: Object.keys(columns),
         title: existing.title,
-        ...(nextSlug ? { slugFrom: existing.slug, slugTo: nextSlug } : {}),
       },
     });
   }
@@ -216,6 +223,8 @@ export async function DELETE(
 
   await writeAudit({
     actorId: guard.user.id,
+    actorRole: guard.role,
+    capability: "editorial",
     action: "show.delete",
     targetType: "show",
     targetId: id,

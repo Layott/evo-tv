@@ -4,7 +4,7 @@ import { ScheduleManagerPage } from "@/components/admin/schedule-manager-page";
 export default function AdminScheduleRoute() {
   return (
     <div className="p-6 lg:p-8">
-      <AdminGuard>
+      <AdminGuard capability="editorial">
         <ScheduleManagerPage />
       </AdminGuard>
     </div>

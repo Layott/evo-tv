@@ -1,7 +1,7 @@
 import "server-only";
 import { and, desc, eq, sql, type SQL } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
-import { generateId } from "@/lib/api/admin";
+import { diffFields, generateId } from "@/lib/api/admin";
 
 export type AuditRow = typeof schema.auditLog.$inferSelect;
 
@@ -65,21 +65,33 @@ export async function listAudit(
  */
 export async function writeAudit(params: {
   actorId: string | null;
+  /** The role held at the time, so a later promotion cannot rewrite history. */
+  actorRole?: string | null;
+  /** Which room this belonged to. */
+  capability?: string | null;
   action: string;
   targetType: string;
   targetId: string;
+  /** Whole rows; only the fields that moved are stored. */
+  before?: Record<string, unknown> | null;
+  after?: Record<string, unknown> | null;
   meta?: Record<string, unknown> | null;
 }): Promise<AuditRow> {
   const id = generateId("audit");
   const createdAt = new Date().toISOString();
+  const changed = diffFields(params.before, params.after);
   await db
     .insert(schema.auditLog)
     .values({
       id,
       actorId: params.actorId,
+      actorRole: params.actorRole ?? null,
+      capability: params.capability ?? null,
       action: params.action,
       targetType: params.targetType,
       targetId: params.targetId,
+      before: changed?.before ?? null,
+      after: changed?.after ?? null,
       meta: (params.meta ?? null) as Record<string, unknown> | null,
       createdAt,
     });
