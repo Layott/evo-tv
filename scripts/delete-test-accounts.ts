@@ -54,6 +54,29 @@ if (!DATABASE_URL) {
 
 const apply = process.argv.includes("--apply");
 
+/**
+ * One extra address, named on the command line.
+ *
+ * Verification on production needs an account: a password change cannot be
+ * proved against the owner's own login, and the local database proves only
+ * that the code can work. So a throwaway is made, used, and removed, and this
+ * is the removing. The app's own delete button files a GDPR erasure request
+ * that the weekly purge picks up, which is right for a person and too slow for
+ * a test account made ten minutes ago.
+ *
+ * Exact match only, never a pattern. The whole point of the two constants
+ * above is that `%test%` would also match somebody called `testimony@`.
+ *
+ *   pnpm tsx scripts/delete-test-accounts.ts --email qa@evotv.local --apply
+ */
+const emailFlag = process.argv.indexOf("--email");
+const extraEmail = emailFlag === -1 ? null : process.argv[emailFlag + 1];
+if (emailFlag !== -1 && !extraEmail?.includes("@")) {
+  console.error("[accounts] --email wants an address");
+  process.exit(1);
+}
+const targetEmails = extraEmail ? [...EXACT_EMAILS, extraEmail] : EXACT_EMAILS;
+
 // prepare: false, because DATABASE_URL points at the transaction pooler in
 // production and named prepared statements do not survive it.
 const sql = postgres(DATABASE_URL, { max: 1, prepare: false });
@@ -147,7 +170,7 @@ async function referencingColumns(): Promise<Ref[]> {
   const users = await sql<UserRow[]>`
     select id, email, name, role, created_at
     from "user"
-    where email = any(${EXACT_EMAILS}) or email like ${"%" + DOMAIN_SUFFIX}
+    where email = any(${targetEmails}) or email like ${"%" + DOMAIN_SUFFIX}
     order by created_at
   `;
 
