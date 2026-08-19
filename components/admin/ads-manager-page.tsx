@@ -536,7 +536,12 @@ function AdForm({
     form.mediaUrl.trim().length > 0 && looksLikeVideo(form.mediaUrl) !== wantsVideo;
 
   const disabled =
-    !form.advertiser.trim() || !form.clickUrl.trim() || creativeMismatch;
+    !form.advertiser.trim() ||
+    !form.clickUrl.trim() ||
+    // An ad with no creative is a slot that renders nothing. The filler row
+    // saved without a file is why the dropped-feed cover stayed black.
+    !form.mediaUrl.trim() ||
+    creativeMismatch;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
