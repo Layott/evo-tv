@@ -14,6 +14,8 @@ import {
   adminListClips,
   adminListGames,
   adminListShows,
+  publishVideo,
+  type ShowOriginType,
   adminListVods,
   adminRestoreClip,
   adminRestoreVod,
@@ -97,6 +99,21 @@ interface VodDraft {
   pillar: ShowPillar | null;
   maturityRating: MaturityRating;
   isPremium: boolean;
+  /**
+   * Where this video belongs: "standalone", "new" for a series that does not
+   * exist yet, or a show id.
+   *
+   * Filing an upload on a series used to be a second journey through a
+   * different screen, with the URL pasted twice, so most videos never got
+   * filed at all.
+   */
+  belongsTo: string;
+  seasonNumber: string;
+  /** Blank takes the next free number in that season. */
+  episodeNumber: string;
+  newShowTitle: string;
+  newShowSynopsis: string;
+  newShowOrigin: ShowOriginType;
 }
 
 interface ClipDraft {
@@ -122,9 +139,15 @@ const emptyVod: VodDraft = {
   hlsUrl: "",
   thumbnailUrl: "",
   durationMin: "",
-  pillar: "esports",
+  pillar: null,
   maturityRating: "teen",
   isPremium: false,
+  belongsTo: "standalone",
+  seasonNumber: "1",
+  episodeNumber: "",
+  newShowTitle: "",
+  newShowSynopsis: "",
+  newShowOrigin: "evo_original",
 };
 
 const emptyClip: ClipDraft = {
@@ -207,7 +230,48 @@ export function LibraryManagerPage() {
   );
 
   const saveVod = useMutation({
-    mutationFn: (input: VodDraft) => {
+    mutationFn: async (input: VodDraft) => {
+      /*
+       * A new upload that belongs to a series goes through /library/publish,
+       * which makes the show if it has to, finds or makes the season, and adds
+       * the episode, all in one transaction. Editing an existing row keeps the
+       * old path: moving a published video between series is a different job
+       * and pretending otherwise would silently orphan the original.
+       */
+      if (!input.id && input.belongsTo !== "standalone") {
+        const runtimeSec = Math.max(
+          1,
+          Math.round(Number(input.durationMin || 0) * 60),
+        );
+        return publishVideo({
+          hlsUrl: input.hlsUrl.trim() || input.mp4Url.trim(),
+          title: input.title.trim(),
+          synopsis: input.description.trim(),
+          thumbnailUrl: input.thumbnailUrl.trim(),
+          runtimeSec,
+          isPremium: input.isPremium,
+          maturityRating: input.maturityRating,
+          pillar: input.pillar,
+          seasonNumber: Number(input.seasonNumber || 1),
+          episodeNumber: input.episodeNumber
+            ? Number(input.episodeNumber)
+            : undefined,
+          ...(input.belongsTo === "new"
+            ? {
+                newShow: {
+                  title: input.newShowTitle.trim() || input.title.trim(),
+                  synopsis: input.newShowSynopsis.trim(),
+                  pillar: input.pillar,
+                  originType: input.newShowOrigin,
+                  posterUrl: input.thumbnailUrl.trim(),
+                  isPremium: input.isPremium,
+                  maturityRating: input.maturityRating,
+                },
+              }
+            : { showId: input.belongsTo }),
+        });
+      }
+
       const payload = {
         title: input.title.trim(),
         description: input.description.trim(),
@@ -225,10 +289,24 @@ export function LibraryManagerPage() {
       // the safe direction to be wrong in.
       return input.id ? adminUpdateVod(input.id, payload) : adminCreateVod(payload);
     },
-    onSuccess: async (_vod, input) => {
-      toast.success(input.id ? "Video saved" : "Video published");
+    onSuccess: async (result, input) => {
+      const filed =
+        result && typeof result === "object" && "kind" in result
+          ? (result as { kind: string; createdShow?: boolean; seasonNumber?: number; episodeNumber?: number })
+          : null;
+      if (filed?.kind === "episode") {
+        toast.success(
+          filed.createdShow
+            ? "Show created, and this is episode 1"
+            : `Published as S${filed.seasonNumber} E${filed.episodeNumber}`,
+        );
+      } else {
+        toast.success(input.id ? "Video saved" : "Video published");
+      }
       setVodDraft(null);
       await refresh("vods");
+      // A new show or episode changes the shows screen too.
+      await queryClient.invalidateQueries({ queryKey: ["admin", "shows"] });
     },
     onError: (err: unknown) =>
       toast.error(err instanceof Error ? err.message : "Could not save the video"),
@@ -237,6 +315,9 @@ export function LibraryManagerPage() {
   /** Open an existing video in the same sheet that publishes one. */
   function configureVod(vod: Vod) {
     setVodDraft({
+      // The filing fields carry their defaults: an existing row is already
+      // filed, and the sheet hides them when `id` is set.
+      ...emptyVod,
       id: vod.id,
       title: vod.title,
       description: vod.description ?? "",
@@ -652,6 +733,147 @@ export function LibraryManagerPage() {
               />
 
               <div className="grid gap-4 sm:grid-cols-2">
+              {/*
+                Where the video belongs.
+                
+                Only when publishing. Moving a video that already exists between
+                series is a different job with different consequences, and
+                offering it here would make an edit look like a filing change.
+              */}
+              {!vodDraft.id ? (
+                <div className="space-y-3 rounded-xl bg-card/60 p-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="vod-belongs">Part of a show?</Label>
+                    <Select
+                      value={vodDraft.belongsTo}
+                      onValueChange={(v) =>
+                        setVodDraft({ ...vodDraft, belongsTo: v })
+                      }
+                    >
+                      <SelectTrigger id="vod-belongs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="standalone">
+                          No, a one-off video
+                        </SelectItem>
+                        <SelectItem value="new">Yes, a new show</SelectItem>
+                        {shows.map((show) => (
+                          <SelectItem key={show.id} value={show.id}>
+                            {show.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Picking a show files this upload as an episode of it, and
+                      takes the tier and the rating from the show unless you
+                      change them below.
+                    </p>
+                  </div>
+
+                  {vodDraft.belongsTo !== "standalone" ? (
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="vod-season">Season</Label>
+                        <Input
+                          id="vod-season"
+                          inputMode="numeric"
+                          value={vodDraft.seasonNumber}
+                          onChange={(e) =>
+                            setVodDraft({
+                              ...vodDraft,
+                              seasonNumber: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="vod-episode">Episode</Label>
+                        <Input
+                          id="vod-episode"
+                          inputMode="numeric"
+                          placeholder="Next"
+                          value={vodDraft.episodeNumber}
+                          onChange={(e) =>
+                            setVodDraft({
+                              ...vodDraft,
+                              episodeNumber: e.target.value,
+                            })
+                          }
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Leave it blank for the next number in that season.
+                        </p>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {vodDraft.belongsTo === "new" ? (
+                    <div className="space-y-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="vod-newshow-title">Show name</Label>
+                        <Input
+                          id="vod-newshow-title"
+                          value={vodDraft.newShowTitle}
+                          placeholder={vodDraft.title || "The series this belongs to"}
+                          onChange={(e) =>
+                            setVodDraft({
+                              ...vodDraft,
+                              newShowTitle: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="vod-newshow-synopsis">
+                          What the show is
+                        </Label>
+                        <Textarea
+                          id="vod-newshow-synopsis"
+                          rows={3}
+                          value={vodDraft.newShowSynopsis}
+                          onChange={(e) =>
+                            setVodDraft({
+                              ...vodDraft,
+                              newShowSynopsis: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="vod-newshow-origin">Origin</Label>
+                        <Select
+                          value={vodDraft.newShowOrigin}
+                          onValueChange={(v) =>
+                            setVodDraft({
+                              ...vodDraft,
+                              newShowOrigin: v as ShowOriginType,
+                            })
+                          }
+                        >
+                          <SelectTrigger id="vod-newshow-origin">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="evo_original">
+                              EVO original
+                            </SelectItem>
+                            <SelectItem value="licensed">Licensed</SelectItem>
+                            <SelectItem value="syndicated">Syndicated</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        The show is created when you publish, with this video as
+                        its first episode. The poster starts as the thumbnail
+                        above; change it on the show itself afterwards.
+                      </p>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+
                 <DurationField
                   id="vod-duration"
                   label="Length"

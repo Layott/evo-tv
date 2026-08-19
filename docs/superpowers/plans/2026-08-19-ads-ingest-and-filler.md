@@ -178,3 +178,45 @@ What it needs:
 - Optionally write an `epg_slots` row from the publish time, which is what puts
   it on /schedule as well. That is the link the question assumed was there.
 - The same states in the app.
+
+---
+
+## Added by the owner, 19 August, afternoon
+
+**Ads, dayparting and shows.**
+
+- An ad can be set to run at a **time of day**, not only "whenever the slot is
+  asked for".
+- When one is scheduled, the admin is told **which programme it will interrupt**,
+  read off the schedule for that time. A collision check, not a guess.
+- **Remove every ad from a show**, in one action.
+- On a show's own page, **see every ad that runs over it**.
+- Mark a show **ad free**, and have that beat any placement that would otherwise
+  play over it.
+
+That last one is the ordering rule for the whole feature: a show marked ad free
+wins over a scheduled ad, always, and the admin is told when a schedule they
+just set will never run because of it.
+
+**The paywall is a toggle and needs to be a setup.**
+
+`Behind the paywall` is a boolean on shows, VODs, episodes and streams. Shows
+already carry `priceWindows`, so the shape exists for one kind of content and
+nothing else uses it. What the owner asked for:
+
+- Which **kind** of paywall: included with a subscription tier, rented for a
+  period, or bought outright.
+- The **price**, and which tier it is included with.
+- **Until when**: a window with a start and an end, after which it changes state
+  rather than staying paid for ever.
+- The same setup everywhere the toggle appears today, not only on shows.
+
+**Uploading a video.**
+
+- Pick an **existing show** and an **episode number**; everything the show
+  already knows fills itself in.
+- Or enter the show's details on the same page, and the show is **created** by
+  the upload rather than needing to exist first.
+
+**A calendar.** One screen showing what is scheduled and what is going live,
+rather than a day list per page.
