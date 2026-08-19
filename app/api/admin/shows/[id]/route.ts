@@ -63,7 +63,7 @@ const patchSchema = z
   .object({
     title: z.string().trim().min(2).max(200),
     synopsis: z.string().max(4000),
-    pillar: z.enum(["esports", "anime", "lifestyle"]),
+    pillar: z.enum(["esports", "anime", "lifestyle"]).nullable(),
     originType: z.enum(["evo_original", "licensed", "syndicated"]),
     primaryCreatorHandle: z.string().trim().max(100),
     socialLinks: z.array(socialLink).max(8),

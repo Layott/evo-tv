@@ -131,7 +131,23 @@ export async function GET(req: NextRequest) {
      * ended broadcast: the stream is only over once its reconnect window has
      * actually elapsed.
      */
-    const windowMs = (row.reconnectWindowSec ?? 0) * 1000;
+    const windowSec = row.reconnectWindowSec ?? 0;
+    /*
+     * -1 means wait for it, however long that takes. The feed is recorded as
+     * lost so an operator can see it, and the broadcast is never ended here:
+     * only End broadcast does that.
+     */
+    if (windowSec < 0) {
+      if (!row.feedLostAt) {
+        await db
+          .update(schema.streams)
+          .set({ feedLostAt: nowIso })
+          .where(eq(schema.streams.id, row.id));
+        changed.push({ id: row.id, isLive: true, via: "rtmp-feed-lost" });
+      }
+      continue;
+    }
+    const windowMs = windowSec * 1000;
     if (windowMs > 0) {
       if (!row.feedLostAt) {
         // The manifest went quiet without a disconnect callback, which happens

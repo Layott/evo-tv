@@ -52,9 +52,8 @@ export const epgSlots = pgTable(
      * their titles into shows and fills this in.
      */
     showId: text("show_id"),
-    pillar: text("pillar", { enum: ["esports", "anime", "lifestyle"] })
-      .notNull()
-      .default("esports"),
+    /** Null means unfiled. See the note on `streams.pillar`. */
+    pillar: text("pillar", { enum: ["esports", "anime", "lifestyle"] }),
 
     // 16 | 18 in the source grid. Null means unrated rather than "all ages".
     parentalRating: integer("parental_rating"),
