@@ -55,9 +55,22 @@ export async function getStreamById(id: string): Promise<Stream | null> {
   return apiGet<Stream>(`/api/streams/${encodeURIComponent(id)}`);
 }
 
-/** The 24/7 flagship channel. `channel_main` is its stable id. */
+/**
+ * The 24/7 flagship channel, whichever stream is currently flagged as it.
+ *
+ * `channel_main` was hardcoded here as "its stable id" and no such stream
+ * exists: the real one is whatever row carries `isMainChannel`, which is what
+ * the admin "Make main channel" button sets and what `/api/channel/main`
+ * already resolves for the landing hero. So this returned null on production
+ * while a stream was live, the channel page said "Off air", and its Watch now
+ * button pointed at `/stream/channel_main`, which is the Stream not found page.
+ */
 export async function getMainChannel(): Promise<Stream | null> {
-  return getStreamById("channel_main");
+  const res = await apiGet<{ channel: { id: string } | null }>(
+    "/api/channel/main",
+  );
+  const id = res?.channel?.id;
+  return id ? getStreamById(id) : null;
 }
 
 /** What a viewer can report, in their words rather than the schema's. */

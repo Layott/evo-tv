@@ -107,10 +107,36 @@ export async function GET(req: NextRequest) {
    */
   const names = await resolveTargetNames(rows);
 
+  /**
+   * What the thing was called, for a thing that no longer exists.
+   *
+   * Resolving at read time is right for a rename and useless for a deletion:
+   * the row for the ad that was deleted this afternoon still read
+   * `ad ad_a0c8b70c397eeff5`, which is the exact complaint that started this.
+   * The delete already stores the row it removed, so the name is there to be
+   * read; it is only used when the live lookup finds nothing, so a rename is
+   * still reflected everywhere the record survives.
+   */
+  function rememberedName(row: (typeof rows)[number]): string | null {
+    const sources = [row.meta, row.before].filter(
+      (v): v is Record<string, unknown> => Boolean(v) && typeof v === "object",
+    );
+    for (const source of sources) {
+      for (const key of ["title", "name", "advertiser", "handle", "email", "question"]) {
+        const value = source[key];
+        if (typeof value === "string" && value.trim().length > 0) {
+          return value.trim();
+        }
+      }
+    }
+    return null;
+  }
+
   return NextResponse.json(
     rows.map((row) => ({
       ...row,
-      targetName: names[`${row.targetType}:${row.targetId}`] ?? null,
+      targetName:
+        names[`${row.targetType}:${row.targetId}`] ?? rememberedName(row),
     })),
   );
 }
