@@ -102,9 +102,43 @@ export async function apiSend<T>(
 
 async function errorMessage(res: Response): Promise<string> {
   try {
-    const body = (await res.json()) as { error?: string; message?: string };
-    return body.error ?? body.message ?? `${res.status} ${res.statusText}`;
+    const body = (await res.json()) as {
+      error?: unknown;
+      message?: unknown;
+    };
+    const readable = readableError(body.error) ?? readableError(body.message);
+    return readable ?? `${res.status} ${res.statusText}`;
   } catch {
     return `${res.status} ${res.statusText}`;
   }
+}
+
+/**
+ * A sentence, or nothing.
+ *
+ * `error` is a string on most routes and a **zod flatten** on the ones that
+ * validate a body, which is an object. Templating that into an Error message
+ * produced the literal "[object Object]" in a toast, on every button of the
+ * moderation queue, which said nothing about the 422 underneath it.
+ */
+function readableError(value: unknown): string | null {
+  if (typeof value === "string") return value.trim() || null;
+  if (!value || typeof value !== "object") return null;
+
+  const flat = value as {
+    formErrors?: unknown;
+    fieldErrors?: Record<string, unknown>;
+  };
+  const parts: string[] = [];
+  if (Array.isArray(flat.formErrors)) {
+    parts.push(...flat.formErrors.filter((v): v is string => typeof v === "string"));
+  }
+  if (flat.fieldErrors && typeof flat.fieldErrors === "object") {
+    for (const [field, messages] of Object.entries(flat.fieldErrors)) {
+      if (!Array.isArray(messages)) continue;
+      const first = messages.find((m): m is string => typeof m === "string");
+      if (first) parts.push(`${field}: ${first}`);
+    }
+  }
+  return parts.length > 0 ? parts.join(". ") : null;
 }

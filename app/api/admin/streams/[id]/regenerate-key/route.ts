@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { generateStreamKey, hashStreamKey } from "@/lib/video/stream-key";
+import { rungKeys } from "@/lib/video/ingest";
 import { requireCapability } from "@/lib/api/admin";
 
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -44,6 +45,10 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   return NextResponse.json({
     id,
     streamKey: isRtmp ? `${id}?key=${streamKey}` : streamKey,
+    // Every rung, filled in. This is the only moment the secret exists in
+    // readable form, so an operator who is setting up four publishes gets all
+    // four here rather than being told to append suffixes by hand.
+    rungs: isRtmp ? rungKeys(id, streamKey) : undefined,
     secret: streamKey,
     ingestUrl: process.env.RTMP_INGEST_URL ?? "rtmp://localhost:1935/live",
     warning: isRtmp

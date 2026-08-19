@@ -76,6 +76,16 @@ export interface CreateStreamInput {
  * What an operator puts into OBS. Both fields, because a key on its own is
  * useless: OBS wants Server and Stream Key and will not start without both.
  */
+export interface IngestRung {
+  label: string;
+  resolution: string;
+  videoKbps: number;
+  audioKbps: number;
+  premiumOnly: boolean;
+  /** Exactly what the OBS Stream Key field wants for this rung. */
+  streamKey: string;
+}
+
 export interface IngestDetails {
   kind: "manual" | "cloudflare" | "rtmp";
   /** OBS: Settings, Stream, Service Custom, Server. */
@@ -87,6 +97,11 @@ export interface IngestDetails {
   hlsUrl: string;
   /** False when the key is stored as a hash and cannot be shown twice. */
   keyRetrievable: boolean;
+  /**
+   * One publish name per rung of the ladder, in the exact form OBS wants.
+   * `<secret>` stands in when the key cannot be shown again.
+   */
+  rungs?: IngestRung[];
 }
 
 export async function adminCreateStream(
@@ -369,13 +384,25 @@ export async function adminListReports(): Promise<
   return res?.reports ?? [];
 }
 
+export interface ResolveReportResult {
+  ok: boolean;
+  status: string;
+  /** True when the reported message was actually deleted. */
+  removedMessage?: boolean;
+  /** Who was banned, when the action was a ban. */
+  bannedUserId?: string | null;
+}
+
 export async function adminResolveReport(
   id: string,
   action: string,
-): Promise<void> {
-  await apiSend("PATCH", `/api/admin/reports/${encodeURIComponent(id)}`, {
-    action,
-  });
+  opts?: { notes?: string; banHours?: number },
+): Promise<ResolveReportResult> {
+  return apiSend<ResolveReportResult>(
+    "PATCH",
+    `/api/admin/reports/${encodeURIComponent(id)}`,
+    { action, ...opts },
+  );
 }
 
 /* ── Products ───────────────────────────────────────────────────────────── */
