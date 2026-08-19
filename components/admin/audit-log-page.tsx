@@ -14,11 +14,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ROOMS } from "@/lib/auth/capabilities";
+import { SECTIONS } from "@/lib/auth/capabilities";
 import { ASSIGNABLE_ROLES, roleLabel } from "@/lib/auth/role-catalog";
 
 /**
- * Who did what, in which room, and what the value was before.
+ * Who did what, in which section, and what the value was before.
  *
  * The log has existed since August and had no screen: reading it meant curling
  * an endpoint. It also recorded only actor, action and target, so "who changed
@@ -64,16 +64,16 @@ function valueLabel(v: unknown): string {
 }
 
 export function AuditLogPage() {
-  const [room, setRoom] = React.useState("all");
+  const [section, setSection] = React.useState("all");
   const [role, setRole] = React.useState("all");
   const [action, setAction] = React.useState("");
   const [expanded, setExpanded] = React.useState<string | null>(null);
 
   const query = useQuery({
-    queryKey: ["admin", "audit", room, role, action],
+    queryKey: ["admin", "audit", section, role, action],
     queryFn: async (): Promise<AuditEntry[]> => {
       const params = new URLSearchParams({ limit: "200" });
-      if (room !== "all") params.set("capability", room);
+      if (section !== "all") params.set("capability", section);
       if (role !== "all") params.set("actorRole", role);
       if (action.trim()) params.set("action", action.trim());
       const res = await fetch(`/api/admin/audit-log?${params}`, {
@@ -113,12 +113,12 @@ export function AuditLogPage() {
     },
     {
       key: "capability",
-      header: "Room",
+      header: "Section",
       width: "120px",
       cell: (r) =>
         r.capability ? (
           <StatusBadge>
-            {ROOMS.find((x) => x.value === r.capability)?.label ?? r.capability}
+            {SECTIONS.find((x) => x.value === r.capability)?.label ?? r.capability}
           </StatusBadge>
         ) : (
           <span className="text-xs text-muted-foreground">not recorded</span>
@@ -166,13 +166,13 @@ export function AuditLogPage() {
       />
 
       <div className="mb-4 flex flex-wrap gap-3">
-        <Select value={room} onValueChange={setRoom}>
+        <Select value={section} onValueChange={setSection}>
           <SelectTrigger className="w-44 bg-card">
-            <SelectValue placeholder="All rooms" />
+            <SelectValue placeholder="All sections" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All rooms</SelectItem>
-            {ROOMS.map((r) => (
+            <SelectItem value="all">All sections</SelectItem>
+            {SECTIONS.map((r) => (
               <SelectItem key={r.value} value={r.value}>
                 {r.label}
               </SelectItem>
@@ -224,7 +224,7 @@ export function AuditLogPage() {
             loading={query.isPending}
             onRowClick={(r) => setExpanded(expanded === r.id ? null : r.id)}
             emptyMessage={
-              action || room !== "all" || role !== "all"
+              action || section !== "all" || role !== "all"
                 ? "Nothing matches those filters."
                 : "Nothing has been done yet."
             }
