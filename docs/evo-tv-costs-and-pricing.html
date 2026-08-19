@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>EVO TV: what it costs, what to charge</title>
+<style>
+  :root {
+    --bg: #05191b;
+    --surface: #0b2426;
+    --surface-2: #10302f;
+    --ink: #e8f4f4;
+    --ink-dim: #9fbdbd;
+    --ink-faint: #6f8f8f;
+    --brand: #46e3ce;
+    --blue: #42ace8;
+    --warn: #f2b53c;
+    --bad: #ef6461;
+    --good: #5ed6a4;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+    line-height: 1.6;
+    font-size: 16px;
+  }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 28px 18px 80px; }
+  header h1 { font-size: 1.9rem; margin: 0 0 6px; letter-spacing: -0.01em; }
+  header p { color: var(--ink-dim); margin: 0 0 4px; }
+  h2 { font-size: 1.3rem; margin: 44px 0 10px; }
+  h3 { font-size: 1.02rem; margin: 26px 0 8px; }
+  p, li { color: var(--ink-dim); }
+  strong { color: var(--ink); font-weight: 600; }
+  .card { background: var(--surface); border-radius: 16px; padding: 20px; margin: 16px 0; }
+  .card.tight { padding: 14px 16px; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+  /* On a phone the tables are wider than the screen. They scroll inside their
+     own card rather than making the whole page slide sideways, which is the
+     thing that makes a page feel broken. */
+  .card { overflow-x: auto; }
+  @media (max-width: 700px) {
+    table { min-width: 520px; }
+    .card { -webkit-overflow-scrolling: touch; }
+  }
+  th { text-align: left; color: var(--ink-faint); font-weight: 600; padding: 8px 10px; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  td { padding: 9px 10px; color: var(--ink-dim); }
+  tbody tr:nth-child(odd) { background: rgba(255,255,255,0.03); }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  td.name { color: var(--ink); }
+  .grid { display: grid; gap: 14px; }
+  @media (min-width: 760px) { .grid.two { grid-template-columns: 1fr 1fr; } .grid.three { grid-template-columns: repeat(3, 1fr); } }
+  .stat { background: var(--surface-2); border-radius: 12px; padding: 14px 16px; }
+  .stat .label { font-size: 0.78rem; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.05em; }
+  .stat .value { font-size: 1.5rem; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; margin-top: 2px; }
+  .stat .value.good { color: var(--good); }
+  .stat .value.bad { color: var(--bad); }
+  .stat .note { font-size: 0.8rem; color: var(--ink-faint); }
+  label.slider { display: block; margin: 14px 0; }
+  label.slider .row { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+  label.slider .name { color: var(--ink); font-size: 0.92rem; }
+  label.slider .val { color: var(--brand); font-variant-numeric: tabular-nums; font-weight: 600; }
+  label.slider .hint { display: block; font-size: 0.78rem; color: var(--ink-faint); margin-top: 2px; }
+  input[type=range] { width: 100%; margin-top: 8px; accent-color: var(--brand); height: 26px; }
+  .pill { display: inline-block; background: var(--surface-2); color: var(--ink-dim); border-radius: 999px; padding: 3px 10px; font-size: 0.78rem; margin: 0 6px 6px 0; }
+  .callout { background: rgba(242,181,60,0.12); color: #f6dcae; border-radius: 12px; padding: 12px 14px; font-size: 0.92rem; }
+  .callout.good { background: rgba(94,214,164,0.12); color: #bff0da; }
+  .assume { font-size: 0.82rem; color: var(--ink-faint); }
+  footer { margin-top: 50px; color: var(--ink-faint); font-size: 0.82rem; }
+  .sticky { position: sticky; top: 0; z-index: 5; background: var(--bg); padding: 10px 0 6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>EVO TV: what it costs, and what to charge</h1>
+  <p>Every number here is either measured on the running platform or clearly marked as an assumption you can change with the sliders.</p>
+  <p class="assume">Written 19 August 2026. Prices in naira unless stated. Change the exchange rate below if it has moved.</p>
+</header>
+
+<h2>1. What the platform costs today</h2>
+
+<p>The whole thing runs on one small server in Frankfurt plus three managed services. This is the real bill, not an estimate of one.</p>
+
+<div class="card">
+<table>
+  <thead>
+    <tr><th>What</th><th>Why it exists</th><th class="num">Per month</th></tr>
+  </thead>
+  <tbody>
+    <tr><td class="name">Server (2 vCPU, 4 GB, 120 GB)</td><td>Runs the website, the API and the live video packager. 39 GB of the disk is used.</td><td class="num">$28</td></tr>
+    <tr><td class="name">Managed Postgres</td><td>The database. Managed so backups and patching are not your problem.</td><td class="num">$15</td></tr>
+    <tr><td class="name">Spaces storage + CDN</td><td>Video files, thumbnails, the app download. Includes 250 GB stored and 1 TB delivered.</td><td class="num">$5</td></tr>
+    <tr><td class="name">Domains</td><td>evotv.co and evotv.africa, averaged over the year.</td><td class="num">$3</td></tr>
+    <tr><td class="name">Email</td><td>Sign-up and password mail. Free below 3,000 messages a month.</td><td class="num">$0</td></tr>
+    <tr><td class="name">App builds</td><td>Free tier covers the current pace of releases.</td><td class="num">$0</td></tr>
+    <tr><td class="name"><strong>Total</strong></td><td>Everything above</td><td class="num"><strong>$51</strong></td></tr>
+  </tbody>
+</table>
+</div>
+
+<p><strong>In plain English:</strong> the technology costs about the same as a modest phone plan. It is not where the money goes, and it will not be for a long time. The two things that actually cost money are the licence and the people.</p>
+
+<h2>2. The one cost that grows with the audience</h2>
+
+<p>Servers do not get more expensive because more people watch. <strong>Delivering the video does.</strong> Every viewer pulls a stream of data for as long as they watch, and that is charged by the gigabyte.</p>
+
+<p>The quality ladder was measured on the live broadcast, so these are real:</p>
+
+<div class="card">
+<table>
+  <thead><tr><th>Quality</th><th class="num">Speed</th><th class="num">Data per hour, per viewer</th><th class="num">Cost per hour, per viewer</th></tr></thead>
+  <tbody>
+    <tr><td class="name">360p (weakest connections)</td><td class="num">647 kbps</td><td class="num">0.29 GB</td><td class="num" id="c360">-</td></tr>
+    <tr><td class="name">480p</td><td class="num">1,318 kbps</td><td class="num">0.59 GB</td><td class="num" id="c480">-</td></tr>
+    <tr><td class="name">720p</td><td class="num">1,681 kbps</td><td class="num">0.76 GB</td><td class="num" id="c720">-</td></tr>
+    <tr><td class="name">1080p (Premium only)</td><td class="num">5,000 kbps</td><td class="num">2.25 GB</td><td class="num" id="c1080">-</td></tr>
+  </tbody>
+</table>
+<p class="assume">At the bandwidth price set in the calculator below. The server already includes 4 TB a month before any of this is charged.</p>
+</div>
+
+<div class="callout">
+<strong>This is why 1080p is behind the paywall.</strong> One person watching an hour of 1080p uses as much data as roughly eight people watching an hour of 360p. Offering it to everybody would mean the cheapest viewers subsidising the most expensive ones.
+</div>
+
+<h3>What the free 4 TB actually buys you</h3>
+<div class="card tight">
+<table>
+  <thead><tr><th>If everyone watched at</th><th class="num">Hours before the 4 TB runs out</th><th class="num">That is roughly</th></tr></thead>
+  <tbody>
+    <tr><td class="name">360p</td><td class="num">13,700 viewer-hours</td><td class="num">450 people watching an hour a day</td></tr>
+    <tr><td class="name">480p</td><td class="num">6,700 viewer-hours</td><td class="num">220 people watching an hour a day</td></tr>
+    <tr><td class="name">720p</td><td class="num">5,300 viewer-hours</td><td class="num">175 people watching an hour a day</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2>3. The real costs: licence and people</h2>
+
+<p>The content licence is about <strong>₦270 million</strong>. The team is around <strong>30 people</strong>, with the lowest paid ₦500,000 a month and about 10% of the team earning up to ₦3 million. That works out at roughly <strong>₦22.5 million a month</strong>, which is <strong>₦270 million a year</strong>. So in round numbers: one licence, and one year of salaries, cost about the same.</p>
+
+<p>Put next to $51 a month of servers, the point is blunt: <strong>this business is a content and payroll business, not a hosting business.</strong> The technology bill only becomes interesting if you reach hundreds of thousands of viewer-hours, and by then it is a rounding error against the licence.</p>
+
+<h2>4. Try your own numbers</h2>
+
+<p>Everything below updates as you move the sliders. Nothing is saved, so move them freely.</p>
+
+<div class="card">
+  <h3 style="margin-top:0">Audience</h3>
+  <label class="slider"><span class="row"><span class="name">People with an account</span><span class="val" id="v_users">50,000</span></span>
+    <input type="range" id="s_users" min="1000" max="2000000" step="1000" value="50000">
+    <span class="hint">Everyone signed up, paying or not.</span></label>
+
+  <label class="slider"><span class="row"><span class="name">How many pay</span><span class="val" id="v_conv">4%</span></span>
+    <input type="range" id="s_conv" min="0.5" max="25" step="0.5" value="4">
+    <span class="hint">Streaming services in Nigeria typically convert 2% to 6% of registered users. Above 10% is optimistic.</span></label>
+
+  <label class="slider"><span class="row"><span class="name">Hours watched per person per month</span><span class="val" id="v_hours">6</span></span>
+    <input type="range" id="s_hours" min="1" max="60" step="1" value="6">
+    <span class="hint">Across everybody with an account, not just payers.</span></label>
+
+  <label class="slider"><span class="row"><span class="name">Share watching at 720p or better</span><span class="val" id="v_hq">35%</span></span>
+    <input type="range" id="s_hq" min="0" max="100" step="5" value="35">
+    <span class="hint">The rest are on 360p or 480p. Higher means a bigger bandwidth bill.</span></label>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0">Prices</h3>
+  <label class="slider"><span class="row"><span class="name">Supporter, per month</span><span class="val" id="v_p1">₦1,500</span></span>
+    <input type="range" id="s_p1" min="0" max="10000" step="100" value="1500"></label>
+  <label class="slider"><span class="row"><span class="name">Premium, per month</span><span class="val" id="v_p2">₦4,500</span></span>
+    <input type="range" id="s_p2" min="0" max="25000" step="250" value="4500"></label>
+  <label class="slider"><span class="row"><span class="name">Pro, per month</span><span class="val" id="v_p3">₦12,000</span></span>
+    <input type="range" id="s_p3" min="0" max="60000" step="500" value="12000"></label>
+  <label class="slider"><span class="row"><span class="name">Of the people who pay, how many take Premium or Pro</span><span class="val" id="v_mix">45%</span></span>
+    <input type="range" id="s_mix" min="0" max="100" step="5" value="45">
+    <span class="hint">The rest take Supporter. Of the Premium-or-better group, one in six is assumed to take Pro.</span></label>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0">Advertising</h3>
+  <label class="slider"><span class="row"><span class="name">Ad income per 1,000 views</span><span class="val" id="v_cpm">₦1,200</span></span>
+    <input type="range" id="s_cpm" min="0" max="8000" step="100" value="1200">
+    <span class="hint">What an advertiser pays for a thousand impressions. Nigerian display and pre-roll sits roughly ₦800 to ₦2,500 for direct sales, less through networks.</span></label>
+  <label class="slider"><span class="row"><span class="name">Ads shown per viewer-hour</span><span class="val" id="v_ads">3</span></span>
+    <input type="range" id="s_ads" min="0" max="12" step="1" value="3">
+    <span class="hint">Only free viewers see them. Paying viewers are counted out automatically.</span></label>
+  <label class="slider"><span class="row"><span class="name">How much of the ad space actually sells</span><span class="val" id="v_fill">35%</span></span>
+    <input type="range" id="s_fill" min="0" max="100" step="5" value="35">
+    <span class="hint">Empty slots earn nothing. Being honest here is the difference between a plan and a wish.</span></label>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0">The team and the licence</h3>
+  <label class="slider"><span class="row"><span class="name">People on payroll</span><span class="val" id="v_head">30</span></span>
+    <input type="range" id="s_head" min="1" max="120" step="1" value="30"></label>
+  <label class="slider"><span class="row"><span class="name">Lowest salary, per month</span><span class="val" id="v_floor">₦500,000</span></span>
+    <input type="range" id="s_floor" min="100000" max="2000000" step="50000" value="500000"></label>
+  <label class="slider"><span class="row"><span class="name">Share of the team on senior pay</span><span class="val" id="v_topshare">10%</span></span>
+    <input type="range" id="s_topshare" min="0" max="50" step="5" value="10"></label>
+  <label class="slider"><span class="row"><span class="name">Senior pay, per month</span><span class="val" id="v_top">₦3,000,000</span></span>
+    <input type="range" id="s_top" min="500000" max="10000000" step="100000" value="3000000"></label>
+  <label class="slider"><span class="row"><span class="name">Content licence, total</span><span class="val" id="v_lic">₦270,000,000</span></span>
+    <input type="range" id="s_lic" min="0" max="1000000000" step="10000000" value="270000000"></label>
+  <label class="slider"><span class="row"><span class="name">Years the licence covers</span><span class="val" id="v_licyears">3</span></span>
+    <input type="range" id="s_licyears" min="1" max="10" step="1" value="3">
+    <span class="hint">A licence paid once but used for several years is spread across them, which is how the monthly figure below is worked out.</span></label>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0">Assumptions you can correct</h3>
+  <label class="slider"><span class="row"><span class="name">Naira per US dollar</span><span class="val" id="v_fx">₦1,600</span></span>
+    <input type="range" id="s_fx" min="700" max="3000" step="25" value="1600"></label>
+  <label class="slider"><span class="row"><span class="name">Bandwidth price per GB</span><span class="val" id="v_bw">$0.010</span></span>
+    <input type="range" id="s_bw" min="1" max="60" step="1" value="10">
+    <span class="hint">DigitalOcean overage is $0.01. A cheap CDN such as Bunny is about the same in Africa and Europe. Cloudflare Stream is far more, and is billed per minute delivered rather than per gigabyte.</span></label>
+  <label class="slider"><span class="row"><span class="name">Payment processing</span><span class="val" id="v_fee">1.5% + ₦100</span></span>
+    <input type="range" id="s_fee" min="0" max="5" step="0.1" value="1.5">
+    <span class="hint">Paystack local cards. The ₦100 is waived under ₦2,500 and the whole fee is capped at ₦2,000.</span></label>
+</div>
+
+<h2>5. What that gives you</h2>
+
+<div class="sticky">
+<div class="grid three">
+  <div class="stat"><div class="label">Money in, per month</div><div class="value" id="o_rev">-</div><div class="note" id="o_rev_note">-</div></div>
+  <div class="stat"><div class="label">Money out, per month</div><div class="value" id="o_cost">-</div><div class="note" id="o_cost_note">-</div></div>
+  <div class="stat"><div class="label">Left over, per month</div><div class="value" id="o_profit">-</div><div class="note" id="o_profit_note">-</div></div>
+</div>
+</div>
+
+<div class="card">
+<table>
+  <thead><tr><th>Line</th><th class="num">Per month</th><th class="num">Per year</th></tr></thead>
+  <tbody id="breakdown"></tbody>
+</table>
+</div>
+
+<div class="card" id="breakeven_card">
+  <h3 style="margin-top:0">Breaking even</h3>
+  <p id="breakeven_text">-</p>
+  <p class="assume" id="breakeven_detail">-</p>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0">What each paying member is worth, and what they cost</h3>
+  <table>
+    <thead><tr><th>Tier</th><th class="num">Price</th><th class="num">After payment fees</th><th class="num">Bandwidth they use</th><th class="num">Left over</th></tr></thead>
+    <tbody id="unit"></tbody>
+  </table>
+  <p class="assume">Bandwidth assumes a paying member watches the hours set above, at the quality mix set above, with Premium and Pro members watching at 1080p for the higher-quality share.</p>
+</div>
+
+<h2>6. What to charge, and why</h2>
+
+<p>Your current ladder is ₦1,500 Supporter, ₦4,500 Premium, ₦12,000 Pro. Here is the honest read on each.</p>
+
+<div class="card">
+<h3 style="margin-top:0">Supporter at ₦1,500</h3>
+<p>This is priced like a tip, and that is fine, but it has to <strong>cost you almost nothing to serve</strong>. Right now it removes feed ads, which means every Supporter reduces ad income as well as adding subscription income. At ₦1,500 with 6 hours of watching, the bandwidth is small, but the lost ad revenue is not automatically smaller. Keep it, but make it about <strong>status and access rather than removing income</strong>: badge, early access, the schedule ahead of time, a supporters-only chat.</p>
+</div>
+
+<div class="card">
+<h3 style="margin-top:0">Premium at ₦4,500</h3>
+<p>This is the one to build the business on, and it is <strong>priced about right for Nigeria today</strong>. For comparison, Showmax Entertainment is around ₦3,500 and its Premier League tier is higher; Netflix Nigeria mobile sits near ₦2,900 with standard plans well above that. Sitting at ₦4,500 with live sport and 1080p is defensible, but only if the catalogue justifies it every month.</p>
+<p><strong>If you want more subscribers rather than more per subscriber</strong>, ₦3,500 is the number that reads as "cheaper than the obvious alternative". The calculator will show you the trade: a 22% price cut needs about a 28% lift in subscribers to stand still.</p>
+</div>
+
+<div class="card">
+<h3 style="margin-top:0">Pro at ₦12,000</h3>
+<p>At eight times Supporter, this only works if it is aimed at a <strong>different kind of buyer</strong>, not a keener viewer. Creator analytics and priority ingest are business features, so sell it as a business product: a creator or a small esports org, invoiced, with a name on it. If it stays a "more premium Premium" it will sell in single digits and cost you a tier of complexity for nothing.</p>
+</div>
+
+<h3>Annual plans</h3>
+<p>Offer <strong>ten months for the price of twelve</strong> (about a 17% discount) on Premium. It is the single cheapest way to reduce churn, and it moves cash forward, which matters when a licence has already been paid.</p>
+
+<h2>7. The kinds of paywall you can run</h2>
+
+<div class="grid two">
+  <div class="card tight">
+    <h3 style="margin-top:0">Subscription</h3>
+    <p>Pay monthly, watch everything in the tier. Predictable income, and the model everything else is measured against.</p>
+    <p><span class="pill">Best for the main catalogue</span><span class="pill">₦3,500 to ₦4,500</span></p>
+  </div>
+  <div class="card tight">
+    <h3 style="margin-top:0">Rental, per title</h3>
+    <p>Pay once, watch within 48 hours. Good for a single big fight or film that non-subscribers will pay for.</p>
+    <p><span class="pill">₦800 to ₦2,000 a title</span></p>
+  </div>
+  <div class="card tight">
+    <h3 style="margin-top:0">Buy to keep</h3>
+    <p>Pay once, watch whenever. Only worth it for content people rewatch, which is rare in sport and common in film.</p>
+    <p><span class="pill">₦2,500 to ₦6,000</span></p>
+  </div>
+  <div class="card tight">
+    <h3 style="margin-top:0">Event pass</h3>
+    <p>One price for one event, live plus replay for a week. This is the model that suits a league final or a big tournament.</p>
+    <p><span class="pill">₦1,500 to ₦5,000</span></p>
+  </div>
+  <div class="card tight">
+    <h3 style="margin-top:0">Day pass</h3>
+    <p>24 hours of everything. Converts people who will not commit monthly, and is the natural upsell on a big match day.</p>
+    <p><span class="pill">₦500 to ₦1,000</span></p>
+  </div>
+  <div class="card tight">
+    <h3 style="margin-top:0">Free with ads</h3>
+    <p>No payment, income from advertising. Needs scale to matter, and every subscriber you gain removes some of it.</p>
+    <p><span class="pill">Keep as the front door</span></p>
+  </div>
+</div>
+
+<div class="callout" style="margin-top:16px">
+<strong>The combination that fits EVO TV:</strong> free with ads as the front door, Premium as the subscription that carries the business, event passes on the two or three moments a year that people will pay for on their own, and Pro sold to organisations rather than to fans. Rental and buy-to-keep are only worth building once there is a film catalogue that justifies them.
+</div>
+
+<h2>8. The three things that decide whether this works</h2>
+<ol>
+  <li><strong>Conversion, not signups.</strong> Every extra person who signs up and never pays costs you bandwidth and earns you a fraction of an advert. Moving 3% to 5% is worth more than doubling registrations.</li>
+  <li><strong>Hours watched per paying member.</strong> A ₦4,500 member who watches 40 hours a month at 1080p is close to unprofitable on bandwidth alone. Watch that number: if it climbs, the 1080p gate is what protects you.</li>
+  <li><strong>The licence is the clock.</strong> ₦270m spread over three years is ₦7.5m a month before a single salary. Everything above is about how quickly subscriptions reach that.</li>
+</ol>
+
+<footer>
+  <p>Server, database, storage and domain costs are the real bill for the platform as it runs today. The bandwidth ladder figures were measured on the live broadcast on 18 August 2026. Everything else is an assumption on a slider, which is the honest way to present a forecast.</p>
+</footer>
+
+</div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var naira = function (n) {
+    if (!isFinite(n)) return "-";
+    var abs = Math.abs(n);
+    if (abs >= 1e9) return "₦" + (n / 1e9).toFixed(2) + "bn";
+    if (abs >= 1e6) return "₦" + (n / 1e6).toFixed(1) + "m";
+    if (abs >= 1e3) return "₦" + Math.round(n).toLocaleString();
+    return "₦" + Math.round(n);
+  };
+  var exact = function (n) { return "₦" + Math.round(n).toLocaleString(); };
+
+  var ids = ["users","conv","hours","hq","p1","p2","p3","mix","cpm","ads","fill",
+             "head","floor","topshare","top","lic","licyears","fx","bw","fee"];
+
+  function read() {
+    var v = {};
+    ids.forEach(function (k) { v[k] = Number($("s_" + k).value); });
+    return v;
+  }
+
+  // Data used per viewer-hour, in GB, measured off the live ladder.
+  var GB = { low: 0.29, mid: 0.59, high: 0.76, fhd: 2.25 };
+
+  function calc(v) {
+    var fx = v.fx;
+    var bwPerGb = (v.bw / 1000) * fx;      // slider is tenths of a cent
+    var payers = v.users * (v.conv / 100);
+    var premiumish = payers * (v.mix / 100);
+    var pro = premiumish / 6;
+    var premium = premiumish - pro;
+    var supporter = payers - premiumish;
+    var free = v.users - payers;
+
+    // Subscription income, after payment fees.
+    function net(price) {
+      if (price <= 0) return 0;
+      var fee = price * (v.fee / 100) + (price >= 2500 ? 100 : 0);
+      return price - Math.min(fee, 2000);
+    }
+    var subs = supporter * net(v.p1) + premium * net(v.p2) + pro * net(v.p3);
+
+    // Advertising: only the free audience sees them.
+    var freeHours = free * v.hours;
+    var impressions = freeHours * v.ads;
+    var adRev = (impressions / 1000) * v.cpm * (v.fill / 100);
+
+    // Bandwidth. Paying members get 1080p for their high-quality share.
+    var hqShare = v.hq / 100;
+    var freeGb = freeHours * (hqShare * GB.high + (1 - hqShare) * GB.mid);
+    var payHours = payers * v.hours;
+    var payGb = payHours * (hqShare * GB.fhd + (1 - hqShare) * GB.mid);
+    var totalGb = freeGb + payGb;
+    var includedGb = 4096;                  // the server's monthly allowance
+    var billableGb = Math.max(0, totalGb - includedGb);
+    var bandwidth = billableGb * bwPerGb;
+
+    // Fixed platform bill, in naira.
+    var platform = 51 * fx;
+
+    // Payroll.
+    var seniors = Math.round(v.head * (v.topshare / 100));
+    var juniors = Math.max(0, v.head - seniors);
+    var payroll = seniors * v.top + juniors * v.floor;
+
+    // Licence, spread across the years it covers.
+    var licenceMonthly = v.lic / (v.licyears * 12);
+
+    var revenue = subs + adRev;
+    var costs = platform + bandwidth + payroll + licenceMonthly;
+    return {
+      payers: payers, free: free, supporter: supporter, premium: premium, pro: pro,
+      subs: subs, adRev: adRev, revenue: revenue,
+      platform: platform, bandwidth: bandwidth, payroll: payroll,
+      licenceMonthly: licenceMonthly, costs: costs,
+      profit: revenue - costs,
+      totalGb: totalGb, billableGb: billableGb, bwPerGb: bwPerGb,
+      net: net, seniors: seniors, juniors: juniors,
+      cashCosts: platform + bandwidth + payroll
+    };
+  }
+
+  function render() {
+    var v = read();
+    var r = calc(v);
+
+    // Slider labels.
+    $("v_users").textContent = v.users.toLocaleString();
+    $("v_conv").textContent = v.conv + "%";
+    $("v_hours").textContent = v.hours;
+    $("v_hq").textContent = v.hq + "%";
+    $("v_p1").textContent = exact(v.p1);
+    $("v_p2").textContent = exact(v.p2);
+    $("v_p3").textContent = exact(v.p3);
+    $("v_mix").textContent = v.mix + "%";
+    $("v_cpm").textContent = exact(v.cpm);
+    $("v_ads").textContent = v.ads;
+    $("v_fill").textContent = v.fill + "%";
+    $("v_head").textContent = v.head;
+    $("v_floor").textContent = exact(v.floor);
+    $("v_topshare").textContent = v.topshare + "%";
+    $("v_top").textContent = exact(v.top);
+    $("v_lic").textContent = exact(v.lic);
+    $("v_licyears").textContent = v.licyears;
+    $("v_fx").textContent = exact(v.fx);
+    $("v_bw").textContent = "$" + (v.bw / 1000).toFixed(3);
+    $("v_fee").textContent = v.fee + "% + ₦100";
+
+    // The per-hour table at the top.
+    var perGb = r.bwPerGb;
+    $("c360").textContent = exact(GB.low * perGb);
+    $("c480").textContent = exact(GB.mid * perGb);
+    $("c720").textContent = exact(GB.high * perGb);
+    $("c1080").textContent = exact(GB.fhd * perGb);
+
+    // Headline numbers.
+    $("o_rev").textContent = naira(r.revenue);
+    $("o_rev_note").textContent = Math.round(r.payers).toLocaleString() + " paying, " +
+      Math.round(r.free).toLocaleString() + " free";
+    $("o_cost").textContent = naira(r.costs);
+    $("o_cost_note").textContent = "of which " + naira(r.payroll) + " is people";
+    var p = $("o_profit");
+    p.textContent = naira(r.profit);
+    p.className = "value " + (r.profit >= 0 ? "good" : "bad");
+    $("o_profit_note").textContent = r.profit >= 0
+      ? "in the black"
+      : "short by " + naira(Math.abs(r.profit)) + " a month";
+
+    // Breakdown table.
+    var rows = [
+      ["Subscriptions, after payment fees", r.subs, true],
+      ["Advertising", r.adRev, true],
+      ["Servers, database, storage, domains", -r.platform, false],
+      ["Video bandwidth over the included 4 TB", -r.bandwidth, false],
+      ["Salaries (" + r.seniors + " senior, " + r.juniors + " other)", -r.payroll, false],
+      ["Licence, spread over " + v.licyears + " year" + (v.licyears === 1 ? "" : "s"), -r.licenceMonthly, false]
+    ];
+    var html = "";
+    rows.forEach(function (row) {
+      html += "<tr><td class='name'>" + row[0] + "</td><td class='num'>" +
+        (row[1] < 0 ? "-" : "") + naira(Math.abs(row[1])) + "</td><td class='num'>" +
+        (row[1] < 0 ? "-" : "") + naira(Math.abs(row[1]) * 12) + "</td></tr>";
+    });
+    html += "<tr><td class='name'><strong>Left over</strong></td><td class='num'><strong>" +
+      naira(r.profit) + "</strong></td><td class='num'><strong>" + naira(r.profit * 12) +
+      "</strong></td></tr>";
+    $("breakdown").innerHTML = html;
+
+    // Unit economics per tier.
+    var hqShare = v.hq / 100;
+    var payerGbEach = v.hours * (hqShare * GB.fhd + (1 - hqShare) * GB.mid);
+    var payerBw = payerGbEach * perGb;
+    var tiers = [["Supporter", v.p1], ["Premium", v.p2], ["Pro", v.p3]];
+    var u = "";
+    tiers.forEach(function (t) {
+      var netv = r.net(t[1]);
+      u += "<tr><td class='name'>" + t[0] + "</td><td class='num'>" + exact(t[1]) +
+        "</td><td class='num'>" + exact(netv) + "</td><td class='num'>" + exact(payerBw) +
+        "</td><td class='num'>" + exact(netv - payerBw) + "</td></tr>";
+    });
+    $("unit").innerHTML = u;
+
+    // Breaking even. Two questions: does it cover the monthly bill, and how long
+    // until the licence is paid back out of what is left.
+    var text, detail;
+    if (r.revenue >= r.cashCosts) {
+      var surplus = r.revenue - r.cashCosts;
+      var months = r.lic === 0 ? 0 : v.lic / surplus;
+      if (v.lic === 0) {
+        text = "Covering the monthly bill with " + naira(surplus) + " a month spare, and no licence to pay back.";
+        detail = "";
+      } else if (months <= 600) {
+        var years = months / 12;
+        text = "The month-to-month runs at a surplus of " + naira(surplus) +
+          ". At that rate the ₦" + Math.round(v.lic / 1e6) + "m licence is paid back in " +
+          (months < 24 ? Math.round(months) + " months" : years.toFixed(1) + " years") + ".";
+        detail = "That is the licence treated as money already spent, being earned back out of what is left after salaries, servers and bandwidth.";
+      } else {
+        text = "Covering the monthly bill, but only just: the licence would take over 50 years to earn back at this rate.";
+        detail = "Move conversion or price rather than costs. Cutting servers cannot fix a payroll and licence gap.";
+      }
+    } else {
+      var gap = r.cashCosts - r.revenue;
+      var needed = gap / (r.net(v.p2) || 1);
+      text = "Not covering the monthly bill. Short by " + naira(gap) + " a month before the licence is counted at all.";
+      detail = "That gap is about " + Math.round(needed).toLocaleString() +
+        " more Premium members at " + exact(v.p2) + ", or the same money from advertising, or a smaller team.";
+    }
+    $("breakeven_text").textContent = text;
+    $("breakeven_detail").textContent = detail;
+  }
+
+  ids.forEach(function (k) { $("s_" + k).addEventListener("input", render); });
+  render();
+})();
+</script>
+</body>
+</html>
