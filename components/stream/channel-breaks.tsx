@@ -50,6 +50,10 @@ interface NowNext {
   next: { title: string; startLabel: string } | null;
 }
 
+/** How often the watchdog looks, and how long a still picture means a dead feed. */
+const STALL_TICK_MS = 2_000;
+const STALL_LIMIT_MS = 12_000;
+
 interface Props {
   children: React.ReactNode;
   /** Shown on the on-air card. Passing null hides the card entirely. */
@@ -194,8 +198,13 @@ export function ChannelBreaks({ children, nowNext }: Props) {
         return current;
       });
       // Keep asking for the feed. When it answers, the filler comes off.
+      let resumeMark = v.currentTime;
       retry ??= setInterval(() => {
-        if (v.readyState >= 3 && !v.error) {
+        // Moving again, not merely "ready": a stalled element keeps a healthy
+        // readyState while the picture sits still.
+        const moving = v.currentTime > resumeMark + 0.25;
+        resumeMark = v.currentTime;
+        if (moving && !v.error) {
           setAdKind((current) => {
             if (current === "live_filler") endAd();
             return current;
@@ -208,6 +217,33 @@ export function ChannelBreaks({ children, nowNext }: Props) {
       }, 5000);
     };
 
+    /*
+     * A feed that stops does not fire an error.
+     *
+     * nginx keeps a five minute playlist, so when the encoder stops the
+     * manifest is still there and still 200: the player simply runs out of
+     * segments and waits. No `error`, no `ended`, often not even `stalled`, so
+     * the filler stayed off for the whole window the operator was watching.
+     * The honest test is whether the picture is moving: if the clock has not
+     * advanced while the video is meant to be playing, the feed is gone.
+     */
+    let lastTime = v.currentTime;
+    let stuckFor = 0;
+    const watchdog = setInterval(() => {
+      if (v.paused || v.seeking) {
+        lastTime = v.currentTime;
+        stuckFor = 0;
+        return;
+      }
+      if (v.currentTime > lastTime + 0.25) {
+        lastTime = v.currentTime;
+        stuckFor = 0;
+        return;
+      }
+      stuckFor += STALL_TICK_MS;
+      if (stuckFor >= STALL_LIMIT_MS) onDrop();
+    }, STALL_TICK_MS);
+
     v.addEventListener("error", onDrop);
     v.addEventListener("ended", onDrop);
     v.addEventListener("stalled", onDrop);
@@ -215,6 +251,7 @@ export function ChannelBreaks({ children, nowNext }: Props) {
       v.removeEventListener("error", onDrop);
       v.removeEventListener("ended", onDrop);
       v.removeEventListener("stalled", onDrop);
+      clearInterval(watchdog);
       if (retry) clearInterval(retry);
     };
   }, [config, liveVideo, showAd, endAd]);

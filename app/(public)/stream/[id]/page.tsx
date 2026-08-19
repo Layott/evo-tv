@@ -58,6 +58,51 @@ export default function StreamPage() {
   // Counts this viewer while the stream is live and the tab is visible.
   useStreamHeartbeat(streamId, Boolean(stream?.isLive));
 
+  /*
+   * On air, off air, without a refresh.
+   *
+   * This page read the stream once and never again, so starting the encoder
+   * changed nothing on a tab that was already open: the viewer sat on "Not
+   * currently live" until they reloaded, which is not how a live channel is
+   * allowed to behave. The home page already listens to this feed; the watch
+   * page, which is where "Watch now" sends everyone, did not.
+   *
+   * `/api/sse/channel` carries the nudge and has no presence side effects, so
+   * subscribing here does not touch the viewer count that `useStreamHeartbeat`
+   * owns. The event is a nudge: the refetch decides what is true.
+   *
+   * The poll is the floor. A proxy that buffers or drops the stream would
+   * otherwise leave the page exactly as stale as it was before.
+   */
+  React.useEffect(() => {
+    if (!streamId) return;
+    let cancelled = false;
+
+    const refetch = () => {
+      void getStreamById(streamId).then((s) => {
+        if (!cancelled) setStream(s);
+      });
+    };
+
+    const poll = setInterval(refetch, 30_000);
+    if (typeof EventSource === "undefined") return () => clearInterval(poll);
+
+    const source = new EventSource("/api/sse/channel");
+    const nudge = (event: MessageEvent) => {
+      if (typeof event.data === "string" && event.data.includes('"hello"')) return;
+      refetch();
+    };
+    source.addEventListener("message", nudge);
+    source.addEventListener("error", () => {});
+
+    return () => {
+      cancelled = true;
+      clearInterval(poll);
+      source.removeEventListener("message", nudge);
+      source.close();
+    };
+  }, [streamId]);
+
   React.useEffect(() => {
     let cancelled = false;
     getStreamById(streamId).then((s) => {
