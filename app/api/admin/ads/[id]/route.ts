@@ -11,7 +11,9 @@ import {
 const updateSchema = z
   .object({
     placement: z.enum(["home_banner", "stream_preroll", "mid_roll", "live_filler", "sidebar", "between_content"]),
-    mediaUrl: z.string(),
+    // Same rule as create: an ad without a creative renders nothing, and an
+    // edit that blanks the file is how a working slot becomes an empty one.
+    mediaUrl: z.string().trim().min(1, "Upload the creative first"),
     clickUrl: z.string(),
     advertiser: z.string().min(1).max(200),
     active: z.boolean(),
