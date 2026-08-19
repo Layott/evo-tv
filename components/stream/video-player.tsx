@@ -423,6 +423,51 @@ export function VideoPlayer({
       hlsRef.current = null;
     };
   }, [src, autoPlay, isLive]);
+
+  /*
+   * Make sure it actually started.
+   *
+   * Autoplay here is a chain: hls.js parses the manifest, the effect waits for
+   * a buffer cushion, then calls `play()`. Any link that does not fire leaves
+   * the channel sitting on a poster with a play button, which is what the home
+   * page was doing: a viewer arriving at a live channel had to press play, and
+   * a channel you have to start is not a channel.
+   *
+   * So this checks the only thing that matters, whether the element is
+   * playing, and if it is not, starts it muted. Muted because every browser
+   * refuses a sound-on autoplay, and a muted picture with a "tap for sound"
+   * control is the behaviour every streaming site has settled on.
+   *
+   * It stops as soon as the viewer takes over: a pause is a decision, and
+   * fighting it would be worse than never autoplaying.
+   */
+  React.useEffect(() => {
+    if (!autoPlay) return;
+    let userPaused = false;
+    const v = videoRef.current;
+    if (!v) return;
+
+    const onPause = () => {
+      // Only a pause with the picture already running is the viewer's doing.
+      if (v.currentTime > 0 && !v.ended) userPaused = true;
+    };
+    v.addEventListener("pause", onPause);
+
+    const nudge = setInterval(() => {
+      if (userPaused || !v.paused || v.ended) return;
+      if (v.readyState < 2) return;
+      void v.play().catch(() => {
+        v.muted = true;
+        setMuted(true);
+        void v.play().catch(() => {});
+      });
+    }, 2_000);
+
+    return () => {
+      clearInterval(nudge);
+      v.removeEventListener("pause", onPause);
+    };
+  }, [src, autoPlay]);
   const controlsTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [playing, setPlaying] = React.useState(false);
