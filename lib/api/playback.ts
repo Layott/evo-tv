@@ -98,11 +98,28 @@ export async function resolveViewer(): Promise<PlaybackViewer> {
  * ladder and was never a security boundary. This is the boundary.
  */
 export function stripVodPlayback<
-  T extends Pick<Vod, "hlsUrl" | "mp4Url" | "isPremium">,
+  T extends Pick<Vod, "hlsUrl" | "mp4Url" | "isPremium"> & {
+    publishAt?: string | null;
+  },
 >(
   vod: T,
   viewer: PlaybackViewer,
-): T & { requiresAuth?: true; requiresPremium?: true } {
+): T & {
+  requiresAuth?: true;
+  requiresPremium?: true;
+  comingSoon?: true;
+} {
+  /*
+   * Not out yet beats every other answer, including premium.
+   *
+   * The lists already exclude it, so reaching this means somebody has the
+   * detail URL: a link shared early, or a guess. They get the page and the
+   * date, and no manifest. Telling them to subscribe for something that does
+   * not exist yet would be worse than useless.
+   */
+  if (vod.publishAt && new Date(vod.publishAt).getTime() > Date.now()) {
+    return { ...vod, hlsUrl: "", mp4Url: "", comingSoon: true as const };
+  }
   if (!viewer.signedIn) {
     return { ...vod, hlsUrl: "", mp4Url: "", requiresAuth: true as const };
   }

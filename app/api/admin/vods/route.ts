@@ -98,6 +98,8 @@ const createSchema = z.object({
   durationSec: z.number().int().positive(),
   description: z.string().max(2000).default(""),
   pillar: z.enum(["esports", "anime", "lifestyle"]).nullish(),
+  /** When it should appear. Null, or omitted, means now. */
+  publishAt: z.string().datetime().nullable().optional(),
   maturityRating: z.enum(["kids", "pg", "teen", "mature"]).default("teen"),
   isPremium: z.boolean().default(false),
   contentTags: z.array(z.string()).default([]),
@@ -141,6 +143,7 @@ export async function POST(req: NextRequest) {
     mp4Path: parsed.data.mp4Url,
     thumbnailUrl: parsed.data.thumbnailUrl,
     publishedAt: nowIso,
+    publishAt: parsed.data.publishAt ?? null,
     chapters: [],
     viewCount: 0,
     likeCount: 0,

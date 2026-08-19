@@ -207,6 +207,13 @@ export interface Vod {
   mp4Url: string;
   thumbnailUrl: string;
   publishedAt: ISODate;
+  /**
+   * When it becomes visible, or null if it already is.
+   *
+   * Present on an admin read so a scheduled row can be shown as scheduled.
+   * Public lists never contain an unreleased row at all.
+   */
+  publishAt?: ISODate | null;
   chapters: VodChapter[];
   /**
    * Audience size, admin only.
