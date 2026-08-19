@@ -125,15 +125,22 @@ export function ModerationPage() {
     action: "approve" | "remove" | "ban" | "escalate",
   ) {
     try {
-      await adminResolveReport(id, action);
+      const result = await adminResolveReport(id, action);
+      // Say what actually happened rather than what the button is called: a
+      // ban also removes the message, and a report against something with no
+      // person attached cannot ban anybody at all.
       toast.success(
         action === "approve"
-          ? "Message approved"
+          ? "Report dismissed, nothing removed"
           : action === "remove"
-            ? "Message removed"
+            ? result?.removedMessage
+              ? "Message deleted"
+              : "Report resolved"
             : action === "escalate"
               ? "Escalated"
-              : "User banned",
+              : result?.removedMessage
+                ? "User banned and the message deleted"
+                : "User banned",
       );
       refresh();
     } catch (err) {
