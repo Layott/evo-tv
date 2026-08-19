@@ -997,11 +997,42 @@ export function StreamsManagerPage() {
               against the bandwidth allowance.
             </div>
           ) : (
+            /*
+             * The same ladder, minus the keys.
+             *
+             * This branch is what an operator sees for a stream that already
+             * exists, which is nearly always, and it still recommended "1280x720,
+             * CBR 2500 kbps": one rendition, at a bitrate no rung uses, on the
+             * screen right next to the four rungs the panel lists. Whichever one
+             * an operator believed, the other was wrong.
+             */
             <div className="rounded-lg bg-card/60 p-3 text-xs text-muted-foreground">
-              Recommended output: 1280x720, 30fps, CBR 2500 kbps, and a{" "}
-              <span className="text-foreground">keyframe interval of 2</span>.
-              Segments can only be cut on a keyframe, so leaving it on auto gives
-              long segments and a slow start.
+              <p className="text-foreground">Publish one output per rung.</p>
+              <ul className="mt-1.5 space-y-0.5">
+                {RUNGS.map((rung) => (
+                  <li key={rung.suffix}>
+                    {rung.label} · {rung.resolution} · {rung.videoKbps} kbps video ·{" "}
+                    {rung.audioKbps} kbps audio
+                    {rung.premiumOnly ? " · Premium viewers only" : ""}
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-2">
+                Each one is the stream key with{" "}
+                <span className="text-foreground">
+                  {RUNGS.map((r) => r.suffix).join(", ")}
+                </span>{" "}
+                on the end of the publish name, and every rung needs a{" "}
+                <span className="text-foreground">keyframe interval of 2</span>:
+                segments are only cut on a keyframe, so rungs whose keyframes do
+                not line up cannot be switched between cleanly and the picture
+                stutters at every quality change.
+              </p>
+              <p className="mt-2">
+                The keys are on the stream itself, under OBS / RTMP settings.
+                Streams, Encoder setup has the settings for OBS, vMix and
+                ffplayout.
+              </p>
             </div>
           )}
 
