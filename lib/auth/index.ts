@@ -196,7 +196,7 @@ export const auth = betterAuth({
         newEmail: string;
         url: string;
       }) {
-  const mail = changeEmailRequested({ newEmail, url });
+        const mail = changeEmailRequested({ newEmail, url });
         await sendEmail({ to: user.email, ...mail });
       },
     },

@@ -3,6 +3,8 @@ import { db, schema } from "@/lib/db";
 import { eq, sql } from "drizzle-orm";
 import { emit, subscribe } from "@/lib/sse/bus";
 import { join, leave, refresh } from "@/lib/sse/presence";
+import { getCurrentUser } from "@/lib/auth/guards";
+import { hasMinRole } from "@/lib/auth/roles";
 
 /**
  * Live status and viewer count for one stream.
@@ -15,6 +17,11 @@ import { join, leave, refresh } from "@/lib/sse/presence";
  */
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  // The audience size goes out on this channel every 30s, so it needs the same
+  // staff gate the REST endpoints have. Resolved once at connect: a session
+  // does not change role mid-stream.
+  const user = await getCurrentUser();
+  const admin = hasMinRole((user as { role?: string } | null)?.role, "admin");
   const viewerId = crypto.randomUUID();
   const topic = `stream:${id}`;
 
@@ -42,14 +49,26 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       )[0];
       controller.enqueue(
         encoder.encode(
-          `data: ${JSON.stringify({ type: "hello", viewerCount: initialCount, isLive: row?.isLive ?? false })}\n\n`
+          `data: ${JSON.stringify({
+            type: "hello",
+            ...(admin ? { viewerCount: initialCount } : {}),
+            isLive: row?.isLive ?? false,
+          })}\n\n`
         )
       );
 
       const unsubs = [
-        subscribe(`stream:${id}:viewers`, (p) =>
-          controller.enqueue(encoder.encode(`event: viewers\ndata: ${JSON.stringify(p)}\n\n`))
-        ),
+        // Viewer counts are staff only, so a non-admin never subscribes to the
+        // topic rather than being sent it and trusted to ignore it.
+        ...(admin
+          ? [
+              subscribe(`stream:${id}:viewers`, (p) =>
+                controller.enqueue(
+                  encoder.encode(`event: viewers\ndata: ${JSON.stringify(p)}\n\n`),
+                ),
+              ),
+            ]
+          : []),
         subscribe(`stream:${id}:status`, (p) =>
           controller.enqueue(encoder.encode(`event: status\ndata: ${JSON.stringify(p)}\n\n`))
         ),

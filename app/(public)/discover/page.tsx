@@ -233,9 +233,11 @@ export default function DiscoverPage() {
                             <LiveBadge />
                           </div>
                         )}
-                        <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] text-paper">
-                          <Eye className="h-3 w-3" /> {formatViewers(s.viewerCount)}
-                        </div>
+                        {typeof s.viewerCount === "number" ? (
+                          <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] text-paper">
+                            <Eye className="h-3 w-3" /> {formatViewers(s.viewerCount)}
+                          </div>
+                        ) : null}
                       </div>
                       <div className="space-y-1 p-3">
                         <h3 className="line-clamp-2 text-sm font-semibold">{s.title}</h3>

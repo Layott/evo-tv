@@ -37,7 +37,7 @@ export function AppFooter() {
             </Link>
           ))}
         </nav>
-        <p>© {new Date().getFullYear()} EVO TV, Lagos. All times West Africa Time.</p>
+        <p>© {new Date().getFullYear()} EVO TV, Nigeria. All times West Africa Time.</p>
       </div>
     </footer>
   );

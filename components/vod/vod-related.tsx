@@ -55,7 +55,10 @@ export function VodRelated({ vods }: { vods: Vod[] }) {
                 {v.title}
               </h3>
               <p className="mt-1 text-[11px] text-muted-foreground">
-                {v.viewCount.toLocaleString()} views · {relTime(v.publishedAt)}
+                {typeof v.viewCount === "number"
+                  ? `${v.viewCount.toLocaleString()} views · `
+                  : ""}
+                {relTime(v.publishedAt)}
               </p>
             </div>
           </Link>

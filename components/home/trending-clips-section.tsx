@@ -67,9 +67,11 @@ export function TrendingClips({ clips, loading }: TrendingClipsProps) {
                   <p className="line-clamp-2 text-xs font-semibold text-white">
                     {c.title}
                   </p>
-                  <div className="flex items-center gap-1 text-[10px] text-foreground/80">
-                    <Eye className="h-3 w-3" /> {formatViewers(c.viewCount)}
-                  </div>
+                  {typeof c.viewCount === "number" ? (
+                    <div className="flex items-center gap-1 text-[10px] text-foreground/80">
+                      <Eye className="h-3 w-3" /> {formatViewers(c.viewCount)}
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </Link>

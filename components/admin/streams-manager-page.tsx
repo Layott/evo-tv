@@ -246,9 +246,9 @@ export function StreamsManagerPage() {
       key: "viewers",
       header: "Viewers",
       sortable: true,
-      accessor: (r) => r.viewerCount,
+      accessor: (r) => r.viewerCount ?? 0,
       cell: (row) => (
-        <span className="tabular-nums text-sm text-foreground/80">{formatCompact(row.viewerCount)}</span>
+        <span className="tabular-nums text-sm text-foreground/80">{formatCompact(row.viewerCount ?? 0)}</span>
       ),
       className: "text-right",
     },
@@ -577,10 +577,10 @@ export function StreamsManagerPage() {
                     )}
                   </Info>
                   <Info label="Viewers">
-                    <span className="tabular-nums">{selected.viewerCount.toLocaleString()}</span>
+                    <span className="tabular-nums">{(selected.viewerCount ?? 0).toLocaleString()}</span>
                   </Info>
                   <Info label="Peak">
-                    <span className="tabular-nums">{selected.peakViewerCount.toLocaleString()}</span>
+                    <span className="tabular-nums">{(selected.peakViewerCount ?? 0).toLocaleString()}</span>
                   </Info>
                   <Info label="Started">{timeAgo(selected.startedAt)}</Info>
                   <Info label="Language">{selected.language.toUpperCase()}</Info>
