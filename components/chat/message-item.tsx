@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Pin, Trash2, Ban } from "@/components/icons";
 import { toast } from "sonner";
-import { pinMessage, deleteMessage, banUser } from "@/lib/client";
+import { pinMessage, deleteMessage, banFromChat } from "@/lib/client";
 
 function fmtTime(iso: string) {
   try {
@@ -33,6 +33,18 @@ function roleColor(role: ChatMessage["userRole"]) {
  * `null.slice(0, 2)` and threw inside React, which unmounts the whole tree, so
  * typing one message took the entire page down.
  */
+/**
+ * What the server said, when it said anything.
+ *
+ * Three catch blocks printed a fixed sentence, so "you are not a moderator",
+ * "that person is already banned" and "the message no longer exists" all read
+ * as "Could not ban user" and none of them could be told apart from a bug.
+ */
+function reason(err: unknown, fallback: string): string {
+  const message = err instanceof Error ? err.message.trim() : "";
+  return message.length > 0 && message.length < 160 ? message : fallback;
+}
+
 function displayHandle(handle: string | null | undefined): string {
   return handle?.trim() || "viewer";
 }
@@ -54,11 +66,11 @@ export function MessageItem({
     setBusy(true);
     setPinned((prev) => !prev);
     try {
-      await pinMessage(msg.id, displayHandle(msg.userHandle));
+      await pinMessage({ streamId: msg.streamId, messageId: msg.id });
       toast.success(pinned ? "Message unpinned" : "Message pinned");
-    } catch {
+    } catch (err) {
       setPinned((prev) => !prev);
-      toast.error("Could not pin message");
+      toast.error(reason(err, "Could not pin message"));
     } finally {
       setBusy(false);
     }
@@ -69,11 +81,11 @@ export function MessageItem({
     setBusy(true);
     setDeleted(true);
     try {
-      await deleteMessage(msg.id, displayHandle(msg.userHandle));
+      await deleteMessage({ streamId: msg.streamId, messageId: msg.id });
       toast.success("Message deleted");
-    } catch {
+    } catch (err) {
       setDeleted(false);
-      toast.error("Could not delete message");
+      toast.error(reason(err, "Could not delete message"));
     } finally {
       setBusy(false);
     }
@@ -83,12 +95,12 @@ export function MessageItem({
     if (busy) return;
     setBusy(true);
     try {
-      await banUser(msg.streamId, msg.userId, 24);
+      await banFromChat({ streamId: msg.streamId, messageId: msg.id, hours: 24 });
       setBanned(true);
       setDeleted(true);
       toast.error(`Banned ${displayHandle(msg.userHandle)} for 24h`);
-    } catch {
-      toast.error("Could not ban user");
+    } catch (err) {
+      toast.error(reason(err, "Could not ban user"));
     } finally {
       setBusy(false);
     }

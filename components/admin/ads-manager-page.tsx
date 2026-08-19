@@ -23,6 +23,7 @@ import type { Ad, AdPlacement } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MediaUpload } from "@/components/admin/media-upload";
+import { looksLikeVideo } from "@/lib/media/file-kind";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
@@ -78,6 +79,25 @@ function placementLabel(p: AdPlacement) {
  * render time. A wrong-shaped banner is not a design problem to fix later: it
  * is the ad, on the page, cut in half.
  */
+/**
+ * The three placements that play inside the player take a video file.
+ *
+ * The break player renders the creative in a `<video>` tag, and the upload
+ * field only ever offered images, so a downtime ad could be uploaded and could
+ * never play: the tag failed to load it, the error handler ended the break, and
+ * the screen went back to a feed that was not there. Anything uploaded for
+ * these three has to be a video the browser can play.
+ */
+const VIDEO_PLACEMENTS: AdPlacement[] = [
+  "stream_preroll",
+  "mid_roll",
+  "live_filler",
+];
+
+function creativeKind(placement: AdPlacement): "image" | "video" {
+  return VIDEO_PLACEMENTS.includes(placement) ? "video" : "image";
+}
+
 const PLACEMENT_SPECS: Record<
   string,
   { size: string; ratio: string; note: string }
@@ -90,17 +110,17 @@ const PLACEMENT_SPECS: Record<
   stream_preroll: {
     size: "1920 by 1080",
     ratio: "16:9",
-    note: "Plays full-frame before the video starts, so it wants video dimensions.",
+    note: "A video, played full-frame before the programme starts.",
   },
   mid_roll: {
     size: "1920 by 1080",
     ratio: "16:9",
-    note: "Fills the player during a channel break.",
+    note: "A video, played in the player during a channel break. It runs once and hands the channel back.",
   },
   live_filler: {
     size: "1920 by 1080",
     ratio: "16:9",
-    note: "Fills the player while a dropped feed reconnects.",
+    note: "A video, looped in the player while a dropped feed reconnects. This is the downtime filler.",
   },
   sidebar: {
     size: "600 by 500",
@@ -466,7 +486,20 @@ function AdForm({
     }
   }, [open, initial]);
 
-  const disabled = !form.advertiser.trim() || !form.clickUrl.trim();
+  /*
+   * A creative has to match its placement.
+   *
+   * Switching the placement after uploading is the easy way to end up with a
+   * JPEG assigned to the filler slot, which cannot play: the player would fail
+   * to load it, end the break and drop the viewer back onto the feed that is
+   * not there. Saying so beats discovering it the next time the feed drops.
+   */
+  const wantsVideo = creativeKind(form.placement) === "video";
+  const creativeMismatch =
+    form.mediaUrl.trim().length > 0 && looksLikeVideo(form.mediaUrl) !== wantsVideo;
+
+  const disabled =
+    !form.advertiser.trim() || !form.clickUrl.trim() || creativeMismatch;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -486,10 +519,10 @@ function AdForm({
             Spaces now, like every other upload on the platform.
           */}
           <MediaUpload
-            label="Creative"
+            label={creativeKind(form.placement) === "video" ? "Creative (video)" : "Creative"}
             value={form.mediaUrl}
             onChange={(url) => setForm({ ...form, mediaUrl: url })}
-            kind="image"
+            kind={creativeKind(form.placement)}
             folder="ads"
             hint={
               PLACEMENT_SPECS[form.placement]
@@ -497,6 +530,14 @@ function AdForm({
                 : undefined
             }
           />
+
+          {creativeMismatch ? (
+            <p className="rounded-md bg-red-500/15 p-2.5 text-xs text-red-200">
+              {wantsVideo
+                ? "This placement plays inside the player, so the creative has to be a video file. Upload an MP4, MOV or WebM."
+                : "This placement is a still image slot, so a video cannot be used. Upload a JPG, PNG, WebP or GIF."}
+            </p>
+          ) : null}
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">

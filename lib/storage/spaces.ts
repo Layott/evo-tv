@@ -2,6 +2,7 @@ import "server-only";
 import {
   S3Client,
   PutObjectCommand,
+  PutObjectAclCommand,
   GetObjectCommand,
   DeleteObjectCommand,
   HeadObjectCommand,
@@ -243,4 +244,41 @@ export async function presignGet(relativePath: string, expiresInSec = 3600): Pro
 /** Mirrors `listBlobs` from the Blob adapter, for the one-shot migration script. */
 export async function listSpaces(prefix?: string) {
   return s3().send(new ListObjectsV2Command({ Bucket: BUCKET, Prefix: prefix }));
+}
+
+/**
+ * Make an object world-readable, and prove it.
+ *
+ * A presigned PUT carries its ACL as a hoisted query parameter, and the bucket
+ * did not apply it: every image the CMS uploaded landed private, so the stream
+ * thumbnail answered `AccessDenied` on the CDN and on the origin, and the
+ * dashboard showed a broken image where the poster should be. Nothing failed
+ * at upload time, which is why it survived.
+ *
+ * Setting the ACL from this side is not subject to that: the header is a
+ * header. The read-back is the part that matters, though. An ACL call that
+ * succeeds is not evidence the file can be fetched, and the whole bug was
+ * trusting exactly that kind of evidence.
+ */
+export async function makePublic(relativePath: string): Promise<{
+  key: string;
+  url: string;
+  publiclyReadable: boolean;
+  status: number;
+}> {
+  ensureConfigured();
+  const Key = normalize(relativePath);
+  await s3().send(
+    new PutObjectAclCommand({ Bucket: BUCKET, Key, ACL: "public-read" }),
+  );
+
+  const url = `${PUBLIC_BASE}/${Key}`;
+  try {
+    const res = await fetch(url, { method: "HEAD", cache: "no-store" });
+    return { key: Key, url, publiclyReadable: res.ok, status: res.status };
+  } catch {
+    // A network failure here is not the same as a private object, and saying
+    // so would send somebody hunting the wrong bug.
+    return { key: Key, url, publiclyReadable: false, status: 0 };
+  }
 }
