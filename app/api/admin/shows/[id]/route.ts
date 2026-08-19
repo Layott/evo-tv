@@ -142,6 +142,33 @@ export async function PATCH(
     });
   }
 
+  /*
+   * The schedule carries a copy of the title, so a rename has to reach it.
+   *
+   * `epg_slots.title` is denormalised on purpose: the grid is read on every
+   * page load and the slot has to render without a join. Nothing kept it in
+   * step, so renaming a show left the old name on /schedule, on the week grid
+   * and in the strip under the player, on every surface, until somebody edited
+   * the slot by hand. The same goes for the pillar, which decides which filter
+   * a slot appears under.
+   *
+   * Only the fields that were actually in the body: a save that did not touch
+   * the title must not overwrite a slot title an operator set deliberately.
+   */
+  const slotSync: { title?: string; pillar?: typeof existing.pillar } = {};
+  if (columns.title && columns.title !== existing.title) {
+    slotSync.title = columns.title;
+  }
+  if ("pillar" in columns && columns.pillar !== existing.pillar) {
+    slotSync.pillar = columns.pillar ?? null;
+  }
+  if (Object.keys(slotSync).length > 0) {
+    await db
+      .update(schema.epgSlots)
+      .set(slotSync)
+      .where(eq(schema.epgSlots.showId, id));
+  }
+
   if (priceWindows) {
     await replacePriceWindows(id, priceWindows);
   }
