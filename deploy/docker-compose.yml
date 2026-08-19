@@ -110,6 +110,10 @@ services:
       REDIRECT_TARGET: ${REDIRECT_TARGET:-evotv.co}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # The page shown when no API container answers. Mounted rather than baked
+      # in, so it is deployed by the same pull that deploys the config that
+      # points at it.
+      - ./maintenance.html:/srv/maintenance/maintenance.html:ro
       - ./web:/srv/web:ro
       - ./app:/srv/app:ro
       - caddy_data:/data      # certificates. Losing this re-issues from scratch.
