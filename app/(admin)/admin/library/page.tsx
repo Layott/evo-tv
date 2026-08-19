@@ -4,7 +4,7 @@ import { LibraryManagerPage } from "@/components/admin/library-manager-page";
 export default function AdminLibraryRoute() {
   return (
     <div className="p-6 lg:p-8">
-      <AdminGuard minRole="moderator">
+      <AdminGuard capability="editorial">
         <LibraryManagerPage />
       </AdminGuard>
     </div>

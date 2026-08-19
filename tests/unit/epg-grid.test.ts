@@ -41,6 +41,11 @@ function slot(
     pillar: "esports",
     parentalRating: 16,
     slotCode: null,
+    // Unprogrammed by default: these tests are about the weekday and minute
+    // arithmetic, and a slot with no show still has to render.
+    showId: null,
+    showSlug: null,
+    showPosterUrl: null,
   };
 }
 

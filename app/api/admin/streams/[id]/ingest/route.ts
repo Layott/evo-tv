@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { requireMinRole } from "@/lib/auth/guards";
+import { requireCapability } from "@/lib/api/admin";
 import { ingestDetailsFor } from "@/lib/video/ingest";
 
 /**
@@ -16,7 +16,7 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const guard = await requireMinRole("support_admin");
+  const guard = await requireCapability("broadcast");
   if (!guard.ok) return guard.response;
 
   const { id } = await params;

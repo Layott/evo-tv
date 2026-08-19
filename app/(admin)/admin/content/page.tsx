@@ -4,7 +4,7 @@ import { ContentManagerPage } from "@/components/admin/content-manager-page";
 export default function AdminContentRoute() {
   return (
     <div className="p-6 lg:p-8">
-      <AdminGuard>
+      <AdminGuard capability="editorial">
         <ContentManagerPage />
       </AdminGuard>
     </div>

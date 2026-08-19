@@ -25,6 +25,8 @@ export const user = pgTable(
         "premium",
         "creator",
         "support_admin",
+        "programmer",
+        "broadcast_op",
         "moderator",
         "finance_admin",
         "admin",

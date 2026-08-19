@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 
 import { db, schema } from "@/lib/db";
-import { generateId, requireAdminFromRequest } from "@/lib/api/admin";
+import { generateId, requireCapability } from "@/lib/api/admin";
 import { listReleases, type ReleasePlatform } from "@/lib/api/app-releases";
 
 /**
@@ -30,7 +30,7 @@ const bodySchema = z.object({
 });
 
 export async function GET(req: NextRequest) {
-  const guard = await requireAdminFromRequest();
+  const guard = await requireCapability("broadcast");
   if (!guard.ok) return guard.response;
 
   const raw = new URL(req.url).searchParams.get("platform") ?? "android";
@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const guard = await requireAdminFromRequest();
+  const guard = await requireCapability("broadcast");
   if (!guard.ok) return guard.response;
 
   let body: unknown;

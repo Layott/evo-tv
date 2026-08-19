@@ -92,6 +92,7 @@ import { DownloadSimple as PDownloadSimple } from "@phosphor-icons/react/dist/ss
 import { Envelope as PEnvelope } from "@phosphor-icons/react/dist/ssr/Envelope";
 import { Eye as PEye } from "@phosphor-icons/react/dist/ssr/Eye";
 import { EyeSlash as PEyeSlash } from "@phosphor-icons/react/dist/ssr/EyeSlash";
+import { ClipboardText as PClipboardText } from "@phosphor-icons/react/dist/ssr/ClipboardText";
 import { FileText as PFileText } from "@phosphor-icons/react/dist/ssr/FileText";
 import { FilmSlate as PFilmSlate } from "@phosphor-icons/react/dist/ssr/FilmSlate";
 import { Fingerprint as PFingerprint } from "@phosphor-icons/react/dist/ssr/Fingerprint";
@@ -237,6 +238,7 @@ export const Edit = make(PPencilSimple, "fill", "Edit");
 export const ExternalLink = make(PArrowSquareOut, "bold", "ExternalLink");
 export const Eye = make(PEye, "fill", "Eye");
 export const EyeOff = make(PEyeSlash, "fill", "EyeOff");
+export const ClipboardText = make(PClipboardText, "fill", "ClipboardText");
 export const FileText = make(PFileText, "fill", "FileText");
 export const Film = make(PFilmSlate, "fill", "Film");
 export const Fingerprint = make(PFingerprint, "bold", "Fingerprint");

@@ -35,6 +35,18 @@ export interface GridSlot {
   pillar: EpgPillar;
   parentalRating: number | null;
   slotCode: string | null;
+  /**
+   * The show this slot programmes, read live rather than copied.
+   *
+   * The poster and the link come from the show on every read, so editing a
+   * show changes the schedule everywhere at once. Only the title and the
+   * pillar are denormalised onto the slot, because the grid is read on every
+   * page load and those two decide what a row says and which filter it is
+   * under.
+   */
+  showId: string | null;
+  showSlug: string | null;
+  showPosterUrl: string | null;
 }
 
 /** A dated row (scheduled stream, premiering episode, match) that can override the grid. */
@@ -311,8 +323,8 @@ export function materializeDay(
       startLabel: minuteLabel(slot.startMinute),
       endLabel: minuteLabel(slot.startMinute + slot.durationMin),
       durationMin: slot.durationMin,
-      watchUrl: null,
-      thumbnailUrl: null,
+      watchUrl: slot.showSlug ? `/shows/${slot.showSlug}` : null,
+      thumbnailUrl: slot.showPosterUrl || null,
       isLive: startsAt <= now && now < endsAt,
     };
   });

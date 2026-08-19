@@ -5,6 +5,11 @@ import { ShieldAlert } from "@/components/icons";
 import { useAuth } from "@/components/providers";
 import { Button } from "@/components/ui/button";
 import { hasMinRole, roleLabel, type PlatformRole } from "@/lib/auth/role-catalog";
+import {
+  ROOMS,
+  hasCapability,
+  type Capability,
+} from "@/lib/auth/capabilities";
 
 /**
  * The gate on every admin screen.
@@ -20,10 +25,14 @@ import { hasMinRole, roleLabel, type PlatformRole } from "@/lib/auth/role-catalo
  */
 export function AdminGuard({
   children,
-  minRole = "admin",
+  minRole,
+  capability,
 }: {
   children: React.ReactNode;
+  /** Legacy seniority gate. Prefer `capability`: a room is what a job needs. */
   minRole?: PlatformRole;
+  /** The room this screen belongs to. */
+  capability?: Capability;
 }) {
   const { role, ready } = useAuth();
 
@@ -38,7 +47,35 @@ export function AdminGuard({
     );
   }
 
-  if (!hasMinRole(role, minRole)) {
+  const allowed = capability
+    ? hasCapability(role, capability)
+    : hasMinRole(role, minRole ?? "admin");
+
+  if (!allowed) {
+    const roomLabel = capability
+      ? (ROOMS.find((r) => r.value === capability)?.label ?? capability)
+      : null;
+    if (roomLabel) {
+      return (
+        <div className="flex min-h-[60vh] items-center justify-center p-8">
+          <div className="w-full max-w-md rounded-xl bg-card/50 p-6 text-center">
+            <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-red-500/10 text-red-400">
+              <ShieldAlert className="h-5 w-5" />
+            </div>
+            <h2 className="text-lg font-semibold text-foreground">
+              {roomLabel} access required
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              This page belongs to the {roomLabel.toLowerCase()} room. You are
+              signed in as {roleLabel(role)}, which does not hold it.
+            </p>
+            <Button asChild className="mt-4 bg-sky-600 hover:bg-sky-500">
+              <Link href="/home">Back to home</Link>
+            </Button>
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="flex min-h-[60vh] items-center justify-center p-8">
         <div className="w-full max-w-md rounded-xl border border-border bg-card/50 p-6 text-center">

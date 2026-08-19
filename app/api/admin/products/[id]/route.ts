@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { count, eq, sql } from "drizzle-orm";
 
 import { db, schema } from "@/lib/db";
-import { requireAdminFromRequest } from "@/lib/api/admin";
+import { requireCapability } from "@/lib/api/admin";
 import { writeAudit } from "@/lib/api/audit";
 import { productBody } from "../route";
 
@@ -21,7 +21,7 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const guard = await requireAdminFromRequest();
+  const guard = await requireCapability("commerce");
   if (!guard.ok) return guard.response;
   const { id } = await params;
 
@@ -74,6 +74,8 @@ export async function PATCH(
 
     await writeAudit({
       actorId: guard.user.id,
+      actorRole: guard.role,
+      capability: "commerce",
       action: "product.update",
       targetType: "product",
       targetId: id,
@@ -103,7 +105,7 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const guard = await requireAdminFromRequest();
+  const guard = await requireCapability("commerce");
   if (!guard.ok) return guard.response;
   const { id } = await params;
 
@@ -131,6 +133,8 @@ export async function DELETE(
 
     await writeAudit({
       actorId: guard.user.id,
+      actorRole: guard.role,
+      capability: "commerce",
       action: "product.deactivate",
       targetType: "product",
       targetId: id,
@@ -151,6 +155,8 @@ export async function DELETE(
 
   await writeAudit({
     actorId: guard.user.id,
+    actorRole: guard.role,
+    capability: "commerce",
     action: "product.delete",
     targetType: "product",
     targetId: id,

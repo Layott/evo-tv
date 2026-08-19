@@ -23,8 +23,17 @@ export async function getGridSlots(): Promise<GridSlot[]> {
       pillar: schema.epgSlots.pillar,
       parentalRating: schema.epgSlots.parentalRating,
       slotCode: schema.epgSlots.slotCode,
+      showId: schema.epgSlots.showId,
+      showSlug: schema.shows.slug,
+      showPosterUrl: schema.shows.posterUrl,
     })
     .from(schema.epgSlots)
+    /*
+     * Left join: a slot that predates the shows catalogue still has to render.
+     * Reading the poster and the slug here rather than copying them means a
+     * show edit reaches the grid with nothing to keep in step.
+     */
+    .leftJoin(schema.shows, eq(schema.shows.id, schema.epgSlots.showId))
     .where(eq(schema.epgSlots.isActive, true))
     .orderBy(asc(schema.epgSlots.dayOfWeek), asc(schema.epgSlots.startMinute));
 

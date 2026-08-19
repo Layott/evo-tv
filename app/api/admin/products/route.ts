@@ -4,7 +4,7 @@ import { asc, eq } from "drizzle-orm";
 
 import { db, schema } from "@/lib/db";
 import { requireMinRole } from "@/lib/auth/guards";
-import { generateId, requireAdminFromRequest } from "@/lib/api/admin";
+import { generateId, requireCapability } from "@/lib/api/admin";
 import { writeAudit } from "@/lib/api/audit";
 import { slugify } from "@/lib/slug";
 
@@ -69,7 +69,7 @@ export const productBody = z.object({
  * place to say what a thing is called, so the URL cannot disagree with it.
  */
 export async function POST(req: NextRequest) {
-  const guard = await requireAdminFromRequest();
+  const guard = await requireCapability("commerce");
   if (!guard.ok) return guard.response;
 
   let body: unknown;
@@ -134,6 +134,8 @@ export async function POST(req: NextRequest) {
 
   await writeAudit({
     actorId: guard.user.id,
+    actorRole: guard.role,
+    capability: "commerce",
     action: "product.create",
     targetType: "product",
     targetId: id,

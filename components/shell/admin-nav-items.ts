@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   Megaphone,
   Radio,
+  ClipboardText,
   Settings,
   Store,
   Shield,
@@ -20,7 +21,7 @@ import {
   type Icon,
 } from "@/components/icons";
 
-import { hasMinRole, type PlatformRole } from "@/lib/auth/role-catalog";
+import { hasCapability, type Capability } from "@/lib/auth/capabilities";
 
 export interface AdminNavItem {
   href: string;
@@ -29,13 +30,14 @@ export interface AdminNavItem {
   /** Only `/admin` itself needs an exact match, or it lights up on every page. */
   exact?: boolean;
   /**
-   * The weakest role that may open this section. Defaults to `admin`.
+   * The room this section belongs to. Defaults to `roster`, which only admins
+   * and above hold, so a new entry is private until somebody says otherwise.
    *
    * Filtering the nav is a courtesy, not a control: the API checks the same
-   * ladder on every route. What it prevents is a moderator clicking Ads and
+   * table on every route. What it prevents is a programmer clicking Orders and
    * being told off for it.
    */
-  minRole?: PlatformRole;
+  capability?: Capability;
 }
 
 /**
@@ -50,29 +52,35 @@ export interface AdminNavItem {
 export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   // Overview is the analytics dashboard, and every analytics endpoint behind it
   // is admin-gated. Listing it for support would be listing a page of errors.
+  // Overview is the analytics dashboard and every endpoint behind it is
+  // admin-gated, so it stays in the roster room rather than being a page of
+  // errors for everybody else.
   { href: "/admin", label: "Overview", Icon: LayoutDashboard, exact: true },
-  { href: "/admin/shows", label: "Shows", Icon: Tv },
-  { href: "/admin/schedule", label: "Schedule", Icon: CalendarRange },
-  { href: "/admin/library", label: "Library", Icon: Film, minRole: "moderator" },
-  { href: "/admin/streams", label: "Streams", Icon: Radio },
-  { href: "/admin/content", label: "Content", Icon: FileText },
-  { href: "/admin/polls", label: "Polls", Icon: Vote },
-  { href: "/admin/announcements", label: "Announcements", Icon: Bell },
-  { href: "/admin/ads", label: "Ads", Icon: Megaphone },
-  { href: "/admin/users", label: "Users & roles", Icon: Users, minRole: "support_admin" },
+  { href: "/admin/shows", label: "Shows", Icon: Tv, capability: "editorial" },
+  { href: "/admin/schedule", label: "Schedule", Icon: CalendarRange, capability: "editorial" },
+  { href: "/admin/library", label: "Library", Icon: Film, capability: "editorial" },
+  { href: "/admin/streams", label: "Streams", Icon: Radio, capability: "broadcast" },
+  { href: "/admin/content", label: "Content", Icon: FileText, capability: "editorial" },
+  { href: "/admin/polls", label: "Polls", Icon: Vote, capability: "editorial" },
+  { href: "/admin/announcements", label: "Announcements", Icon: Bell, capability: "editorial" },
+  { href: "/admin/ads", label: "Ads", Icon: Megaphone, capability: "commerce" },
+  { href: "/admin/users", label: "Users & roles", Icon: Users, capability: "support" },
   { href: "/admin/analytics", label: "Analytics", Icon: BarChart3 },
-  { href: "/admin/shop", label: "Shop", Icon: Store, minRole: "support_admin" },
-  { href: "/admin/orders", label: "Orders", Icon: ShoppingBag, minRole: "support_admin" },
-  { href: "/admin/subscriptions", label: "Subscriptions", Icon: CreditCard, minRole: "finance_admin" },
-  { href: "/admin/moderation", label: "Moderation", Icon: Shield, minRole: "moderator" },
-  { href: "/admin/billing", label: "Billing & USSD", Icon: Landmark, minRole: "finance_admin" },
-  { href: "/admin/forensic", label: "Forensic", Icon: Fingerprint },
+  { href: "/admin/shop", label: "Shop", Icon: Store, capability: "commerce" },
+  { href: "/admin/orders", label: "Orders", Icon: ShoppingBag, capability: "support" },
+  { href: "/admin/subscriptions", label: "Subscriptions", Icon: CreditCard, capability: "commerce" },
+  { href: "/admin/moderation", label: "Moderation", Icon: Shield, capability: "community" },
+  { href: "/admin/billing", label: "Billing & USSD", Icon: Landmark, capability: "commerce" },
+  { href: "/admin/forensic", label: "Forensic", Icon: Fingerprint, capability: "broadcast" },
+  { href: "/admin/audit", label: "Audit log", Icon: ClipboardText, capability: "roster" },
   { href: "/admin/settings", label: "Settings", Icon: Settings },
 ];
 
 /** The sections a role may open, in nav order. */
 export function adminNavFor(role: string | null | undefined): AdminNavItem[] {
-  return ADMIN_NAV_ITEMS.filter((item) => hasMinRole(role, item.minRole ?? "admin"));
+  return ADMIN_NAV_ITEMS.filter((item) =>
+    hasCapability(role, item.capability ?? "roster"),
+  );
 }
 
 /** Shared so the sidebar and the drawer cannot disagree about what is active. */
