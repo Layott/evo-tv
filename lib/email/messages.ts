@@ -202,3 +202,34 @@ export function reportReceivedEmail(input: {
 function formatNgn(amount: number): string {
   return `NGN ${amount.toLocaleString("en-NG")}`;
 }
+
+/**
+ * An announcement, in an inbox.
+ *
+ * The same words that go to the notification list and the push. An
+ * announcement that is worth interrupting somebody for is worth writing once,
+ * and rewriting it per channel is how the three drift apart.
+ */
+export function announcementEmail(input: {
+  title: string;
+  body: string;
+  /** Where it points, already composed into a full URL. */
+  url?: string | null;
+  /** The words on the button. Falls back to something plain. */
+  cta?: string;
+}): RenderedEmail {
+  return render(input.title, {
+    preheader: input.body.slice(0, 120),
+    heading: input.title,
+    blocks: [
+      {
+        text: input.body,
+        ...(input.url
+          ? { cta: { label: input.cta || "Open EVO TV", url: input.url } }
+          : {}),
+      },
+    ],
+    footnote:
+      "You are getting this because you have an EVO TV account. Turn announcements off in Settings, Notifications.",
+  });
+}
