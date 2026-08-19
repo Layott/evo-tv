@@ -28,6 +28,7 @@ import { useAuth } from "@/components/providers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DurationField } from "@/components/admin/duration-field";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
@@ -651,17 +652,21 @@ export function LibraryManagerPage() {
               />
 
               <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="vod-duration">Length, minutes</Label>
-                  <Input
-                    id="vod-duration"
-                    inputMode="numeric"
-                    value={vodDraft.durationMin}
-                    onChange={(e) =>
-                      setVodDraft({ ...vodDraft, durationMin: e.target.value })
-                    }
-                  />
-                </div>
+                <DurationField
+                  id="vod-duration"
+                  label="Length"
+                  value={Number(vodDraft.durationMin || 0) * 60}
+                  onChange={(sec) =>
+                    setVodDraft({
+                      ...vodDraft,
+                      // The draft carries minutes because that is what the
+                      // create call wants; the picker speaks seconds, so the
+                      // conversion happens here and nowhere else.
+                      durationMin: String(sec / 60),
+                    })
+                  }
+                  hint="How long the recording runs."
+                />
 
                 <div className="space-y-2">
                   <Label htmlFor="vod-pillar">Pillar</Label>
@@ -836,18 +841,16 @@ export function LibraryManagerPage() {
               />
 
               <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="clip-duration">Length, seconds</Label>
-                  <Input
-                    id="clip-duration"
-                    inputMode="numeric"
-                    value={clipDraft.durationSec}
-                    onChange={(e) =>
-                      setClipDraft({ ...clipDraft, durationSec: e.target.value })
-                    }
-                    placeholder="45"
-                  />
-                </div>
+                <DurationField
+                  id="clip-duration"
+                  label="Length"
+                  value={Number(clipDraft.durationSec || 0)}
+                  onChange={(sec) =>
+                    setClipDraft({ ...clipDraft, durationSec: String(sec) })
+                  }
+                  maxHours={1}
+                  hint="A clip is usually under a minute."
+                />
 
                 <div className="space-y-2">
                   <Label htmlFor="clip-pillar">Pillar</Label>
