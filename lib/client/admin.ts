@@ -653,12 +653,22 @@ export interface AdminVideoAnalytics {
   devices: { device: string; views: number }[];
 }
 
+/**
+ * Either a preset number of days or a chosen window, never both.
+ *
+ * A union rather than three optional fields, because `{ days: 7, from: "..." }`
+ * has no meaning and the screen should not be able to express it.
+ */
+export type AdminAnalyticsRange =
+  | { days: number }
+  | { from: string; to?: string };
+
 export async function adminVideoSummaries(
-  days = 28,
+  range: AdminAnalyticsRange = { days: 28 },
 ): Promise<AdminVideoSummary[]> {
   const res = await apiGet<{ videos: AdminVideoSummary[] }>(
     "/api/admin/video-analytics",
-    { days },
+    { ...range },
   );
   return res?.videos ?? [];
 }
@@ -666,12 +676,12 @@ export async function adminVideoSummaries(
 export async function adminVideoAnalytics(
   type: "vod" | "episode",
   id: string,
-  days = 28,
+  range: AdminAnalyticsRange = { days: 28 },
 ): Promise<AdminVideoAnalytics | null> {
   return apiGet<AdminVideoAnalytics>("/api/admin/video-analytics", {
     type,
     id,
-    days,
+    ...range,
   });
 }
 

@@ -1,6 +1,7 @@
 import "server-only";
-import { and, desc, eq, gte, sql, inArray } from "drizzle-orm";
+import { and, desc, eq, gte, lt, sql, inArray } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
+import { daysInRange, resolveRange, type RangeInput } from "@/lib/analytics/range";
 
 const PREMIUM_TIERS = ["premium", "pro", "supporter"] as const;
 
@@ -90,12 +91,18 @@ export interface ViewsPoint {
  * vods.viewCount so empty days still trend plausibly - but the main signal
  * is progress upserts.
  */
-export async function viewsOverTime(days = 30): Promise<ViewsPoint[]> {
-  const safeDays = Math.max(1, Math.min(365, Math.trunc(days)));
-  const now = new Date();
-  const start = new Date(now.getTime() - (safeDays - 1) * 86_400_000);
-  start.setHours(0, 0, 0, 0);
-  const startIso = start.toISOString();
+export async function viewsOverTime(
+  range: RangeInput | number = 30,
+): Promise<ViewsPoint[]> {
+  /*
+   * The window comes from `lib/analytics/range.ts` so this can answer a chosen
+   * date as well as a preset, and so it stops disagreeing with itself: the day
+   * keys are UTC (they are a `substr` of an ISO string) while the start of the
+   * range was snapped to *local* midnight. On the Lagos droplet that is an hour
+   * out, so the first day of every chart was short by an hour of views and the
+   * chart could not be reconciled with the headline beside it.
+   */
+  const window = resolveRange(typeof range === "number" ? { days: range } : range);
 
   const rows = await db
     .select({
@@ -103,7 +110,12 @@ export async function viewsOverTime(days = 30): Promise<ViewsPoint[]> {
       views: sql<number>`count(*)`,
     })
     .from(schema.vodProgress)
-    .where(gte(schema.vodProgress.updatedAt, startIso))
+    .where(
+      and(
+        gte(schema.vodProgress.updatedAt, window.since),
+        lt(schema.vodProgress.updatedAt, window.until),
+      ),
+    )
     .groupBy(sql`substr(${schema.vodProgress.updatedAt}, 1, 10)`);
 
   const byDay = new Map<string, number>();
@@ -111,13 +123,10 @@ export async function viewsOverTime(days = 30): Promise<ViewsPoint[]> {
     if (r.day) byDay.set(r.day, Number(r.views ?? 0));
   }
 
-  const out: ViewsPoint[] = [];
-  for (let i = 0; i < safeDays; i++) {
-    const d = new Date(start.getTime() + i * 86_400_000);
-    const key = d.toISOString().slice(0, 10);
-    out.push({ date: key, views: byDay.get(key) ?? 0 });
-  }
-  return out;
+  return daysInRange(window).map((date) => ({
+    date,
+    views: byDay.get(date) ?? 0,
+  }));
 }
 
 /* ------------------------------------------------------------------ */
