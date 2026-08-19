@@ -14,6 +14,7 @@ import {
   Edit,
 } from "@/components/icons";
 import { toast } from "sonner";
+import { RUNGS } from "@/lib/video/rungs";
 import {
   adminCreateStream,
   adminDeleteStream,
@@ -169,11 +170,21 @@ export function StreamsManagerPage() {
     const q = key.indexOf("?");
     const name = q === -1 ? key : key.slice(0, q);
     const query = q === -1 ? "" : key.slice(q);
-    return [
-      { label: "high", hint: "1280x720 · 2200 kbps", value: `${name}_hi${query}` },
-      { label: "mid", hint: "854x480 · 900 kbps", value: `${name}_mid${query}` },
-      { label: "low", hint: "640x360 · 400 kbps", value: `${name}_low${query}` },
-    ];
+    /*
+     * From the shared ladder, not a list typed here.
+     *
+     * This dialog carried its own three rungs with their own numbers, so it
+     * went on saying 2200 / 900 / 400 after the ladder was re-measured, and it
+     * had no 1080p line at all once the fourth rung existed. One list, in
+     * `lib/video/ingest.ts`, next to the suffixes nginx matches on.
+     */
+    return RUNGS.map((rung) => ({
+      label: rung.label,
+      hint: `${rung.resolution} · ${rung.videoKbps} kbps${
+        rung.premiumOnly ? " · Premium viewers only" : ""
+      }`,
+      value: `${name}${rung.suffix}${query}`,
+    }));
   }, [ingestReveal]);
 
   React.useEffect(() => {
@@ -970,9 +981,9 @@ export function StreamsManagerPage() {
 
           {ladderKeys ? (
             <div className="rounded-lg bg-card/60 p-3 text-xs text-muted-foreground">
-              Publish all three. The <span className="text-foreground">high</span>{" "}
-              rung goes in OBS itself; the other two go in a multi-output plugin,
-              each with its own resolution and bitrate. Set a{" "}
+              Publish as many rungs as the uplink can carry. One goes in OBS
+              itself; the rest go in a multi-output plugin, each with its own
+              resolution and bitrate. Set a{" "}
               <span className="text-foreground">keyframe interval of 2</span> on
               every rung: segments are only cut on a keyframe, and rungs whose
               keyframes do not line up cannot be switched between cleanly, so the
@@ -981,7 +992,9 @@ export function StreamsManagerPage() {
               <br />
               Publishing only one rung works, and gives every viewer that single
               quality. Anyone whose connection cannot carry it will stall with
-              nothing to fall back to.
+              nothing to fall back to. 1080p is offered to Premium viewers only,
+              because one of them costs roughly what seven viewers on 360p cost
+              against the bandwidth allowance.
             </div>
           ) : (
             <div className="rounded-lg bg-card/60 p-3 text-xs text-muted-foreground">

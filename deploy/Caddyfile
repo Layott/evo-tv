@@ -106,6 +106,25 @@
 		}
 	}
 
+	# What a visitor sees while a deploy is in flight.
+	#
+	# deploy.sh restarts one container at a time and waits for health, so the
+	# other one usually keeps serving. Usually is not always: a migration, a
+	# slow build or a failed container leaves a window where nothing answers,
+	# and the site's own buttons then fail with no explanation, which is what
+	# the owner saw. This is that explanation, and it reloads itself.
+	handle_errors {
+		@down expression {err.status_code} in [502, 503, 504]
+		handle @down {
+			root * /srv/maintenance
+			rewrite * /maintenance.html
+			file_server
+		}
+		handle {
+			respond "{err.status_code} {err.status_text}"
+		}
+	}
+
 	request_body {
 		max_size 100MB
 	}
