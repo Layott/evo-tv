@@ -14,6 +14,7 @@ import { useAuth } from "@/components/providers";
 import { VideoPlayer } from "@/components/stream/video-player";
 import { FillerScreen } from "@/components/stream/filler-screen";
 import { ChannelBreaks } from "@/components/stream/channel-breaks";
+import { PollResultOverlay } from "@/components/stream/poll-result-overlay";
 import { useStreamHeartbeat } from "@/hooks/use-stream-heartbeat";
 import { LiveChat } from "@/components/stream/live-chat";
 import { LivePolls } from "@/components/stream/live-polls";
@@ -239,6 +240,9 @@ export default function StreamPage() {
                */
               stream.isMainChannel ? (
                 <ChannelBreaks nowNext={null}>
+                  {/* The poll result takes the picture at the close, for
+                      everybody at the same second. */}
+                  <PollResultOverlay streamId={streamId} />
                   <VideoPlayer
                     src={stream.hlsUrl}
                     poster={stream.thumbnailUrl}

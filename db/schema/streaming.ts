@@ -312,9 +312,17 @@ export const chatMessages = pgTable(
   "chat_messages",
   {
     id: text("id").primaryKey(),
-    streamId: text("stream_id")
-      .notNull()
-      .references(() => streams.id, { onDelete: "cascade" }),
+    /** Exactly one of `streamId` and `vodId` is set; the database enforces it. */
+    streamId: text("stream_id").references(() => streams.id, { onDelete: "cascade" }),
+    vodId: text("vod_id").references(() => vods.id, { onDelete: "cascade" }),
+    /**
+     * The message this one answers.
+     *
+     * `SET NULL` on delete, not cascade: removing a rule-breaking message must
+     * not take the replies with it, since those are usually the people
+     * objecting to it.
+     */
+    parentId: text("parent_id"),
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),

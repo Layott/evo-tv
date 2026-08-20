@@ -16,6 +16,8 @@ const SLOW_MODE_MS = 2000;
 
 const postSchema = z.object({
   body: z.string().min(1).max(400),
+  /** The message being answered, when this is a reply. */
+  parentId: z.string().min(1).max(64).optional(),
 });
 
 // Per-user last-post timestamp for slow mode. In-memory is fine for a single
@@ -117,9 +119,10 @@ export async function POST(
   lastPostAt.set(key, now);
 
   const message = await postMessage({
-    streamId: id,
+    target: { kind: "stream", id },
     userId: user.id,
     body: trimmed,
+    parentId: parsed.data.parentId ?? null,
   });
   return NextResponse.json({ message });
 }
