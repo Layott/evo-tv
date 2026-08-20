@@ -52,6 +52,7 @@ import {
 } from "@/components/ui/dialog";
 import { DataTable, type DataColumn } from "./data-table";
 import { PageHeader } from "./page-header";
+import { HowTo } from "./how-to";
 import { ChannelBreaksCard } from "./channel-breaks-card";
 import { StatusBadge } from "./status-badge";
 import { formatDate, formatNumber } from "./utils";
@@ -367,6 +368,7 @@ export function AdsManagerPage() {
         actions={
           <Button className="bg-sky-600 text-white hover:bg-sky-500" onClick={() => setCreateOpen(true)}>
             <Plus className="h-4 w-4" />
+      <HowTo page="ads" />
             New ad
           </Button>
         }

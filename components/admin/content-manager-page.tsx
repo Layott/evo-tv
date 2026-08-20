@@ -60,6 +60,7 @@ import {
 } from "@/components/ui/dialog";
 import { DataTable, type DataColumn } from "./data-table";
 import { PageHeader } from "./page-header";
+import { HowTo } from "./how-to";
 import { StatusBadge } from "./status-badge";
 import { formatDate, formatNgn, formatNumber } from "./utils";
 import { UserAvatar } from "@/components/ui/user-avatar";
@@ -204,6 +205,7 @@ export function ContentManagerPage() {
         description="Manage games, teams, players and esports events."
         actions={newButton}
       />
+      <HowTo page="content" />
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as ContentTab)}>
         <div className="flex flex-wrap items-center gap-3">

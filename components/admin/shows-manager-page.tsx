@@ -56,6 +56,7 @@ import {
 } from "@/components/ui/dialog";
 import { DataTable, type DataColumn } from "./data-table";
 import { PageHeader } from "./page-header";
+import { HowTo } from "./how-to";
 import { HERO_SPEC, MediaUpload, POSTER_SPEC } from "./media-upload";
 import { ShowEpisodesPanel } from "./show-episodes-panel";
 
@@ -521,6 +522,7 @@ export function ShowsManagerPage() {
         actions={
           <Button type="button" onClick={() => setDraft(draftFrom(null))}>
             <Plus className="h-4 w-4" />
+      <HowTo page="shows" />
             New show
           </Button>
         }

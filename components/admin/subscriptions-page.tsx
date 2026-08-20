@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/dialog";
 import { DataTable, type DataColumn } from "./data-table";
 import { PageHeader } from "./page-header";
+import { HowTo } from "./how-to";
 import { StatusBadge } from "./status-badge";
 import { formatDate, formatNgn } from "./utils";
 
@@ -220,6 +221,7 @@ export function SubscriptionsPage() {
         title="Subscriptions"
         description="Who is past the paywall and until when. Refunds happen in Paystack; this controls access periods."
       />
+      <HowTo page="subscriptions" />
 
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <div className="relative min-w-0 flex-1 sm:max-w-xs">
