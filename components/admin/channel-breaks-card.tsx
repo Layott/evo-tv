@@ -41,8 +41,10 @@ interface Breaks {
   overlayIntervalMin: number;
   overlayDurationSec: number;
   fillerOnDrop: boolean;
+  lowerThirdStyles: OverlayStyle[];
   lowerThirdStyle: OverlayStyle;
   lowerThirdUrl: string;
+  upNextStyles: UpNextStyle[];
   upNextStyle: UpNextStyle;
   upNextUrl: string;
   upNextLeadMin: number;
@@ -255,23 +257,60 @@ export function ChannelBreaksCard() {
 
           <div className="grid gap-5 lg:grid-cols-2">
             <div className="space-y-3">
-              <div className="space-y-1.5">
-                <Label>Lower third</Label>
-                <Select
-                  value={draft.lowerThirdStyle}
-                  onValueChange={(v) => set("lowerThirdStyle", v as OverlayStyle)}
-                >
-                  <SelectTrigger className="w-full bg-card">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {OVERLAY_STYLES.map((style) => (
-                      <SelectItem key={style} value={style}>
+              <div className="space-y-2">
+                <Label>Lower thirds in rotation</Label>
+                <p className="text-xs text-muted-foreground">
+                  Each appearance uses the next one on this list. Showing the
+                  same card every twenty minutes for six hours teaches people to
+                  stop reading it. Clear them all to turn the lower third off.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {OVERLAY_STYLES.map((style) => {
+                    const on = draft.lowerThirdStyles.includes(style);
+                    return (
+                      <button
+                        key={style}
+                        type="button"
+                        onClick={() =>
+                          set(
+                            "lowerThirdStyles",
+                            on
+                              ? draft.lowerThirdStyles.filter((v) => v !== style)
+                              : [...draft.lowerThirdStyles, style],
+                          )
+                        }
+                        aria-pressed={on}
+                        className={
+                          on
+                            ? "rounded-full bg-sky-600 px-3 py-1.5 text-xs font-semibold text-white"
+                            : "rounded-full bg-card px-3 py-1.5 text-xs text-muted-foreground hover:bg-accent"
+                        }
+                      >
                         {LOWER_THIRD_LABELS[style]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="lower-preview" className="text-xs text-muted-foreground">
+                    Preview
+                  </Label>
+                  <Select
+                    value={draft.lowerThirdStyle}
+                    onValueChange={(v) => set("lowerThirdStyle", v as OverlayStyle)}
+                  >
+                    <SelectTrigger id="lower-preview" className="w-full bg-card">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {OVERLAY_STYLES.map((style) => (
+                        <SelectItem key={style} value={style}>
+                          {LOWER_THIRD_LABELS[style]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <div className="relative aspect-video overflow-hidden rounded-lg bg-black">
@@ -301,23 +340,59 @@ export function ChannelBreaksCard() {
             </div>
 
             <div className="space-y-3">
-              <div className="space-y-1.5">
-                <Label>Full screen, before a programme</Label>
-                <Select
-                  value={draft.upNextStyle}
-                  onValueChange={(v) => set("upNextStyle", v as UpNextStyle)}
-                >
-                  <SelectTrigger className="w-full bg-card">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {UP_NEXT_STYLES.map((style) => (
-                      <SelectItem key={style} value={style}>
+              <div className="space-y-2">
+                <Label>Full-screen cards in rotation</Label>
+                <p className="text-xs text-muted-foreground">
+                  One plays before each programme, taking the next on this list.
+                  Clear them all to turn the full-screen card off.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {UP_NEXT_STYLES.map((style) => {
+                    const on = draft.upNextStyles.includes(style);
+                    return (
+                      <button
+                        key={style}
+                        type="button"
+                        onClick={() =>
+                          set(
+                            "upNextStyles",
+                            on
+                              ? draft.upNextStyles.filter((v) => v !== style)
+                              : [...draft.upNextStyles, style],
+                          )
+                        }
+                        aria-pressed={on}
+                        className={
+                          on
+                            ? "rounded-full bg-sky-600 px-3 py-1.5 text-xs font-semibold text-white"
+                            : "rounded-full bg-card px-3 py-1.5 text-xs text-muted-foreground hover:bg-accent"
+                        }
+                      >
                         {UP_NEXT_LABELS[style]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="up-preview" className="text-xs text-muted-foreground">
+                    Preview
+                  </Label>
+                  <Select
+                    value={draft.upNextStyle}
+                    onValueChange={(v) => set("upNextStyle", v as UpNextStyle)}
+                  >
+                    <SelectTrigger id="up-preview" className="w-full bg-card">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {UP_NEXT_STYLES.map((style) => (
+                        <SelectItem key={style} value={style}>
+                          {UP_NEXT_LABELS[style]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <div className="relative aspect-video overflow-hidden rounded-lg bg-black">

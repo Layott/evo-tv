@@ -91,7 +91,7 @@ export function AdminSettingsPage() {
         description="Feature flags, branding, email templates and uploaded files."
       />
       <HowTo page="settings" />
-
+      
       <Tabs defaultValue="flags">
         <TabsList className="bg-card">
           <TabsTrigger value="flags">

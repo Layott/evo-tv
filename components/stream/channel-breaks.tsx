@@ -38,8 +38,10 @@ interface BreaksConfig {
   overlayDurationSec: number;
   fillerOnDrop: boolean;
   adFree: boolean;
+  lowerThirdStyles?: OverlayStyle[];
   lowerThirdStyle?: OverlayStyle;
   lowerThirdUrl?: string;
+  upNextStyles?: UpNextStyle[];
   upNextStyle?: UpNextStyle;
   upNextUrl?: string;
   upNextLeadMin?: number;
@@ -67,6 +69,18 @@ interface NowNext {
   } | null;
   /** The rest of the evening, for the line-up card. */
   lineup?: { startLabel: string; title: string }[];
+}
+
+/**
+ * The layout for this appearance.
+ *
+ * An empty list means the operator switched that card off, and the caller has
+ * already decided whether to render at all, so the fallback keeps it honest
+ * rather than silently reviving a disabled card.
+ */
+function pickStyle<T extends string>(list: T[] | undefined, fallback: T, shown: number): T {
+  if (!list || list.length === 0) return fallback;
+  return list[shown % list.length]!;
 }
 
 /** How often the watchdog looks, and how long a still picture means a dead feed. */
@@ -100,6 +114,17 @@ export function ChannelBreaks({ children, nowNext }: Props) {
   const [adKind, setAdKind] = React.useState<"mid_roll" | "live_filler" | null>(null);
   const [cardVisible, setCardVisible] = React.useState(false);
   const [upNextVisible, setUpNextVisible] = React.useState(false);
+  /*
+   * Which layout this appearance uses.
+   *
+   * The owner wants all five in rotation rather than one chosen forever, and a
+   * channel that shows the same card every twenty minutes for six hours teaches
+   * people to stop reading it. Counting appearances rather than picking at
+   * random means the sequence is predictable, which matters when somebody is
+   * checking that a particular card looks right on air.
+   */
+  const lowerThirdShown = React.useRef(0);
+  const upNextShown = React.useRef(0);
   const [secondsToNext, setSecondsToNext] = React.useState(0);
   /** The programme the full-screen card has already announced. */
   const announced = React.useRef<string | null>(null);
@@ -195,6 +220,7 @@ export function ChannelBreaks({ children, nowNext }: Props) {
    * a page left open overnight does not replay last night's card.
    */
   React.useEffect(() => {
+    if (config?.upNextStyles && config.upNextStyles.length === 0) return;
     const lead = config?.upNextLeadMin ?? 0;
     const airsAt = nowNext?.next?.airsAt;
     if (!lead || !airsAt) return;
@@ -205,6 +231,7 @@ export function ChannelBreaks({ children, nowNext }: Props) {
       if (seconds <= 0 || seconds > lead * 60) return;
       if (announced.current === airsAt) return;
       announced.current = airsAt;
+      upNextShown.current += 1;
       setUpNextVisible(true);
       setTimeout(() => setUpNextVisible(false), (config?.upNextSec ?? 10) * 1000);
     };
@@ -217,8 +244,11 @@ export function ChannelBreaks({ children, nowNext }: Props) {
   // ------------------------------------------------------------ on-air card
   React.useEffect(() => {
     if (!config?.enabled || config.overlayIntervalMin <= 0 || !nowNext?.now) return;
+    // An empty rotation is the operator turning the lower third off.
+    if (config.lowerThirdStyles && config.lowerThirdStyles.length === 0) return;
     const every = config.overlayIntervalMin * 60_000;
     const id = setInterval(() => {
+      lowerThirdShown.current += 1;
       setCardVisible(true);
       setTimeout(() => setCardVisible(false), config.overlayDurationSec * 1000);
     }, every);
@@ -380,7 +410,11 @@ export function ChannelBreaks({ children, nowNext }: Props) {
       */}
       {cardVisible && nowNext?.next ? (
         <LowerThird
-          style={config?.lowerThirdStyle ?? "bar"}
+          style={pickStyle(
+            config?.lowerThirdStyles,
+            config?.lowerThirdStyle ?? "bar",
+            lowerThirdShown.current,
+          )}
           copy={{
             title: nowNext.next.title,
             subtitle: nowNext.next.subtitle,
@@ -396,7 +430,11 @@ export function ChannelBreaks({ children, nowNext }: Props) {
 
       {upNextVisible && nowNext?.next ? (
         <UpNextCard
-          style={config?.upNextStyle ?? "centre"}
+          style={pickStyle(
+            config?.upNextStyles,
+            config?.upNextStyle ?? "centre",
+            upNextShown.current,
+          )}
           secondsToStart={secondsToNext}
           copy={{
             title: nowNext.next.title,

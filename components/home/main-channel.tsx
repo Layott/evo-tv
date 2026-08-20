@@ -9,6 +9,7 @@ import { useAuth } from "@/components/providers";
 import { VideoPlayer } from "@/components/stream/video-player";
 import { ChannelBreaks } from "@/components/stream/channel-breaks";
 import { FillerScreen } from "@/components/stream/filler-screen";
+import { PollResultOverlay } from "@/components/stream/poll-result-overlay";
 import { MediaImage } from "@/components/ui/media-image";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -188,6 +189,9 @@ export function MainChannelHero() {
               })),
             }}
           >
+            {/* The poll result takes the picture here as well as on the watch
+                page: most viewers meet the channel on the home page. */}
+            <PollResultOverlay streamId={channel.id} />
             <VideoPlayer
               src={channel.hlsUrl}
               poster={channel.thumbnailUrl || channel.posterUrl}
