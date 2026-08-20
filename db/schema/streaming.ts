@@ -339,6 +339,28 @@ export const polls = pgTable("polls", {
   closesAt: text("closes_at").notNull(),
   isClosed: boolean("is_closed").notNull().default(false),
   totalVotes: integer("total_votes").notNull().default(0),
+
+  /**
+   * Who is allowed to vote.
+   *
+   * `signed_in` is the old behaviour and stays the default. `subscribers` is
+   * for the votes that decide something worth paying for, and `everyone` is
+   * deliberately absent: a vote nobody can be identified for is a vote that can
+   * be cast a thousand times from one browser.
+   */
+  whoCanVote: text("who_can_vote").notNull().default("signed_in"),
+  /**
+   * Whether viewers see the totals while it runs.
+   *
+   * Off is not a smaller version of on. A poll with the numbers hidden is a
+   * different thing: nobody is voting with the crowd, and the reveal at the
+   * close is the moment the poll exists for.
+   */
+  showResultsLive: boolean("show_results_live").notNull().default(true),
+  /** Put the winner on screen over the video when it closes. */
+  showWinnerOnStream: boolean("show_winner_on_stream").notNull().default(false),
+  /** Whether a voter can change their mind while it is open. */
+  allowVoteChange: boolean("allow_vote_change").notNull().default(false),
 });
 
 export const pollVotes = pgTable(

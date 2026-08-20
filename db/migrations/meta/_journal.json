@@ -344,6 +344,13 @@
       "when": 1787356800004,
       "tag": "0048_slot_subtitle",
       "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1787356800005,
+      "tag": "0049_poll_options",
+      "breakpoints": true
     }
   ]
 }
