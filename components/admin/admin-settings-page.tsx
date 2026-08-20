@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PageHeader } from "./page-header";
+import { adminListEmailTemplates, readBranding, writeBranding } from "@/lib/client";
 import { HowTo } from "./how-to";
 
 const EMAIL_TEMPLATES: Record<string, { label: string; body: string }> = {
@@ -175,14 +176,43 @@ function FeatureFlagsSection() {
 }
 
 function BrandingSection() {
+  const qc = useQueryClient();
+  const brandingQ = useQuery({
+    queryKey: ["admin", "branding"],
+    queryFn: readBranding,
+  });
+
   const [siteName, setSiteName] = React.useState("EVO TV");
-  const [tagline, setTagline] = React.useState("African esports, live everywhere.");
-  const [primary, setPrimary] = React.useState("#10b981");
-  const [logoUrl, setLogoUrl] = React.useState("/evo-logo/evo-tv-152.png");
+  const [tagline, setTagline] = React.useState("");
+  const [logoUrl, setLogoUrl] = React.useState("");
   const logoInput = React.useRef<HTMLInputElement>(null);
 
-  function onSave() {
-    toast.success("Branding saved");
+  React.useEffect(() => {
+    if (!brandingQ.data) return;
+    setSiteName(brandingQ.data.siteName);
+    setTagline(brandingQ.data.tagline);
+    setLogoUrl(brandingQ.data.logoUrl);
+  }, [brandingQ.data]);
+
+  /*
+   * This used to raise "Branding saved" and store nothing.
+   *
+   * It is the same shape of bug as the password change that said it worked and
+   * left the old password valid: a screen that lies about a write is worse than
+   * a screen that has no write, because the person believes the job is done.
+   *
+   * The colour picker is gone rather than wired. The palette is a token system
+   * with a hard rule behind it, and an arbitrary hue set here would fight every
+   * surface that reads those tokens.
+   */
+  async function onSave() {
+    try {
+      await writeBranding({ siteName, tagline, logoUrl });
+      await qc.invalidateQueries({ queryKey: ["admin", "branding"] });
+      toast.success("Branding saved. The site reads it on the next request.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not save the branding");
+    }
   }
 
   return (
@@ -197,19 +227,15 @@ function BrandingSection() {
           <Label>Tagline</Label>
           <Input value={tagline} onChange={(e) => setTagline(e.target.value)} className="border-border bg-card" />
         </div>
-        <div className="space-y-1.5">
-          <Label>Primary color</Label>
-          <div className="flex items-center gap-3">
-            <input
-              type="color"
-              value={primary}
-              onChange={(e) => setPrimary(e.target.value)}
-              className="h-10 w-14 cursor-pointer rounded border border-border bg-card p-1"
-              aria-label="Primary color"
-            />
-            <Input value={primary} onChange={(e) => setPrimary(e.target.value)} className="border-border bg-card font-mono" />
-          </div>
-        </div>
+        {/*
+          The colour picker is gone rather than wired. The palette is a token
+          system with a rule behind it, and a hue set here would fight every
+          surface that reads those tokens, including the on-air graphics.
+        */}
+        <p className="text-xs text-muted-foreground">
+          Colour comes from the brand palette in the theme, not from here, so a
+          value set on this page cannot disagree with the rest of the site.
+        </p>
         <div className="space-y-1.5">
           <Label>Logo</Label>
           <div className="flex items-center gap-3">
@@ -257,13 +283,13 @@ function BrandingSection() {
           <div className="flex items-center gap-3 border-b border-border bg-background p-4">
             <div
               className="flex h-8 w-8 items-center justify-center rounded-md text-sm font-black"
-              style={{ backgroundColor: primary, color: "#052e1a" }}
+              style={{ backgroundColor: "var(--brand,#46e3ce)", color: "#04100f" }}
             >
               {siteName.charAt(0).toUpperCase()}
             </div>
             <div>
               <div className="text-sm font-semibold text-foreground">{siteName}</div>
-              <div className="text-xs" style={{ color: primary }}>
+              <div className="text-xs" style={{ color: "var(--brand,#46e3ce)" }}>
                 {tagline}
               </div>
             </div>
@@ -272,7 +298,7 @@ function BrandingSection() {
             <p className="mb-3">Action button preview:</p>
             <button
               className="rounded-md px-3 py-1.5 text-xs font-semibold text-white"
-              style={{ backgroundColor: primary }}
+              style={{ backgroundColor: "var(--brand,#46e3ce)" }}
             >
               Subscribe
             </button>
@@ -288,9 +314,23 @@ function EmailTemplatesSection() {
   const [body, setBody] = React.useState(EMAIL_TEMPLATES["welcome"]!.body);
   const [saving, setSaving] = React.useState(false);
 
+  /*
+   * Open what was written last, not the shipped default.
+   *
+   * The editor reset to the built-in text every time a template was selected,
+   * so an operator wrote something, was told it saved, came back and found the
+   * original. There are two plausible readings of that and both are wrong: "it
+   * did not save" and "somebody overwrote me".
+   */
+  const savedQ = useQuery({
+    queryKey: ["admin", "email-templates"],
+    queryFn: adminListEmailTemplates,
+  });
+
   React.useEffect(() => {
-    setBody(EMAIL_TEMPLATES[templateKey]!.body);
-  }, [templateKey]);
+    const saved = savedQ.data?.find((t) => t.key === String(templateKey));
+    setBody(saved?.body ?? EMAIL_TEMPLATES[templateKey]!.body);
+  }, [templateKey, savedQ.data]);
 
   async function handleSave() {
     if (saving) return;
@@ -298,6 +338,7 @@ function EmailTemplatesSection() {
     try {
       const tpl = EMAIL_TEMPLATES[templateKey]!;
       const { savedAt } = await adminSaveEmailTemplate(String(templateKey), tpl.label, body);
+      await savedQ.refetch();
       const niceTime = new Date(savedAt).toLocaleTimeString();
       toast.success(`Template "${tpl.label}" saved at ${niceTime}`);
     } catch {

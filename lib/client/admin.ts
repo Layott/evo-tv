@@ -617,6 +617,23 @@ export async function adminCreatePoll(
   return (res as { poll?: Poll })?.poll ?? (res as Poll);
 }
 
+/**
+ * The saved templates, so the editor opens what was written last.
+ *
+ * It opened the built-in default every time, so an operator edited, was told it
+ * saved, came back and found their words replaced by the shipped text. Two
+ * plausible readings of that, "it did not save" and "somebody overwrote me",
+ * and both are wrong.
+ */
+export async function adminListEmailTemplates(): Promise<
+  { key: string; label: string; body: string; updatedAt: string }[]
+> {
+  const res = await apiGet<{ templates: { key: string; label: string; body: string; updatedAt: string }[] }>(
+    "/api/admin/email-templates",
+  );
+  return res?.templates ?? [];
+}
+
 export async function adminSaveEmailTemplate(
   key: string,
   subject: string,
@@ -722,4 +739,24 @@ export interface AdminOverviewData {
 
 export async function adminOverviewPage(): Promise<AdminOverviewData | null> {
   return apiGet<AdminOverviewData>("/api/admin/overview");
+}
+
+/* ── Branding ───────────────────────────────────────────────────────────── */
+
+export interface Branding {
+  siteName: string;
+  tagline: string;
+  logoUrl: string;
+}
+
+export async function readBranding(): Promise<Branding> {
+  const res = await apiGet<Branding>("/api/admin/branding");
+  return (
+    res ?? { siteName: "EVO TV", tagline: "", logoUrl: "" }
+  );
+}
+
+export async function writeBranding(branding: Branding): Promise<Branding> {
+  const res = await apiSend<Branding>("PUT", "/api/admin/branding", branding);
+  return res ?? branding;
 }
