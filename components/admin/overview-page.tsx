@@ -183,7 +183,7 @@ export function OverviewPage() {
             Views, last 30 days
           </h3>
           <p className="text-xs text-muted-foreground">
-            One per playback, across recordings and episodes
+            One per playback on a recording, plus one per person per broadcast per day
           </p>
         </div>
         {o && o.viewsByDay.every((p) => p.views === 0) ? (
