@@ -9,6 +9,7 @@ import { HowTo } from "@/components/admin/how-to";
 import { ArrowLeft, ArrowRight } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { CHANNEL_TZ } from "@/lib/epg/grid";
 
 /**
  * One month, and everything dated in it.
@@ -66,10 +67,20 @@ function dayKey(d: Date): string {
   ).padStart(2, "0")}`;
 }
 
+/**
+ * The channel's clock, not the reader's.
+ *
+ * A slot at 07:00 is 07:00 in Lagos, and rendering it in the browser's zone
+ * would show an operator in London 06:00 for a programme everybody on the team
+ * calls the seven o'clock. 24-hour to match Schedule, which is where these
+ * times are set.
+ */
 function timeLabel(iso: string): string {
-  return new Date(iso).toLocaleTimeString(undefined, {
+  return new Date(iso).toLocaleTimeString("en-GB", {
     hour: "2-digit",
     minute: "2-digit",
+    hour12: false,
+    timeZone: CHANNEL_TZ,
   });
 }
 
@@ -158,7 +169,7 @@ export function CalendarPage() {
     <div>
       <PageHeader
         title="Calendar"
-        description="Every broadcast, release and premiere with a date on it. The weekly grid lives on Schedule."
+        description="What actually airs on a given day: the weekly grid, with one-off broadcasts and premieres laid over it. Times are the channel's, in Lagos."
         actions={
           <div className="flex items-center gap-2">
             <Button
