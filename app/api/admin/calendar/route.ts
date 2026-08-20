@@ -4,6 +4,7 @@ import { and, eq, gte, isNotNull, isNull, lte } from "drizzle-orm";
 
 import { db, schema } from "@/lib/db";
 import { requireCapability } from "@/lib/api/admin";
+import { zonedDateKey, zonedDayOfWeek, zonedToUtc } from "@/lib/epg/grid";
 
 /**
  * Everything with a date on it, in one answer.
@@ -13,9 +14,14 @@ import { requireCapability } from "@/lib/api/admin";
  * the weekly grid. Answering "what is happening on Thursday" meant opening four
  * pages and holding the answer in your head.
  *
- * The weekly grid is deliberately not in here. It repeats every week and would
- * bury the four things that do not, which are the ones somebody is checking a
- * date for. The schedule screen is where the grid belongs.
+ * The weekly grid was deliberately left out, on the reasoning that it repeats
+ * and would bury the things that do not. That was wrong in practice: this
+ * platform runs on the grid and schedules almost nothing dated, so the calendar
+ * was an empty month, every month, while the channel was on air the whole time.
+ * The page's own explainer promised a "grid row" the endpoint never sent.
+ *
+ * So the grid is laid over the dates now, and each entry says which it is. A
+ * dated row still stands out, because it is the thing that is not every week.
  */
 
 const querySchema = z.object({
@@ -26,7 +32,8 @@ const querySchema = z.object({
 
 export interface CalendarEntry {
   id: string;
-  kind: "broadcast" | "video" | "episode";
+  /** `grid` repeats every week; everything else happens once. */
+  kind: "grid" | "broadcast" | "video" | "episode";
   title: string;
   /** When it happens, or lands. */
   at: string;
@@ -118,8 +125,64 @@ export async function GET(req: NextRequest) {
       ),
   ]);
 
+  /*
+   * The weekly grid, expanded across the range.
+   *
+   * One row per slot per matching weekday. The start time is built in the
+   * channel's own clock (`zonedToUtc`), not the browser's, so a slot at 07:00
+   * in Lagos lands on the 7am cell for an operator in London too.
+   */
+  const slots = await db
+    .select({
+      id: schema.epgSlots.id,
+      dayOfWeek: schema.epgSlots.dayOfWeek,
+      startMinute: schema.epgSlots.startMinute,
+      durationMin: schema.epgSlots.durationMin,
+      title: schema.epgSlots.title,
+      subtitle: schema.epgSlots.subtitle,
+      showTitle: schema.shows.title,
+    })
+    .from(schema.epgSlots)
+    .leftJoin(schema.shows, eq(schema.shows.id, schema.epgSlots.showId));
+
+  const gridEntries: CalendarEntry[] = [];
+  if (slots.length > 0) {
+    const cursor = new Date(from);
+    const end = new Date(to);
+    // Walk calendar days rather than adding 24 hours, so a zone with DST
+    // cannot drift the walk by an hour and skip or repeat a day.
+    for (
+      let day = new Date(
+        Date.UTC(cursor.getUTCFullYear(), cursor.getUTCMonth(), cursor.getUTCDate()),
+      );
+      day.getTime() <= end.getTime();
+      day = new Date(day.getTime() + 86_400_000)
+    ) {
+      const key = zonedDateKey(day);
+      const [y, m, d] = key.split("-").map(Number);
+      const weekday = zonedDayOfWeek(day);
+      for (const slot of slots) {
+        if (slot.dayOfWeek !== weekday) continue;
+        const at = zonedToUtc(y!, m!, d!, slot.startMinute).toISOString();
+        if (at < from || at > to) continue;
+        gridEntries.push({
+          id: `${slot.id}:${key}`,
+          kind: "grid",
+          // The show's current name wins: the slot's copy drifts after a rename.
+          title: slot.showTitle ?? slot.title,
+          at,
+          durationMin: slot.durationMin,
+          href: "/admin/schedule",
+          past: new Date(at).getTime() < Date.now(),
+          detail: slot.subtitle || null,
+        });
+      }
+    }
+  }
+
   const nowMs = Date.now();
   const entries: CalendarEntry[] = [
+    ...gridEntries,
     ...broadcasts.map((b) => ({
       id: b.id,
       kind: "broadcast" as const,

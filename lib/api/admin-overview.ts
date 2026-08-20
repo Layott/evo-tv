@@ -72,6 +72,8 @@ export async function adminOverview(): Promise<AdminOverview> {
     unshippedRow,
     pastDueRow,
     emptyEpisodesRow,
+    liveViewRows,
+    liveMinutesRow,
   ] = await Promise.all([
     // Viewer counts live on the stream rows, so one query answers both tiles.
     db
@@ -185,11 +187,63 @@ export async function adminOverview(): Promise<AdminOverview> {
           sql`${schema.episodes.releasedAt} is not null`,
         ),
       ),
+
+    /*
+     * Live viewing, which every number on this page used to be blind to.
+     *
+     * `video_view_buckets` is written by the recorded-video player and nothing
+     * else, so a channel that is live around the clock with an empty catalogue
+     * reported zero views, zero watch time and an empty chart while people were
+     * watching. The live signal is `watch_events`: one row per viewer per
+     * minute, which is what the viewer count on this same page already reads.
+     *
+     * A view here is one person on one stream on one day. Not per session:
+     * somebody who tunes into a 24/7 channel four times in an evening is one
+     * viewer of it, and counting four would flatter the number.
+     */
+    db
+      .select({
+        date: sql<string>`to_char(${schema.watchEvents.createdAt} at time zone 'UTC', 'YYYY-MM-DD')`,
+        viewer: sql<string>`coalesce(${schema.watchEvents.userId}, ${schema.watchEvents.ipHash})`,
+        streamId: schema.watchEvents.streamId,
+      })
+      .from(schema.watchEvents)
+      .where(gte(schema.watchEvents.createdAt, thirtyDaysAgo.toISOString()))
+      .groupBy(
+        sql`to_char(${schema.watchEvents.createdAt} at time zone 'UTC', 'YYYY-MM-DD')`,
+        sql`coalesce(${schema.watchEvents.userId}, ${schema.watchEvents.ipHash})`,
+        schema.watchEvents.streamId,
+      ),
+
+    /*
+     * Live watch time: distinct viewer-minutes.
+     *
+     * The player beats once a minute and the row carries the minute it beat
+     * in, so counting distinct (viewer, minute) pairs is the number of minutes
+     * somebody had a live player open. A beat is a minute claimed, so this
+     * rounds up by less than a minute per viewer per session.
+     */
+    db
+      .select({
+        minutes: sql<number>`count(distinct (coalesce(${schema.watchEvents.userId}, ${schema.watchEvents.ipHash}) || ':' || ${schema.watchEvents.minuteBucket}))`,
+      })
+      .from(schema.watchEvents)
+      .where(gte(schema.watchEvents.createdAt, sevenDaysAgo.toISOString())),
   ]);
 
-  // Zero-fill so a quiet day is a zero rather than a gap the chart bridges.
+  /*
+   * Recorded and live, in one number.
+   *
+   * Both are a view of something by somebody: one arrives as a playback
+   * session on a recording, the other as a person on a broadcast that day.
+   * Reporting only the first is what made a channel that is live around the
+   * clock read as zero views.
+   */
   const counts = new Map<string, number>();
   for (const r of viewSessions) {
+    if (r.date) counts.set(r.date, (counts.get(r.date) ?? 0) + 1);
+  }
+  for (const r of liveViewRows) {
     if (r.date) counts.set(r.date, (counts.get(r.date) ?? 0) + 1);
   }
   const viewsByDay: { date: string; views: number }[] = [];
@@ -249,7 +303,10 @@ export async function adminOverview(): Promise<AdminOverview> {
     liveViewers: Number(liveRows[0]?.viewers ?? 0),
     viewsToday: counts.get(today) ?? 0,
     viewsYesterday: counts.get(yesterday) ?? 0,
-    watchTimeSec7d: Math.round(Number(watch7dRow[0]?.seconds ?? 0)),
+    // Recorded watch time plus live viewer-minutes.
+    watchTimeSec7d:
+      Math.round(Number(watch7dRow[0]?.seconds ?? 0)) +
+      Number(liveMinutesRow[0]?.minutes ?? 0) * 60,
     signupsToday: Number(signupsTodayRow[0]?.c ?? 0),
     signups7d: Number(signups7dRow[0]?.c ?? 0),
     activePremiumSubs: Number(premiumRow[0]?.c ?? 0),
