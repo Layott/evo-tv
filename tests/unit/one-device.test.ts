@@ -1,5 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
+import { endOtherSessions } from "@/lib/auth/one-device";
+
 /**
  * The rule is small and the cost of getting it wrong is not: delete the wrong
  * row and the person signing in is signed out of the session they just created.
@@ -39,7 +41,6 @@ vi.mock("drizzle-orm", () => ({
   ne: (_col: unknown, value: string) => ({ keep: value }),
 }));
 
-const { endOtherSessions } = await import("@/lib/auth/one-device");
 
 describe("endOtherSessions", () => {
   beforeEach(() => {
