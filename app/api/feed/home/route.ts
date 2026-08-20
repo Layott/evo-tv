@@ -43,8 +43,8 @@ export async function GET() {
     : await trendingVods(20);
 
   return NextResponse.json({
-    hero: stripViewerCountAll(stripPlaybackAll(hero, viewer.signedIn), viewer.admin),
-    live: stripViewerCountAll(stripPlaybackAll(live, viewer.signedIn), viewer.admin),
+    hero: stripViewerCountAll(stripPlaybackAll(hero, viewer), viewer.admin),
+    live: stripViewerCountAll(stripPlaybackAll(live, viewer), viewer.admin),
     upcoming,
     recommendations: stripViewCountAll(
       stripVodPlaybackAll(recommendations, viewer),

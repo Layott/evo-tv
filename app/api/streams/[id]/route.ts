@@ -28,6 +28,6 @@ export async function GET(
 
   const viewer = await resolveViewer();
   return NextResponse.json(
-    stripViewerCount(stripPlayback(stream, viewer.signedIn), viewer.admin),
+    stripViewerCount(stripPlayback(stream, viewer), viewer.admin),
   );
 }
