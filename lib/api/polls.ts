@@ -245,5 +245,37 @@ export async function closePoll(pollId: string): Promise<Poll | null> {
     .where(eq(schema.polls.id, pollId));
   const closed: Poll = { ...toPoll(row), isClosed: true };
   emit(`stream:${row.streamId}:polls`, { type: "closed", poll: closed });
+
+  /*
+   * The result, on the picture, when the poll was set up to end that way.
+   *
+   * Sent as its own frame rather than left for the client to work out from the
+   * closed poll: the winner is a moment with a start, and every viewer should
+   * see it at the same time rather than whenever their next poll refresh lands.
+   *
+   * A tie is announced as a tie. Picking one of two equal answers to put on
+   * screen would be inventing a result in front of the people who voted.
+   */
+  if (closed.showWinnerOnStream && closed.totalVotes > 0) {
+    const ranked = [...closed.options].sort((a, b) => b.votes - a.votes);
+    const top = ranked[0]!;
+    const tied = ranked.filter((o) => o.votes === top.votes);
+    emit(`stream:${row.streamId}:polls`, {
+      type: "winner",
+      pollId: closed.id,
+      question: closed.question,
+      totalVotes: closed.totalVotes,
+      tie: tied.length > 1,
+      // Every answer, in order, not only the winning one: a viewer should be
+      // able to see where their own vote sat rather than only being told they
+      // lost. The screen decides how many of them it has room for.
+      winners: ranked.map((o) => ({
+        label: o.label,
+        votes: o.votes,
+        percent: Math.round((o.votes / closed.totalVotes) * 100),
+      })),
+    });
+  }
+
   return closed;
 }
