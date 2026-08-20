@@ -43,10 +43,21 @@ export interface ChannelBreaks {
    * block, and the alternative to a choice is an operator asking for a code
    * change every time the channel changes character.
    */
+  /**
+   * The lower third layouts in rotation, in order.
+   *
+   * A list rather than one choice: the owner wants all five, and a channel that
+   * shows the same card every twenty minutes for six hours teaches viewers to
+   * stop reading it. Empty means the lower third is off.
+   */
+  lowerThirdStyles: OverlayStyle[];
+  /** Kept so an older row still resolves; the list wins when it has entries. */
   lowerThirdStyle: OverlayStyle;
   /** Optional artwork behind the lower third. Wide strip, transparent PNG. */
   lowerThirdUrl: string;
   /** Which full-screen card announces the next programme. */
+  /** The full-screen layouts in rotation, in order. Empty turns the card off. */
+  upNextStyles: UpNextStyle[];
   upNextStyle: UpNextStyle;
   /** Optional artwork behind that card. 16:9. */
   upNextUrl: string;
@@ -76,6 +87,27 @@ export type OverlayStyle = (typeof OVERLAY_STYLES)[number];
 export const UP_NEXT_STYLES = ["centre", "band", "split", "countdown", "lineup"] as const;
 export type UpNextStyle = (typeof UP_NEXT_STYLES)[number];
 
+/**
+ * The stored rotation, cleaned.
+ *
+ * Unknown names are dropped rather than defaulting the whole list, because a
+ * style renamed in a future release should cost that one card and not the
+ * channel's furniture. Duplicates are dropped so the rotation cannot stutter.
+ */
+function manyOf<T extends string>(
+  value: unknown,
+  allowed: readonly T[],
+  single?: unknown,
+): T[] {
+  if (Array.isArray(value)) {
+    const cleaned = [...new Set(value)].filter((v): v is T => allowed.includes(v as T));
+    // An empty array is a real answer: it means the operator turned it off.
+    return cleaned;
+  }
+  if (typeof single === "string" && allowed.includes(single as T)) return [single as T];
+  return [...allowed];
+}
+
 function oneOf<T extends string>(
   value: unknown,
   allowed: readonly T[],
@@ -96,8 +128,10 @@ export const CHANNEL_BREAKS_DEFAULT: ChannelBreaks = {
   overlayIntervalMin: 10,
   overlayDurationSec: 8,
   fillerOnDrop: true,
+  lowerThirdStyles: [...OVERLAY_STYLES],
   lowerThirdStyle: "bar",
   lowerThirdUrl: "",
+  upNextStyles: [...UP_NEXT_STYLES],
   upNextStyle: "centre",
   upNextUrl: "",
   upNextLeadMin: 2,
@@ -130,8 +164,14 @@ export function normalizeChannelBreaks(raw: unknown): ChannelBreaks {
       CHANNEL_BREAKS_DEFAULT.overlayDurationSec,
     ),
     fillerOnDrop: p.fillerOnDrop !== false,
+    /*
+     * A stored list wins; a stored single value becomes a list of one; nothing
+     * stored means all of them, which is what the owner asked for.
+     */
+    lowerThirdStyles: manyOf(p.lowerThirdStyles, OVERLAY_STYLES, p.lowerThirdStyle),
     lowerThirdStyle: oneOf(p.lowerThirdStyle, OVERLAY_STYLES, CHANNEL_BREAKS_DEFAULT.lowerThirdStyle),
     lowerThirdUrl: urlOrBlank(p.lowerThirdUrl),
+    upNextStyles: manyOf(p.upNextStyles, UP_NEXT_STYLES, p.upNextStyle),
     upNextStyle: oneOf(p.upNextStyle, UP_NEXT_STYLES, CHANNEL_BREAKS_DEFAULT.upNextStyle),
     upNextUrl: urlOrBlank(p.upNextUrl),
     upNextLeadMin: clampInt(p.upNextLeadMin, 0, 60, CHANNEL_BREAKS_DEFAULT.upNextLeadMin),
