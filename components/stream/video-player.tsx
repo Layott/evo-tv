@@ -46,6 +46,14 @@ import {
  * Raising it makes the start slower and the picture steadier; the ceiling is
  * patience, not memory.
  */
+/**
+ * How often a live player with nothing in hand asks for its source again.
+ *
+ * Slow on purpose: this runs for the whole length of an outage, and the only
+ * thing it has to beat is a viewer's patience, not a stopwatch.
+ */
+const RECOVERY_INTERVAL_MS = 8_000;
+
 const LIVE_PREBUFFER_SEC = 8;
 
 /** Start anyway after this long, however little was banked. */
@@ -206,6 +214,7 @@ export function VideoPlayer({
 
     let cancelled = false;
     let prebufferTimer: ReturnType<typeof setTimeout> | null = null;
+    const healTimers: ReturnType<typeof setInterval>[] = [];
 
     // Any instance still attached from a previous run has to go before a new
     // one touches the element. React's dev Strict Mode mounts this effect
@@ -413,11 +422,45 @@ export function VideoPlayer({
           if (hlsRef.current === instance) hlsRef.current = null;
         }
       });
+
+      /*
+       * Come back when the channel does.
+       *
+       * `startLoad()` resumes a stopped loader, and that is the right answer to
+       * a dropped segment. It is the wrong answer to a manifest that has been
+       * deleted: nginx removes the playlists a while after the encoder stops,
+       * every request 404s, and hls.js exhausts its manifest retries and sits
+       * there. The feed then comes back and nothing asks for it again, so the
+       * viewer keeps watching filler over a channel that is on air, which is
+       * what the owner hit.
+       *
+       * So while the element is holding nothing, ask for the source again on a
+       * slow cadence, forever. It costs one request every eight seconds during
+       * an outage and it is the only thing that turns an outage back into a
+       * broadcast without the viewer reloading the page.
+       */
+      if (isLive) {
+        const heal = setInterval(() => {
+          const v = videoRef.current;
+          if (!v || cancelled) return;
+          const hasNothing = v.buffered.length === 0 && v.readyState < 2;
+          if (!hasNothing) return;
+          try {
+            instance.startLoad();
+            instance.loadSource(src);
+          } catch {
+            // A destroyed instance throws here. The effect's cleanup owns that
+            // case, and retrying a dead object would only mask it.
+          }
+        }, RECOVERY_INTERVAL_MS);
+        healTimers.push(heal);
+      }
     });
 
     return () => {
       cancelled = true;
       if (prebufferTimer) clearTimeout(prebufferTimer);
+      healTimers.forEach((t) => clearInterval(t));
       setPrebuffering(false);
       hlsRef.current?.destroy();
       hlsRef.current = null;
