@@ -4,6 +4,8 @@ import { and, eq, isNull } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/guards";
 import { hasMinRole } from "@/lib/auth/roles";
+import { getEntitlements, NO_ENTITLEMENTS } from "@/lib/api/entitlements";
+import { playbackUrlFor } from "@/lib/video/playback-url";
 import { liveViewerCounts } from "@/lib/api/streams";
 import { listScheduleForDay, type EpgRow } from "@/lib/api/schedule";
 import { zonedDateKey } from "@/lib/epg/grid";
@@ -100,6 +102,12 @@ export async function GET() {
   // signed-out caller gets everything except the manifest.
   const user = await getCurrentUser();
   const signedIn = Boolean(user);
+  // The ladder is a cost decision, so the flagship goes through the same gate
+  // as every other stream: free viewers get 360p and 480p, 720p and 1080p are
+  // for people who pay.
+  const entitlements = user
+    ? await getEntitlements(user.id, user.role).catch(() => NO_ENTITLEMENTS)
+    : NO_ENTITLEMENTS;
   // Audience size is staff only, same rule as every other public endpoint.
   const admin = hasMinRole((user as { role?: string } | null)?.role, "admin");
 
@@ -111,7 +119,7 @@ export async function GET() {
       posterUrl: row.posterUrl,
       thumbnailUrl: row.thumbnailUrl,
       isLive: row.isLive,
-      hlsUrl: signedIn ? row.hlsPath : "",
+      hlsUrl: signedIn ? playbackUrlFor(row.id, row.hlsPath, entitlements.hdPlayback) : "",
       requiresAuth: signedIn ? undefined : (true as const),
       viewerCount: admin ? (counts.get(row.id) ?? 0) : undefined,
       startedAt: row.startedAt ?? null,

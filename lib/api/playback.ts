@@ -3,6 +3,7 @@ import "server-only";
 import type { Stream, Vod } from "@/lib/types";
 import { getCurrentUser } from "@/lib/auth/guards";
 import { getEntitlements, NO_ENTITLEMENTS } from "@/lib/api/entitlements";
+import { playbackUrlFor } from "@/lib/video/playback-url";
 import { hasMinRole } from "@/lib/auth/roles";
 
 /**
@@ -17,26 +18,44 @@ import { hasMinRole } from "@/lib/auth/roles";
  * live state are what a shared link needs to render a preview and what a search
  * engine needs to index the page, and none of it is the broadcast itself.
  */
-export function stripPlayback<T extends Pick<Stream, "hlsUrl">>(
+export function stripPlayback<T extends Pick<Stream, "id" | "hlsUrl">>(
   stream: T,
-  signedIn: boolean,
+  viewer: PlaybackViewer | boolean,
 ): T & { requiresAuth?: true } {
-  if (signedIn) return stream;
-  return {
-    ...stream,
-    hlsUrl: "",
-    // Explicit, so a client can tell "no video source configured yet" apart
-    // from "you are not allowed to see it" and say the right thing.
-    requiresAuth: true as const,
-  };
+  // Call sites used to pass a bare `signedIn`. Both still work, because the
+  // only thing that changes for a caller with no viewer to hand over is that
+  // the URL comes back without an HD ticket, which is the safe answer.
+  const resolved: PlaybackViewer =
+    typeof viewer === "boolean"
+      ? { signedIn: viewer, premium: false, hd: false, admin: false }
+      : viewer;
+
+  if (!resolved.signedIn) {
+    return {
+      ...stream,
+      hlsUrl: "",
+      // Explicit, so a client can tell "no video source configured yet" apart
+      // from "you are not allowed to see it" and say the right thing.
+      requiresAuth: true as const,
+    };
+  }
+
+  /*
+   * The playback URL is ours, not nginx's.
+   *
+   * nginx advertises every rung it knows about and cannot tell who is asking,
+   * so handing its master out is handing out 1080p to anybody who signs up for
+   * free. The route this points at serves the same manifest with the premium
+   * rungs removed for viewers who have not paid for them.
+   */
+  return { ...stream, hlsUrl: playbackUrlFor(stream.id, stream.hlsUrl, resolved.hd) };
 }
 
-export function stripPlaybackAll<T extends Pick<Stream, "hlsUrl">>(
+export function stripPlaybackAll<T extends Pick<Stream, "id" | "hlsUrl">>(
   streams: T[],
-  signedIn: boolean,
+  viewer: PlaybackViewer | boolean,
 ): Array<T & { requiresAuth?: true }> {
-  if (signedIn) return streams;
-  return streams.map((s) => stripPlayback(s, false));
+  return streams.map((s) => stripPlayback(s, viewer));
 }
 
 /* ------------------------------------------------------------------ */
@@ -53,19 +72,22 @@ export interface PlaybackViewer {
   signedIn: boolean;
   /** Entitled to premium content, by subscription or by being staff. */
   premium: boolean;
+  /** Entitled to the 720p and 1080p rungs. A cost question, not an access one. */
+  hd: boolean;
   /** Staff. Audience numbers are theirs and nobody else's. */
   admin: boolean;
 }
 
 export async function resolveViewer(): Promise<PlaybackViewer> {
   const user = await getCurrentUser();
-  if (!user) return { signedIn: false, premium: false, admin: false };
+  if (!user) return { signedIn: false, premium: false, hd: false, admin: false };
   const entitlements = await getEntitlements(user.id, user.role).catch(
     () => NO_ENTITLEMENTS,
   );
   return {
     signedIn: true,
     premium: entitlements.premiumContent,
+    hd: entitlements.hdPlayback,
     admin: hasMinRole((user as { role?: string }).role, "admin"),
   };
 }
