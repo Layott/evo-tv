@@ -2,7 +2,7 @@
 
 import * as React from "react";
 
-import type { OverlayStyle, UpNextStyle } from "@/lib/channel-breaks";
+import type { OverlayStyle, UpNextStyle } from "@/lib/channel-breaks-shape";
 
 /**
  * The channel's on-air furniture: a lower third while a programme runs, and a
