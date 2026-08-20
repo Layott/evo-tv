@@ -22,7 +22,7 @@ export function EncoderSetupPage() {
         description="OBS, vMix and ffplayout, and the settings this platform needs from each."
       />
       <HowTo page="encoder" />
-
+      
       <Section title="The shape of it">
         <p>
           The server does not transcode. Whatever the encoder sends is what

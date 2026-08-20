@@ -161,7 +161,7 @@ export function OrdersPage() {
     <div className="space-y-6">
       <PageHeader title="Orders" description="Customer orders, payments and refunds." />
       <HowTo page="orders" />
-
+      
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative w-full max-w-sm">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />

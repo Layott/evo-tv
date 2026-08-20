@@ -37,8 +37,10 @@ const putSchema = z.object({
   fillerOnDrop: z.boolean(),
   // The on-screen furniture. Optional so an older client, or a form that has
   // not been redeployed yet, keeps working and simply leaves them at default.
+  lowerThirdStyles: z.array(z.enum(OVERLAY_STYLES)).max(10).optional(),
   lowerThirdStyle: z.enum(OVERLAY_STYLES).optional(),
   lowerThirdUrl: z.string().trim().max(500).optional(),
+  upNextStyles: z.array(z.enum(UP_NEXT_STYLES)).max(10).optional(),
   upNextStyle: z.enum(UP_NEXT_STYLES).optional(),
   upNextUrl: z.string().trim().max(500).optional(),
   upNextLeadMin: z.number().int().min(0).max(60).optional(),

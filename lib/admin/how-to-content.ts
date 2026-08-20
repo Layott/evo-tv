@@ -248,6 +248,7 @@ export const HOW_TO = {
       { term: "Delete message", detail: "Removes it for everyone, live, without banning the author." },
       { term: "Ban user", detail: "Writes a timed chat ban and removes the message. It expires by itself." },
       { term: "Escalate", detail: "Passes it up to an admin with the context attached." },
+      { term: "Chat rules", detail: "What is blocked before anybody has to report it: links, words, and how many warnings before a mute. The house rules apply everywhere; a broadcast can carry its own, which replace them." },
     ],
   },
 

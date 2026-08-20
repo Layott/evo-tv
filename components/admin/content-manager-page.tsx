@@ -206,7 +206,7 @@ export function ContentManagerPage() {
         actions={newButton}
       />
       <HowTo page="content" />
-
+      
       <Tabs value={tab} onValueChange={(v) => setTab(v as ContentTab)}>
         <div className="flex flex-wrap items-center gap-3">
           <TabsList className="bg-card">

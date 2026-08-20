@@ -263,12 +263,12 @@ export function UsersRolesPage() {
           canManage ? (
             <Button type="button" onClick={() => setGrantOpen(true)}>
               <UserPlus className="h-4 w-4" />
-      <HowTo page="users" />
-              Grant a role
+                    Grant a role
             </Button>
           ) : null
         }
       />
+      <HowTo page="users" />
 
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative w-full max-w-sm">
