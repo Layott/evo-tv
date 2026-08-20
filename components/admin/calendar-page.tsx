@@ -16,12 +16,17 @@ import { cn } from "@/lib/utils";
  * A broadcast with a scheduled start, a video with a release date and an
  * episode with a premiere each lived on a different screen, so "what is
  * happening on Thursday" meant opening three pages and holding the answer in
- * your head. The weekly grid is deliberately not here: it repeats, and it would
- * bury the things that do not.
+ * your head.
+ *
+ * The weekly grid used to be left out on the reasoning that it repeats. On a
+ * channel that runs on the grid and schedules almost nothing dated, that made
+ * the calendar an empty month, every month, while the channel was on air the
+ * whole time. It is laid over the dates now, quieter than the dated rows,
+ * because the thing worth spotting is still the one that is not every week.
  */
 interface CalendarEntry {
   id: string;
-  kind: "broadcast" | "video" | "episode";
+  kind: "grid" | "broadcast" | "video" | "episode";
   title: string;
   at: string;
   durationMin: number | null;
@@ -31,6 +36,7 @@ interface CalendarEntry {
 }
 
 const KIND_LABEL: Record<CalendarEntry["kind"], string> = {
+  grid: "Weekly",
   broadcast: "Live",
   video: "Video",
   episode: "Episode",
@@ -42,6 +48,9 @@ const KIND_LABEL: Record<CalendarEntry["kind"], string> = {
  * cell until the cell is only words.
  */
 const KIND_STYLE: Record<CalendarEntry["kind"], string> = {
+  // The grid is the background rhythm, so it reads as surface rather than as
+  // an event. Anything with its own colour is a thing that happens once.
+  grid: "bg-white/[0.06] text-foreground/70",
   broadcast: "bg-red-500/15 text-red-200",
   video: "bg-sky-400/15 text-sky-200",
   episode: "bg-emerald-400/15 text-emerald-200",
@@ -90,6 +99,12 @@ export function CalendarPage() {
     },
   });
 
+  /*
+   * The grid is 24 slots a day, so a cell that listed everything would be a
+   * wall of identical rows and the one dated thing in the month would be lost
+   * in it. Dated rows sort first because they are the exception; the rest is
+   * the day's rhythm, in order, behind a count.
+   */
   const byDay = React.useMemo(() => {
     const map = new Map<string, CalendarEntry[]>();
     for (const entry of query.data ?? []) {
@@ -98,8 +113,20 @@ export function CalendarPage() {
       if (list) list.push(entry);
       else map.set(key, [entry]);
     }
+    for (const list of map.values()) {
+      list.sort((a, b) => {
+        if ((a.kind === "grid") !== (b.kind === "grid")) {
+          return a.kind === "grid" ? 1 : -1;
+        }
+        return a.at.localeCompare(b.at);
+      });
+    }
     return map;
   }, [query.data]);
+
+  /** Which day is showing all of its rows. One at a time; the cells are small. */
+  const [expanded, setExpanded] = React.useState<string | null>(null);
+  const VISIBLE = 3;
 
   /*
    * Monday first, and the leading blanks come from the 1st's weekday. Lagos has
@@ -223,7 +250,7 @@ export function CalendarPage() {
                     {date.getDate()}
                   </span>
                   <div className="mt-1 space-y-1">
-                    {entries.map((entry) => (
+                    {(expanded === key ? entries : entries.slice(0, VISIBLE)).map((entry) => (
                       <Link
                         key={entry.id}
                         href={entry.href}
@@ -244,6 +271,19 @@ export function CalendarPage() {
                         </span>
                       </Link>
                     ))}
+                    {entries.length > VISIBLE ? (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setExpanded((prev) => (prev === key ? null : key))
+                        }
+                        className="block w-full rounded-md px-1.5 py-1 text-left text-[11px] text-muted-foreground hover:bg-white/[0.06]"
+                      >
+                        {expanded === key
+                          ? "Show less"
+                          : `+${entries.length - VISIBLE} more`}
+                      </button>
+                    ) : null}
                   </div>
                 </div>
               );
@@ -254,8 +294,9 @@ export function CalendarPage() {
             <p className="mt-4 text-sm text-muted-foreground">Loading…</p>
           ) : (query.data?.length ?? 0) === 0 ? (
             <p className="mt-4 text-sm text-muted-foreground">
-              Nothing is dated in {monthLabel}. Broadcasts appear here once they
-              have a scheduled start, videos once they have a release date, and
+              Nothing is on in {monthLabel}. The weekly grid fills these days
+              once Schedule has slots; broadcasts appear once they have a
+              scheduled start, videos once they have a release date, and
               episodes once they have a premiere.
             </p>
           ) : null}

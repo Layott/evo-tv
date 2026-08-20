@@ -28,8 +28,8 @@ export const HOW_TO = {
       "The state of the channel in one screen: what is on air, how many people are watching, what has sold, and who signed up. Everything here is read live, so it is the page to leave open during a broadcast.",
     points: [
       { term: "Live now", detail: "Streams currently publishing. A number here with a black player usually means the encoder stopped without telling us." },
-      { term: "Viewers", detail: "Counted from heartbeats sent by real players, shared across both API containers. Staff only." },
-      { term: "Views today", detail: "Distinct viewing sessions since midnight UTC, not page loads." },
+      { term: "Viewers", detail: "Counted from heartbeats sent by real players, shared across both API containers. Staff only. The same beats are what live views and live watch time are counted from." },
+      { term: "Views today", detail: "Playback sessions on recordings, plus one per person per broadcast, since midnight UTC. Not page loads." },
       { term: "Revenue", detail: "Paid orders and active subscriptions, in naira, exactly as Paystack settled them." },
     ],
     watchOut:
@@ -79,7 +79,7 @@ export const HOW_TO = {
     intro:
       "The dated view of the same programming: a specific day rather than the repeating week. Use it to see what a given date will actually air once one-off broadcasts and premieres are laid over the grid.",
     points: [
-      { term: "Grid row", detail: "Comes from the weekly schedule and repeats every week." },
+      { term: "Grid row", detail: "Comes from the weekly schedule and repeats every week. Drawn quietly, because it is the background rhythm rather than an event." },
       { term: "Dated row", detail: "A scheduled stream or an episode premiere. It overrides the grid for that day only." },
       { term: "Today", detail: "Highlighted in the channel's own clock, Lagos, not the browser's." },
     ],
