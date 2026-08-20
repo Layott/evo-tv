@@ -45,6 +45,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { PageHeader } from "./page-header";
+import { HowTo } from "./how-to";
 
 /**
  * The channel's running order.
@@ -298,6 +299,7 @@ export function ScheduleManagerPage() {
         actions={
           <Button type="button" onClick={() => setDraft(draftFrom(null, day))}>
             <Plus className="h-4 w-4" />
+      <HowTo page="schedule" />
             Add slot
           </Button>
         }

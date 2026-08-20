@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PageHeader } from "./page-header";
+import { HowTo } from "./how-to";
 
 const EMAIL_TEMPLATES: Record<string, { label: string; body: string }> = {
   welcome: {
@@ -88,6 +89,7 @@ export function AdminSettingsPage() {
         title="Settings"
         description="Feature flags, branding, email templates and uploaded files."
       />
+      <HowTo page="settings" />
 
       <Tabs defaultValue="flags">
         <TabsList className="bg-card">

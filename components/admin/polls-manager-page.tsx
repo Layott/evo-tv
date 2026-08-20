@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/sheet";
 import { DataTable, type DataColumn } from "./data-table";
 import { PageHeader } from "./page-header";
+import { HowTo } from "./how-to";
 import { StatusBadge } from "./status-badge";
 import { formatNumber, timeAgo } from "./utils";
 
@@ -179,6 +180,7 @@ export function PollsManagerPage() {
         actions={
           <Button className="bg-sky-600 text-white hover:bg-sky-500" onClick={() => setOpenCreate(true)}>
             <Plus className="h-4 w-4" />
+      <HowTo page="polls" />
             New poll
           </Button>
         }

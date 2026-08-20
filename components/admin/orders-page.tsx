@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/dialog";
 import { DataTable, type DataColumn } from "./data-table";
 import { PageHeader } from "./page-header";
+import { HowTo } from "./how-to";
 import { StatusBadge } from "./status-badge";
 import { formatDateTime, formatNgn } from "./utils";
 
@@ -159,6 +160,7 @@ export function OrdersPage() {
   return (
     <div className="space-y-6">
       <PageHeader title="Orders" description="Customer orders, payments and refunds." />
+      <HowTo page="orders" />
 
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative w-full max-w-sm">

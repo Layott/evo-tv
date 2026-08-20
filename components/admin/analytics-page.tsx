@@ -13,6 +13,7 @@ import {
 import { PercentCircle, Users, Wallet } from "@/components/icons";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "./page-header";
+import { HowTo } from "./how-to";
 import { MetricCard } from "./metric-card";
 import { VideoAnalyticsPanel } from "./video-analytics-panel";
 import { useQuery } from "@tanstack/react-query";
@@ -75,6 +76,7 @@ export function AnalyticsPage() {
         title="Analytics"
         description="How each video performed, and how the platform is doing."
       />
+      <HowTo page="analytics" />
 
       <Tabs defaultValue="videos">
         <TabsList className="mb-6 bg-card">
