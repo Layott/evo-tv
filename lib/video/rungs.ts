@@ -43,7 +43,7 @@ export interface RungSpec {
 export const RUNGS: RungSpec[] = [
   { suffix: "_low", label: "360p", resolution: "640x360", videoKbps: 800, audioKbps: 96, premiumOnly: false },
   { suffix: "_mid", label: "480p", resolution: "854x480", videoKbps: 1400, audioKbps: 128, premiumOnly: false },
-  { suffix: "_hi", label: "720p", resolution: "1280x720", videoKbps: 2800, audioKbps: 128, premiumOnly: false },
+  { suffix: "_hi", label: "720p", resolution: "1280x720", videoKbps: 2800, audioKbps: 128, premiumOnly: true },
   { suffix: "_fhd", label: "1080p", resolution: "1920x1080", videoKbps: 5000, audioKbps: 160, premiumOnly: true },
 ];
 

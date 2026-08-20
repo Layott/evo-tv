@@ -188,7 +188,7 @@ export const HOW_TO = {
     points: [
       { term: "Role", detail: "Granted here and effective immediately, without the person signing out." },
       { term: "Programmer", detail: "Opens the editorial screens: shows, schedule, library, content." },
-      { term: "Broadcast op", detail: "Opens the broadcast screens: streams and encoder setup." },
+      { term: "Broadcast op", detail: "Opens the broadcast screens: streams, encoder setup and sign-in forensics." },
       { term: "Moderator", detail: "Opens moderation, and can pin, delete and ban in a live chat." },
     ],
     watchOut:
@@ -267,10 +267,12 @@ export const HOW_TO = {
   forensic: {
     title: "How this page works",
     intro:
-      "The technical record of a broadcast: what the encoder sent, when segments arrived, and where a stream dropped. This is the page to open when somebody says the stream was buffering.",
+      "Every sign-in, with the connection and device it came from. The question this answers is not who leaked a stream; it is whether somebody you banned is back under a new name.",
     points: [
-      { term: "Publish events", detail: "Every time an encoder connected or disconnected, with the rung it was publishing." },
-      { term: "Segment timing", detail: "Late or missing segments are what buffering looks like from the server's side." },
+      { term: "Connection", detail: "The IP, hashed. Enough to group by and useless for anything else, which is the point: the job is spotting the same connection twice." },
+      { term: "Everyone here", detail: "Pivots the list to every account that has signed in from that connection. Two is a household. Nine is somebody working around a ban." },
+      { term: "Device", detail: "The same question for one device, which survives a change of network." },
+      { term: "Watermarking", detail: "Not built. Tracing a leaked recording back to the account that played it needs the video re-encoded per session." },
     ],
   },
 

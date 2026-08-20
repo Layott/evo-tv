@@ -1,5 +1,6 @@
 import {
   BarChart3,
+  Fingerprint,
   Landmark,
   Bell,
   Calendar,
@@ -111,8 +112,9 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
    * It briefly left the sidebar because it rendered "Coming soon" and nothing
    * else, which made the entry a door to a wall. The answer was the page, not
    * the grouping: it now says where money actually comes in, with the real
-   * numbers, and says plainly that USSD is not built. Forensic is still out of
-   * the nav, because it has nothing behind it at all.
+   * numbers, and says plainly that USSD is not built. Forensic went the same
+   * way: the watermarking it promised is not built, but the sign-in trail it
+   * sits on has been recorded since August and nothing was reading it.
    */
   {
     href: "/admin/billing",
@@ -128,6 +130,7 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
       },
     ],
   },
+  { href: "/admin/forensic", label: "Sign-in forensics", Icon: Fingerprint, capability: "broadcast" },
   { href: "/admin/audit", label: "Audit log", Icon: ClipboardText, capability: "roster" },
   { href: "/admin/settings", label: "Settings", Icon: Settings },
 ];
