@@ -255,10 +255,12 @@ export const HOW_TO = {
   billing: {
     title: "How this page works",
     intro:
-      "Payment provider settings and the USSD flow for viewers paying without a card. Changes here affect real money immediately.",
+      "Where money comes in, in one place. Nothing is edited here: the work happens under Subscriptions and Orders, and the processor is set on the server.",
     points: [
-      { term: "Provider", detail: "Which processor takes the payment. Switching it does not migrate existing subscriptions." },
-      { term: "USSD", detail: "The short code path for viewers on feature phones or without a card." },
+      { term: "Subscriptions", detail: "What the active periods are worth, at the price each was bought on. Premium access is read from these rows, not from a role." },
+      { term: "Shop orders", detail: "Paid orders and what they came to. Refunds are counted separately, because the money went back." },
+      { term: "Processor", detail: "Paystack takes every card payment. It is chosen by an environment variable on the server, so no switch here can put the platform into a mode where payments are approved without money moving." },
+      { term: "USSD", detail: "Not integrated. No short code, no aggregator, no table behind one, so a viewer on a feature phone cannot pay yet." },
     ],
   },
 

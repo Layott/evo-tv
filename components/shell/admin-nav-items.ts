@@ -1,5 +1,6 @@
 import {
   BarChart3,
+  Landmark,
   Bell,
   Calendar,
   CalendarRange,
@@ -105,19 +106,27 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   },
   { href: "/admin/moderation", label: "Moderation", Icon: Shield, capability: "community" },
   /*
-   * Billing & USSD and Forensic are gone from the sidebar.
+   * Billing keeps Subscriptions under it, at the owner's ask.
    *
-   * Both routes render "Coming soon" and nothing else, so every visit was a
-   * door to a wall. Subscriptions used to hang under Billing as a child and
-   * now stands on its own, because it is the entry that actually does
-   * something. The routes are still there for anyone holding a link; they are
-   * simply not advertised as places to go.
+   * It briefly left the sidebar because it rendered "Coming soon" and nothing
+   * else, which made the entry a door to a wall. The answer was the page, not
+   * the grouping: it now says where money actually comes in, with the real
+   * numbers, and says plainly that USSD is not built. Forensic is still out of
+   * the nav, because it has nothing behind it at all.
    */
   {
-    href: "/admin/subscriptions",
-    label: "Subscriptions",
-    Icon: CreditCard,
+    href: "/admin/billing",
+    label: "Billing & USSD",
+    Icon: Landmark,
     capability: "commerce",
+    children: [
+      {
+        href: "/admin/subscriptions",
+        label: "Subscriptions",
+        Icon: CreditCard,
+        capability: "commerce",
+      },
+    ],
   },
   { href: "/admin/audit", label: "Audit log", Icon: ClipboardText, capability: "roster" },
   { href: "/admin/settings", label: "Settings", Icon: Settings },
