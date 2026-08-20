@@ -7,6 +7,8 @@ import {
   CHANNEL_BREAKS_FLAG_KEY,
   readChannelBreaks,
   normalizeChannelBreaks,
+  OVERLAY_STYLES,
+  UP_NEXT_STYLES,
 } from "@/lib/channel-breaks";
 import { writeAudit } from "@/lib/api/audit";
 
@@ -33,6 +35,14 @@ const putSchema = z.object({
   overlayIntervalMin: z.number().int().min(0).max(240),
   overlayDurationSec: z.number().int().min(3).max(60),
   fillerOnDrop: z.boolean(),
+  // The on-screen furniture. Optional so an older client, or a form that has
+  // not been redeployed yet, keeps working and simply leaves them at default.
+  lowerThirdStyle: z.enum(OVERLAY_STYLES).optional(),
+  lowerThirdUrl: z.string().trim().max(500).optional(),
+  upNextStyle: z.enum(UP_NEXT_STYLES).optional(),
+  upNextUrl: z.string().trim().max(500).optional(),
+  upNextLeadMin: z.number().int().min(0).max(60).optional(),
+  upNextSec: z.number().int().min(3).max(60).optional(),
 });
 
 export async function PUT(req: NextRequest) {

@@ -22,6 +22,7 @@ import {
 import type { Poll, Stream } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -114,6 +115,10 @@ export function PollsManagerPage() {
     question: string;
     options: string[];
     durationMinutes: number;
+    whoCanVote: "signed_in" | "subscribers";
+    showResultsLive: boolean;
+    showWinnerOnStream: boolean;
+    allowVoteChange: boolean;
   }) {
     const poll: Poll = {
       id: `poll_new_${Date.now()}`,
@@ -128,6 +133,10 @@ export function PollsManagerPage() {
       closesAt: new Date(Date.now() + payload.durationMinutes * 60_000).toISOString(),
       isClosed: false,
       totalVotes: 0,
+      whoCanVote: payload.whoCanVote,
+      showResultsLive: payload.showResultsLive,
+      showWinnerOnStream: payload.showWinnerOnStream,
+      allowVoteChange: payload.allowVoteChange,
     };
     void (async () => {
       try {
@@ -135,6 +144,10 @@ export function PollsManagerPage() {
           question: payload.question,
           options: payload.options,
           durationMinutes: payload.durationMinutes,
+          whoCanVote: payload.whoCanVote,
+          showResultsLive: payload.showResultsLive,
+          showWinnerOnStream: payload.showWinnerOnStream,
+          allowVoteChange: payload.allowVoteChange,
         });
         toast.success("Poll created");
         setOpenCreate(false);
@@ -278,12 +291,20 @@ function CreatePollDrawer({
     question: string;
     options: string[];
     durationMinutes: number;
+    whoCanVote: "signed_in" | "subscribers";
+    showResultsLive: boolean;
+    showWinnerOnStream: boolean;
+    allowVoteChange: boolean;
   }) => void;
 }) {
   const [streamId, setStreamId] = React.useState(streams[0]?.id ?? "");
   const [question, setQuestion] = React.useState("");
   const [options, setOptions] = React.useState<string[]>(["", ""]);
   const [duration, setDuration] = React.useState("5");
+  const [whoCanVote, setWhoCanVote] = React.useState<"signed_in" | "subscribers">("signed_in");
+  const [showResultsLive, setShowResultsLive] = React.useState(true);
+  const [showWinnerOnStream, setShowWinnerOnStream] = React.useState(false);
+  const [allowVoteChange, setAllowVoteChange] = React.useState(false);
 
   React.useEffect(() => {
     if (open) {
@@ -291,6 +312,10 @@ function CreatePollDrawer({
       setQuestion("");
       setOptions(["", ""]);
       setDuration("5");
+      setWhoCanVote("signed_in");
+      setShowResultsLive(true);
+      setShowWinnerOnStream(false);
+      setAllowVoteChange(false);
     }
   }, [open]);
 
@@ -384,6 +409,76 @@ function CreatePollDrawer({
               </SelectContent>
             </Select>
           </div>
+
+          {/*
+            How the poll behaves, per poll.
+            
+            "Who takes Map 4" and "which show should we renew" are not the same
+            event and should not run under the same rules. A poll used to have a
+            question, options and a clock, so it could only ever be the first
+            kind.
+          */}
+          <div className="space-y-1.5">
+            <Label>Who can vote</Label>
+            <Select
+              value={whoCanVote}
+              onValueChange={(v) => setWhoCanVote(v as "signed_in" | "subscribers")}
+            >
+              <SelectTrigger className="w-full border-border bg-card">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="signed_in">Anyone with an account</SelectItem>
+                <SelectItem value="subscribers">Subscribers only</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              An account is the floor. A vote nobody can be identified for can be
+              cast a thousand times from one browser.
+            </p>
+          </div>
+
+          <div className="space-y-3 rounded-lg bg-card/60 p-3">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-sm font-medium text-foreground">
+                  Show the totals while it runs
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Off holds them back until it closes, so nobody votes with the
+                  crowd and the close is the moment.
+                </div>
+              </div>
+              <Switch checked={showResultsLive} onCheckedChange={setShowResultsLive} />
+            </div>
+
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-sm font-medium text-foreground">
+                  Put the winner on screen
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  When it closes, the result takes the picture for a few seconds.
+                </div>
+              </div>
+              <Switch
+                checked={showWinnerOnStream}
+                onCheckedChange={setShowWinnerOnStream}
+              />
+            </div>
+
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-sm font-medium text-foreground">
+                  Let people change their mind
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Off means one vote each, decided the first time.
+                </div>
+              </div>
+              <Switch checked={allowVoteChange} onCheckedChange={setAllowVoteChange} />
+            </div>
+          </div>
         </div>
         <SheetFooter>
           <Button
@@ -402,6 +497,10 @@ function CreatePollDrawer({
                 question: question.trim(),
                 options: validOptions,
                 durationMinutes: Number(duration),
+                whoCanVote,
+                showResultsLive,
+                showWinnerOnStream,
+                allowVoteChange,
               })
             }
           >

@@ -588,7 +588,15 @@ export async function adminConversion(): Promise<{
  */
 export async function adminCreatePoll(
   streamId: string,
-  input: { question: string; options: string[]; durationMinutes: number },
+  input: {
+    question: string;
+    options: string[];
+    durationMinutes: number;
+    whoCanVote?: "signed_in" | "subscribers";
+    showResultsLive?: boolean;
+    showWinnerOnStream?: boolean;
+    allowVoteChange?: boolean;
+  },
 ): Promise<Poll> {
   const closesAt = new Date(
     Date.now() + input.durationMinutes * 60_000,
@@ -600,6 +608,10 @@ export async function adminCreatePoll(
       question: input.question,
       options: input.options.map((label, i) => ({ id: `opt_${i}`, label })),
       closesAt,
+      whoCanVote: input.whoCanVote ?? "signed_in",
+      showResultsLive: input.showResultsLive ?? true,
+      showWinnerOnStream: input.showWinnerOnStream ?? false,
+      allowVoteChange: input.allowVoteChange ?? false,
     },
   );
   return (res as { poll?: Poll })?.poll ?? (res as Poll);
