@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
       stripViewerCountAll(
         stripPlaybackAll(
           filterByMaxRating(await listFeaturedStreams(), maxRating),
-          signedIn,
+          viewer,
         ),
         viewer.admin,
       ),
@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
     stripViewerCountAll(
       stripPlaybackAll(
         filterByMaxRating(await listLiveStreams({ gameId, isPremium }), maxRating),
-        signedIn,
+        viewer,
       ),
       viewer.admin,
     ),

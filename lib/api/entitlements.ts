@@ -30,6 +30,14 @@ export interface Entitlements {
   chatPerks: boolean;
   /** Opens a show or episode marked premium. */
   premiumContent: boolean;
+  /**
+   * Sees the 720p and 1080p rungs.
+   *
+   * Separate from `premiumContent` because it is a different question: one is
+   * whether somebody may watch a programme at all, this is how expensive it is
+   * to serve them. A 1080p viewer costs roughly seven times a 360p one.
+   */
+  hdPlayback: boolean;
 }
 
 export const NO_ENTITLEMENTS: Entitlements = {
@@ -37,6 +45,7 @@ export const NO_ENTITLEMENTS: Entitlements = {
   earlyAccess: false,
   chatPerks: false,
   premiumContent: false,
+  hdPlayback: false,
 };
 
 /**
@@ -56,6 +65,7 @@ export async function getEntitlements(
       earlyAccess: true,
       chatPerks: true,
       premiumContent: true,
+      hdPlayback: true,
     };
   }
   if (!userId) return NO_ENTITLEMENTS;
@@ -79,5 +89,6 @@ export async function getEntitlements(
     earlyAccess: subscribed,
     chatPerks: subscribed,
     premiumContent: subscribed,
+    hdPlayback: subscribed,
   };
 }

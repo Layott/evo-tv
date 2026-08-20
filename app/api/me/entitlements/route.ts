@@ -11,9 +11,10 @@ import { getEntitlements, NO_ENTITLEMENTS } from "@/lib/api/entitlements";
  *
  * The player uses `maxHeight` to cap the quality ladder. Note what this is and
  * is not: it stops the player asking for the higher rungs, which saves the
- * viewer's data and ours. It is not DRM, and it is not the last word on
- * premium content, which is enforced server-side where the video URL is
- * handed out.
+ * viewer's data and ours. It is not the boundary. The boundary is the master
+ * playlist, which is now served per viewer at `/api/hls/[id]/master.m3u8` and
+ * simply does not contain the premium rungs for somebody who has not paid for
+ * them, so a client that ignores this number gets nothing extra.
  */
 export async function GET() {
   const user = await getCurrentUser();
@@ -33,7 +34,7 @@ export async function GET() {
        * the difference between a viewer costing 0.36 GB an hour and 0.68.
        * `null` means no cap.
        */
-      maxHeight: entitlements.premiumContent ? null : 480,
+      maxHeight: entitlements.hdPlayback ? null : 480,
     },
     { headers: { "Cache-Control": "private, no-store" } },
   );
