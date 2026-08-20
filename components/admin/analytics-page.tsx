@@ -77,7 +77,7 @@ export function AnalyticsPage() {
         description="How each video performed, and how the platform is doing."
       />
       <HowTo page="analytics" />
-
+      
       <Tabs defaultValue="videos">
         <TabsList className="mb-6 bg-card">
           <TabsTrigger value="videos">Videos</TabsTrigger>

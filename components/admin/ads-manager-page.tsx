@@ -368,11 +368,11 @@ export function AdsManagerPage() {
         actions={
           <Button className="bg-sky-600 text-white hover:bg-sky-500" onClick={() => setCreateOpen(true)}>
             <Plus className="h-4 w-4" />
-      <HowTo page="ads" />
-            New ad
+                  New ad
           </Button>
         }
       />
+      <HowTo page="ads" />
 
       <ChannelBreaksCard />
 

@@ -179,7 +179,7 @@ export function ModerationPage() {
         description="Review reported messages, active bans and user appeals."
       />
       <HowTo page="moderation" />
-
+      
       <Tabs defaultValue="reports">
         <TabsList className="bg-card">
           <TabsTrigger value="reports">

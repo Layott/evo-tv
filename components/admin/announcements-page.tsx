@@ -163,7 +163,7 @@ export function AnnouncementsPage() {
         description="One message, three ways: the notification list, the app, and the browser. There is no unsend."
       />
       <HowTo page="announcements" />
-
+      
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="space-y-4 rounded-xl border border-border bg-card/30 p-4">
           <div className="space-y-2">

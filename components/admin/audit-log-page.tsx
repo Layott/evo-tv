@@ -264,7 +264,7 @@ export function AuditLogPage() {
         description="Every action taken in the dashboard, the role it was taken under, and what changed."
       />
       <HowTo page="audit" />
-
+      
       <div className="mb-4 flex flex-wrap gap-3">
         <Select value={section} onValueChange={setSection}>
           <SelectTrigger className="w-44 bg-card">

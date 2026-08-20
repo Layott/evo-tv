@@ -143,8 +143,7 @@ export function CalendarPage() {
               }
             >
               <ArrowLeft className="h-4 w-4" />
-      <HowTo page="calendar" />
-            </Button>
+                  </Button>
             <span className="min-w-40 text-center text-sm font-medium text-foreground">
               {monthLabel}
             </span>
@@ -167,6 +166,7 @@ export function CalendarPage() {
           </div>
         }
       />
+      <HowTo page="calendar" />
 
       {query.isError ? (
         <div className="rounded-xl bg-card p-6">

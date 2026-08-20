@@ -500,11 +500,11 @@ export function StreamsManagerPage() {
         actions={
           <Button className="bg-sky-600 text-white hover:bg-sky-500" onClick={() => setCreateOpen(true)}>
             <Plus className="h-4 w-4" />
-      <HowTo page="streams" />
-            New stream
+                  New stream
           </Button>
         }
       />
+      <HowTo page="streams" />
 
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative w-full max-w-sm">

@@ -654,12 +654,12 @@ export function LibraryManagerPage() {
               }
             >
               <Plus className="h-4 w-4" />
-      <HowTo page="library" />
-              {tab === "videos" ? "New video" : "New clip"}
+                    {tab === "videos" ? "New video" : "New clip"}
             </Button>
           ) : null
         }
       />
+      <HowTo page="library" />
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as "videos" | "clips")}>
         <div className="mb-4 flex flex-wrap items-center gap-3">
