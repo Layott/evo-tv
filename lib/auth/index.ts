@@ -285,6 +285,26 @@ export const auth = betterAuth({
           } catch (err) {
             console.warn("[auth] login-event write failed", err);
           }
+
+          /*
+           * One account, one device.
+           *
+           * A subscription that can be signed into on ten phones is one
+           * subscription ten people use, and the paid tier is the business. The
+           * newest sign-in wins deliberately: that person is present, while the
+           * other session may be a phone in a drawer, and refusing the new one
+           * would lock out the account holder rather than the sharer.
+           *
+           * Best-effort, like the event above: a failure here must never turn a
+           * valid sign-in into an error.
+           */
+          try {
+            const { endOtherSessions } = await import("./one-device");
+            const row = session as { id: string; userId: string };
+            if (row.userId && row.id) await endOtherSessions(row.userId, row.id);
+          } catch (err) {
+            console.warn("[auth] one-device cleanup failed", err);
+          }
         },
       },
     },
