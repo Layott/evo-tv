@@ -24,7 +24,51 @@ function toPoll(r: typeof schema.polls.$inferSelect): Poll {
     closesAt: r.closesAt,
     isClosed: r.isClosed,
     totalVotes: r.totalVotes,
+    whoCanVote: (r.whoCanVote === "subscribers" ? "subscribers" : "signed_in"),
+    showResultsLive: r.showResultsLive,
+    showWinnerOnStream: r.showWinnerOnStream,
+    allowVoteChange: r.allowVoteChange,
   };
+}
+
+/**
+ * The poll as this viewer is allowed to see it.
+ *
+ * A poll with the results hidden has to be hidden on the server. Sending the
+ * counts and asking the screen not to draw them puts the answer in the network
+ * tab of anyone who wants it, and the whole point of hiding them is that nobody
+ * has it yet. Staff see the real numbers, because running the poll is their job.
+ */
+export function forViewer(
+  poll: Poll,
+  opts: { staff?: boolean; myVote?: string | null } = {},
+): Poll {
+  const withVote: Poll =
+    opts.myVote === undefined ? poll : { ...poll, myVote: opts.myVote };
+  if (poll.showResultsLive || poll.isClosed || opts.staff) return withVote;
+  return {
+    ...withVote,
+    options: withVote.options.map((o) => ({ ...o, votes: 0 })),
+    totalVotes: 0,
+  };
+}
+
+/** What this viewer picked, or null. */
+export async function myVote(
+  pollId: string,
+  userId: string | null | undefined,
+): Promise<string | null> {
+  if (!userId) return null;
+  const row = (
+    await db
+      .select({ optionId: schema.pollVotes.optionId })
+      .from(schema.pollVotes)
+      .where(
+        and(eq(schema.pollVotes.pollId, pollId), eq(schema.pollVotes.userId, userId)),
+      )
+      .limit(1)
+  )[0];
+  return row?.optionId ?? null;
 }
 
 export async function listActivePolls(streamId: string): Promise<Poll[]> {
@@ -57,6 +101,10 @@ export async function createPoll(input: {
   question: string;
   options: { id: string; label: string }[];
   closesAt: string;
+  whoCanVote?: "signed_in" | "subscribers";
+  showResultsLive?: boolean;
+  showWinnerOnStream?: boolean;
+  allowVoteChange?: boolean;
 }): Promise<Poll> {
   const id = shortId("poll");
   const createdAt = new Date().toISOString();
@@ -76,6 +124,10 @@ export async function createPoll(input: {
       closesAt: input.closesAt,
       isClosed: false,
       totalVotes: 0,
+      whoCanVote: input.whoCanVote ?? "signed_in",
+      showResultsLive: input.showResultsLive ?? true,
+      showWinnerOnStream: input.showWinnerOnStream ?? false,
+      allowVoteChange: input.allowVoteChange ?? false,
     });
   const poll: Poll = {
     id,
@@ -86,6 +138,10 @@ export async function createPoll(input: {
     closesAt: input.closesAt,
     isClosed: false,
     totalVotes: 0,
+    whoCanVote: input.whoCanVote ?? "signed_in",
+    showResultsLive: input.showResultsLive ?? true,
+    showWinnerOnStream: input.showWinnerOnStream ?? false,
+    allowVoteChange: input.allowVoteChange ?? false,
   };
   emit(`stream:${input.streamId}:polls`, { type: "created", poll });
   return poll;
