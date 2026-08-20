@@ -14,6 +14,7 @@ import {
 import type { ChatMessage, Profile } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ChatRulesPanel } from "./chat-rules-panel";
 import { PageHeader } from "./page-header";
 import { HowTo } from "./how-to";
 import { StatusBadge } from "./status-badge";
@@ -189,6 +190,7 @@ export function ModerationPage() {
             </span>
           </TabsTrigger>
           <TabsTrigger value="banned">Banned users</TabsTrigger>
+          <TabsTrigger value="rules">Chat rules</TabsTrigger>
           <TabsTrigger value="appeals">
             Appeals
             <span className="ml-2 rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[10px] text-amber-300">
@@ -385,6 +387,10 @@ export function ModerationPage() {
               </div>
             ) : null}
           </div>
+        </TabsContent>
+
+        <TabsContent value="rules" className="mt-4">
+          <ChatRulesPanel />
         </TabsContent>
       </Tabs>
     </div>
