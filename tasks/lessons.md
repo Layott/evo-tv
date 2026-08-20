@@ -55,3 +55,25 @@ advertising it, and never leave the two out of step "for now".
 **Check the viewport, do not trust the resize.** `resize_window` reports success
 against a maximized Chrome window and `window.innerWidth` stays 1920. Read
 `window.innerWidth` before believing any mobile screenshot.
+
+## 2026-08-20, the deploy that stopped and nobody noticed
+
+**`pnpm typecheck` does not prove a Next build.** A client component imported a
+value from a module whose first line is `import "server-only"`. TypeScript is
+perfectly happy with that; `next build` refuses it outright. Three merged
+batches, six PRs and two migrations sat on `main` for over an hour without
+reaching production, while `/api/health` answered 200 the whole time because the
+old container was still serving.
+
+Three rules out of it:
+
+1. **Run `pnpm build` before merging anything that touches a client component,
+   a `lib/` module, or the boundary between them.** `pnpm check` now includes it,
+   so `pnpm check` is the gate rather than typecheck plus tests.
+2. **A green deploy is a deployed route, not a healthy health check.** After a
+   deploy, probe a route that only exists in that batch. 404 where the code is
+   on `main` means the deploy did not land, whatever health says.
+3. **Split pure config out of `server-only` modules.** Anything a screen needs
+   to render (shapes, enums, defaults, formatting) belongs in a module with no
+   database import, and the server module re-exports it. That is what
+   `lib/channel-breaks-shape.ts` is.

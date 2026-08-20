@@ -3,7 +3,7 @@
 import * as React from "react";
 import { looksLikeVideo } from "@/lib/media/file-kind";
 import { LowerThird, UpNextCard } from "@/components/stream/channel-overlays";
-import type { OverlayStyle, UpNextStyle } from "@/lib/channel-breaks";
+import type { OverlayStyle, UpNextStyle } from "@/lib/channel-breaks-shape";
 
 /**
  * The channel's rhythm, wrapped around the player.
