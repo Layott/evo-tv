@@ -309,12 +309,12 @@ export function ShopManagerPage() {
           canEdit ? (
             <Button type="button" onClick={() => setDraft(draftFrom(null))}>
               <Plus className="h-4 w-4" />
-      <HowTo page="shop" />
-              New product
+                    New product
             </Button>
           ) : null
         }
       />
+      <HowTo page="shop" />
 
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <div className="relative min-w-0 flex-1 sm:max-w-xs">

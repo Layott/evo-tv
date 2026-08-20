@@ -522,11 +522,11 @@ export function ShowsManagerPage() {
         actions={
           <Button type="button" onClick={() => setDraft(draftFrom(null))}>
             <Plus className="h-4 w-4" />
-      <HowTo page="shows" />
-            New show
+                  New show
           </Button>
         }
       />
+      <HowTo page="shows" />
 
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <div className="relative min-w-0 flex-1 sm:max-w-xs">

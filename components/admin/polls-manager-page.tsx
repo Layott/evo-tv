@@ -180,11 +180,11 @@ export function PollsManagerPage() {
         actions={
           <Button className="bg-sky-600 text-white hover:bg-sky-500" onClick={() => setOpenCreate(true)}>
             <Plus className="h-4 w-4" />
-      <HowTo page="polls" />
-            New poll
+                  New poll
           </Button>
         }
       />
+      <HowTo page="polls" />
 
       <DataTable<Poll>
         data={all}

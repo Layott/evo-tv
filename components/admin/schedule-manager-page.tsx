@@ -299,11 +299,11 @@ export function ScheduleManagerPage() {
         actions={
           <Button type="button" onClick={() => setDraft(draftFrom(null, day))}>
             <Plus className="h-4 w-4" />
-      <HowTo page="schedule" />
-            Add slot
+                  Add slot
           </Button>
         }
       />
+      <HowTo page="schedule" />
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <div className="flex flex-wrap gap-1">
