@@ -39,64 +39,72 @@ export async function listInitialMessages(
 export async function sendMessage(
   streamId: string,
   body: string,
+  parentId?: string | null,
 ): Promise<ChatMessage | null> {
   const res = await apiSend<{ message: ChatMessage }>(
     "POST",
     `/api/streams/${encodeURIComponent(streamId)}/chat`,
-    { body },
+    { body, ...(parentId ? { parentId } : {}) },
+  );
+  return res?.message ?? null;
+}
+
+/** The same chat, under a recording. */
+export async function listVodMessages(vodId: string): Promise<ChatMessage[]> {
+  const res = await apiGet<{ messages: ChatMessage[] }>(
+    `/api/vods/${encodeURIComponent(vodId)}/chat`,
+  );
+  return res?.messages ?? [];
+}
+
+export async function sendVodMessage(
+  vodId: string,
+  body: string,
+  parentId?: string | null,
+): Promise<ChatMessage | null> {
+  const res = await apiSend<{ message: ChatMessage }>(
+    "POST",
+    `/api/vods/${encodeURIComponent(vodId)}/chat`,
+    { body, ...(parentId ? { parentId } : {}) },
   );
   return res?.message ?? null;
 }
 
 /**
- * Moderation, with named arguments on purpose.
+ * Moderation, addressed by the message.
  *
- * These took `(streamId, messageId)` positionally and the chat called them
- * `(messageId, handle)`. Two strings, so nothing failed to compile: the request
- * went to `/api/streams/<messageId>/chat/<handle>/pin`, which is a 404, and
- * every click answered "Could not pin message". An object cannot be passed in
- * the wrong order.
+ * These took the stream id as well, which stopped being true the day chat
+ * appeared under a recording: the same three buttons would have needed a second
+ * set of endpoints and a client that knew which kind of page it was on. A
+ * message knows where it lives; nothing else has to.
+ *
+ * They also took two positional strings, and the chat passed them in the wrong
+ * order for weeks without anything failing to compile. One argument now, and it
+ * is the one the buttons already have.
  */
-export async function pinMessage(args: {
-  streamId: string;
-  messageId: string;
-}): Promise<{ isPinned: boolean } | null> {
+export async function pinMessage(messageId: string): Promise<{ isPinned: boolean } | null> {
   return apiSend<{ isPinned: boolean }>(
     "POST",
-    `/api/streams/${encodeURIComponent(args.streamId)}/chat/${encodeURIComponent(args.messageId)}/pin`,
+    `/api/chat/${encodeURIComponent(messageId)}/mod`,
+    { action: "pin" },
   );
 }
 
-export async function deleteMessage(args: {
-  streamId: string;
-  messageId: string;
-}): Promise<void> {
-  await apiSend<void>(
-    "POST",
-    `/api/streams/${encodeURIComponent(args.streamId)}/chat/${encodeURIComponent(args.messageId)}/delete`,
-  );
+export async function deleteMessage(messageId: string): Promise<void> {
+  await apiSend<void>("POST", `/api/chat/${encodeURIComponent(messageId)}/mod`, {
+    action: "delete",
+  });
 }
 
-/**
- * Ban the author of a message from chat for a while.
- *
- * This used to post `{ action: "ban" }` at the partner channel endpoint with
- * the stream id in the channel's place. That endpoint has no "ban" action, it
- * has "timeout", and a timeout only emits an event: nothing was written, so a
- * banned viewer was talking again after a reload. It now writes the same
- * `chat_banned` sanction the moderation queue writes, which `isChatBlocked`
- * enforces on the next message and which expires on its own.
- */
 export async function banFromChat(args: {
-  streamId: string;
   messageId: string;
   hours?: number;
   reason?: string;
 }): Promise<{ expiresAt: string } | null> {
   return apiSend<{ expiresAt: string }>(
     "POST",
-    `/api/streams/${encodeURIComponent(args.streamId)}/chat/${encodeURIComponent(args.messageId)}/ban`,
-    { hours: args.hours ?? 24, ...(args.reason ? { reason: args.reason } : {}) },
+    `/api/chat/${encodeURIComponent(args.messageId)}/mod`,
+    { action: "ban", hours: args.hours ?? 24, ...(args.reason ? { reason: args.reason } : {}) },
   );
 }
 

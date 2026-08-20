@@ -52,9 +52,12 @@ function displayHandle(handle: string | null | undefined): string {
 export function MessageItem({
   msg,
   isAdmin,
+  onReply,
 }: {
   msg: ChatMessage;
   isAdmin: boolean;
+  /** Omitted for a signed-out reader, who has nothing to reply with. */
+  onReply?: (msg: ChatMessage) => void;
 }) {
   const [pinned, setPinned] = React.useState(msg.isPinned);
   const [deleted, setDeleted] = React.useState(msg.isDeleted);
@@ -66,7 +69,7 @@ export function MessageItem({
     setBusy(true);
     setPinned((prev) => !prev);
     try {
-      await pinMessage({ streamId: msg.streamId, messageId: msg.id });
+      await pinMessage(msg.id);
       toast.success(pinned ? "Message unpinned" : "Message pinned");
     } catch (err) {
       setPinned((prev) => !prev);
@@ -81,7 +84,7 @@ export function MessageItem({
     setBusy(true);
     setDeleted(true);
     try {
-      await deleteMessage({ streamId: msg.streamId, messageId: msg.id });
+      await deleteMessage(msg.id);
       toast.success("Message deleted");
     } catch (err) {
       setDeleted(false);
@@ -95,7 +98,7 @@ export function MessageItem({
     if (busy) return;
     setBusy(true);
     try {
-      await banFromChat({ streamId: msg.streamId, messageId: msg.id, hours: 24 });
+      await banFromChat({ messageId: msg.id, hours: 24 });
       setBanned(true);
       setDeleted(true);
       toast.error(`Banned ${displayHandle(msg.userHandle)} for 24h`);
@@ -130,6 +133,21 @@ export function MessageItem({
         </AvatarFallback>
       </Avatar>
       <div className="min-w-0 flex-1">
+        {/*
+          What this answers, quoted in one line.
+          
+          A reply that shows only its own text reads as a non-sequitur once three
+          more messages have arrived, which in a live chat is four seconds.
+        */}
+        {msg.parent ? (
+          <div className="mb-0.5 flex items-center gap-1.5 text-[0.7rem] text-muted-foreground">
+            <span className="text-muted-foreground/70">↳</span>
+            <span className="font-semibold">
+              {msg.parent.userHandle || "viewer"}
+            </span>
+            <span className="min-w-0 truncate">{msg.parent.body}</span>
+          </div>
+        ) : null}
         <span className={cn("text-xs font-semibold mr-1.5", roleColor(msg.userRole))}>
           {displayHandle(msg.userHandle)}
           {msg.userRole === "premium" && (
@@ -146,6 +164,16 @@ export function MessageItem({
         </span>
         <span className="text-sm text-foreground break-words">{msg.body}</span>
       </div>
+      {onReply ? (
+        <button
+          type="button"
+          onClick={() => onReply(msg)}
+          className="shrink-0 self-start rounded-md px-1.5 py-0.5 text-[0.7rem] text-muted-foreground opacity-100 hover:text-foreground [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100"
+        >
+          Reply
+        </button>
+      ) : null}
+
       {/*
         Hover-to-reveal is a desktop idea, and a phone has no hover: these three
         buttons were `opacity-0` with no way to bring them back, so a moderator
