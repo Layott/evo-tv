@@ -23,7 +23,7 @@ import {
   UP_NEXT_STYLES,
   type OverlayStyle,
   type UpNextStyle,
-} from "@/lib/channel-breaks";
+} from "@/lib/channel-breaks-shape";
 
 /**
  * The rhythm of the always-on channel, in one card.
