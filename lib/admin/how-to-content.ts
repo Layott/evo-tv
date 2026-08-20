@@ -200,10 +200,11 @@ export const HOW_TO = {
     intro:
       "How each video performed and how the platform is doing. Nothing here is modelled or smoothed: a video nobody watched returns zeroes and the page says so.",
     points: [
-      { term: "Views", detail: "Distinct viewing sessions, not page loads and not plays." },
+      { term: "Views", detail: "Distinct viewing sessions, not page loads and not plays. On the Platform tab, a live view is one person on one broadcast on one day." },
       { term: "Average percent viewed", detail: "How far into the video a session got, averaged across sessions." },
       { term: "Retention", detail: "The share of sessions still watching at each percent of the runtime. The cliff is where people leave." },
       { term: "Pick dates", detail: "Any single day, or any window. The presets are shortcuts, not the only answer." },
+      { term: "Most at once", detail: "The busiest single minute in the window. Concurrency, not a total: 5 here and 40 people means they came and went." },
     ],
   },
 
