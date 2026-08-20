@@ -108,7 +108,7 @@ export async function POST(
   void writeAudit({
     actorId: guard.user.id,
     actorRole: guard.role,
-    capability: "moderation",
+    capability: "community",
     action: "chat.ban",
     targetType: "user",
     targetId: target.id,

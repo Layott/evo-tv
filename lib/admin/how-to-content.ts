@@ -188,7 +188,7 @@ export const HOW_TO = {
     points: [
       { term: "Role", detail: "Granted here and effective immediately, without the person signing out." },
       { term: "Programmer", detail: "Opens the editorial screens: shows, schedule, library, content." },
-      { term: "Broadcast op", detail: "Opens the broadcast screens: streams, encoder setup, forensic." },
+      { term: "Broadcast op", detail: "Opens the broadcast screens: streams and encoder setup." },
       { term: "Moderator", detail: "Opens moderation, and can pin, delete and ban in a live chat." },
     ],
     watchOut:

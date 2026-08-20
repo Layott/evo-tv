@@ -48,7 +48,7 @@ export async function PUT(req: NextRequest) {
   void writeAudit({
     actorId: guard.user.id,
     actorRole: guard.role,
-    capability: "moderation",
+    capability: "community",
     action: "chat_rules.update",
     targetType: streamId ? "stream" : "channel",
     targetId: streamId ?? "house",

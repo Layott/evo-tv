@@ -6,6 +6,7 @@ import { hasMinRole } from "@/lib/auth/roles";
 import { eq } from "drizzle-orm";
 import { hasCapability, type Capability } from "@/lib/auth/capabilities";
 import type { SessionUser } from "@/lib/auth";
+import { sectionForAudit } from "@/lib/api/audit-section";
 
 export type AdminGuardOk = {
   ok: true;
@@ -185,8 +186,10 @@ export async function writeAudit(params: {
     await db.insert(schema.auditLog).values({
       id: generateId("audit"),
       actorId: params.actorId,
-      actorRole: params.actorRole ?? null,
-      capability: params.capability ?? null,
+      actorRole: params.actorRole ?? (await currentRole(params.actorId)),
+      capability:
+        params.capability ??
+        (sectionForAudit(params.action, params.targetType) as Capability | null),
       action: params.action,
       targetType: params.targetType,
       targetId: params.targetId,
