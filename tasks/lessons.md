@@ -77,3 +77,29 @@ Three rules out of it:
    to render (shapes, enums, defaults, formatting) belongs in a module with no
    database import, and the server module re-exports it. That is what
    `lib/channel-breaks-shape.ts` is.
+
+## 20 August 2026 - a deploy is a restarted container, and a release is a frozen tree
+
+Two more, both from watching things that looked finished and were not.
+
+**The droplet's git checkout moves before the deploy is done.** Waiting for
+`git -C /srv/evotv/api rev-parse HEAD` to equal the merge commit says the pull
+happened, not that anything is serving it: twice today the checkout matched
+while the old container was still answering, and `/admin/billing` served the
+previous page for minutes afterwards. Wait for `docker compose ps` to show the
+api containers with a fresh uptime, then probe a route from the batch. (This is
+the sibling of the health-check rule above: HEAD is as poor a proxy for
+"deployed" as a 200 from `/api/health`.)
+
+**Do not commit into the app repo while a release is running.**
+`pnpm release:android` builds on EAS from the commit it started with, then
+exports the OTA from the working tree minutes later. Committing in between made
+build 234's APK `b412ee3` and its OTA `51eaf5f`, so the download and an updated
+phone hold different JS, and the release notes named the wrong commit. Benign
+this time. It would not be if the extra commit were a migration or a breaking
+API change.
+
+**Also, once more, in a smaller way:** a component that only checks
+`isLoading` shows a spinner forever when the read fails. Check `isError` too,
+and say what went wrong. The app's on-air card manager did exactly this until
+the walk at 390 caught it.
