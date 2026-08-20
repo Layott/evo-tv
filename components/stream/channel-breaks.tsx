@@ -2,6 +2,8 @@
 
 import * as React from "react";
 import { looksLikeVideo } from "@/lib/media/file-kind";
+import { LowerThird, UpNextCard } from "@/components/stream/channel-overlays";
+import type { OverlayStyle, UpNextStyle } from "@/lib/channel-breaks";
 
 /**
  * The channel's rhythm, wrapped around the player.
@@ -36,6 +38,12 @@ interface BreaksConfig {
   overlayDurationSec: number;
   fillerOnDrop: boolean;
   adFree: boolean;
+  lowerThirdStyle?: OverlayStyle;
+  lowerThirdUrl?: string;
+  upNextStyle?: UpNextStyle;
+  upNextUrl?: string;
+  upNextLeadMin?: number;
+  upNextSec?: number;
 }
 
 interface Ad {
@@ -47,7 +55,18 @@ interface Ad {
 
 interface NowNext {
   now: { title: string; subtitle: string; endLabel?: string } | null;
-  next: { title: string; startLabel: string } | null;
+  next: {
+    title: string;
+    startLabel: string;
+    /** ISO instant, so the full-screen card knows when to arrive. */
+    airsAt?: string;
+    subtitle?: string;
+    durationMin?: number;
+    pillar?: string;
+    posterUrl?: string;
+  } | null;
+  /** The rest of the evening, for the line-up card. */
+  lineup?: { startLabel: string; title: string }[];
 }
 
 /** How often the watchdog looks, and how long a still picture means a dead feed. */
@@ -80,6 +99,10 @@ export function ChannelBreaks({ children, nowNext }: Props) {
   const [ad, setAd] = React.useState<Ad | null>(null);
   const [adKind, setAdKind] = React.useState<"mid_roll" | "live_filler" | null>(null);
   const [cardVisible, setCardVisible] = React.useState(false);
+  const [upNextVisible, setUpNextVisible] = React.useState(false);
+  const [secondsToNext, setSecondsToNext] = React.useState(0);
+  /** The programme the full-screen card has already announced. */
+  const announced = React.useRef<string | null>(null);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -162,6 +185,34 @@ export function ChannelBreaks({ children, nowNext }: Props) {
     const id = setTimeout(endAd, config.adMaxSec * 1000);
     return () => clearTimeout(id);
   }, [ad, adKind, config, endAd]);
+
+  /*
+   * The full-screen card, in the last minutes before a programme starts.
+   *
+   * Once per programme, not on a cycle: an announcement that repeats every few
+   * minutes stops being an announcement and becomes an interruption. The
+   * programme's own start time is the key, so a schedule change re-arms it and
+   * a page left open overnight does not replay last night's card.
+   */
+  React.useEffect(() => {
+    const lead = config?.upNextLeadMin ?? 0;
+    const airsAt = nowNext?.next?.airsAt;
+    if (!lead || !airsAt) return;
+
+    const tick = () => {
+      const seconds = Math.round((new Date(airsAt).getTime() - Date.now()) / 1000);
+      setSecondsToNext(Math.max(0, seconds));
+      if (seconds <= 0 || seconds > lead * 60) return;
+      if (announced.current === airsAt) return;
+      announced.current = airsAt;
+      setUpNextVisible(true);
+      setTimeout(() => setUpNextVisible(false), (config?.upNextSec ?? 10) * 1000);
+    };
+
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [config, nowNext]);
 
   // ------------------------------------------------------------ on-air card
   React.useEffect(() => {
@@ -322,21 +373,42 @@ export function ChannelBreaks({ children, nowNext }: Props) {
         </div>
       ) : null}
 
-      {cardVisible && nowNext?.now ? (
-        <div className="pointer-events-none absolute bottom-4 left-4 z-10 max-w-[min(90%,26rem)] rounded-lg bg-black/85 p-3">
-          <p className="text-[0.7rem] text-[var(--brand,#46E3CE)]">
-            On now
-          </p>
-          <p className="text-sm font-semibold text-white">{nowNext.now.title}</p>
-          {nowNext.now.subtitle ? (
-            <p className="text-xs text-white/60">{nowNext.now.subtitle}</p>
-          ) : null}
-          {nowNext.next ? (
-            <p className="mt-2 text-xs text-white/70">
-              Up next, {nowNext.next.startLabel} · {nowNext.next.title}
-            </p>
-          ) : null}
-        </div>
+      {/*
+        The lower third and the full-screen card, in the layouts the owner
+        picked. Both are drawn by `channel-overlays.tsx`, which the admin
+        preview uses as well, so what is chosen there is what goes out here.
+      */}
+      {cardVisible && nowNext?.next ? (
+        <LowerThird
+          style={config?.lowerThirdStyle ?? "bar"}
+          copy={{
+            title: nowNext.next.title,
+            subtitle: nowNext.next.subtitle,
+            startLabel: nowNext.next.startLabel,
+            nowTitle: nowNext.now?.title,
+            durationMin: nowNext.next.durationMin,
+            posterUrl: nowNext.next.posterUrl,
+            pillar: nowNext.next.pillar,
+            templateUrl: config?.lowerThirdUrl || undefined,
+          }}
+        />
+      ) : null}
+
+      {upNextVisible && nowNext?.next ? (
+        <UpNextCard
+          style={config?.upNextStyle ?? "centre"}
+          secondsToStart={secondsToNext}
+          copy={{
+            title: nowNext.next.title,
+            subtitle: nowNext.next.subtitle,
+            startLabel: nowNext.next.startLabel,
+            durationMin: nowNext.next.durationMin,
+            posterUrl: nowNext.next.posterUrl,
+            pillar: nowNext.next.pillar,
+            lineup: nowNext.lineup,
+            templateUrl: config?.upNextUrl || undefined,
+          }}
+        />
       ) : null}
     </div>
   );
