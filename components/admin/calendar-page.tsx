@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 
 import { PageHeader } from "@/components/admin/page-header";
+import { HowTo } from "@/components/admin/how-to";
 import { ArrowLeft, ArrowRight } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -142,6 +143,7 @@ export function CalendarPage() {
               }
             >
               <ArrowLeft className="h-4 w-4" />
+      <HowTo page="calendar" />
             </Button>
             <span className="min-w-40 text-center text-sm font-medium text-foreground">
               {monthLabel}

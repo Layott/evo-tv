@@ -45,6 +45,7 @@ import {
 } from "@/components/ui/dialog";
 import { DataTable, type DataColumn } from "./data-table";
 import { PageHeader } from "./page-header";
+import { HowTo } from "./how-to";
 import { MediaUpload, PRODUCT_SPEC } from "./media-upload";
 import { formatNgn } from "./utils";
 
@@ -308,6 +309,7 @@ export function ShopManagerPage() {
           canEdit ? (
             <Button type="button" onClick={() => setDraft(draftFrom(null))}>
               <Plus className="h-4 w-4" />
+      <HowTo page="shop" />
               New product
             </Button>
           ) : null

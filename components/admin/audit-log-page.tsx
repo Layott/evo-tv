@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { DataTable, type DataColumn } from "@/components/admin/data-table";
 import { PageHeader } from "@/components/admin/page-header";
+import { HowTo } from "@/components/admin/how-to";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { Input } from "@/components/ui/input";
 import {
@@ -262,6 +263,7 @@ export function AuditLogPage() {
         title="Audit log"
         description="Every action taken in the dashboard, the role it was taken under, and what changed."
       />
+      <HowTo page="audit" />
 
       <div className="mb-4 flex flex-wrap gap-3">
         <Select value={section} onValueChange={setSection}>
