@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect } from "react";
 
+import { isChunkError, reloadOnce } from "@/components/providers/stale-build-guard";
+
 export default function GlobalError({
   error,
   reset,
@@ -11,6 +13,19 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
+    /*
+     * A chunk that no longer exists is not an error worth showing anybody.
+     *
+     * It means this tab was open when a deploy landed, so the page is asking
+     * for files from a build that is gone. "We dropped a frame" is a bad answer
+     * to that: nothing is wrong with the site, the tab is simply out of date,
+     * and one reload fixes it. `reloadOnce` carries the cooldown that stops
+     * this becoming a loop if the new build is broken too.
+     */
+    if (isChunkError(error)) {
+      reloadOnce();
+      return;
+    }
     console.error(error);
   }, [error]);
 
