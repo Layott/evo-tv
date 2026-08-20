@@ -49,6 +49,7 @@ import {
 } from "@/components/ui/sheet";
 import { DataTable, type DataColumn } from "./data-table";
 import { PageHeader } from "./page-header";
+import { HowTo } from "./how-to";
 import { StatusBadge } from "./status-badge";
 import { formatDate, timeAgo } from "./utils";
 import { UserAvatar } from "@/components/ui/user-avatar";
@@ -262,6 +263,7 @@ export function UsersRolesPage() {
           canManage ? (
             <Button type="button" onClick={() => setGrantOpen(true)}>
               <UserPlus className="h-4 w-4" />
+      <HowTo page="users" />
               Grant a role
             </Button>
           ) : null

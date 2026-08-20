@@ -15,6 +15,7 @@ import type { ChatMessage, Profile } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "./page-header";
+import { HowTo } from "./how-to";
 import { StatusBadge } from "./status-badge";
 import { formatDate, timeAgo } from "./utils";
 import { UserAvatar } from "@/components/ui/user-avatar";
@@ -177,6 +178,7 @@ export function ModerationPage() {
         title="Moderation"
         description="Review reported messages, active bans and user appeals."
       />
+      <HowTo page="moderation" />
 
       <Tabs defaultValue="reports">
         <TabsList className="bg-card">

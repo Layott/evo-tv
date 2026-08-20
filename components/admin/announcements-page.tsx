@@ -34,6 +34,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { PageHeader } from "./page-header";
+import { HowTo } from "./how-to";
 
 /**
  * Telling viewers something.
@@ -161,6 +162,7 @@ export function AnnouncementsPage() {
         title="Announcements"
         description="One message, three ways: the notification list, the app, and the browser. There is no unsend."
       />
+      <HowTo page="announcements" />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="space-y-4 rounded-xl border border-border bg-card/30 p-4">

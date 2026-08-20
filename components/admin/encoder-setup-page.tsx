@@ -3,6 +3,7 @@
 import * as React from "react";
 
 import { PageHeader } from "@/components/admin/page-header";
+import { HowTo } from "@/components/admin/how-to";
 import { RUNGS } from "@/lib/video/rungs";
 
 /**
@@ -20,6 +21,7 @@ export function EncoderSetupPage() {
         title="Encoder setup"
         description="OBS, vMix and ffplayout, and the settings this platform needs from each."
       />
+      <HowTo page="encoder" />
 
       <Section title="The shape of it">
         <p>

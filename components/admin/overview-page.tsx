@@ -30,6 +30,7 @@ import {
 } from "@/lib/client";
 import { MetricCard } from "./metric-card";
 import { PageHeader } from "./page-header";
+import { HowTo } from "./how-to";
 import { StatusBadge } from "./status-badge";
 import { formatCompact, formatNgn, formatNumber, timeAgo } from "./utils";
 import { UserAvatar } from "@/components/ui/user-avatar";
@@ -111,6 +112,7 @@ export function OverviewPage() {
         title="Overview"
         description="What is happening now, what moved, and what needs doing."
       />
+      <HowTo page="overview" />
 
       {o && o.attention.length > 0 ? (
         <section className="space-y-2">

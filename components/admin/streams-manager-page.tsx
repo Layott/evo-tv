@@ -59,6 +59,7 @@ import {
 } from "@/components/ui/dialog";
 import { DataTable, type DataColumn } from "./data-table";
 import { PageHeader } from "./page-header";
+import { HowTo } from "./how-to";
 import { StatusBadge } from "./status-badge";
 import { formatCompact, timeAgo } from "./utils";
 
@@ -499,6 +500,7 @@ export function StreamsManagerPage() {
         actions={
           <Button className="bg-sky-600 text-white hover:bg-sky-500" onClick={() => setCreateOpen(true)}>
             <Plus className="h-4 w-4" />
+      <HowTo page="streams" />
             New stream
           </Button>
         }
