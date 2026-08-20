@@ -2,7 +2,12 @@
 
 import * as React from "react";
 import type { ChatMessage } from "@/lib/types";
-import { listInitialMessages, sendMessage } from "@/lib/client";
+import {
+  listInitialMessages,
+  listVodMessages,
+  sendMessage,
+  sendVodMessage,
+} from "@/lib/client";
 import { useAuth } from "@/components/providers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,10 +22,28 @@ import { cn } from "@/lib/utils";
 const MAX_MSGS = 200;
 const CHAR_LIMIT = 400;
 
-export function LiveChat({ streamId }: { streamId: string }) {
+/**
+ * The chat, live or under a recording.
+ *
+ * One component for both. A recording's comments are the same messages, the
+ * same rules, the same bans and the same live feed, so a second implementation
+ * would need all of that again and would drift from this one within a week.
+ * What differs is the pace, and that is a prop.
+ */
+export function LiveChat({
+  streamId,
+  vodId,
+}: {
+  streamId?: string;
+  vodId?: string;
+}) {
+  const isVod = Boolean(vodId);
+  const targetId = (vodId ?? streamId) as string;
   const { user, role } = useAuth();
   const [messages, setMessages] = React.useState<ChatMessage[]>([]);
   const [input, setInput] = React.useState("");
+  /** The message being answered, if any. */
+  const [replyTo, setReplyTo] = React.useState<ChatMessage | null>(null);
   const [subsOnly, setSubsOnly] = React.useState(false);
   const scrollRef = React.useRef<HTMLDivElement>(null);
   const stuckToBottom = React.useRef(true);
@@ -31,18 +54,20 @@ export function LiveChat({ streamId }: { streamId: string }) {
   // Initial load
   React.useEffect(() => {
     let cancelled = false;
-    listInitialMessages(streamId).then((msgs) => {
+    (isVod ? listVodMessages(targetId) : listInitialMessages(targetId)).then((msgs) => {
       if (!cancelled) setMessages(msgs);
     });
     return () => {
       cancelled = true;
     };
-  }, [streamId]);
+  }, [isVod, targetId]);
 
   // Real incoming messages. This used to invent one every two to four seconds;
   // the server publishes to `stream:<id>:chat` and this subscribes to it.
   React.useEffect(() => {
-    const source = new EventSource(`/api/sse/chat/${streamId}`);
+    const source = new EventSource(
+      isVod ? `/api/sse/vod-chat/${targetId}` : `/api/sse/chat/${targetId}`,
+    );
 
     source.onmessage = (event) => {
       let payload: unknown;
@@ -133,7 +158,7 @@ export function LiveChat({ streamId }: { streamId: string }) {
     };
 
     return () => source.close();
-  }, [streamId]);
+  }, [isVod, targetId]);
 
   // Auto-scroll
   React.useEffect(() => {
@@ -162,7 +187,12 @@ export function LiveChat({ streamId }: { streamId: string }) {
     const optimisticId = `msg_local_${Date.now()}`;
     const optimistic: ChatMessage = {
       id: optimisticId,
-      streamId,
+      streamId: isVod ? null : targetId,
+      vodId: isVod ? targetId : null,
+      parentId: replyTo?.id ?? null,
+      parent: replyTo
+        ? { id: replyTo.id, userHandle: replyTo.userHandle, body: replyTo.body }
+        : null,
       userId: user.id,
       // Fall back rather than pass null through: an account without a handle
       // is normal, and the row that comes back from the server carries a
@@ -180,10 +210,13 @@ export function LiveChat({ streamId }: { streamId: string }) {
       return next.length > MAX_MSGS ? next.slice(next.length - MAX_MSGS) : next;
     });
     setInput("");
+    setReplyTo(null);
     stuckToBottom.current = true;
 
     try {
-      const saved = await sendMessage(streamId, body);
+      const saved = isVod
+        ? await sendVodMessage(targetId, body, replyTo?.id ?? null)
+        : await sendMessage(targetId, body, replyTo?.id ?? null);
       // A response missing an id is not a message. Replacing the optimistic row
       // with one is what turned a just-sent line into a blank "viewer" entry,
       // so the local row is kept and SSE reconciles it instead.
@@ -255,13 +288,43 @@ export function LiveChat({ streamId }: { streamId: string }) {
           </div>
         ) : (
           visibleMessages.map((m) => (
-            <MessageItem key={m.id} msg={m} isAdmin={isAdmin} />
+            <MessageItem
+              key={m.id}
+              msg={m}
+              isAdmin={isAdmin}
+              onReply={user ? setReplyTo : undefined}
+            />
           ))
         )}
       </div>
 
       {/* Input */}
       <div className="border-t border-border p-2">
+        {/*
+          Answering something, shown above the box rather than inside it.
+          A reply whose target is only visible after it is sent is how people end
+          up answering the wrong message.
+        */}
+        {replyTo ? (
+          <div className="mb-2 flex items-center gap-2 rounded-lg bg-card px-2.5 py-1.5">
+            <span className="text-[0.7rem] text-muted-foreground">
+              Replying to{" "}
+              <span className="font-semibold text-foreground">
+                {replyTo.userHandle || "viewer"}
+              </span>
+            </span>
+            <span className="min-w-0 flex-1 truncate text-[0.7rem] text-muted-foreground/70">
+              {replyTo.body}
+            </span>
+            <button
+              type="button"
+              onClick={() => setReplyTo(null)}
+              className="shrink-0 text-[0.7rem] text-muted-foreground hover:text-foreground"
+            >
+              Cancel
+            </button>
+          </div>
+        ) : null}
         <div className="flex items-center gap-1">
           <Input
             value={input}

@@ -69,7 +69,8 @@ export async function GET(req: NextRequest) {
     .filter((r) => r.targetType === "chat_message")
     .map((r) => r.targetId);
 
-  let chatBodies: Record<string, { body: string; streamId: string; userId: string }> = {};
+  // `streamId` is null for a message reported under a recording.
+  let chatBodies: Record<string, { body: string; streamId: string | null; userId: string }> = {};
   if (chatTargetIds.length > 0) {
     const chatRows = await db
       .select({

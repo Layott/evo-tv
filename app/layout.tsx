@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { BRANDING_DEFAULT, readBranding } from "@/lib/api/branding";
 import { Archivo, Martian_Mono } from "next/font/google";
 import { Providers } from "@/components/providers";
 import "./globals.css";
@@ -38,7 +39,26 @@ const martianMono = Martian_Mono({
   display: "swap",
 });
 
-export const metadata: Metadata = {
+/**
+ * The name and tagline an operator set, read on the server for every request.
+ *
+ * `generateMetadata` rather than a constant, because the Branding tab writes a
+ * row and a constant would go on saying whatever was compiled in. A failed read
+ * falls back to the shipped words rather than an empty title.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const branding = await readBranding().catch(() => BRANDING_DEFAULT);
+  return {
+    ...metadata,
+    title: {
+      default: `${branding.siteName}. ${branding.tagline}`,
+      template: `%s | ${branding.siteName}`,
+    },
+    openGraph: { ...metadata.openGraph, siteName: branding.siteName },
+  };
+}
+
+const metadata: Metadata = {
   // Required for Open Graph and canonical URLs to resolve to absolute
   // addresses. Without it Next emits relative og:image paths, which every
   // social scraper ignores, so shared links render with no preview.
