@@ -23,9 +23,14 @@ export const userSanctions = pgTable(
       .references(() => user.id, { onDelete: "cascade" }),
     kind: text("kind").notNull(),
     reason: text("reason").notNull(),
-    issuedBy: text("issued_by")
-      .notNull()
-      .references(() => user.id),
+    /**
+     * Who issued it, or null when the chat rules did.
+     *
+     * Nullable so an automatic ban does not have to name a person. The only way
+     * to satisfy a NOT NULL here was to attribute it to the offender, which
+     * reads in the moderation list as though they banned themselves.
+     */
+    issuedBy: text("issued_by").references(() => user.id),
     /** ISO timestamp. NULL = permanent. */
     expiresAt: text("expires_at"),
     revertedAt: text("reverted_at"),

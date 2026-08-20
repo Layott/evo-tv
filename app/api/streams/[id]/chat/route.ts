@@ -5,9 +5,13 @@ import { getCurrentUser } from "@/lib/auth/guards";
 import { getStreamById } from "@/lib/api/streams";
 import { listInitialMessages, postMessage } from "@/lib/api/chat";
 import { isChatBlocked } from "@/lib/sanctions";
+import {
+  banFromChatForMinutes,
+  effectiveChatRules,
+  recordStrike,
+} from "@/lib/api/chat-rules";
+import { refusalMessage, screenMessage } from "@/lib/chat/rules";
 
-// TODO(config): move banned words to a feature flag / admin-tunable list.
-const BANNED_WORDS = ["spam", "slur1", "slur2"];
 const SLOW_MODE_MS = 2000;
 
 const postSchema = z.object({
@@ -17,11 +21,6 @@ const postSchema = z.object({
 // Per-user last-post timestamp for slow mode. In-memory is fine for a single
 // Node process; replace with KV/Redis if we ever scale horizontally.
 const lastPostAt = new Map<string, number>();
-
-function containsBanned(body: string): boolean {
-  const normalized = body.toLowerCase();
-  return BANNED_WORDS.some((w) => normalized.includes(w));
-}
 
 export async function GET(
   _req: NextRequest,
@@ -62,10 +61,41 @@ export async function POST(
   if (trimmed.length === 0) {
     return NextResponse.json({ error: "Empty message" }, { status: 422 });
   }
-  if (containsBanned(trimmed)) {
+  /*
+   * The rules an operator set, not three words in a comment.
+   *
+   * Links are the actual problem on a live channel: scam drops, fake giveaways,
+   * somebody else's stream. A refusal counts as a strike, and enough strikes on
+   * one broadcast writes the same timed ban the moderation queue writes, so
+   * there is one list of who is banned and one thing that lifts it.
+   */
+  const rules = await effectiveChatRules(id);
+  const verdict = screenMessage(trimmed, rules);
+  if (!verdict.allowed) {
+    const strikes = await recordStrike(user.id, id);
+    if (rules.strikesBeforeBan > 0 && strikes >= rules.strikesBeforeBan) {
+      const until = await banFromChatForMinutes(
+        user.id,
+        rules.banMinutes,
+        verdict.reason === "link"
+          ? `Posted links after ${strikes} warnings`
+          : `Blocked words after ${strikes} warnings`,
+      );
+      return NextResponse.json(
+        {
+          error: `You are muted in chat until ${new Date(until).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}.`,
+          bannedUntil: until,
+        },
+        { status: 403 },
+      );
+    }
     return NextResponse.json(
-      { error: "Message blocked by moderation" },
-      { status: 422 }
+      {
+        error: refusalMessage(verdict),
+        strikes,
+        strikesBeforeBan: rules.strikesBeforeBan,
+      },
+      { status: 422 },
     );
   }
 

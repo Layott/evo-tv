@@ -445,3 +445,45 @@ export const videoViewBuckets = pgTable(
     index("video_view_buckets_user_idx").on(t.userId),
   ],
 );
+
+/**
+ * The chat rules an operator can change without a deploy.
+ *
+ * `streamId` null is the house rule. A row with a stream is that broadcast's
+ * own and it replaces the house rule rather than adding to it: two sets of
+ * rules that partly apply is not something anybody can reason about at 9pm with
+ * chat moving.
+ */
+export const chatRules = pgTable("chat_rules", {
+  id: text("id").primaryKey(),
+  streamId: text("stream_id").references(() => streams.id, { onDelete: "cascade" }),
+  blockLinks: boolean("block_links").notNull().default(true),
+  /** Hosts still allowed when links are blocked. */
+  allowedDomains: jsonb("allowed_domains").$type<string[]>().notNull().default([]),
+  bannedWords: jsonb("banned_words").$type<string[]>().notNull().default([]),
+  strikesBeforeBan: integer("strikes_before_ban").notNull().default(3),
+  banMinutes: integer("ban_minutes").notNull().default(60),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
+/**
+ * Strikes, per person per broadcast.
+ *
+ * Somebody who pasted a link in a match three weeks ago is not two thirds of
+ * the way to a ban tonight, so this is not a running total against the account.
+ */
+export const chatStrikes = pgTable(
+  "chat_strikes",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    streamId: text("stream_id")
+      .notNull()
+      .references(() => streams.id, { onDelete: "cascade" }),
+    count: integer("count").notNull().default(0),
+    lastAt: text("last_at").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.streamId] })],
+);
