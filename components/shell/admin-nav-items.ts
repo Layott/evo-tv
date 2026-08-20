@@ -6,8 +6,6 @@ import {
   CreditCard,
   FileText,
   Film,
-  Fingerprint,
-  Landmark,
   LayoutDashboard,
   Megaphone,
   Radio,
@@ -106,21 +104,21 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
     ],
   },
   { href: "/admin/moderation", label: "Moderation", Icon: Shield, capability: "community" },
+  /*
+   * Billing & USSD and Forensic are gone from the sidebar.
+   *
+   * Both routes render "Coming soon" and nothing else, so every visit was a
+   * door to a wall. Subscriptions used to hang under Billing as a child and
+   * now stands on its own, because it is the entry that actually does
+   * something. The routes are still there for anyone holding a link; they are
+   * simply not advertised as places to go.
+   */
   {
-    href: "/admin/billing",
-    label: "Billing & USSD",
-    Icon: Landmark,
+    href: "/admin/subscriptions",
+    label: "Subscriptions",
+    Icon: CreditCard,
     capability: "commerce",
-    children: [
-      {
-        href: "/admin/subscriptions",
-        label: "Subscriptions",
-        Icon: CreditCard,
-        capability: "commerce",
-      },
-    ],
   },
-  { href: "/admin/forensic", label: "Forensic", Icon: Fingerprint, capability: "broadcast" },
   { href: "/admin/audit", label: "Audit log", Icon: ClipboardText, capability: "roster" },
   { href: "/admin/settings", label: "Settings", Icon: Settings },
 ];

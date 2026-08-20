@@ -58,7 +58,7 @@ export async function POST(
     void writeAudit({
       actorId: guard.user.id,
       actorRole: guard.role,
-      capability: "moderation",
+      capability: "community",
       action: result.isPinned ? "chat.pin" : "chat.unpin",
       ...where,
       meta: { messageId },
@@ -72,7 +72,7 @@ export async function POST(
     void writeAudit({
       actorId: guard.user.id,
       actorRole: guard.role,
-      capability: "moderation",
+      capability: "community",
       action: "chat.delete",
       ...where,
       meta: { messageId, body: deleted.body },
@@ -132,7 +132,7 @@ export async function POST(
   void writeAudit({
     actorId: guard.user.id,
     actorRole: guard.role,
-    capability: "moderation",
+    capability: "community",
     action: "chat.ban",
     targetType: "user",
     targetId: target.id,
