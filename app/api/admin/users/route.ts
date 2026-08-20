@@ -259,16 +259,17 @@ export async function PATCH(req: NextRequest) {
     return new NextResponse("User not found", { status: 404 });
   }
 
+  // Both sides of the change, in the columns the log reads. Stashing them in
+  // `meta` is why every role grant on production shows "no fields".
   await writeAudit({
     actorId: guard.user.id,
+    actorRole: guard.role,
+    capability: "roster",
     action: "role.grant",
     targetType: "user",
     targetId: userId,
-    meta: {
-      actorRole: guard.role,
-      previousRole: currentRole,
-      newRole: targetRole,
-    },
+    before: { role: currentRole },
+    after: { role: targetRole },
   });
 
   return NextResponse.json({ ok: true, ...result[0] });
