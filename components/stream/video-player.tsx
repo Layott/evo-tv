@@ -3,6 +3,7 @@
 import * as React from "react";
 
 import { useWatchHeartbeat } from "@/hooks/use-watch-heartbeat";
+import { reportRung, forgetRung, rungFromUrl } from "@/lib/video/current-rung";
 import {
   Play,
   Pause,
@@ -407,6 +408,10 @@ export function VideoPlayer({
       });
       instance.on(Hls.Events.LEVEL_SWITCHED, (_e, data) => {
         setActiveLevel(data.level);
+        // Tell the heartbeat which rung this viewer is actually pulling. The
+        // column has existed since August and every row written to it was null,
+        // because nothing ever reported one.
+        reportRung(mediaId, rungFromUrl(instance.levels[data.level]?.url?.[0]));
       });
       instance.on(Hls.Events.ERROR, (_evt, data) => {
         if (!data.fatal) return;
@@ -462,6 +467,9 @@ export function VideoPlayer({
       if (prebufferTimer) clearTimeout(prebufferTimer);
       healTimers.forEach((t) => clearInterval(t));
       setPrebuffering(false);
+      // A rung left behind by a torn-down player would be reported by the next
+      // beat as though somebody were still watching at it.
+      forgetRung(mediaId);
       hlsRef.current?.destroy();
       hlsRef.current = null;
     };

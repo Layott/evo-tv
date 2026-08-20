@@ -2,6 +2,8 @@
 
 import * as React from "react";
 
+import { currentRung } from "@/lib/video/current-rung";
+
 /**
  * Tell the server someone is watching.
  *
@@ -32,10 +34,20 @@ export function useStreamHeartbeat(
 
     const beat = () => {
       if (stopped || document.visibilityState !== "visible") return;
+      /*
+       * The rung rides along, when the player has settled on one.
+       *
+       * `watch_events.rung` was built for this and had been null on every row
+       * ever written, because the beat sent no body. It is what turns "how many
+       * people watched" into "and how much bandwidth that cost".
+       */
+      const rung = currentRung(streamId);
       void fetch(`/api/streams/${streamId}/heartbeat`, {
         method: "POST",
         credentials: "include",
         keepalive: true,
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(rung ? { rung } : {}),
       }).catch(() => {
         // A missed beat costs one minute of attribution. Never surface it.
       });
