@@ -591,3 +591,47 @@
     transition: none;
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* On-air overlays                                                     */
+/*                                                                     */
+/* Broadcast furniture arrives; it does not fade in place. Every rule   */
+/* here is an entrance, played once when the element mounts, and the    */
+/* whole block stands down under prefers-reduced-motion, where each     */
+/* card simply holds its final state.                                   */
+/* ------------------------------------------------------------------ */
+
+@keyframes ovl-rise { from { transform: translateY(110%) } to { transform: translateY(0) } }
+@keyframes ovl-wipe { from { clip-path: inset(0 100% 0 0) } to { clip-path: inset(0 0 0 0) } }
+@keyframes ovl-mask { from { clip-path: inset(0 0 100% 0) } to { clip-path: inset(0 0 0 0) } }
+@keyframes ovl-fade { from { opacity: 0 } to { opacity: 1 } }
+@keyframes ovl-slide { from { opacity: 0; transform: translateY(12px) } to { opacity: 1; transform: translateY(0) } }
+@keyframes ovl-letters { from { opacity: 0; letter-spacing: .4em } to { opacity: 1; letter-spacing: .18em } }
+@keyframes ovl-drift { from { transform: scale(1.06) } to { transform: scale(1.14) translate3d(-1.5%, -1%, 0) } }
+@keyframes ovl-settle { from { transform: scale(1.08) translateX(2%) } to { transform: scale(1) translateX(0) } }
+@keyframes ovl-grow { from { transform: scaleY(0) } to { transform: scaleY(1) } }
+
+.ovl-bar, .ovl-band { animation: ovl-rise .5s cubic-bezier(.2,.8,.2,1) both }
+.ovl-ticker, .ovl-left { animation: ovl-wipe .55s cubic-bezier(.2,.8,.2,1) both }
+.ovl-slab, .ovl-plate, .ovl-stack { animation: ovl-slide .45s cubic-bezier(.2,.8,.2,1) both }
+.ovl-fs { animation: ovl-fade .35s both }
+.ovl-mask { animation: ovl-mask .55s .18s cubic-bezier(.2,.8,.2,1) both }
+.ovl-letters { animation: ovl-letters .6s both }
+.ovl-drift { animation: ovl-drift 12s linear both }
+.ovl-settle { animation: ovl-settle 1.1s cubic-bezier(.2,.8,.2,1) both }
+.ovl-pillar { transform-origin: bottom; animation: ovl-grow .5s cubic-bezier(.2,.8,.2,1) both }
+.ovl-row { animation: ovl-slide .45s cubic-bezier(.2,.8,.2,1) both }
+.ovl-row:nth-of-type(1) { animation-delay: .16s }
+.ovl-row:nth-of-type(2) { animation-delay: .28s }
+.ovl-row:nth-of-type(3) { animation-delay: .40s }
+.ovl-row:nth-of-type(4) { animation-delay: .52s }
+
+@media (prefers-reduced-motion: reduce) {
+  .ovl-bar, .ovl-band, .ovl-ticker, .ovl-left, .ovl-slab, .ovl-plate, .ovl-stack,
+  .ovl-fs, .ovl-mask, .ovl-letters, .ovl-drift, .ovl-settle, .ovl-pillar, .ovl-row {
+    animation: none;
+    opacity: 1;
+    clip-path: none;
+    transform: none;
+  }
+}

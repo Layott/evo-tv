@@ -36,6 +36,8 @@ interface EpgRow {
   airsAt: string;
   durationMin: number;
   state: string;
+  /** The show's poster, for the on-air cards that carry artwork. */
+  thumbnailUrl?: string;
 }
 
 interface MainChannel {
@@ -160,13 +162,30 @@ export function MainChannelHero() {
           // The channel is the one surface with breaks, an on-air card and
           // filler. Everything else on the site is a video page.
           <ChannelBreaks
+            /*
+             * Everything the on-air cards need, from the schedule the guide
+             * already read. Nothing is written per show: a programme added this
+             * afternoon appears tonight with nothing redrawn.
+             */
             nowNext={{
               now: onNow
                 ? { title: onNow.title, subtitle: onNow.subtitle }
                 : null,
               next: upNext[0]
-                ? { title: upNext[0].title, startLabel: clock(upNext[0].airsAt) }
+                ? {
+                    title: upNext[0].title,
+                    startLabel: clock(upNext[0].airsAt),
+                    airsAt: upNext[0].airsAt,
+                    subtitle: upNext[0].subtitle,
+                    durationMin: upNext[0].durationMin,
+                    pillar: upNext[0].pillar,
+                    posterUrl: upNext[0].thumbnailUrl || undefined,
+                  }
                 : null,
+              lineup: upNext.slice(0, 4).map((row) => ({
+                startLabel: clock(row.airsAt),
+                title: row.title,
+              })),
             }}
           >
             <VideoPlayer

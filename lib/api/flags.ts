@@ -23,6 +23,18 @@ export async function getFlag(key: string): Promise<FeatureFlagRow | null> {
 }
 
 /**
+ * Is this flag on, with a default for the case where nobody has set it?
+ *
+ * The default matters: a rule that protects the business, like one signed-in
+ * device per account, must not be off simply because no row exists yet. The
+ * flag is there to switch it off deliberately.
+ */
+export async function isFlagEnabled(key: string, fallback = false): Promise<boolean> {
+  const row = await getFlag(key);
+  return row ? row.enabled : fallback;
+}
+
+/**
  * Upsert a flag. Creates the row when missing; otherwise updates the
  * provided fields (undefined ones are untouched).
  */
