@@ -66,11 +66,18 @@ export interface ChannelBreaks {
 }
 
 /** The lower third layouts an operator can pick between. */
-export const OVERLAY_STYLES = ["bar", "block", "ticker"] as const;
+/**
+ * The five lower thirds, as approved.
+ *
+ * Named for the shape rather than the occasion, because an operator picking one
+ * is choosing how much of the picture to give up, not what kind of programme is
+ * on.
+ */
+export const OVERLAY_STYLES = ["bar", "slab", "ticker", "plate", "stack"] as const;
 export type OverlayStyle = (typeof OVERLAY_STYLES)[number];
 
 /** The full-screen layouts. */
-export const UP_NEXT_STYLES = ["centre", "band", "split"] as const;
+export const UP_NEXT_STYLES = ["centre", "band", "split", "countdown", "lineup"] as const;
 export type UpNextStyle = (typeof UP_NEXT_STYLES)[number];
 
 function oneOf<T extends string>(
