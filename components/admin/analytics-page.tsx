@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "./page-header";
 import { HowTo } from "./how-to";
 import { MetricCard } from "./metric-card";
+import { AudiencePanel } from "./audience-panel";
 import { VideoAnalyticsPanel } from "./video-analytics-panel";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -90,6 +91,11 @@ export function AnalyticsPage() {
 
         <TabsContent value="platform">
           <div className="space-y-6">
+            {/* The audience comes first. This platform's product is a live
+                channel, and a page that opened with conversion and revenue
+                while saying nothing about who was watching read as broken. */}
+            <AudiencePanel />
+
             <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <MetricCard
                 title="Free to Premium"
