@@ -347,6 +347,9 @@ export interface PollOption {
   votes: number;
 }
 
+/** Who may vote. Never "anyone": an unidentified vote can be cast a thousand times. */
+export type PollAudience = "signed_in" | "subscribers";
+
 export interface Poll {
   id: UUID;
   streamId: UUID;
@@ -356,6 +359,20 @@ export interface Poll {
   closesAt: ISODate;
   isClosed: boolean;
   totalVotes: number;
+  whoCanVote: PollAudience;
+  /** When false the totals are withheld until it closes. */
+  showResultsLive: boolean;
+  /** When true the winner takes the screen over the video at the close. */
+  showWinnerOnStream: boolean;
+  allowVoteChange: boolean;
+  /**
+   * The option this viewer chose, when the server knows who is asking.
+   *
+   * Absent rather than null for a signed-out caller, so "not voted" and "not
+   * identified" cannot be confused by a client deciding whether to highlight a
+   * choice.
+   */
+  myVote?: string | null;
 }
 
 export type FollowTarget = "team" | "player" | "streamer";

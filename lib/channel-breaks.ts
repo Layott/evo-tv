@@ -37,6 +37,53 @@ export interface ChannelBreaks {
    * `live_filler` ads on a loop instead of a black rectangle and an error.
    */
   fillerOnDrop: boolean;
+
+  /* ── What the channel says on screen ──────────────────────────────────── */
+
+  /**
+   * Which lower third to draw.
+   *
+   * Three, because one house style does not fit a football night and an anime
+   * block, and the alternative to a choice is an operator asking for a code
+   * change every time the channel changes character.
+   */
+  lowerThirdStyle: OverlayStyle;
+  /** Optional artwork behind the lower third. Wide strip, transparent PNG. */
+  lowerThirdUrl: string;
+  /** Which full-screen card announces the next programme. */
+  upNextStyle: UpNextStyle;
+  /** Optional artwork behind that card. 16:9. */
+  upNextUrl: string;
+  /**
+   * How many minutes before a programme starts the full-screen card appears.
+   *
+   * 0 turns it off. It plays once per programme: a card that reappears every
+   * few minutes stops being an announcement and becomes an interruption.
+   */
+  upNextLeadMin: number;
+  /** How long that card holds the screen. */
+  upNextSec: number;
+}
+
+/** The lower third layouts an operator can pick between. */
+export const OVERLAY_STYLES = ["bar", "block", "ticker"] as const;
+export type OverlayStyle = (typeof OVERLAY_STYLES)[number];
+
+/** The full-screen layouts. */
+export const UP_NEXT_STYLES = ["centre", "band", "split"] as const;
+export type UpNextStyle = (typeof UP_NEXT_STYLES)[number];
+
+function oneOf<T extends string>(
+  value: unknown,
+  allowed: readonly T[],
+  fallback: T,
+): T {
+  return allowed.includes(value as T) ? (value as T) : fallback;
+}
+
+/** A URL an operator pasted, or nothing. Never a half-trimmed string. */
+function urlOrBlank(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
 }
 
 export const CHANNEL_BREAKS_DEFAULT: ChannelBreaks = {
@@ -46,6 +93,12 @@ export const CHANNEL_BREAKS_DEFAULT: ChannelBreaks = {
   overlayIntervalMin: 10,
   overlayDurationSec: 8,
   fillerOnDrop: true,
+  lowerThirdStyle: "bar",
+  lowerThirdUrl: "",
+  upNextStyle: "centre",
+  upNextUrl: "",
+  upNextLeadMin: 2,
+  upNextSec: 10,
 };
 
 function clampInt(value: unknown, min: number, max: number, fallback: number): number {
@@ -74,6 +127,12 @@ export function normalizeChannelBreaks(raw: unknown): ChannelBreaks {
       CHANNEL_BREAKS_DEFAULT.overlayDurationSec,
     ),
     fillerOnDrop: p.fillerOnDrop !== false,
+    lowerThirdStyle: oneOf(p.lowerThirdStyle, OVERLAY_STYLES, CHANNEL_BREAKS_DEFAULT.lowerThirdStyle),
+    lowerThirdUrl: urlOrBlank(p.lowerThirdUrl),
+    upNextStyle: oneOf(p.upNextStyle, UP_NEXT_STYLES, CHANNEL_BREAKS_DEFAULT.upNextStyle),
+    upNextUrl: urlOrBlank(p.upNextUrl),
+    upNextLeadMin: clampInt(p.upNextLeadMin, 0, 60, CHANNEL_BREAKS_DEFAULT.upNextLeadMin),
+    upNextSec: clampInt(p.upNextSec, 3, 60, CHANNEL_BREAKS_DEFAULT.upNextSec),
   };
 }
 
