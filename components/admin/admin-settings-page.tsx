@@ -26,6 +26,7 @@ import {
 import { PageHeader } from "./page-header";
 import { adminListEmailTemplates, readBranding, writeBranding } from "@/lib/client";
 import { HowTo } from "./how-to";
+import { MediaUpload } from "./media-upload";
 
 const EMAIL_TEMPLATES: Record<string, { label: string; body: string }> = {
   welcome: {
@@ -129,6 +130,19 @@ export function AdminSettingsPage() {
   );
 }
 
+/**
+ * A switch reads as `in_stream_shop` only to the person who named the column.
+ *
+ * The flag key is what the code checks and it stays the identity of the row,
+ * but the line somebody reads before flipping a product feature on for every
+ * viewer should be words. The description underneath says what it does; this
+ * says what it is.
+ */
+function flagLabel(key: string): string {
+  const words = key.replace(/[._-]+/g, " ").trim();
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
 function FeatureFlagsSection() {
   const qc = useQueryClient();
   const flagsQ = useQuery<FeatureFlag[]>({
@@ -141,7 +155,7 @@ function FeatureFlagsSection() {
     qc.setQueryData<FeatureFlag[]>(["admin", "flags"], (prev) =>
       (prev ?? []).map((f) => (f.key === key ? { ...f, enabled } : f)),
     );
-    toast.success(`${key} ${enabled ? "enabled" : "disabled"}`);
+    toast.success(`${flagLabel(key)} ${enabled ? "is on" : "is off"}`);
   }
 
   return (
@@ -164,7 +178,7 @@ function FeatureFlagsSection() {
           : (flagsQ.data ?? []).map((f) => (
               <li key={f.key} className="flex items-center justify-between gap-4 p-4">
                 <div>
-                  <div className="font-mono text-sm text-foreground">{f.key}</div>
+                  <div className="text-sm text-foreground">{flagLabel(f.key)}</div>
                   <div className="text-xs text-muted-foreground">{f.description}</div>
                 </div>
                 <Switch checked={f.enabled} onCheckedChange={(v) => onToggle(f.key, v)} />
@@ -185,7 +199,6 @@ function BrandingSection() {
   const [siteName, setSiteName] = React.useState("EVO TV");
   const [tagline, setTagline] = React.useState("");
   const [logoUrl, setLogoUrl] = React.useState("");
-  const logoInput = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
     if (!brandingQ.data) return;
@@ -236,38 +249,27 @@ function BrandingSection() {
           Colour comes from the brand palette in the theme, not from here, so a
           value set on this page cannot disagree with the rest of the site.
         </p>
-        <div className="space-y-1.5">
-          <Label>Logo</Label>
-          <div className="flex items-center gap-3">
-            <div className="h-14 w-14 overflow-hidden rounded-md border border-border bg-card">
-              {}
-              <img src={logoUrl} alt="logo" className="h-full w-full object-contain p-2" />
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              className="bg-card hover:bg-accent"
-              onClick={() => logoInput.current?.click()}
-            >
-              <Upload className="h-4 w-4" />
-              Upload logo
-            </Button>
-            <input
-              ref={logoInput}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) {
-                  const reader = new FileReader();
-                  reader.onload = (ev) => setLogoUrl(String(ev.target?.result ?? ""));
-                  reader.readAsDataURL(f);
-                }
-              }}
-            />
-          </div>
-        </div>
+        {/*
+          The picker used to read the file to a data URL and hand the whole
+          image back as a string, so saving the branding wrote a base64 blob
+          into a settings row and every page that read the branding carried it.
+          With no logo set it also rendered `<img src="">`, which is the broken
+          image icon the walk found sitting in the dashboard.
+
+          Same uploader as every other image on the platform: the browser PUTs
+          the bytes at the bucket and the field keeps the URL.
+        */}
+        <MediaUpload
+          label="Logo"
+          kind="image"
+          folder="branding"
+          value={logoUrl}
+          onChange={setLogoUrl}
+          hint="Shown next to the site name. Transparent PNG or SVG reads best on the dark surface."
+        />
+        <p className="text-xs text-muted-foreground">
+          Leave it empty and the first letter of the site name is used instead.
+        </p>
         <div className="pt-2">
           <Button className="bg-sky-600 text-white hover:bg-sky-500" onClick={onSave}>
             <Save className="h-4 w-4" />
@@ -281,12 +283,23 @@ function BrandingSection() {
         <p className="text-xs text-muted-foreground">How branding will appear in-app.</p>
         <div className="mt-4 overflow-hidden rounded-lg border border-border">
           <div className="flex items-center gap-3 border-b border-border bg-background p-4">
-            <div
-              className="flex h-8 w-8 items-center justify-center rounded-md text-sm font-black"
-              style={{ backgroundColor: "var(--brand,#46e3ce)", color: "#04100f" }}
-            >
-              {siteName.charAt(0).toUpperCase()}
-            </div>
+            {/* The preview showed the letter tile whatever was uploaded, so
+                there was no way to see the logo before saving it. */}
+            {logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={logoUrl}
+                alt={siteName}
+                className="h-8 w-8 rounded-md object-contain"
+              />
+            ) : (
+              <div
+                className="flex h-8 w-8 items-center justify-center rounded-md text-sm font-black"
+                style={{ backgroundColor: "var(--brand,#46e3ce)", color: "#04100f" }}
+              >
+                {siteName.charAt(0).toUpperCase()}
+              </div>
+            )}
             <div>
               <div className="text-sm font-semibold text-foreground">{siteName}</div>
               <div className="text-xs" style={{ color: "var(--brand,#46e3ce)" }}>

@@ -2,6 +2,7 @@ import "server-only";
 import { and, desc, eq, sql, type SQL } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { diffFields, generateId } from "@/lib/api/admin";
+import { sectionForAudit } from "@/lib/api/audit-section";
 
 export type AuditRow = typeof schema.auditLog.$inferSelect;
 
@@ -59,6 +60,26 @@ export async function listAudit(
 }
 
 /**
+ * The role the actor held when they did it.
+ *
+ * Read at write time rather than passed in, for the same reason: most call
+ * sites forgot, and the value read now is the value held now, which is exactly
+ * what the column is supposed to mean. A later promotion cannot rewrite it
+ * because the row is already written.
+ */
+async function roleAtTimeOf(actorId: string | null): Promise<string | null> {
+  if (!actorId) return "system";
+  const row = (
+    await db
+      .select({ role: schema.user.role })
+      .from(schema.user)
+      .where(eq(schema.user.id, actorId))
+      .limit(1)
+  )[0];
+  return row?.role ?? null;
+}
+
+/**
  * Write a row to `audit_log`. Unlike the best-effort helper in
  * `lib/api/admin.ts`, this one re-throws on failure so callers can decide
  * how to react.
@@ -80,13 +101,16 @@ export async function writeAudit(params: {
   const id = generateId("audit");
   const createdAt = new Date().toISOString();
   const changed = diffFields(params.before, params.after);
+  const actorRole = params.actorRole ?? (await roleAtTimeOf(params.actorId));
+  const capability =
+    params.capability ?? sectionForAudit(params.action, params.targetType);
   await db
     .insert(schema.auditLog)
     .values({
       id,
       actorId: params.actorId,
-      actorRole: params.actorRole ?? null,
-      capability: params.capability ?? null,
+      actorRole,
+      capability,
       action: params.action,
       targetType: params.targetType,
       targetId: params.targetId,
