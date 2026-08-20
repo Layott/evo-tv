@@ -86,8 +86,24 @@ function actionLabel(action: string): string {
     product: "product",
     game: "game",
     event: "event",
+    chat: "chat message",
+    chat_rules: "chat rules",
+    email_template: "email template",
+    feature_flag: "feature flag",
+    epg: "schedule slot",
+    branding: "branding",
+    season: "season",
+    subscription: "subscription",
+    channel: "channel",
+    playout: "playout",
+    uploads: "uploads",
+    announcement: "announcement",
+    user: "account",
   };
-  return `${verbs[verb] ?? verb} ${subjects[subject] ?? subject}`;
+  // A subject nobody mapped still reads as words rather than a column name:
+  // the log showed "Edited chat_rules" until this was here.
+  const subjectLabel = subjects[subject] ?? subject.replace(/_/g, " ");
+  return `${verbs[verb] ?? verb} ${subjectLabel}`;
 }
 
 function timeLabel(iso: string): string {

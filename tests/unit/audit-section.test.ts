@@ -11,7 +11,7 @@ import { SECTIONS } from "@/lib/auth/capabilities";
  * renders as a raw string, and an action that falls through to nothing.
  */
 
-const KNOWN = new Set(SECTIONS.map((s) => s.value));
+const KNOWN = new Set<string>(SECTIONS.map((s) => s.value));
 
 /** Every action string written anywhere in the codebase, as of this batch. */
 const ACTIONS: [action: string, targetType: string][] = [
@@ -55,7 +55,7 @@ describe("sectionForAudit", () => {
     for (const [action, targetType] of ACTIONS) {
       const section = sectionForAudit(action, targetType);
       expect(section, `${action} on ${targetType}`).not.toBeNull();
-      expect(KNOWN.has(section as string), `${action} -> ${section}`).toBe(true);
+      expect(KNOWN.has(section ?? ""), `${action} -> ${section}`).toBe(true);
     }
   });
 

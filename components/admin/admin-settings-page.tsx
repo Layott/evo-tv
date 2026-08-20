@@ -265,7 +265,7 @@ function BrandingSection() {
           folder="branding"
           value={logoUrl}
           onChange={setLogoUrl}
-          hint="Shown next to the site name. Transparent PNG or SVG reads best on the dark surface."
+          hint="Shown next to the site name. A transparent PNG reads best on the dark surface."
         />
         <p className="text-xs text-muted-foreground">
           Leave it empty and the first letter of the site name is used instead.
