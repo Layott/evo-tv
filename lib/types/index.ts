@@ -325,7 +325,19 @@ export interface Episode {
 
 export interface ChatMessage {
   id: UUID;
-  streamId: UUID;
+  /**
+   * Where the message lives.
+   *
+   * A message belongs to a live broadcast or to a recording, never both and
+   * never neither. `streamId` stays for every existing caller; `vodId` is set
+   * instead of it under a VOD.
+   */
+  streamId: UUID | null;
+  vodId?: UUID | null;
+  /** The message this one answers, when it answers one. */
+  parentId?: UUID | null;
+  /** The answered message, flattened for rendering: author and a short quote. */
+  parent?: { id: UUID; userHandle: string | null; body: string } | null;
   userId: UUID;
   /**
    * Null when the account has never set a handle, which is the default state
