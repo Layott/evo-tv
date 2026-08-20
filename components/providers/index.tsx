@@ -6,10 +6,15 @@ import { ThemeProvider } from "./theme-provider";
 import { QueryProvider } from "./query-provider";
 import { AuthProvider } from "./auth-provider";
 import { I18nProvider } from "./i18n-provider";
+import { StaleBuildGuard } from "./stale-build-guard";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+      {/* Outside the query and auth providers: a tab left open across a deploy
+          loses chunks belonging to anything below this, so the thing that
+          notices has to sit above all of it. */}
+      <StaleBuildGuard />
       <QueryProvider>
         <AuthProvider>
           {/* Inside AuthProvider, because the account's chosen language is read
