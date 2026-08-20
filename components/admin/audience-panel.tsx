@@ -75,6 +75,17 @@ function dayLabel(date: string): string {
   return date.slice(5);
 }
 
+/**
+ * Why a slice can say "Unknown".
+ *
+ * Country and device were added to the beat in August, so every row written
+ * before that carries neither. It is history rather than a hole, and it leaves
+ * the window on its own as the days roll past; saying so is cheaper than
+ * somebody wondering whether the capture is broken.
+ */
+const UNRECORDED_NOTE =
+  "Unknown is beats written before this was captured. It ages out of the window on its own.";
+
 export function AudiencePanel({ days = 30 }: { days?: number }) {
   const audienceQ = useQuery({
     queryKey: ["admin", "audience", days],
@@ -181,12 +192,14 @@ export function AudiencePanel({ days = 30 }: { days?: number }) {
           empty="No country recorded yet."
           rows={report?.byCountry ?? []}
           total={report?.totalMinutes ?? 0}
+          note={UNRECORDED_NOTE}
         />
         <Breakdown
           title="On what"
           empty="No device recorded yet."
           rows={report?.byDevice ?? []}
           total={report?.totalMinutes ?? 0}
+          note={UNRECORDED_NOTE}
         />
         <Breakdown
           title="At which quality"
