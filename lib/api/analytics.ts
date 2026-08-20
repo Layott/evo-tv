@@ -86,10 +86,13 @@ export interface ViewsPoint {
 }
 
 /**
- * Returns per-day view-count proxy using `vod_progress.updatedAt` bucketed
- * by day for the last N days. We also fold in a small baseline from
- * vods.viewCount so empty days still trend plausibly - but the main signal
- * is progress upserts.
+ * Views per day: recordings and live, added together.
+ *
+ * Recordings come from `vod_progress` upserts. Live comes from `watch_events`,
+ * counted as distinct people per stream per day. Until 20 August only the first
+ * half was here, so a channel broadcasting around the clock with an empty
+ * catalogue drew a flat zero and the owner reasonably said the page did not
+ * work.
  */
 export async function viewsOverTime(
   range: RangeInput | number = 30,
@@ -104,23 +107,51 @@ export async function viewsOverTime(
    */
   const window = resolveRange(typeof range === "number" ? { days: range } : range);
 
-  const rows = await db
-    .select({
-      day: sql<string>`substr(${schema.vodProgress.updatedAt}, 1, 10)`,
-      views: sql<number>`count(*)`,
-    })
-    .from(schema.vodProgress)
-    .where(
-      and(
-        gte(schema.vodProgress.updatedAt, window.since),
-        lt(schema.vodProgress.updatedAt, window.until),
-      ),
-    )
-    .groupBy(sql`substr(${schema.vodProgress.updatedAt}, 1, 10)`);
+  const [rows, liveRows] = await Promise.all([
+    db
+      .select({
+        day: sql<string>`substr(${schema.vodProgress.updatedAt}, 1, 10)`,
+        views: sql<number>`count(*)`,
+      })
+      .from(schema.vodProgress)
+      .where(
+        and(
+          gte(schema.vodProgress.updatedAt, window.since),
+          lt(schema.vodProgress.updatedAt, window.until),
+        ),
+      )
+      .groupBy(sql`substr(${schema.vodProgress.updatedAt}, 1, 10)`),
+
+    /*
+     * Live viewing, which this chart could not see.
+     *
+     * It counted progress on recordings and nothing else, so a channel that is
+     * live around the clock with an empty catalogue drew a flat zero while
+     * people were watching it. One person on one stream on one day is one view;
+     * `watch_events` carries a row per viewer per minute, so the distinct count
+     * is the honest number.
+     */
+    db
+      .select({
+        day: sql<string>`to_char(${schema.watchEvents.createdAt} at time zone 'UTC', 'YYYY-MM-DD')`,
+        views: sql<number>`count(distinct (coalesce(${schema.watchEvents.userId}, ${schema.watchEvents.ipHash}) || ':' || coalesce(${schema.watchEvents.streamId}, '')))`,
+      })
+      .from(schema.watchEvents)
+      .where(
+        and(
+          gte(schema.watchEvents.createdAt, window.since),
+          lt(schema.watchEvents.createdAt, window.until),
+        ),
+      )
+      .groupBy(sql`to_char(${schema.watchEvents.createdAt} at time zone 'UTC', 'YYYY-MM-DD')`),
+  ]);
 
   const byDay = new Map<string, number>();
   for (const r of rows) {
     if (r.day) byDay.set(r.day, Number(r.views ?? 0));
+  }
+  for (const r of liveRows) {
+    if (r.day) byDay.set(r.day, (byDay.get(r.day) ?? 0) + Number(r.views ?? 0));
   }
 
   return daysInRange(window).map((date) => ({
