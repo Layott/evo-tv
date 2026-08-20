@@ -250,6 +250,8 @@ export function PollsManagerPage() {
                 </ul>
               </div>
 
+              <PollMetrics poll={selected} />
+
               <SheetFooter>
                 {selected.isClosed ? (
                   <Button disabled className="bg-muted">
@@ -511,5 +513,73 @@ function CreatePollDrawer({
         </SheetFooter>
       </SheetContent>
     </Sheet>
+  );
+}
+
+/**
+ * How the poll is going, while it is going.
+ *
+ * The panel showed a total and nothing else, so the person running the
+ * broadcast could not answer either question that matters in the moment: is
+ * anybody still voting, and is it close. Both come off `poll_votes`, which has
+ * carried a timestamp since the table was created and had nothing reading it.
+ *
+ * Refreshed every five seconds while the poll is open and once when it is not.
+ * A live number that is thirty seconds stale is worse than no number, because it
+ * gets acted on.
+ */
+function PollMetrics({ poll }: { poll: Poll }) {
+  const metricsQ = useQuery({
+    queryKey: ["admin", "poll-metrics", poll.id],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/polls/${encodeURIComponent(poll.id)}/metrics`, {
+        credentials: "include",
+        cache: "no-store",
+      });
+      if (!res.ok) throw new Error("Could not read the poll metrics");
+      return (await res.json()) as {
+        totalVotes: number;
+        lastMinute: number;
+        perMinute: number[];
+        options: { id: string; label: string; votes: number; percent: number }[];
+      };
+    },
+    refetchInterval: poll.isClosed ? false : 5_000,
+  });
+
+  const data = metricsQ.data;
+  if (!data) return null;
+
+  const peak = Math.max(1, ...data.perMinute);
+
+  return (
+    <div className="mt-6 space-y-3 rounded-xl bg-card/60 p-4">
+      <div className="flex items-baseline justify-between">
+        <h3 className="text-sm font-semibold text-foreground">
+          {poll.isClosed ? "How it went" : "Live"}
+        </h3>
+        <p className="text-xs text-muted-foreground">
+          {formatNumber(data.totalVotes)} vote{data.totalVotes === 1 ? "" : "s"}
+          {poll.isClosed ? "" : ` · ${data.lastMinute} in the last minute`}
+        </p>
+      </div>
+
+      {/* Votes per minute since it opened, zero-filled: a gap in the middle is
+          the moment the question stopped being interesting, and a chart that
+          skips empty minutes hides exactly that. */}
+      <div className="flex h-16 items-end gap-[2px]">
+        {data.perMinute.map((count, i) => (
+          <div
+            key={i}
+            className="flex-1 rounded-t bg-sky-500/70"
+            style={{ height: `${Math.max(2, (count / peak) * 100)}%` }}
+            title={`${count} in minute ${i + 1}`}
+          />
+        ))}
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Votes per minute since it opened
+      </p>
+    </div>
   );
 }
