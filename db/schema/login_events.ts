@@ -19,7 +19,10 @@ export const loginEvents = pgTable(
       .references(() => user.id, { onDelete: "cascade" }),
     /** sha256(ip + LOGIN_HASH_SALT). */
     ipHash: text("ip_hash"),
-    /** Coarse region inferred from Vercel headers (e.g. "Lagos, NG"). */
+    /** Where they were, as Cloudflare reports it: "Lagos, LA, NG". City and
+     * region need the "Add visitor location headers" managed transform; the
+     * country arrives regardless. Read from Vercel headers until August, which
+     * is why every row from the droplet era says nothing. */
     region: text("region"),
     userAgent: text("user_agent"),
     /** Stable per-device fingerprint set by RN client header `x-device-id`. */
