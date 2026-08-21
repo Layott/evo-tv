@@ -47,7 +47,16 @@ export function useStreamHeartbeat(
         credentials: "include",
         keepalive: true,
         headers: { "content-type": "application/json" },
-        body: JSON.stringify(rung ? { rung } : {}),
+        /*
+         * The browser is asked for the little it knows about itself and the
+         * server reads the rest out of the user agent. `platform: "web"` is
+         * the one thing worth saying explicitly, because it is what separates
+         * these beats from the app's in every breakdown.
+         */
+        body: JSON.stringify({
+          ...(rung ? { rung } : {}),
+          platform: "web",
+        }),
       }).catch(() => {
         // A missed beat costs one minute of attribution. Never surface it.
       });

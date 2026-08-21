@@ -41,9 +41,17 @@ export interface AudienceReport {
   totalViews: number;
   totalMinutes: number;
   byCountry: AudienceSlice[];
-  byDevice: AudienceSlice[];
-  /** Which rung viewers actually pulled. Website players report it; the app does not. */
+  /** Which rung viewers actually pulled. */
   byRung: AudienceSlice[];
+  /** App or web, which is the cut that decides where the work goes. */
+  byPlatform: AudienceSlice[];
+  /** Phone, tablet, TV, desktop. */
+  byDevice: AudienceSlice[];
+  /** Actual handsets and browsers, most-watched first. */
+  byModel: AudienceSlice[];
+  byOs: AudienceSlice[];
+  /** Which app build. A bug from the field arrives attached to one of these. */
+  byAppVersion: AudienceSlice[];
 }
 
 /** The viewer identity: the account if signed in, the hashed IP otherwise. */
@@ -67,6 +75,22 @@ function labelRung(rung: string | null): string {
   }
 }
 
+/** The words a person uses for these, not the values the column holds. */
+function labelPlatform(value: string | null): string {
+  switch (value) {
+    case "android":
+      return "Android app";
+    case "ios":
+      return "iOS app";
+    case "web":
+      return "Website";
+    case "tv":
+      return "TV";
+    default:
+      return "Not reported";
+  }
+}
+
 export async function audienceReport(
   range: RangeInput | number = 30,
 ): Promise<AudienceReport> {
@@ -76,8 +100,18 @@ export async function audienceReport(
     lt(schema.watchEvents.createdAt, window.until),
   );
 
-  const [dayRows, minuteRows, peakRows, countryRows, deviceRows, rungRows] =
-    await Promise.all([
+  const [
+    dayRows,
+    minuteRows,
+    peakRows,
+    countryRows,
+    deviceRows,
+    rungRows,
+    platformRows,
+    modelRows,
+    osRows,
+    appVersionRows,
+  ] = await Promise.all([
       // People per day: distinct viewer per stream, so one person watching two
       // broadcasts is two views and watching one all day is one.
       db
@@ -137,6 +171,50 @@ export async function audienceReport(
         .from(schema.watchEvents)
         .where(within)
         .groupBy(schema.watchEvents.rung),
+
+      /*
+       * What the client said it was.
+       *
+       * Every one of these is null on a row written before 21 August, and on a
+       * beat from an app build older than the one that started reporting. The
+       * slices label that share rather than dropping it, because "we do not
+       * know" is a real answer about a real part of the audience.
+       */
+      db
+        .select({
+          label: schema.watchEvents.platform,
+          minutes: sql<number>`count(distinct (${VIEWER} || ':' || ${schema.watchEvents.minuteBucket}))`,
+        })
+        .from(schema.watchEvents)
+        .where(within)
+        .groupBy(schema.watchEvents.platform),
+
+      db
+        .select({
+          label: schema.watchEvents.model,
+          minutes: sql<number>`count(distinct (${VIEWER} || ':' || ${schema.watchEvents.minuteBucket}))`,
+        })
+        .from(schema.watchEvents)
+        .where(within)
+        .groupBy(schema.watchEvents.model),
+
+      db
+        .select({
+          label: sql<string>`coalesce(${schema.watchEvents.osName}, '') || case when ${schema.watchEvents.osVersion} is null then '' else ' ' || ${schema.watchEvents.osVersion} end`,
+          minutes: sql<number>`count(distinct (${VIEWER} || ':' || ${schema.watchEvents.minuteBucket}))`,
+        })
+        .from(schema.watchEvents)
+        .where(within)
+        .groupBy(schema.watchEvents.osName, schema.watchEvents.osVersion),
+
+      db
+        .select({
+          label: schema.watchEvents.appVersion,
+          minutes: sql<number>`count(distinct (${VIEWER} || ':' || ${schema.watchEvents.minuteBucket}))`,
+        })
+        .from(schema.watchEvents)
+        .where(within)
+        .groupBy(schema.watchEvents.appVersion),
     ]);
 
   const views = new Map(dayRows.map((r) => [r.date, Number(r.views ?? 0)]));
@@ -168,5 +246,9 @@ export async function audienceReport(
     byCountry: slice(countryRows, "Unknown"),
     byDevice: slice(deviceRows, "Unknown"),
     byRung: slice(rungRows, "Not reported", labelRung),
+    byPlatform: slice(platformRows, "Not reported", labelPlatform),
+    byModel: slice(modelRows, "Not reported"),
+    byOs: slice(osRows, "Not reported", (v) => (v && v.trim() ? v.trim() : "Not reported")),
+    byAppVersion: slice(appVersionRows, "Web or an older build"),
   };
 }
