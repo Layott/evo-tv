@@ -147,6 +147,16 @@ export async function PATCH(req: NextRequest) {
   const profilePatch: Record<string, unknown> = {};
   if (typeof bio === "string") profilePatch.bio = bio;
   if (typeof country === "string") profilePatch.country = country;
+  // The profile as it stands, so the audit row can say what the edit moved.
+  // One indexed read on a screen somebody opens rarely.
+  const existingProfile = (
+    await db
+      .select({ bio: schema.profiles.bio, country: schema.profiles.country })
+      .from(schema.profiles)
+      .where(eq(schema.profiles.userId, user.id))
+      .limit(1)
+  )[0];
+
   // Written once. Onboarding again on a second device is the bug this fixes,
   // and re-stamping it on every call would lose the date it actually happened.
   const onboardedNow = onboarded === true ? new Date().toISOString() : null;
@@ -192,6 +202,17 @@ export async function PATCH(req: NextRequest) {
   void writeAudit({
     actorId: user.id,
     action: "user.profile.update",
+    before: {
+      name: user.name,
+      bio: existingProfile?.bio ?? null,
+      country: existingProfile?.country ?? null,
+    },
+    after: {
+      name: name ?? user.name,
+      bio: typeof bio === "string" ? bio : (existingProfile?.bio ?? null),
+      country:
+        typeof country === "string" ? country : (existingProfile?.country ?? null),
+    },
     targetType: "user",
     targetId: user.id,
     meta: { fields: Object.keys(parsed.data) },
@@ -291,6 +312,11 @@ export async function DELETE() {
   void writeAudit({
     actorId: user.id,
     action: "delete",
+    before: { deletionRequestedAt: null },
+    after: {
+      deletionRequestedAt: new Date().toISOString(),
+      scheduledPurgeAt: new Date(Date.now() + 30 * 86400_000).toISOString(),
+    },
     targetType: "ad",
     targetId: user.id,
     meta: { event: "user_self_delete_requested", scheduledPurgeAt: new Date(Date.now() + 30 * 86400_000).toISOString() },

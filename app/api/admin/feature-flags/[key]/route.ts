@@ -52,6 +52,8 @@ export async function PATCH(
     );
     try {
       await writeAudit({
+    before: existing as unknown as Record<string, unknown>,
+    after: row as unknown as Record<string, unknown>,
         actorId: guard.user.id,
         action: "update",
         targetType: "feature_flag",
@@ -87,6 +89,8 @@ export async function DELETE(
       await writeAudit({
         actorId: guard.user.id,
         action: hard ? "delete" : "disable",
+        before: existing as unknown as Record<string, unknown>,
+        after: hard ? null : { ...existing, enabled: false },
         targetType: "feature_flag",
         targetId: key,
         meta: existing as unknown as Record<string, unknown>,

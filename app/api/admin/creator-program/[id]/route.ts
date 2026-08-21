@@ -40,6 +40,8 @@ export async function PATCH(
     await writeAudit({
       actorId: guard.user.id,
       action: `creator_program.${parsed.data.status}`,
+      before: { status: "pending" },
+      after: { status: parsed.data.status, note: parsed.data.note ?? null },
       targetType: "creator_application",
       targetId: id,
       meta: {

@@ -73,6 +73,8 @@ export async function PATCH(
   )[0];
 
   writeAudit({
+    before: existing as unknown as Record<string, unknown>,
+    after: updated as unknown as Record<string, unknown>,
     actorId: guard.user.id,
     actorRole: guard.role,
     capability: "commerce",
@@ -109,6 +111,8 @@ export async function DELETE(
   }
 
   writeAudit({
+    before: existing as unknown as Record<string, unknown>,
+    after: null,
     actorId: guard.user.id,
     actorRole: guard.role,
     capability: "commerce",

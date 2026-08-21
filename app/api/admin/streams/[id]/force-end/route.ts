@@ -55,6 +55,12 @@ export async function POST(
     actorRole: guard.role,
     capability: "broadcast",
     action: "stream.force_end",
+    before: {
+      isLive: stream.isLive,
+      endedAt: stream.endedAt,
+      viewerCount: stream.viewerCount,
+    },
+    after: { isLive: false, endedAt: nowIso, viewerCount: 0 },
     targetType: "stream",
     targetId: id,
     meta: {

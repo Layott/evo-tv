@@ -304,6 +304,14 @@ export async function POST(req: NextRequest) {
     action: "announcement.send",
     targetType: "system",
     targetId: "announcement",
+    before: null,
+    after: {
+      title: input.title,
+      body: input.body,
+      audience: description,
+      destination: destinationLabel,
+      recipients: ids.length,
+    },
     meta: {
       title: input.title,
       audience: description,

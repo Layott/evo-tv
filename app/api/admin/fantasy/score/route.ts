@@ -41,6 +41,8 @@ export async function POST(req: NextRequest) {
     void writeAudit({
       actorId: guard.user.id,
       action: "fantasy.score",
+      before: null,
+      after: { ...result },
       targetType: "fantasy_league",
       targetId: targetLeagueId,
       meta: { ...result },
@@ -60,9 +62,10 @@ export async function POST(req: NextRequest) {
   void writeAudit({
     actorId: guard.user.id,
     action: "fantasy.score",
+    before: null,
+    after: { ...totals },
     targetType: "system",
     targetId: "manual",
-    meta: totals,
   });
   return NextResponse.json({ ok: true, ...totals, results });
 }

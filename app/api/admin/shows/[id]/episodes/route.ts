@@ -183,6 +183,14 @@ export async function POST(
     actorRole: guard.role,
     capability: "editorial",
     action: "episode.create",
+    before: null,
+    after: (
+      await db
+        .select()
+        .from(schema.episodes)
+        .where(eq(schema.episodes.id, episodeId))
+        .limit(1)
+    )[0] as unknown as Record<string, unknown>,
     targetType: "episode",
     targetId: episodeId,
     meta: {

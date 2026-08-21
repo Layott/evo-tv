@@ -114,17 +114,22 @@ export async function POST(req: NextRequest) {
   // A show with a live slot is on air, whatever its episodes say.
   await refreshShowStatus(input.showId);
 
-  await writeAudit({
-    actorId: guard.user.id,
-    action: "epg.create",
-    targetType: "epg_slot",
-    targetId: id,
-    meta: { ...input, title: show.title },
-  });
-
   const slot = (
     await db.select().from(schema.epgSlots).where(eq(schema.epgSlots.id, id)).limit(1)
   )[0];
+
+  await writeAudit({
+    actorId: guard.user.id,
+    actorRole: guard.role,
+    capability: "editorial",
+    action: "epg.create",
+    targetType: "epg_slot",
+    targetId: id,
+    before: null,
+    // The row as stored, not the request: the title and the pillar come from
+    // the show rather than from whoever filled the form.
+    after: slot as unknown as Record<string, unknown>,
+  });
 
   return NextResponse.json(
     { slot, warnings: overlapWarnings(candidate, existing) },

@@ -87,7 +87,19 @@ export async function PATCH(
     });
   }
 
+  // The row as it ended up, read back rather than assembled from the payload:
+  // the version bump and the timestamp are the database's to decide.
+  const saved = (
+    await db
+      .select()
+      .from(schema.emailTemplates)
+      .where(eq(schema.emailTemplates.key, key))
+      .limit(1)
+  )[0];
+
   await writeAudit({
+    before: existing as unknown as Record<string, unknown>,
+    after: saved as unknown as Record<string, unknown>,
     actorId: guard.user.id,
     action: "email_template.update",
     targetType: "email_template",

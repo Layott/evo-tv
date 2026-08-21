@@ -70,7 +70,12 @@ export async function POST(req: NextRequest) {
 
   const existing = (
     await db
-      .select({ id: schema.streams.id, startedAt: schema.streams.startedAt })
+      .select({
+        id: schema.streams.id,
+        startedAt: schema.streams.startedAt,
+        nowAiringTitle: schema.streams.nowAiringTitle,
+        nowAiringTargetId: schema.streams.nowAiringTargetId,
+      })
       .from(schema.streams)
       .where(eq(schema.streams.id, streamId))
       .limit(1)
@@ -103,6 +108,8 @@ export async function POST(req: NextRequest) {
     void writeAudit({
       actorId: null,
       action: "playout.now_airing.offline",
+      before: { isLive: true },
+      after: { isLive: false },
       targetType: "stream",
       targetId: streamId,
       meta: {},
@@ -148,6 +155,11 @@ export async function POST(req: NextRequest) {
   void writeAudit({
     actorId: null,
     action: "playout.now_airing.update",
+    before: {
+      nowAiringTitle: existing.nowAiringTitle,
+      nowAiringTargetId: existing.nowAiringTargetId,
+    },
+    after: { nowAiringTitle: title, nowAiringTargetId: targetId, startedAt: programStartedAt },
     targetType: "stream",
     targetId: streamId,
     meta: { title, targetId, startedAt: programStartedAt },

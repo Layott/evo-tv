@@ -76,6 +76,8 @@ export async function POST(
     actorRole: guard.role,
     capability: "commerce",
     action: "update",
+    before: { status: row.status },
+    after: { status: "approved" },
     targetType: "ad",
     targetId: id,
     meta: {

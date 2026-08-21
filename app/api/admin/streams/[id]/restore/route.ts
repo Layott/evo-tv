@@ -36,6 +36,8 @@ export async function POST(
     actorRole: guard.role,
     capability: "broadcast",
     action: "stream.restore",
+    before: { deletedAt: row.deletedAt },
+    after: { deletedAt: null },
     targetType: "stream",
     targetId: id,
     meta: { role: guard.role, streamerName: row.streamerName, channelId: row.channelId },

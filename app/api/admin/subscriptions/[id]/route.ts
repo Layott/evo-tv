@@ -4,6 +4,7 @@ import { requireMinRole } from "@/lib/auth/guards";
 import { writeAudit } from "@/lib/api/audit";
 import {
   cancelSubscriptionById,
+  getSubscriptionById,
   extendSubscriptionById,
 } from "@/lib/api/subscriptions";
 
@@ -34,15 +35,22 @@ export async function PATCH(
   }
 
   if (body.action === "cancel") {
+    // Read before the write, so the log can say what the period was before
+    // somebody ended it.
+    const wasCancel = await getSubscriptionById(id);
     const sub = await cancelSubscriptionById(id);
     if (!sub) return new NextResponse("Subscription not found", { status: 404 });
     // Best-effort audit - never fail a committed state change on a log write.
     await writeAudit({
       actorId: guard.user.id,
+      actorRole: guard.role,
+      capability: "commerce",
       action: "subscription.cancel",
       targetType: "subscription",
       targetId: id,
-      meta: { role: guard.role, userId: sub.userId },
+      before: wasCancel as unknown as Record<string, unknown>,
+      after: sub as unknown as Record<string, unknown>,
+      meta: { userId: sub.userId },
     }).catch(() => {});
     return NextResponse.json({ ok: true, subscription: sub });
   }
@@ -55,14 +63,19 @@ export async function PATCH(
       body.days <= 365
         ? Math.round(body.days)
         : 30;
+    const wasExtend = await getSubscriptionById(id);
     const sub = await extendSubscriptionById(id, days);
     if (!sub) return new NextResponse("Subscription not found", { status: 404 });
     await writeAudit({
       actorId: guard.user.id,
+      actorRole: guard.role,
+      capability: "commerce",
       action: "subscription.extend",
       targetType: "subscription",
       targetId: id,
-      meta: { role: guard.role, userId: sub.userId, days, newEnd: sub.currentPeriodEnd },
+      before: wasExtend as unknown as Record<string, unknown>,
+      after: sub as unknown as Record<string, unknown>,
+      meta: { userId: sub.userId, days },
     }).catch(() => {});
     return NextResponse.json({ ok: true, subscription: sub });
   }

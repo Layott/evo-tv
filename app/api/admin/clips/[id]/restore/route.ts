@@ -28,6 +28,8 @@ export async function POST(
   await writeAudit({
     actorId: guard.user.id,
     action: "clip.restore",
+    before: { deletedAt: row.deletedAt },
+    after: { deletedAt: null },
     targetType: "clip",
     targetId: id,
     meta: { role: guard.role, title: row.title, channelId: row.channelId },

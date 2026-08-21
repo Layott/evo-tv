@@ -238,6 +238,26 @@ export async function listAllSubscriptions(
 }
 
 /** Cancel one subscription by id; demote the user if they have no other active sub. */
+/**
+ * One subscription, as it stands.
+ *
+ * Exists so an admin action can record what the row was before it changed it.
+ * The cancel and extend helpers read the row themselves and hand back only the
+ * result, which is the half the audit log already had.
+ */
+export async function getSubscriptionById(
+  id: string
+): Promise<Subscription | null> {
+  const row = (
+    await db
+      .select()
+      .from(schema.subscriptions)
+      .where(eq(schema.subscriptions.id, id))
+      .limit(1)
+  )[0];
+  return (row as Subscription | undefined) ?? null;
+}
+
 export async function cancelSubscriptionById(
   id: string
 ): Promise<Subscription | null> {
