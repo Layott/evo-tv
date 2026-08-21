@@ -1,5 +1,5 @@
 import "server-only";
-import { and, gte, lt, sql } from "drizzle-orm";
+import { and, eq, gte, isNull, lt, sql } from "drizzle-orm";
 
 import { db, schema } from "@/lib/db";
 import { resolveRange, daysInRange, type RangeInput } from "@/lib/analytics/range";
@@ -33,6 +33,21 @@ export interface AudienceSlice {
   minutes: number;
 }
 
+export interface AudiencePerson {
+  userId: string;
+  name: string | null;
+  handle: string | null;
+  email: string | null;
+  /** Minutes with a live player open, in the window. */
+  minutes: number;
+  /** Separate days they turned up. Two nights is a habit; one is a visit. */
+  days: number;
+  lastSeen: string;
+  country: string | null;
+  device: string | null;
+  platform: string | null;
+}
+
 export interface AudienceReport {
   byDay: AudienceDay[];
   /** The most people watching at the same minute, and when that was. */
@@ -52,6 +67,16 @@ export interface AudienceReport {
   byOs: AudienceSlice[];
   /** Which app build. A bug from the field arrives attached to one of these. */
   byAppVersion: AudienceSlice[];
+  /**
+   * The people, by name, most-watched first.
+   *
+   * Signed-in accounts only. An anonymous viewer is a hashed IP and a number of
+   * minutes, which is a row nobody can act on, and putting a hash in a list of
+   * people invites somebody to treat it as one.
+   */
+  people: AudiencePerson[];
+  /** How many of the window's minutes belong to viewers who were signed out. */
+  anonymousMinutes: number;
 }
 
 /** The viewer identity: the account if signed in, the hashed IP otherwise. */
@@ -111,6 +136,8 @@ export async function audienceReport(
     modelRows,
     osRows,
     appVersionRows,
+    peopleRows,
+    anonRows,
   ] = await Promise.all([
       // People per day: distinct viewer per stream, so one person watching two
       // broadcasts is two views and watching one all day is one.
@@ -215,6 +242,48 @@ export async function audienceReport(
         .from(schema.watchEvents)
         .where(within)
         .groupBy(schema.watchEvents.appVersion),
+
+      /*
+       * The audience by name.
+       *
+       * Signed-in accounts only, joined to the user so the row says who rather
+       * than which id. The country, device and platform are the last ones seen
+       * for that person, which is what somebody asking "what is this viewer
+       * watching on" wants; a person who switched phones mid-window shows the
+       * one they are on now.
+       */
+      db
+        .select({
+          userId: schema.watchEvents.userId,
+          name: schema.user.name,
+          handle: schema.user.handle,
+          email: schema.user.email,
+          minutes: sql<number>`count(distinct ${schema.watchEvents.minuteBucket})`,
+          days: sql<number>`count(distinct to_char(${schema.watchEvents.createdAt} at time zone 'UTC', 'YYYY-MM-DD'))`,
+          lastSeen: sql<string>`max(${schema.watchEvents.createdAt})::text`,
+          country: sql<string | null>`(array_agg(${schema.watchEvents.country} order by ${schema.watchEvents.createdAt} desc))[1]`,
+          device: sql<string | null>`(array_agg(${schema.watchEvents.device} order by ${schema.watchEvents.createdAt} desc))[1]`,
+          platform: sql<string | null>`(array_agg(${schema.watchEvents.platform} order by ${schema.watchEvents.createdAt} desc))[1]`,
+        })
+        .from(schema.watchEvents)
+        .innerJoin(schema.user, eq(schema.user.id, schema.watchEvents.userId))
+        .where(within)
+        .groupBy(
+          schema.watchEvents.userId,
+          schema.user.name,
+          schema.user.handle,
+          schema.user.email,
+        )
+        .orderBy(sql`count(distinct ${schema.watchEvents.minuteBucket}) desc`)
+        .limit(100),
+
+      // What is left over: the minutes nobody can put a name to.
+      db
+        .select({
+          minutes: sql<number>`count(distinct (${schema.watchEvents.ipHash} || ':' || ${schema.watchEvents.minuteBucket}))`,
+        })
+        .from(schema.watchEvents)
+        .where(and(within, isNull(schema.watchEvents.userId))),
     ]);
 
   const views = new Map(dayRows.map((r) => [r.date, Number(r.views ?? 0)]));
@@ -250,5 +319,18 @@ export async function audienceReport(
     byModel: slice(modelRows, "Not reported"),
     byOs: slice(osRows, "Not reported", (v) => (v && v.trim() ? v.trim() : "Not reported")),
     byAppVersion: slice(appVersionRows, "Web or an older build"),
+    people: peopleRows.map((r) => ({
+      userId: r.userId as string,
+      name: r.name ?? null,
+      handle: r.handle ?? null,
+      email: r.email ?? null,
+      minutes: Number(r.minutes ?? 0),
+      days: Number(r.days ?? 0),
+      lastSeen: r.lastSeen,
+      country: r.country ?? null,
+      device: r.device ?? null,
+      platform: r.platform ?? null,
+    })),
+    anonymousMinutes: Number(anonRows[0]?.minutes ?? 0),
   };
 }
