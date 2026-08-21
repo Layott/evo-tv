@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "./page-header";
 import { HowTo } from "./how-to";
 import { MetricCard } from "./metric-card";
+import { cn } from "@/lib/utils";
 import { AudiencePanel } from "./audience-panel";
 import { VideoAnalyticsPanel } from "./video-analytics-panel";
 import { useQuery } from "@tanstack/react-query";
@@ -51,9 +52,18 @@ const TOOLTIP_STYLE = {
 } as const;
 
 export function AnalyticsPage() {
+  /*
+   * How far back the cohorts go.
+   *
+   * Eight weeks was fixed, which is the wrong answer twice: a platform two
+   * months old has nothing to show beyond its own age, and a year in, the
+   * interesting question is whether the people who arrived in March are still
+   * here.
+   */
+  const [weeks, setWeeks] = React.useState(8);
   const retentionQ = useQuery({
-    queryKey: ["admin", "retention"],
-    queryFn: () => adminRetention(8),
+    queryKey: ["admin", "retention", weeks],
+    queryFn: () => adminRetention(weeks),
   });
   const revenueQ = useQuery({
     queryKey: ["admin", "revenue"],
@@ -165,13 +175,34 @@ export function AnalyticsPage() {
             </section>
 
             <section className="rounded-xl bg-card/50 p-5">
-              <h3 className="text-sm font-semibold text-foreground">
-                Who came back
-              </h3>
-              <p className="text-xs text-muted-foreground">
-                Of the people who signed up in a week, how many watched
-                something in the weeks after. Live or recorded, both count.
-              </p>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground">
+                    Who came back
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    Of the people who signed up in a week, how many watched
+                    something in the weeks after. Live or recorded, both count.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {[4, 8, 12, 26, 52].map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => setWeeks(n)}
+                      className={cn(
+                        "rounded-md px-2.5 py-1 text-xs transition-colors",
+                        weeks === n
+                          ? "bg-sky-500/20 text-sky-200"
+                          : "bg-card text-muted-foreground hover:bg-accent",
+                      )}
+                    >
+                      {n === 52 ? "1 year" : `${n} weeks`}
+                    </button>
+                  ))}
+                </div>
+              </div>
               {retention.length === 0 ? (
                 <p className="py-12 text-center text-sm text-muted-foreground">
                   Not enough signup history yet to build cohorts.

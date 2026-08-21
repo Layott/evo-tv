@@ -205,6 +205,8 @@ export const HOW_TO = {
       { term: "Retention", detail: "The share of sessions still watching at each percent of the runtime. The cliff is where people leave." },
       { term: "Pick dates", detail: "Any single day, or any window. The presets are shortcuts, not the only answer." },
       { term: "Most at once", detail: "The busiest single minute in the window. Concurrency, not a total: 5 here and 40 people means they came and went." },
+      { term: "Who watched", detail: "The audience by name, with how long each person watched, how many separate days they turned up, and what they were on. Signed-in accounts only; anonymous minutes are counted beside the list rather than listed as people." },
+      { term: "Who came back", detail: "Signup cohorts, over 4 weeks to a year. A week that has not happened yet is blank rather than 0%." },
     ],
   },
 

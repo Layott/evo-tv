@@ -22,8 +22,29 @@ export async function recordLoginEvent(session: { userId: string }): Promise<voi
   const ip = fwd ? fwd.split(",")[0]?.trim() : null;
   const ua = h.get("user-agent");
   const deviceFp = h.get("x-device-id");
+  /*
+   * Where they signed in from.
+   *
+   * This read `x-vercel-ip-city` and `x-vercel-ip-country`, which stopped
+   * existing the day the platform moved to a droplet behind Cloudflare in
+   * August. Every row since has said "Region unknown", not because the
+   * information was unavailable but because it was being asked for in the
+   * wrong language.
+   *
+   * Cloudflare always sends the country. City and region arrive only if the
+   * "Add visitor location headers" managed transform is switched on, so both
+   * are optional and the answer degrades to the country alone.
+   *
+   * The IP itself stays hashed. City is as precise as this gets on purpose:
+   * an exact address is not something a broadcaster needs in order to spot the
+   * same person signing in under two names.
+   */
+  const city = h.get("cf-ipcity") ?? h.get("x-vercel-ip-city");
+  const regionName = h.get("cf-region") ?? h.get("x-vercel-ip-country-region");
+  const country =
+    h.get("cf-ipcountry") ?? h.get("x-vercel-ip-country") ?? null;
   const region =
-    [h.get("x-vercel-ip-city"), h.get("x-vercel-ip-country")]
+    [city, regionName, country === "XX" ? null : country]
       .filter(Boolean)
       .join(", ") || null;
 

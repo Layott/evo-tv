@@ -13,8 +13,9 @@ import {
 } from "recharts";
 
 import { Eye, Clock, Users } from "@/components/icons";
-import { apiGet } from "@/lib/client";
+import { apiGet, type AdminAnalyticsRange } from "@/lib/client";
 import { MetricCard } from "./metric-card";
+import { RangePicker } from "./range-picker";
 import { formatNumber } from "./utils";
 
 /**
@@ -41,6 +42,19 @@ interface AudienceSlice {
   minutes: number;
 }
 
+interface AudiencePerson {
+  userId: string;
+  name: string | null;
+  handle: string | null;
+  email: string | null;
+  minutes: number;
+  days: number;
+  lastSeen: string;
+  country: string | null;
+  device: string | null;
+  platform: string | null;
+}
+
 interface AudienceReport {
   byDay: AudienceDay[];
   peakConcurrent: number;
@@ -54,6 +68,8 @@ interface AudienceReport {
   byModel: AudienceSlice[];
   byOs: AudienceSlice[];
   byAppVersion: AudienceSlice[];
+  people: AudiencePerson[];
+  anonymousMinutes: number;
 }
 
 const MINT = "#46E3CE";
@@ -91,9 +107,19 @@ const UNRECORDED_NOTE =
   "Unknown is beats written before this was captured. It ages out of the window on its own.";
 
 export function AudiencePanel({ days = 30 }: { days?: number }) {
+  /*
+   * The window is the operator's, not mine.
+   *
+   * Thirty days was fixed, so "how did the premiere on the 12th go" could only
+   * be asked by squinting at a month of everything else. Same control as the
+   * Videos tab, and the endpoint already spoke both grammars.
+   */
+  const [range, setRange] = React.useState<AdminAnalyticsRange>({ days });
+
   const audienceQ = useQuery({
-    queryKey: ["admin", "audience", days],
-    queryFn: () => apiGet<AudienceReport>("/api/admin/analytics/audience", { days }),
+    queryKey: ["admin", "audience", range],
+    queryFn: () =>
+      apiGet<AudienceReport>("/api/admin/analytics/audience", range as never),
     staleTime: 60_000,
   });
 
@@ -107,9 +133,19 @@ export function AudiencePanel({ days = 30 }: { days?: number }) {
 
   return (
     <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-semibold text-foreground">The audience</h3>
+          <p className="text-xs text-muted-foreground">
+            Counted from the beats real players send, over the window you pick.
+          </p>
+        </div>
+        <RangePicker value={range} onChange={setRange} />
+      </div>
+
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <MetricCard
-          title="People, last 30 days"
+          title="People"
           value={formatNumber(report?.totalViews ?? 0)}
           hint="Counted once per person per broadcast per day"
           icon={Eye}
@@ -240,6 +276,89 @@ export function AudiencePanel({ days = 30 }: { days?: number }) {
           total={report?.totalMinutes ?? 0}
           note="The website reports the rung its player chose. The app's native player does not expose one, so its share sits under Not reported until expo-video can say."
         />
+      </section>
+
+      <section className="rounded-xl bg-card/50 p-5">
+        <div className="mb-4 flex flex-wrap items-baseline justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-semibold text-foreground">
+              Who watched
+            </h3>
+            <p className="text-xs text-muted-foreground">
+              Signed-in accounts, most-watched first. Anonymous viewers are a
+              hashed connection and a number of minutes, so they are counted
+              below rather than listed as people.
+            </p>
+          </div>
+          {report && report.anonymousMinutes > 0 ? (
+            <span className="text-xs text-muted-foreground">
+              {formatMinutes(report.anonymousMinutes)} watched signed out
+            </span>
+          ) : null}
+        </div>
+
+        {audienceQ.isLoading ? (
+          <p className="py-10 text-center text-sm text-muted-foreground">Reading…</p>
+        ) : (report?.people.length ?? 0) === 0 ? (
+          <p className="py-10 text-center text-sm text-muted-foreground">
+            Nobody signed in has watched in this window.
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs text-muted-foreground">
+                  <th className="py-1 pr-4 font-normal">Who</th>
+                  <th className="py-1 pr-4 font-normal">Watched</th>
+                  <th className="py-1 pr-4 font-normal">Days</th>
+                  <th className="py-1 pr-4 font-normal">On</th>
+                  <th className="py-1 pr-4 font-normal">From</th>
+                  <th className="py-1 font-normal">Last seen</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(report?.people ?? []).map((person) => (
+                  <tr key={person.userId}>
+                    <td className="py-1.5 pr-4">
+                      <span className="block text-foreground">
+                        {person.name ?? person.handle ?? "Deleted account"}
+                      </span>
+                      <span className="block text-xs text-muted-foreground">
+                        {person.handle ? `@${person.handle}` : (person.email ?? "")}
+                      </span>
+                    </td>
+                    <td className="py-1.5 pr-4 tabular-nums text-foreground">
+                      {formatMinutes(person.minutes)}
+                    </td>
+                    <td className="py-1.5 pr-4 tabular-nums text-muted-foreground">
+                      {person.days}
+                    </td>
+                    <td className="py-1.5 pr-4 text-muted-foreground">
+                      {person.platform === "android"
+                        ? "Android app"
+                        : person.platform === "ios"
+                          ? "iOS app"
+                          : person.platform === "web"
+                            ? "Website"
+                            : (person.device ?? "Not reported")}
+                    </td>
+                    <td className="py-1.5 pr-4 text-muted-foreground">
+                      {person.country ?? "Not recorded"}
+                    </td>
+                    <td className="py-1.5 text-muted-foreground">
+                      {new Date(person.lastSeen).toLocaleString(undefined, {
+                        day: "numeric",
+                        month: "short",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
     </div>
   );
