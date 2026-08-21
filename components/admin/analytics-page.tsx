@@ -65,6 +65,7 @@ export function AnalyticsPage() {
   });
 
   const retention = retentionQ.data?.matrix ?? [];
+  const cohorts = retentionQ.data?.cohorts ?? [];
   const revenueByMonth = (revenueQ.data ?? []).map((r) => ({
     month: r.month,
     revenue: r.ngn,
@@ -165,11 +166,11 @@ export function AnalyticsPage() {
 
             <section className="rounded-xl bg-card/50 p-5">
               <h3 className="text-sm font-semibold text-foreground">
-                Retention cohort
+                Who came back
               </h3>
               <p className="text-xs text-muted-foreground">
-                Of everyone who signed up in a week, how many came back in the
-                weeks after
+                Of the people who signed up in a week, how many watched
+                something in the weeks after. Live or recorded, both count.
               </p>
               {retention.length === 0 ? (
                 <p className="py-12 text-center text-sm text-muted-foreground">
@@ -177,46 +178,54 @@ export function AnalyticsPage() {
                 </p>
               ) : (
                 <div className="mt-4 overflow-x-auto">
-                  <table className="min-w-full text-center text-xs">
+                  <table className="min-w-full text-xs">
                     <thead>
                       <tr>
-                        <th className="p-1 text-left font-normal text-muted-foreground">
-                          Cohort
+                        <th className="py-1 pr-4 text-left font-normal text-muted-foreground">
+                          Signed up
                         </th>
-                        {Array.from({ length: 8 }, (_, i) => (
+                        {Array.from({ length: retention[0]?.length ?? 0 }, (_, i) => (
                           <th
                             key={i}
-                            className="p-1 font-normal text-muted-foreground"
+                            className="px-2 py-1 text-center font-normal text-muted-foreground"
                           >
-                            W{i}
+                            {i === 0 ? "That week" : `+${i}`}
                           </th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
-                      {retention.map((row, r) => (
-                        <tr key={r}>
-                          <td className="p-1 text-left text-muted-foreground">
-                            W{r + 1}
-                          </td>
-                          {row.map((v, c) => (
-                            <td
-                              key={c}
-                              className="rounded p-1 font-mono tabular-nums"
-                              style={
-                                v == null
-                                  ? { color: "#3f5f5f" }
-                                  : {
-                                      backgroundColor: `rgba(70,227,206,${(v / 100) * 0.7 + 0.05})`,
-                                      color: v > 55 ? "#052e2a" : "#c8f4ec",
-                                    }
-                              }
-                            >
-                              {v == null ? "-" : `${v}%`}
+                      {retention.map((row, r) => {
+                        const cohort = cohorts[r];
+                        return (
+                          <tr key={cohort?.weekStart ?? r}>
+                            <td className="whitespace-nowrap py-1 pr-4 text-left">
+                              <span className="text-foreground">
+                                {cohort ? weekLabel(cohort.weekStart) : `Week ${r + 1}`}
+                              </span>
+                              <span className="ml-2 text-muted-foreground">
+                                {cohort
+                                  ? cohort.size === 0
+                                    ? "nobody"
+                                    : `${cohort.size} ${cohort.size === 1 ? "person" : "people"}`
+                                  : ""}
+                              </span>
                             </td>
-                          ))}
-                        </tr>
-                      ))}
+                            {row.map((v, c) => (
+                              <RetentionCell
+                                key={c}
+                                value={v}
+                                empty={!cohort || cohort.size === 0}
+                                /* A cohort from last week has no week 4 yet.
+                                   Printing 0% for a week that has not happened
+                                   is the difference between "nobody came back"
+                                   and "ask again later". */
+                                future={weeksSince(cohort?.weekStart) < c}
+                              />
+                            ))}
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -226,5 +235,63 @@ export function AnalyticsPage() {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+/** "4 Aug", because "W3" tells nobody when they signed up. */
+function weekLabel(weekStart: string): string {
+  return new Date(weekStart + "T00:00:00Z").toLocaleDateString(undefined, {
+    day: "numeric",
+    month: "short",
+    timeZone: "UTC",
+  });
+}
+
+/** How many whole weeks have passed since a cohort started. */
+function weeksSince(weekStart: string | undefined): number {
+  if (!weekStart) return Number.MAX_SAFE_INTEGER;
+  const start = new Date(weekStart + "T00:00:00Z").getTime();
+  return Math.floor((Date.now() - start) / (7 * 86_400_000));
+}
+
+/**
+ * One cell.
+ *
+ * A grid of sixty-four boxes each saying 0% is a wall, and the eye has nothing
+ * to catch on. Zero is drawn as a dash on the page background; only a real
+ * number gets ink, and the fill carries the size so a row can be read across
+ * without reading every figure.
+ */
+function RetentionCell({
+  value,
+  empty,
+  future,
+}: {
+  value: number | null;
+  empty: boolean;
+  future: boolean;
+}) {
+  if (empty || future || value == null) {
+    return (
+      <td className="px-2 py-1 text-center text-muted-foreground/40">
+        {future && !empty ? "" : "-"}
+      </td>
+    );
+  }
+  if (value === 0) {
+    return <td className="px-2 py-1 text-center text-muted-foreground/40">-</td>;
+  }
+  return (
+    <td className="px-1 py-1 text-center">
+      <span
+        className="inline-block min-w-[2.75rem] rounded-md px-2 py-1 font-mono tabular-nums"
+        style={{
+          backgroundColor: `rgba(70,227,206,${(value / 100) * 0.65 + 0.12})`,
+          color: value > 55 ? "#052e2a" : "#c8f4ec",
+        }}
+      >
+        {value}%
+      </span>
+    </td>
   );
 }

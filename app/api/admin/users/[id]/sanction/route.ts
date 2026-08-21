@@ -102,6 +102,13 @@ export async function POST(
   await writeAudit({
     actorId: guard.user.id,
     action: `user.sanction.${kind}`,
+    before: null,
+    after: {
+      kind,
+      reason,
+      expiresAt: expiresIso,
+      sessionsRevoked,
+    },
     targetType: "user",
     targetId: targetUserId,
     meta: {

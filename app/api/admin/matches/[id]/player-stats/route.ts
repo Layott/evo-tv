@@ -116,6 +116,8 @@ export async function POST(
     actorRole: guard.role,
     capability: "editorial",
     action: "update",
+    before: null,
+    after: { rows: parsed.data.stats.length, rescored: fantasy !== null },
     targetType: "event",
     targetId: matchId,
     meta: {

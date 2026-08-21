@@ -109,6 +109,14 @@ export async function POST(
     actorRole: guard.role,
     capability: "editorial",
     action: "season.create",
+    before: null,
+    after: (
+      await db
+        .select()
+        .from(schema.seasons)
+        .where(eq(schema.seasons.id, seasonId))
+        .limit(1)
+    )[0] as unknown as Record<string, unknown>,
     targetType: "season",
     targetId: seasonId,
     meta: { showId: id, showTitle: show.title, seasonNumber },

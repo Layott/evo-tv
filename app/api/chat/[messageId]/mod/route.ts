@@ -61,6 +61,8 @@ export async function POST(
       capability: "community",
       action: result.isPinned ? "chat.pin" : "chat.unpin",
       ...where,
+      before: { isPinned: message.isPinned, body: message.body },
+      after: { isPinned: result.isPinned, body: message.body },
       meta: { messageId },
     });
     return NextResponse.json({ ok: true, ...result });
@@ -75,7 +77,13 @@ export async function POST(
       capability: "community",
       action: "chat.delete",
       ...where,
-      meta: { messageId, body: deleted.body },
+      before: {
+        body: deleted.body,
+        isDeleted: message.isDeleted,
+        authorId: message.userId,
+      },
+      after: { body: deleted.body, isDeleted: true, authorId: message.userId },
+      meta: { messageId },
     });
     return NextResponse.json({ ok: true });
   }
@@ -136,7 +144,15 @@ export async function POST(
     action: "chat.ban",
     targetType: "user",
     targetId: target.id,
-    meta: { messageId, hours: parsed.data.hours, expiresAt, ...where },
+    before: { chatBanned: false },
+    after: {
+      chatBanned: true,
+      hours: parsed.data.hours,
+      expiresAt,
+      reason: parsed.data.reason ?? "Banned from chat by a moderator",
+      messageRemoved: message.body,
+    },
+    meta: { messageId, ...where },
   });
 
   return NextResponse.json({ ok: true, expiresAt });

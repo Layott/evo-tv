@@ -92,6 +92,8 @@ export async function GET(req: NextRequest) {
     await writeAudit({
       actorId: null,
       action: "gdpr.purge",
+      before: null,
+      after: { purged: purgedIds.length },
       targetType: "system",
       targetId: "cron",
       meta: { purgedCount: purgedIds.length, userIds: purgedIds },

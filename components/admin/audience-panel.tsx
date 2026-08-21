@@ -50,6 +50,10 @@ interface AudienceReport {
   byCountry: AudienceSlice[];
   byDevice: AudienceSlice[];
   byRung: AudienceSlice[];
+  byPlatform: AudienceSlice[];
+  byModel: AudienceSlice[];
+  byOs: AudienceSlice[];
+  byAppVersion: AudienceSlice[];
 }
 
 const MINT = "#46E3CE";
@@ -188,6 +192,13 @@ export function AudiencePanel({ days = 30 }: { days?: number }) {
 
       <section className="grid grid-cols-1 gap-3 lg:grid-cols-3">
         <Breakdown
+          title="App or website"
+          empty="Nothing has reported which it is yet."
+          rows={report?.byPlatform ?? []}
+          total={report?.totalMinutes ?? 0}
+          note={UNRECORDED_NOTE}
+        />
+        <Breakdown
           title="Where they watched"
           empty="No country recorded yet."
           rows={report?.byCountry ?? []}
@@ -195,18 +206,39 @@ export function AudiencePanel({ days = 30 }: { days?: number }) {
           note={UNRECORDED_NOTE}
         />
         <Breakdown
-          title="On what"
+          title="Phone, tablet or desktop"
           empty="No device recorded yet."
           rows={report?.byDevice ?? []}
           total={report?.totalMinutes ?? 0}
           note={UNRECORDED_NOTE}
         />
         <Breakdown
+          title="Which handset or browser"
+          empty="No model reported yet."
+          rows={report?.byModel ?? []}
+          total={report?.totalMinutes ?? 0}
+          note="The app names the handset; a browser is named by what it admits to in its user agent."
+        />
+        <Breakdown
+          title="Operating system"
+          empty="No system reported yet."
+          rows={report?.byOs ?? []}
+          total={report?.totalMinutes ?? 0}
+          note={UNRECORDED_NOTE}
+        />
+        <Breakdown
+          title="Which app build"
+          empty="No build reported yet."
+          rows={report?.byAppVersion ?? []}
+          total={report?.totalMinutes ?? 0}
+          note="Website viewers have no build, and neither does an app older than the one that started reporting."
+        />
+        <Breakdown
           title="At which quality"
           empty="No quality reported yet."
           rows={report?.byRung ?? []}
           total={report?.totalMinutes ?? 0}
-          note="The app plays without reporting a rung, so its share sits under Not reported."
+          note="The website reports the rung its player chose. The app's native player does not expose one, so its share sits under Not reported until expo-video can say."
         />
       </section>
     </div>

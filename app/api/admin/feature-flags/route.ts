@@ -42,6 +42,8 @@ export async function POST(req: NextRequest) {
     );
     try {
       await writeAudit({
+    before: null,
+    after: row as unknown as Record<string, unknown>,
         actorId: guard.user.id,
         action: "upsert",
         targetType: "feature_flag",

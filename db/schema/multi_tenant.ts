@@ -184,8 +184,25 @@ export const watchEvents = pgTable(
     country: text("country"),
     /** mobile / tablet / tv / desktop, from the user agent. */
     device: text("device"),
-    /** Ladder rung the player pulled: _low, _mid, _hi. Website viewers only. */
+    /** Ladder rung the player pulled: _low, _mid, _hi, _fhd. */
     rung: text("rung"),
+    /**
+     * What the viewer was watching on, as the client itself reports it.
+     *
+     * `device` above is a word guessed from a user agent, which is all a
+     * browser gives us and is worse than nothing for the app: a React Native
+     * agent parses as neither phone nor browser, so every app viewer landed
+     * under Unknown. The app knows its own platform, model and build, so it
+     * says so, and the website fills the same columns from its user agent.
+     *
+     * All nullable. Rows written before this know none of it, and a viewer on
+     * an old build keeps not reporting some of it until they update.
+     */
+    platform: text("platform"),
+    model: text("model"),
+    osName: text("os_name"),
+    osVersion: text("os_version"),
+    appVersion: text("app_version"),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
       .notNull()
       .defaultNow(),

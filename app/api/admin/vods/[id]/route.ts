@@ -102,6 +102,8 @@ export async function PATCH(
       actorRole: guard.role,
       capability: "editorial",
       action: "vod.update",
+      before: existing as unknown as Record<string, unknown>,
+      after: { ...existing, ...patch } as unknown as Record<string, unknown>,
       targetType: "vod",
       targetId: id,
       meta: { fields: Object.keys(patch), title: existing.title },
@@ -140,6 +142,8 @@ export async function DELETE(
     .where(eq(schema.vods.id, id));
 
   await writeAudit({
+    before: vod as unknown as Record<string, unknown>,
+    after: null,
     actorId: guard.user.id,
     actorRole: guard.role,
     capability: "editorial",

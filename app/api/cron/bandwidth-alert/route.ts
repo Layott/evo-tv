@@ -104,6 +104,8 @@ export async function POST(req: NextRequest) {
   await writeAudit({
     actorId: null,
     action: "bandwidth.threshold",
+    before: null,
+    after: { usedGb, allowanceGb, thresholdPct, month, notified, pushed },
     targetType: "system",
     targetId: "cron",
     meta: { usedGb, allowanceGb, thresholdPct, month, notified, pushed },

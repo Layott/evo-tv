@@ -5,6 +5,8 @@ import { db, schema } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/guards";
 import { getStreamById } from "@/lib/api/streams";
 import { join, leave, presenceTopic } from "@/lib/sse/presence";
+import { resolveClientInfo } from "@/lib/analytics/client-info";
+import { HLS_VARIANT_SUFFIXES } from "@/lib/video/rungs";
 
 /**
  * Viewer-minute heartbeat. Called once per 60s by the live player while a
@@ -41,19 +43,17 @@ function hashIp(req: NextRequest): string {
   return crypto.createHash("sha256").update(fwd).digest("hex").slice(0, 32);
 }
 
-/** Coarse enough to be a useful cut, coarse enough not to identify anybody. */
-function deviceFrom(ua: string): string {
-  const s = ua.toLowerCase();
-  if (/ipad|tablet/.test(s)) return "tablet";
-  if (/mobi|android|iphone/.test(s)) return "mobile";
-  if (/smart-?tv|smarttv|appletv|googletv|hbbtv|netcast|webos|tizen/.test(s)) return "tv";
-  if (!s) return "";
-  return "desktop";
-}
-
-/** The ladder rung the player reported. Anything else is recorded as null. */
+/**
+ * The ladder rung the player reported. Anything else is recorded as null.
+ *
+ * `_fhd` was missing from this list, so a viewer on 1080p, the most expensive
+ * rung there is and the only one behind a subscription, recorded as though the
+ * player had said nothing at all.
+ */
 function rungFrom(value: unknown): string | null {
-  return value === "_low" || value === "_mid" || value === "_hi" ? value : null;
+  return HLS_VARIANT_SUFFIXES.includes(value as (typeof HLS_VARIANT_SUFFIXES)[number])
+    ? (value as string)
+    : null;
 }
 
 export async function POST(
@@ -86,14 +86,28 @@ export async function POST(
   const channelId = stream.channelId;
 
   const country = (req.headers.get("cf-ipcountry") ?? "").slice(0, 2).toUpperCase();
-  const device = deviceFrom(req.headers.get("user-agent") ?? "");
+
+  /*
+   * What the viewer is watching on.
+   *
+   * A user agent is all a browser will admit to, and it is worse than nothing
+   * for the app: a React Native agent parses as neither a phone nor a browser,
+   * so every app viewer was filed under Unknown in the audience breakdown while
+   * the app is the surface most people watch on. The app knows its own
+   * platform, model, OS and build, so it says so, and this trusts it.
+   *
+   * A beat with no body at all is still a beat. An old app build sends one, and
+   * a viewer running it must keep counting.
+   */
   let rung: string | null = null;
+  let reported: Record<string, unknown> | null = null;
   try {
-    const body = (await req.json()) as { rung?: unknown };
-    rung = rungFrom(body?.rung);
+    reported = (await req.json()) as Record<string, unknown>;
+    rung = rungFrom(reported?.rung);
   } catch {
-    // The app sends no body at all. That is fine and must not fail the beat.
+    reported = null;
   }
+  const client = resolveClientInfo(reported, req.headers.get("user-agent") ?? "");
 
   // Dedup within bucket: if a row already exists for this channel+bucket and
   // this viewer (by user_id if signed in, otherwise by ip_hash), skip insert.
@@ -125,8 +139,13 @@ export async function POST(
     minuteBucket: bucket,
     ipHash: user ? "" : ipHash,
     country: country === "XX" ? null : country || null,
-    device: device || null,
+    device: client.device,
     rung,
+    platform: client.platform,
+    model: client.model,
+    osName: client.osName,
+    osVersion: client.osVersion,
+    appVersion: client.appVersion,
   });
 
   return NextResponse.json({ ok: true, accounted: true });

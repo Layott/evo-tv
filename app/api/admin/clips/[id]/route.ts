@@ -81,6 +81,8 @@ export async function DELETE(
     .where(eq(schema.clips.id, id));
 
   await writeAudit({
+    before: clip as unknown as Record<string, unknown>,
+    after: null,
     actorId: guard.user.id,
     actorRole: guard.role,
     capability: "editorial",

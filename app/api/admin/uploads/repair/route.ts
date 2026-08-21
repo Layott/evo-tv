@@ -74,6 +74,8 @@ export async function POST() {
     actorRole: guard.role,
     capability: "roster",
     action: "uploads.repair",
+    before: { unreadable: broken },
+    after: { repaired, stillUnreadable: stillBroken.length, checked },
     targetType: "storage",
     targetId: "spaces",
     meta: { checked, broken, repaired, stillBroken: stillBroken.length, truncated },

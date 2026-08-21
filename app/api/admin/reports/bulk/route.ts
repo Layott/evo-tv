@@ -59,6 +59,16 @@ export async function POST(req: NextRequest) {
     await writeAudit({
       actorId: guard.user.id,
       action: `report.${status}`,
+      before: {
+        status: row.status,
+        resolvedBy: row.resolvedBy,
+        resolutionNotes: row.resolutionNotes,
+      },
+      after: {
+        status,
+        resolvedBy: guard.user.id,
+        resolutionNotes: notes ?? null,
+      },
       targetType: "report",
       targetId: row.id,
       meta: {

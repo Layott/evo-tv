@@ -58,6 +58,8 @@ export async function POST(req: NextRequest) {
             kda: Math.round(kda * 100),
           });
         writeAudit({
+    before: null,
+    after: row as unknown as Record<string, unknown>,
           actorId: guard.user.id,
           action: "create",
           targetType: "player",
