@@ -73,11 +73,17 @@ export async function POST(
 
   await writeAudit({
     actorId: guard.user.id,
+    actorRole: guard.role,
+    capability: "broadcast",
     action: "channel.suspend",
     targetType: "channel",
     targetId: id,
+    before: {
+      suspendedAt: channel.suspendedAt,
+      suspendedReason: channel.suspendedReason,
+    },
+    after: { suspendedAt: nowIso, suspendedReason: parsed.data.reason },
     meta: {
-      role: guard.role,
       reason: parsed.data.reason,
       slug: channel.slug,
       publisherId: channel.publisherId,
@@ -122,10 +128,17 @@ export async function DELETE(
 
   await writeAudit({
     actorId: guard.user.id,
+    actorRole: guard.role,
+    capability: "broadcast",
     action: "channel.unsuspend",
     targetType: "channel",
     targetId: id,
-    meta: { role: guard.role, slug: channel.slug, publisherId: channel.publisherId },
+    before: {
+      suspendedAt: channel.suspendedAt,
+      suspendedReason: channel.suspendedReason,
+    },
+    after: { suspendedAt: null, suspendedReason: null },
+    meta: { slug: channel.slug, publisherId: channel.publisherId },
   });
 
   return NextResponse.json({ ok: true, channelId: id });

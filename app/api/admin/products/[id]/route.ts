@@ -154,6 +154,8 @@ export async function DELETE(
   await db.delete(schema.products).where(eq(schema.products.id, id));
 
   await writeAudit({
+    before: product as unknown as Record<string, unknown>,
+    after: null,
     actorId: guard.user.id,
     actorRole: guard.role,
     capability: "commerce",

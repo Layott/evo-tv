@@ -52,6 +52,8 @@ export async function PATCH(
     );
     try {
       await writeAudit({
+    before: existing as unknown as Record<string, unknown>,
+    after: row as unknown as Record<string, unknown>,
         actorId: guard.user.id,
         action: "update",
         targetType: "feature_flag",

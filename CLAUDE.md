@@ -80,6 +80,55 @@ A React Native / Expo SDK 52 twin of this app lives at **`../EVOTV-app/`** (sibl
 
 ---
 
+## 🛑 HARD RULE - Every admin write is audited, with both sides (owner, 2026-08-21)
+
+**Anything an admin can change from the dashboard writes an audit row, and that
+row says what changed, from what, to what.** New screen, new button, new field,
+new bulk action: the audit entry ships in the same PR as the feature. A feature
+that changes data and leaves no trace is not finished.
+
+Set after the owner opened the log and found "no fields" on almost every row: 81
+of 90 audit writes recorded no before/after, so the log could say somebody
+edited the channel breaks and never what they set them to.
+
+### What a write must carry
+
+```ts
+await writeAudit({
+  actorId: guard.user.id,
+  actorRole: guard.role,        // optional: read at write time when omitted
+  capability: "broadcast",      // optional: derived from the action when omitted
+  action: "channel.breaks.update",
+  targetType: "system",
+  targetId: "channel-breaks",
+  before: previousRow,          // REQUIRED for an update or a delete
+  after: nextRow,               // REQUIRED for an update or a create
+});
+```
+
+- **Create**: `before: null`, `after:` the row as created.
+- **Update**: read the row before mutating and pass both. `diffFields` stores
+  only what moved, so passing whole rows is correct and cheap.
+- **Delete**: `before:` the row as it was, `after: null`. A deleted row keeps its
+  name in `meta` so the log stays readable once the record is gone.
+
+### Reviewing your own work
+
+Before opening the PR, run the sweep and check your new call site is not in it:
+
+```
+node scripts/audit-coverage.mjs
+```
+
+It lists every `writeAudit` that records no before/after. The number it prints
+should never go up.
+
+### Field labels
+
+If the feature adds a column an operator will read in the log, add it to
+`FIELD_LABELS` in `components/admin/audit-log-page.tsx` so it renders as the
+words the screen uses rather than the column name.
+
 ## 🛑 HARD RULE - Design: no hairline borders, no glow (owner, 2026-08-17)
 
 Two bans. Absolute. Every project, every framework, every component. Applies to code I write AND designs I propose.

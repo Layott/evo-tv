@@ -156,6 +156,8 @@ export async function DELETE(
   if (slot.showId) await refreshShowStatus(slot.showId);
 
   await writeAudit({
+    before: slot as unknown as Record<string, unknown>,
+    after: null,
     actorId: guard.user.id,
     action: "epg.delete",
     targetType: "epg_slot",

@@ -115,7 +115,8 @@ export async function POST(req: NextRequest) {
     action: "create",
     targetType: "ad",
     targetId: id,
-    meta: parsed.data as unknown as Record<string, unknown>,
+    before: null,
+    after: { id, ...parsed.data } as unknown as Record<string, unknown>,
   });
 
   return NextResponse.json({ id, ...parsed.data }, { status: 201 });
