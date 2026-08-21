@@ -104,6 +104,8 @@ export async function PATCH(
       actorRole: guard.role,
       capability: "editorial",
       action: "episode.update",
+      before: existing as unknown as Record<string, unknown>,
+      after: { ...existing, ...parsed.data } as unknown as Record<string, unknown>,
       targetType: "episode",
       targetId: id,
       meta: {
@@ -163,6 +165,8 @@ export async function DELETE(
   await refreshShowStatus(episode.showId);
 
   await writeAudit({
+    before: episode as unknown as Record<string, unknown>,
+    after: null,
     actorId: guard.user.id,
     actorRole: guard.role,
     capability: "editorial",

@@ -69,7 +69,8 @@ export async function POST(req: NextRequest) {
     action: "create",
     targetType: "event",
     targetId: id,
-    meta: parsed.data as unknown as Record<string, unknown>,
+    before: null,
+    after: { id, ...parsed.data } as unknown as Record<string, unknown>,
   });
 
   const created = (

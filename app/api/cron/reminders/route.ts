@@ -157,6 +157,8 @@ export async function GET(req: NextRequest) {
     void writeAudit({
       actorId: null,
       action: "epg.reminders.fanout",
+      before: null,
+      after: { candidates: candidates.length, due: due.length, stamped, notified, pushed },
       targetType: "system",
       targetId: "cron",
       meta: {

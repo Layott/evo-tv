@@ -48,7 +48,9 @@ export async function POST(
       action: "update",
       targetType: "stream",
       targetId: channelId,
-      meta: { event: "chat_pin", messageId: parsed.data.messageId, ...result },
+      before: { isPinned: !result.isPinned },
+      after: { isPinned: result.isPinned },
+      meta: { event: "chat_pin", messageId: parsed.data.messageId },
     });
     return NextResponse.json({ ok: true, ...result });
   }
@@ -61,6 +63,9 @@ export async function POST(
       action: "delete",
       targetType: "stream",
       targetId: channelId,
+      // The words go with the message. This is where they survive.
+      before: { body: deleted.body, isDeleted: false },
+      after: { body: deleted.body, isDeleted: true },
       meta: { event: "chat_delete", messageId: parsed.data.messageId },
     });
     return NextResponse.json({ ok: true });
@@ -88,6 +93,8 @@ export async function POST(
     action: "update",
     targetType: "stream",
     targetId: channelId,
+    before: { timedOut: false },
+    after: { timedOut: true, durationSec: parsed.data.durationSec, expiresAt },
     meta: {
       event: "chat_timeout",
       userId: parsed.data.userId,

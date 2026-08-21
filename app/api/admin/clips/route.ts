@@ -185,6 +185,12 @@ export async function POST(req: NextRequest) {
     contentTags: input.contentTags,
   });
 
+  // Read back rather than assembled: the slug and the timestamps are the
+  // database's to decide, and the log should show what it actually holds.
+  const row = (
+    await db.select().from(schema.clips).where(eq(schema.clips.id, id)).limit(1)
+  )[0];
+
   await writeAudit({
     actorId: guard.user.id,
     actorRole: guard.role,
@@ -192,12 +198,11 @@ export async function POST(req: NextRequest) {
     action: "clip.create",
     targetType: "clip",
     targetId: id,
+    before: null,
+    after: row as unknown as Record<string, unknown>,
     meta: { title: input.title, showId, episodeId: input.episodeId, vodId: input.vodId },
   });
 
-  const row = (
-    await db.select().from(schema.clips).where(eq(schema.clips.id, id)).limit(1)
-  )[0];
   const { mp4Path, ...rest } = row!;
   return NextResponse.json({ clip: { ...rest, mp4Url: mp4Path } }, { status: 201 });
 }

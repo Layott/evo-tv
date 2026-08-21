@@ -179,6 +179,8 @@ export async function POST(req: NextRequest) {
     actorRole: guard.role,
     capability: "editorial",
     action: "show.create",
+    before: null,
+    after: (await getShowById(id)) as unknown as Record<string, unknown>,
     targetType: "show",
     targetId: id,
     meta: { title: input.title, slug, isPremium: input.isPremium },

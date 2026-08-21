@@ -99,6 +99,8 @@ export async function POST(
   void writeAudit({
     actorId: guard.user.id,
     action: "update",
+    before: { activeKeyRotated: true },
+    after: { keyRowId: rowId },
     targetType: "stream",
     targetId: id,
     meta: { event: "rotate_stream_key", keyRowId: rowId },

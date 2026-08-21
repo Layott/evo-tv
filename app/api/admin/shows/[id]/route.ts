@@ -222,6 +222,8 @@ export async function DELETE(
     .where(eq(schema.shows.id, id));
 
   await writeAudit({
+    before: show as unknown as Record<string, unknown>,
+    after: null,
     actorId: guard.user.id,
     actorRole: guard.role,
     capability: "editorial",

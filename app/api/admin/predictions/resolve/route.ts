@@ -22,6 +22,8 @@ export async function POST(req: NextRequest) {
   void writeAudit({
     actorId: guard.user.id,
     action: "update",
+    before: null,
+    after: { winningTeamId: parsed.data.winningTeamId, ...result },
     targetType: "event",
     targetId: parsed.data.matchId,
     meta: { event: "prediction_resolved", winningTeamId: parsed.data.winningTeamId, ...result },

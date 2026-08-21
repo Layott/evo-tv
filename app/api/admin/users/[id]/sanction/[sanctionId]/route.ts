@@ -56,6 +56,8 @@ export async function DELETE(
   await writeAudit({
     actorId: guard.user.id,
     action: `user.sanction.revert.${row.kind}`,
+    before: { revertedAt: row.revertedAt, revertedBy: row.revertedBy },
+    after: { revertedAt: nowIso, revertedBy: guard.user.id },
     targetType: "user",
     targetId: targetUserId,
     meta: {

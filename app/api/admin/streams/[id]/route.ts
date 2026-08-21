@@ -55,6 +55,8 @@ export async function DELETE(
     actorRole: guard.role,
     capability: "broadcast",
     action: "stream.delete",
+    before: { deletedAt: stream.deletedAt, isLive: stream.isLive },
+    after: { deletedAt: nowIso, isLive: false },
     targetType: "stream",
     targetId: id,
     meta: {

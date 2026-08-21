@@ -67,6 +67,11 @@ export async function PUT(req: NextRequest) {
     unknown
   >;
 
+  // What it was, so the log can say what moved. Read before the write, because
+  // afterwards there is nothing left to compare against: this row is a single
+  // settings blob and the update overwrites it whole.
+  const before = (await readChannelBreaks()) as unknown as Record<string, unknown>;
+
   await db
     .insert(schema.featureFlags)
     .values({
@@ -82,10 +87,13 @@ export async function PUT(req: NextRequest) {
 
   await writeAudit({
     actorId: guard.user.id,
+    actorRole: guard.role,
+    capability: "broadcast",
     action: "channel.breaks.update",
     targetType: "system",
     targetId: "channel",
-    meta: payload,
+    before,
+    after: payload,
   });
 
   return NextResponse.json(payload);

@@ -24,6 +24,8 @@ export async function POST(
   void writeAudit({
     actorId: guard.user.id,
     action: "update",
+    before: null,
+    after: { ...result },
     targetType: "event",
     targetId: eventId,
     meta: {

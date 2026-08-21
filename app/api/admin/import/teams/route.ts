@@ -49,6 +49,8 @@ export async function POST(req: NextRequest) {
       try {
         await db.insert(schema.teams).values({ id, ...row });
         writeAudit({
+    before: null,
+    after: row as unknown as Record<string, unknown>,
           actorId: guard.user.id,
           action: "create",
           targetType: "team",

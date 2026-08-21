@@ -110,6 +110,8 @@ export async function POST(
     actorRole: guard.role,
     capability: "community",
     action: "chat.ban",
+    before: { chatBanned: false },
+    after: { chatBanned: true, reason, expiresAt, messageRemoved: message.body },
     targetType: "user",
     targetId: target.id,
     meta: { streamId, messageId, hours, expiresAt, reason },
