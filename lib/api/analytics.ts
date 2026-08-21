@@ -1,5 +1,5 @@
 import "server-only";
-import { and, desc, eq, gte, lt, sql, inArray } from "drizzle-orm";
+import { and, desc, eq, gte, isNotNull, lt, sql, inArray } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { daysInRange, resolveRange, type RangeInput } from "@/lib/analytics/range";
 
@@ -165,9 +165,12 @@ export async function viewsOverTime(
 /* ------------------------------------------------------------------ */
 
 /**
- * Returns an N x N matrix: rows = signup-week cohorts (most-recent first),
- * cell[w][k] = percentage of that cohort who had at least one
- * `vod_progress` row in week k after signup.
+ * Who came back, by the week they signed up in.
+ *
+ * `cell[w][k]` is the share of the cohort that watched something in week k
+ * after signing up. Watching means a live broadcast or a recording: counting
+ * only recordings made the entire grid read 0% on a channel that is live
+ * around the clock, which is what the owner was looking at.
  */
 export async function retentionCohort(weeks = 8): Promise<{
   cohorts: { weekStart: string; size: number }[];
@@ -213,14 +216,45 @@ export async function retentionCohort(weeks = 8): Promise<{
     if (idx >= 0 && idx < safeWeeks) cohortUsers[idx].push(u.id);
   }
 
-  // Pull all vod_progress rows for any user we care about (>= earliest).
-  const progressRows = await db
-    .select({
-      userId: schema.vodProgress.userId,
-      updatedAt: schema.vodProgress.updatedAt,
-    })
-    .from(schema.vodProgress)
-    .where(gte(schema.vodProgress.updatedAt, earliest.toISOString()));
+  /*
+   * Coming back means watching something. Either kind of something.
+   *
+   * This counted `vod_progress` and nothing else, so on a platform whose
+   * catalogue is empty and whose channel is live around the clock the whole
+   * grid was 0%, permanently, and said nothing about anybody. A live viewer is
+   * as returned as a viewer of a recording, and `watch_events` has been
+   * recording them the whole time.
+   */
+  const [progressRows, liveRows] = await Promise.all([
+    db
+      .select({
+        userId: schema.vodProgress.userId,
+        updatedAt: schema.vodProgress.updatedAt,
+      })
+      .from(schema.vodProgress)
+      .where(gte(schema.vodProgress.updatedAt, earliest.toISOString())),
+
+    // Signed-in beats only: an anonymous viewer cannot belong to a signup
+    // cohort, so counting them would inflate the denominator's answer with
+    // people the numerator can never find.
+    db
+      .select({
+        userId: schema.watchEvents.userId,
+        updatedAt: schema.watchEvents.createdAt,
+      })
+      .from(schema.watchEvents)
+      .where(
+        and(
+          gte(schema.watchEvents.createdAt, earliest.toISOString()),
+          isNotNull(schema.watchEvents.userId),
+        ),
+      ),
+  ]);
+
+  const activity: { userId: string; updatedAt: string }[] = [
+    ...progressRows,
+    ...liveRows.map((r) => ({ userId: r.userId as string, updatedAt: r.updatedAt })),
+  ];
 
   // userId -> Set of week offsets (since their cohort start) where they had activity.
   const userToCohortIdx = new Map<string, number>();
@@ -229,7 +263,7 @@ export async function retentionCohort(weeks = 8): Promise<{
   }
 
   const userActiveWeeks = new Map<string, Set<number>>();
-  for (const p of progressRows) {
+  for (const p of activity) {
     const cohortIdx = userToCohortIdx.get(p.userId);
     if (cohortIdx === undefined) continue;
     const cohortStart = cohortStarts[cohortIdx];
