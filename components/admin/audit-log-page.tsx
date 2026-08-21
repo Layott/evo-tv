@@ -144,6 +144,54 @@ const FIELD_LABELS: Record<string, string> = {
   active: "Active",
   clickUrl: "Click-through",
   mediaUrl: "Creative",
+
+  // The channel's rhythm, as the Ads screen words it.
+  adIntervalMin: "Ad break every",
+  adMaxSec: "Longest an ad holds",
+  overlayIntervalMin: "Lower third every",
+  overlayDurationSec: "Lower third holds for",
+  fillerOnDrop: "Cover a dropped feed",
+  lowerThirdStyles: "Lower thirds in rotation",
+  upNextStyles: "Full-screen cards in rotation",
+  upNextLeadMin: "Full-screen card, minutes before",
+  upNextSec: "Full-screen card holds for",
+  enabled: "Switched on",
+
+  // Broadcast state.
+  isLive: "On air",
+  endedAt: "Ended",
+  viewerCount: "Viewers at the time",
+  deletedAt: "Deleted",
+  suspendedAt: "Suspended",
+  suspendedReason: "Suspension reason",
+  nowAiringTitle: "On air now",
+  nowAiringTargetId: "Programme",
+
+  // Moderation, where the words themselves are the record.
+  body: "The message",
+  isPinned: "Pinned",
+  isDeleted: "Removed",
+  chatBanned: "Banned from chat",
+  timedOut: "Timed out",
+  messageRemoved: "Message removed with it",
+  expiresAt: "Expires",
+  sessionsRevoked: "Sessions kicked",
+  reason: "Reason",
+
+  // Money.
+  currentPeriodEnd: "Paid until",
+  priceNgn: "Price",
+  tier: "Plan",
+
+  // What a job did.
+  repaired: "Files repaired",
+  unreadable: "Files unreadable",
+  stillUnreadable: "Still unreadable",
+  checked: "Files checked",
+  purged: "Accounts purged",
+  recipients: "Recipients",
+  audience: "Audience",
+  destination: "Where it points",
 };
 
 function fieldLabel(key: string): string {

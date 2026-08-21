@@ -65,6 +65,11 @@ for (const dir of SEARCH_DIRS) {
     const pattern = /(writeAudit|auditFromGuard)\(/g;
     let match;
     while ((match = pattern.exec(src)) !== null) {
+      // `auditFromGuard` forwards whatever its caller passed, including both
+      // sides. Counting the forward as a call site would report a helper that
+      // cannot be fixed, because there is nothing there to fix.
+      if (file.endsWith(path.join("lib", "api", "admin.ts"))) continue;
+
       // The definitions themselves are not call sites.
       if (/export (async )?function /.test(src.slice(Math.max(0, match.index - 60), match.index))) {
         continue;

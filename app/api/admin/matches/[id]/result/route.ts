@@ -41,7 +41,13 @@ export async function POST(
 
   const existing = (
     await db
-      .select({ id: schema.matches.id, eventId: schema.matches.eventId })
+      .select({
+        id: schema.matches.id,
+        eventId: schema.matches.eventId,
+        scoreA: schema.matches.scoreA,
+        scoreB: schema.matches.scoreB,
+        state: schema.matches.state,
+      })
       .from(schema.matches)
       .where(eq(schema.matches.id, id))
       .limit(1)
@@ -75,6 +81,16 @@ export async function POST(
     actorRole: guard.role,
     capability: "editorial",
     action: "update",
+    before: {
+      scoreA: existing.scoreA,
+      scoreB: existing.scoreB,
+      state: existing.state,
+    },
+    after: {
+      scoreA: parsed.data.scoreA,
+      scoreB: parsed.data.scoreB,
+      state: parsed.data.state,
+    },
     targetType: "event",
     targetId: existing.eventId,
     meta: {

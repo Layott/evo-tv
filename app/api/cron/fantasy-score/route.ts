@@ -35,6 +35,8 @@ export async function GET(req: NextRequest) {
     void writeAudit({
       actorId: null,
       action: "fantasy.score",
+      before: null,
+      after: { ...totals },
       targetType: "system",
       targetId: "cron",
       meta: totals,

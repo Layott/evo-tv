@@ -271,6 +271,7 @@ export async function POST(req: NextRequest) {
 
   await auditFromGuard(guard, "editorial", {
     action: result.createdShow ? "show.create_with_episode" : "episode.create",
+    before: null,
     targetType: "episode",
     targetId: result.episodeId,
     after: {

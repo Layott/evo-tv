@@ -102,6 +102,8 @@ export async function PATCH(
       actorRole: guard.role,
       capability: "editorial",
       action: "vod.update",
+      before: existing as unknown as Record<string, unknown>,
+      after: { ...existing, ...patch } as unknown as Record<string, unknown>,
       targetType: "vod",
       targetId: id,
       meta: { fields: Object.keys(patch), title: existing.title },

@@ -117,11 +117,13 @@ await writeAudit({
 Before opening the PR, run the sweep and check your new call site is not in it:
 
 ```
-node scripts/audit-coverage.mjs
+pnpm audit:coverage
 ```
 
-It lists every `writeAudit` that records no before/after. The number it prints
-should never go up.
+It lists every `writeAudit` that records no before/after and fails on any at
+all. **It is at zero and `pnpm check` runs it**, so a write that forgets both
+sides fails the build rather than being noticed months later by somebody reading
+the log.
 
 ### Field labels
 

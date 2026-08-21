@@ -92,6 +92,8 @@ export async function PATCH(
       actorRole: guard.role,
       capability: "editorial",
       action: "season.update",
+      before: existing as unknown as Record<string, unknown>,
+      after: { ...existing, ...parsed.data } as unknown as Record<string, unknown>,
       targetType: "season",
       targetId: id,
       meta: {

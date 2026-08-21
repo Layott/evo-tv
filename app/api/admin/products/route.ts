@@ -137,6 +137,8 @@ export async function POST(req: NextRequest) {
     actorRole: guard.role,
     capability: "commerce",
     action: "product.create",
+    before: null,
+    after: { id, slug, ...input } as unknown as Record<string, unknown>,
     targetType: "product",
     targetId: id,
     meta: { name: input.name, slug, priceNgn: input.priceNgn },

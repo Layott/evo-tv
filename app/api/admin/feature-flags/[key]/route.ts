@@ -89,6 +89,8 @@ export async function DELETE(
       await writeAudit({
         actorId: guard.user.id,
         action: hard ? "delete" : "disable",
+        before: existing as unknown as Record<string, unknown>,
+        after: hard ? null : { ...existing, enabled: false },
         targetType: "feature_flag",
         targetId: key,
         meta: existing as unknown as Record<string, unknown>,
