@@ -15,13 +15,14 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:integration": "vitest run --config vitest.integration.config.ts",
-    "check": "pnpm typecheck && pnpm test && pnpm build && pnpm audit:coverage",
+    "check": "pnpm typecheck && pnpm test && pnpm build && pnpm audit:coverage && pnpm seo:coverage",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx db/migrate.ts",
     "db:reset": "node -e \"require('fs').rmSync('./data',{recursive:true,force:true})\" && pnpm db:migrate",
     "db:studio": "drizzle-kit studio",
     "audit:coverage": "node scripts/audit-coverage.mjs --max 0",
-    "geoip:download": "bash deploy/geoip-refresh.sh ./data/city.mmdb"
+    "geoip:download": "bash deploy/geoip-refresh.sh ./data/city.mmdb",
+    "seo:coverage": "node scripts/seo-coverage.mjs --max 0"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1105.0",
