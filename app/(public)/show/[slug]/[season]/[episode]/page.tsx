@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { JsonLd, breadcrumbs, tvEpisode } from "@/lib/seo/json-ld";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MediaImage } from "@/components/ui/media-image";
@@ -62,9 +63,32 @@ export async function generateMetadata({ params }: RouteParams): Promise<Metadat
   if (!show || s === null || e === null) notFound();
   const ep = await getEpisodeByLookup(show.id, s, e);
   if (!ep) notFound();
+  const description =
+    ep.synopsis ||
+    show.synopsis ||
+    `${show.title}, season ${s}, episode ${e} on EVO TV.`;
+  const canonical = `/show/${show.slug}/${s}/${e}`;
+
   return {
     title: `${show.title}, S${s}E${e}: ${ep.title}`,
-    description: ep.synopsis || show.synopsis,
+    description,
+    // Without this an episode reached with a tracking parameter counts as a
+    // second page, and the two split whatever the episode would have ranked
+    // for. Episodes are the pages most often shared with one attached.
+    alternates: { canonical },
+    openGraph: {
+      title: `${show.title}, S${s}E${e}: ${ep.title}`,
+      description,
+      url: canonical,
+      type: "video.episode",
+      images: ep.thumbnailUrl ? [{ url: ep.thumbnailUrl, alt: ep.title }] : [],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${show.title}, S${s}E${e}: ${ep.title}`,
+      description,
+      images: ep.thumbnailUrl ? [ep.thumbnailUrl] : [],
+    },
   };
 }
 
@@ -88,8 +112,39 @@ export default async function EpisodePage({ params }: RouteParams) {
   const thisSeason = seasons.find((s) => s.seasonNumber === seasonNumber);
   const siblings = thisSeason ? await listEpisodesForSeason(thisSeason.id) : [];
 
+  const episodePath = `/show/${show.slug}/${seasonNumber}/${episodeNumber}`;
+
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 sm:py-8">
+      {/*
+        The episode, described for a machine, and tied back to its series.
+
+        The visible breadcrumb below says the same thing to a reader; this says
+        it to a crawler, which is what puts "Shows > Title > Episode" under the
+        result instead of a bare URL.
+      */}
+      <JsonLd
+        data={[
+          tvEpisode({
+            name: ep.title,
+            description: ep.synopsis,
+            path: episodePath,
+            image: ep.thumbnailUrl,
+            episodeNumber: ep.episodeNumber,
+            seasonNumber: ep.seasonNumber,
+            seriesName: show.title,
+            seriesPath: `/show/${show.slug}`,
+            duration: ep.runtimeSec,
+            released: ep.releasedAt,
+          }),
+          breadcrumbs([
+            { name: "EVO TV", path: "/" },
+            { name: "Shows", path: "/shows" },
+            { name: show.title, path: `/show/${show.slug}` },
+            { name: ep.title, path: episodePath },
+          ]),
+        ]}
+      />
       <BackButton fallbackHref={`/show/${show.slug}`} />
 
       <nav className="mt-4 text-xs text-muted-foreground">

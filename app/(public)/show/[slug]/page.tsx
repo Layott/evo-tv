@@ -15,6 +15,7 @@ import { Price } from "@/components/ui/price";
 import { LocalTime } from "@/components/ui/local-time";
 import { BackButton } from "@/components/shell/back-button";
 import { MediaImage } from "@/components/ui/media-image";
+import { JsonLd, breadcrumbs, tvSeries } from "@/lib/seo/json-ld";
 
 /**
  * A show's own page, inside the app.
@@ -194,6 +195,32 @@ export default async function ShowPage({
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 sm:py-8">
+      {/*
+        What this page is, for a machine. A show marked up as a TVSeries is
+        eligible to be understood as one thing with seasons rather than a page
+        that happens to list episode titles, and it is what an assistant reads
+        when somebody asks what EVO TV airs.
+
+        Sits inside the existing wrapper and renders a script tag, so it takes
+        no space and moves nothing.
+      */}
+      <JsonLd
+        data={[
+          tvSeries({
+            name: title,
+            description: synopsis,
+            path: `/show/${slug}`,
+            image: poster,
+            genre: PILLAR_LABEL[pillar] ?? undefined,
+            seasons: row?.totalSeasons ?? seasons.length,
+          }),
+          breadcrumbs([
+            { name: "EVO TV", path: "/" },
+            { name: "Shows", path: "/shows" },
+            { name: title, path: `/show/${slug}` },
+          ]),
+        ]}
+      />
       <BackButton fallbackHref="/shows" />
 
       <div className="mt-5 grid gap-6 md:grid-cols-[minmax(0,16rem)_minmax(0,1fr)]">
