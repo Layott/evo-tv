@@ -107,6 +107,9 @@ export async function POST(
   const country =
     headerCountry && headerCountry !== "XX"
       ? headerCountry
+      // No `remote`: this row stores the country and nothing finer, and the
+      // local file supplies a country for effectively every address, so a
+      // paid call here would buy something already in hand.
       : ((await locateIp(clientIp(req)))?.country ?? "");
 
   /*

@@ -82,7 +82,7 @@ describe("locateIp", () => {
       GEOIP_DB_PATH: "/nonexistent/city.mmdb",
     });
 
-    expect(await locateIp("105.112.0.1")).toEqual({
+    expect(await locateIp("105.112.0.1", { remote: true })).toEqual({
       city: "Lagos",
       region: "Lagos",
       country: "NG",
@@ -91,7 +91,7 @@ describe("locateIp", () => {
 
     // A viewer sends a heartbeat every fifteen seconds. Without the cache that
     // is one paid lookup per heartbeat, and the free tier is a monthly count.
-    await locateIp("105.112.0.1");
+    await locateIp("105.112.0.1", { remote: true });
     expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 
@@ -109,7 +109,7 @@ describe("locateIp", () => {
 
     // The caller is writing a login row. No location is acceptable; a thrown
     // error inside a sign-in is not.
-    expect(await locateIp("105.112.0.1")).toBeNull();
+    expect(await locateIp("105.112.0.1", { remote: true })).toBeNull();
   });
 
   it("does not call out at all when no token is configured", async () => {
@@ -120,7 +120,24 @@ describe("locateIp", () => {
       GEOIP_DB_PATH: "/nonexistent/city.mmdb",
     });
 
+    expect(await locateIp("105.112.0.1", { remote: true })).toBeNull();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("does not call out for a heartbeat, only for a sign-in", async () => {
+    const fetchSpy = vi.fn(async () => Response.json({ city: "Lagos", country: "NG" }));
+    vi.stubGlobal("fetch", fetchSpy);
+    const { locateIp } = await freshModule({
+      IPINFO_TOKEN: "test-token",
+      GEOIP_DB_PATH: "/nonexistent/city.mmdb",
+    });
+
+    // A heartbeat stores the country and nothing finer, and there are tens of
+    // thousands of them a day against a handful of sign-ins.
     expect(await locateIp("105.112.0.1")).toBeNull();
     expect(fetchSpy).not.toHaveBeenCalled();
+
+    expect(await locateIp("41.58.0.1", { remote: true })).not.toBeNull();
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 });

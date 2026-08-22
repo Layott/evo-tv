@@ -46,7 +46,10 @@ export async function recordLoginEvent(session: { userId: string }): Promise<voi
   const headerCity = h.get("cf-ipcity");
   const headerRegion = h.get("cf-region");
   const headerCountry = h.get("cf-ipcountry");
-  const located = headerCity ? null : await locateIp(ip);
+  // `remote` is what permits the IPinfo call, and only a sign-in sets it: this
+  // row is read by somebody asking where a person signed in from, where a city
+  // answers and a country does not.
+  const located = headerCity ? null : await locateIp(ip, { remote: true });
 
   const region =
     formatLocation({

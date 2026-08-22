@@ -1,4 +1,5 @@
 import "server-only";
+import { redisClient } from "@/lib/sse/bus";
 
 /**
  * Where an address is, asked of three sources in order of what each costs.
@@ -16,7 +17,8 @@ import "server-only";
  *   2. A local database file, a few microseconds and no network. Covers the
  *      requests Cloudflare never saw.
  *   3. IPinfo, one HTTPS call, for the addresses the local file places in a
- *      country but not a city. Rare once the cache is warm.
+ *      country but not a city. **Sign-ins only**, and under a daily ceiling:
+ *      see `locateIp`.
  *
  * Each step is optional. With no database file and no token the module returns
  * null and callers degrade to whatever the headers gave them, which is what
@@ -39,6 +41,19 @@ const IPINFO_TOKEN = process.env.IPINFO_TOKEN ?? "";
 
 /** A lookup is worth waiting for, but never worth holding up a sign-in. */
 const IPINFO_TIMEOUT_MS = 1_500;
+
+/**
+ * How many IPinfo lookups a day, across both api containers.
+ *
+ * The free allowance is a monthly number, and a month is exactly the wrong
+ * unit to discover you have exhausted: it fails on the 20th and stays failed.
+ * A daily ceiling turns that into a bad afternoon. 1,000 a day sits under
+ * 50,000 a month with room for an unusual week.
+ *
+ * The counter lives in Valkey because two containers each keeping their own
+ * would quietly permit twice the ceiling.
+ */
+const IPINFO_DAILY_MAX = Number(process.env.IPINFO_DAILY_MAX ?? 1_000);
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const CACHE_MAX = 5_000;
 
@@ -174,8 +189,41 @@ type IpinfoResponse = {
   bogon?: boolean;
 };
 
+/**
+ * Claim one lookup against today's ceiling, or refuse.
+ *
+ * With no broker there is nothing to share a count through, so the ceiling
+ * applies per container. That is the development case, where the volume is a
+ * handful of requests.
+ */
+async function claimBudget(): Promise<boolean> {
+  const redis = redisClient();
+  if (!redis) return true;
+  // A UTC day, which is what the analytics day keys already use.
+  const key = `geo:ipinfo:${new Date().toISOString().slice(0, 10)}`;
+  try {
+    const used = await redis.incr(key);
+    // Only the first write needs the expiry, and setting it every time would
+    // keep pushing the window forward.
+    if (used === 1) await redis.expire(key, 48 * 60 * 60);
+    if (used > IPINFO_DAILY_MAX) {
+      if (used === IPINFO_DAILY_MAX + 1) {
+        console.warn(
+          `[geo] hit the daily IPinfo ceiling of ${IPINFO_DAILY_MAX}; using the local database alone until tomorrow.`,
+        );
+      }
+      return false;
+    }
+    return true;
+  } catch {
+    // A broker that is down must not stop locations being resolved.
+    return true;
+  }
+}
+
 async function fromIpinfo(ip: string): Promise<IpLocation | null> {
   if (!IPINFO_TOKEN) return null;
+  if (!(await claimBudget())) return null;
   try {
     const res = await fetch(
       `https://ipinfo.io/${encodeURIComponent(ip)}/json?token=${encodeURIComponent(IPINFO_TOKEN)}`,
@@ -212,17 +260,31 @@ async function fromIpinfo(ip: string): Promise<IpLocation | null> {
  * Never throws. Callers treat the result as decoration on a row they were
  * writing anyway.
  */
-export async function locateIp(ip: string | null | undefined): Promise<IpLocation | null> {
+export async function locateIp(
+  ip: string | null | undefined,
+  opts: { remote?: boolean } = {},
+): Promise<IpLocation | null> {
   if (!ip || isPrivate(ip)) return null;
 
   const cached = cacheGet(ip);
   if (cached) return cached.value;
 
   const local = await fromLocal(ip);
-  // The local file places most addresses in a country and many in a city. Only
-  // the ones it leaves without a city are worth an HTTPS call, which keeps the
-  // free tier's monthly allowance spent on the addresses that need it.
-  const value = local?.city ? local : ((await fromIpinfo(ip)) ?? local);
+
+  /*
+   * Whether this caller is allowed to reach IPinfo.
+   *
+   * Only sign-ins are. A login row is read by a person asking where somebody
+   * signed in from, and a city answers that where a country does not. A viewer
+   * heartbeat stores nothing but the country, which the local file supplies for
+   * effectively every address, so a call there would spend the allowance to
+   * learn something already known.
+   *
+   * That distinction, rather than a rule about which logins count, is what
+   * keeps the volume down: every sign-in still gets located.
+   */
+  const value =
+    opts.remote && !local?.city ? ((await fromIpinfo(ip)) ?? local) : local;
 
   cacheSet(ip, value);
   return value;
