@@ -9,8 +9,18 @@
 #
 #   DB-IP City Lite   the default. A public monthly file, no signup, no key.
 #   MaxMind GeoLite2  used instead when MAXMIND_LICENSE_KEY is in /srv/evotv/.env
-#                     (or the environment). Needs a free MaxMind account, and is
-#                     generally the sharper of the two on mobile networks.
+#                     (or the environment). Needs a free MaxMind account.
+#
+# DB-IP is the default on measurement rather than reputation. Across 17 real
+# addresses, mostly Nigerian mobile ranges, DB-IP named a city for 17 and
+# GeoLite2 for 10: GeoLite2 returned a bare country for two MTN ranges, for
+# 8.8.8.8, and nothing at all for 1.1.1.1. That is GeoLite2 abstaining where it
+# is unsure, which is defensible, but every abstention becomes an IPinfo call,
+# and IPinfo has a monthly allowance where the local file has none.
+#
+# DB-IP errs the other way, labelling mobile ranges down to a neighbourhood.
+# lib/geo/ip-location.ts trims that back to the city, because a handset cannot
+# honestly be placed to a district.
 #
 # Either way the result is one .mmdb file and the reader does not care which
 # made it. Both are refreshed monthly at source, so this belongs on cron:

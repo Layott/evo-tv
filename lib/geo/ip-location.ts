@@ -134,12 +134,26 @@ function pickName(names: Record<string, string> | undefined): string | null {
   return names.en ?? Object.values(names)[0] ?? null;
 }
 
+/**
+ * Drop a parenthesised sub-locality: "Lagos (Victoria Island Annex)" is Lagos.
+ *
+ * DB-IP labels some ranges down to a neighbourhood, including mobile ranges,
+ * and a phone's address cannot honestly be placed to a district: the handset
+ * is wherever the carrier's gateway is not. Storing the longer string would
+ * put a precision in the audit log that the data does not have, and an
+ * operator reading "Lekki (Banana Island)" would reasonably believe it.
+ */
+function trimLocality(city: string | null): string | null {
+  if (!city) return null;
+  return city.replace(/\s*\([^)]*\)\s*$/, "").trim() || null;
+}
+
 async function fromLocal(ip: string): Promise<IpLocation | null> {
   const reader = await openReader();
   if (!reader) return null;
   try {
     const found = reader.city(ip);
-    const city = pickName(found.city?.names);
+    const city = trimLocality(pickName(found.city?.names));
     const region = pickName(found.subdivisions?.[0]?.names);
     const country = found.country?.isoCode ?? null;
     if (!city && !region && !country) return null;
@@ -227,3 +241,6 @@ export function formatLocation(
 export function geoConfig(): { dbPath: string; ipinfo: boolean } {
   return { dbPath: DB_PATH, ipinfo: Boolean(IPINFO_TOKEN) };
 }
+
+/** Internals worth testing directly, exported for the unit test only. */
+export const __test = { trimLocality, isPrivate };

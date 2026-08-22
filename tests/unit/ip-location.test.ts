@@ -43,6 +43,19 @@ describe("formatLocation", () => {
   });
 });
 
+describe("the local file's neighbourhood labels", () => {
+  it("keeps the city and drops the district", async () => {
+    // DB-IP names some ranges down to a neighbourhood, mobile ranges included,
+    // and a handset is wherever the carrier's gateway is not. The log should
+    // not claim a precision the data does not have.
+    const { __test } = await import("@/lib/geo/ip-location");
+    expect(__test.trimLocality("Lagos (Victoria Island Annex)")).toBe("Lagos");
+    expect(__test.trimLocality("Lekki (Banana Island)")).toBe("Lekki");
+    expect(__test.trimLocality("Lagos")).toBe("Lagos");
+    expect(__test.trimLocality(null)).toBeNull();
+  });
+});
+
 describe("locateIp", () => {
   it("never asks a paid API about an address on the compose network", async () => {
     const fetchSpy = vi.fn();
