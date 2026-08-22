@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { JsonLd, breadcrumbs, videoObject } from "@/lib/seo/json-ld";
 import { permanentRedirect } from "next/navigation";
 
 import { getVodBySlugOrId } from "@/lib/api/vods";
@@ -31,13 +32,24 @@ export async function generateMetadata({
   if (!vod) return {};
 
   const canonical = `/vod/${vod.slug ?? vod.id}`;
+  /*
+   * A description is never left empty.
+   *
+   * Plenty of rows have no synopsis, and a page with no meta description hands
+   * the search engine the job of inventing one out of whatever text it finds,
+   * which on a player page is the navigation. One written sentence about the
+   * video beats a scrape of the menu.
+   */
+  const description =
+    vod.description?.trim() || `${vod.title}, on demand at EVO TV.`;
+
   return {
     title: vod.title,
-    description: vod.description || undefined,
+    description,
     alternates: { canonical },
     openGraph: {
       title: vod.title,
-      description: vod.description || undefined,
+      description,
       url: canonical,
       type: "video.other",
       images: vod.thumbnailUrl ? [{ url: vod.thumbnailUrl }] : undefined,
@@ -65,10 +77,41 @@ export default async function VodPage({
   // That is also why the canonical above matters: it is what tells a crawler,
   // which is exactly the client that cannot follow this, which URL is the real
   // one.
-  if (looksLikeId(id)) {
-    const vod = await getVodBySlugOrId(id);
-    if (vod?.slug) permanentRedirect(`/vod/${vod.slug}`);
-  }
+  const vod = await getVodBySlugOrId(id);
 
-  return <VodView />;
+  if (looksLikeId(id) && vod?.slug) permanentRedirect(`/vod/${vod.slug}`);
+
+  return (
+    <>
+      {/*
+        The video, described for a machine.
+
+        This record carries both fields Google treats as required for a video
+        result, `thumbnailUrl` and `uploadDate`, plus a real duration, which is
+        what earns a thumbnail and a runtime beside the link rather than a
+        plain one. The player itself is a client component and could never
+        emit this.
+      */}
+      {vod ? (
+        <JsonLd
+          data={[
+            videoObject({
+              name: vod.title,
+              description: vod.description,
+              path: `/vod/${vod.slug ?? vod.id}`,
+              thumbnail: vod.thumbnailUrl,
+              uploadDate: vod.publishedAt,
+              duration: vod.durationSec,
+            }),
+            breadcrumbs([
+              { name: "EVO TV", path: "/" },
+              { name: "Library", path: "/shows" },
+              { name: vod.title, path: `/vod/${vod.slug ?? vod.id}` },
+            ]),
+          ]}
+        />
+      ) : null}
+      <VodView />
+    </>
+  );
 }

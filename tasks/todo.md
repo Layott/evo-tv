@@ -938,3 +938,42 @@ Verified in Chrome at 1440 wide and at a true 390px viewport, guest and signed-i
 - `/api/schedule` windows on a **UTC** day while the grid is Lagos-local, so a requested date returns Lagos 01:00 to 00:00. Pre-existing contract, left alone rather than silently changed under the native app.
 - Pillar mapping is the spec's proposal and still needs owner sign-off.
 - The April grid is four months old and may be stale.
+
+## SEO and structured data (2026-08-22)
+
+Owner asked for serious SEO across the site, for search engines and for AI
+crawlers, without touching the design. Everything here is invisible to the
+rendered page: `<head>` tags, `application/ld+json` scripts, robots, sitemap.
+
+- [x] `lib/seo/json-ld.tsx`: one `<JsonLd>` component and typed builders
+- [x] `lib/seo/metadata.ts`: one helper so 20-odd pages stay consistent
+- [x] Organization + WebSite on the root layout
+- [x] Per-page metadata everywhere public that has none
+- [x] `noindex` on (auth), (authed), (embed) and every ComingSoon page
+- [x] Structured data: TVSeries, TVEpisode, VideoObject, BroadcastEvent,
+      SportsEvent, SportsTeam, Product, FAQPage, BreadcrumbList
+- [x] robots.txt: 18 agents named, disallows widened to every personal page
+- [x] sitemap.xml: driven by the database rather than a static list
+- [x] `/llms.txt` for agents that look for one
+- [x] Verified: `pnpm check` green, every JSON-LD block parsed by a script that
+      fetches as Googlebot, and the /upgrade layout fingerprint is byte
+      identical between production and this build
+
+### Review
+
+The blocker was that **19 of the public pages are client components**, and a
+file with "use client" can never export `metadata`. That is why 94 pages shared
+one title. Fixed with a `layout.tsx` per segment, which is a server component
+and can carry both the metadata and the JSON-LD, so no page file was touched
+and no rendering changed.
+
+Landmines worth remembering:
+
+- `app/sitemap.ts` is **prerendered during `next build`** by default, and the
+  droplet builds in Docker with no database. Without `force-dynamic` this would
+  have failed the image build exactly as `app/page.tsx` once did.
+- Tailwind's `space-y-*` compiles to `& > :not([hidden]) ~ :not([hidden])`, so
+  an injected `<script>` counts as a sibling and would push a margin onto the
+  first visible child. The blocks carry `hidden` so they cannot.
+- `toEpisode` fills a missing `releasedAt` with `new Date(0)`, so emitting it
+  unguarded would have told every crawler these shows came out in 1970.

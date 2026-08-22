@@ -16,6 +16,17 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Get EVO TV",
   description: "Where to download the EVO TV app, and what runs in a browser today.",
+  /*
+   * Without this the page has no canonical, so a crawler arriving with a
+   * tracking parameter on the URL treats `?utm_source=x` as a separate page
+   * and splits the ranking between them.
+   */
+  alternates: { canonical: "/apps" },
+  openGraph: {
+    title: "Get EVO TV",
+    description: "Where to download the EVO TV app, and what runs in a browser today.",
+    url: "/apps",
+  },
 };
 
 export default function Page() {

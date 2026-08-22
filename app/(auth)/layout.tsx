@@ -1,6 +1,24 @@
 import Link from "next/link";
 import { BrandMark } from "@/components/shell/brand-mark";
 
+import type { Metadata } from "next";
+
+/**
+ * A sign-in form is not a useful search result.
+ *
+ * It competes with the pages that are, and "log in to EVO TV" ranking above
+ * the channel itself is a worse outcome than not ranking at all.
+ *
+ * A layout's metadata applies to every page under it, so this one line covers
+ * the whole group and cannot be forgotten on the next page added to it.
+ * `follow` stays on: a crawler that lands here should still walk the links out
+ * to the pages that are worth indexing.
+ */
+export const metadata: Metadata = {
+  robots: { index: false, follow: true, googleBot: { index: false, follow: true } },
+};
+
+
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-[#05091a] text-foreground">
