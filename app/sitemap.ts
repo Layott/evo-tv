@@ -4,8 +4,9 @@ import { listEvents } from "@/lib/api/events";
 import { listGames } from "@/lib/api/games";
 import { listProducts } from "@/lib/api/products";
 import { listShows, listSeasonsForShow, listEpisodesForSeason } from "@/lib/api/shows";
+import { listLiveStreams } from "@/lib/api/streams";
 import { listTeams } from "@/lib/api/teams";
-import { listVods } from "@/lib/api/vods";
+import { listTrendingClips, listVods } from "@/lib/api/vods";
 import { originalShows } from "@/lib/epg/artwork";
 import { SITE_URL } from "@/lib/site";
 
@@ -112,14 +113,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/terms`, changeFrequency: "yearly", priority: 0.3 },
   ];
 
-  const [shows, vods, events, teams, games, products] = await Promise.all([
-    safely("shows", () => listShows()),
-    safely("vods", () => listVods()),
-    safely("events", () => listEvents()),
-    safely("teams", () => listTeams()),
-    safely("games", () => listGames()),
-    safely("products", () => listProducts()),
-  ]);
+  const [shows, vods, events, teams, games, products, clips, liveStreams] =
+    await Promise.all([
+      safely("shows", () => listShows()),
+      safely("vods", () => listVods()),
+      safely("events", () => listEvents()),
+      safely("teams", () => listTeams()),
+      safely("games", () => listGames()),
+      safely("products", () => listProducts()),
+      safely("clips", () => listTrendingClips(PER_SECTION)),
+      safely("live streams", () => listLiveStreams()),
+    ]);
 
   /*
    * Shows, from the database and the artwork registry both.
@@ -204,6 +208,28 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.5,
     }));
 
+  const clipEntries: MetadataRoute.Sitemap = cap("clips", byNewest(clips)).map((clip) => ({
+    url: `${SITE_URL}/clips/${clip.id}`,
+    lastModified: clip.createdAt ? new Date(clip.createdAt) : undefined,
+    changeFrequency: "monthly",
+    priority: 0.5,
+  }));
+
+  /*
+   * Live streams only, which is a deliberate line rather than an oversight.
+   *
+   * A stream page keeps working after the broadcast ends, but it is not worth
+   * asking a search engine to index a one-off that finished last Tuesday: the
+   * watchable version of that content is the VOD, which is listed above with a
+   * real date and duration. What this does cover is the 24/7 channel, which is
+   * always live and is the single most important page on the site.
+   */
+  const streamEntries: MetadataRoute.Sitemap = liveStreams.map((stream) => ({
+    url: `${SITE_URL}/stream/${stream.id}`,
+    changeFrequency: "hourly",
+    priority: stream.isMainChannel ? 0.9 : 0.6,
+  }));
+
   return [
     ...fixed,
     ...showEntries,
@@ -213,5 +239,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...teamEntries,
     ...categoryEntries,
     ...productEntries,
+    ...clipEntries,
+    ...streamEntries,
   ];
 }

@@ -131,6 +131,90 @@ If the feature adds a column an operator will read in the log, add it to
 `FIELD_LABELS` in `components/admin/audit-log-page.tsx` so it renders as the
 words the screen uses rather than the column name.
 
+## 🛑 HARD RULE - Every public page is described for search (owner, 2026-08-22)
+
+**Anything a signed-out visitor can reach carries its own title, description and
+canonical, says what it is in structured data, and appears in the sitemap.** New
+page, new route, new public feature: it ships described, in the same PR. A page
+a search engine cannot read is not finished.
+
+Set after the site spent months with **one title across 94 pages**, no
+structured data at all, and a sitemap of three fixed URLs. Nothing failed, which
+is exactly why nobody noticed: a page with no description looks completely
+normal to everyone who already knows the URL.
+
+### Adding content needs nothing
+
+**A new show, VOD, clip, event, team or product is described automatically.**
+The routes already carry `generateMetadata` and JSON-LD, and `app/sitemap.ts`
+reads the tables, so publishing a show puts `/show/<slug>` in the sitemap with a
+`TVSeries` block on the next request. Do not add anything per row.
+
+This rule is about **new kinds of page**. That is the case the checker guards.
+
+### What a new public page must carry
+
+```tsx
+// A server component can do it directly.
+export const metadata = pageMetadata({
+  title: "Teams",                       // no brand suffix; the root template adds it
+  description: "The esports teams competing in the events EVO TV covers.",
+  path: "/team",                        // becomes the canonical
+});
+```
+
+**A client component cannot export metadata at all.** A file with `"use client"`
+at the top can never have `metadata` or `generateMetadata`, and that single fact
+is why 94 pages shared one title. Give it a `layout.tsx` beside it, which is a
+server component, and put the metadata and the JSON-LD there. The page itself
+stays untouched, so nothing about the rendering changes.
+
+- **An entity page** (`[id]`, `[slug]`) also renders `<JsonLd>` describing what
+  it is: `TVSeries`, `TVEpisode`, `VideoObject`, `SportsEvent`, `SportsTeam`,
+  `Product`. Builders are in `lib/seo/json-ld.tsx`.
+- **A new kind of entity** gets its rows added to `app/sitemap.ts`.
+- **Anything still saying "coming soon"** uses `comingSoonMetadata`, so a
+  searcher is never sent to a dead end.
+- **Anything private** goes under `(auth)`, `(authed)` or `(embed)`, which are
+  noindex at the group layout, and is added to `PRIVATE_PATHS` in `robots.ts`.
+
+### Structured data is evidence, so it must be true
+
+- **A field we do not have is omitted, never invented.** `clean()` drops empty
+  values, and `isoDate` treats the epoch as absent because `toEpisode` fills a
+  missing `releasedAt` with `new Date(0)`: publishing that would tell every
+  crawler these shows came out in 1970.
+- **No `aggregateRating` or `review`.** There are no ratings here. Emitting them
+  to win a rich result is fabricating evidence, and it is a manual action when
+  Google notices.
+- **Prices match the checkout**, read from the same column, and a product with
+  variants emits an `AggregateOffer` range rather than the base price.
+- **Marked-up FAQ answers must be visible on the page.** `/upgrade` reads its
+  questions from `lib/content/upgrade-faq.ts` so the two cannot drift.
+
+### Reviewing your own work
+
+```
+pnpm seo:coverage
+```
+
+It lists every public page a search engine cannot read properly and fails on any
+at all. **It is at zero and `pnpm check` runs it**, so a page shipped without a
+title fails the build rather than being found months later by an owner asking
+why nothing ranks.
+
+Exceptions are written into `SITEMAP_EXEMPT` or `JSON_LD_EXEMPT` in
+`scripts/seo-coverage.mjs` **with the reason**, which is the difference between
+a decision and an oversight.
+
+### The design does not move
+
+All of this is `<head>` tags and `application/ld+json` blocks. If a change here
+moves a pixel, that is a bug. One catch worth knowing: Tailwind's `space-y-*`
+compiles to `& > :not([hidden]) ~ :not([hidden])`, so an injected `<script>`
+counts as a sibling and pushes a margin onto the first visible child. `JsonLd`
+carries `hidden` so it cannot.
+
 ## 🛑 HARD RULE - Design: no hairline borders, no glow (owner, 2026-08-17)
 
 Two bans. Absolute. Every project, every framework, every component. Applies to code I write AND designs I propose.
