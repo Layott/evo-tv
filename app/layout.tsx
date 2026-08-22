@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { BRANDING_DEFAULT, readBranding } from "@/lib/api/branding";
 import { Archivo, Martian_Mono } from "next/font/google";
 import { Providers } from "@/components/providers";
+import { JsonLd, organization, website } from "@/lib/seo/json-ld";
 import "./globals.css";
 
 /**
@@ -105,14 +106,35 @@ const metadata: Metadata = {
    */
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  /*
+   * Who publishes this, and what "this" is, on every page.
+   *
+   * Both blocks carry an `@id`, and every other page references them rather
+   * than repeating the publisher: a crawler reading a VOD page can follow
+   * `publisher` to the same organisation it already knows from the home page,
+   * which is how the pages get read as one site rather than a hundred
+   * unrelated documents.
+   *
+   * Read from the branding row for the same reason the title is: an operator
+   * who renames the site should not have to wait for a deploy to see the name
+   * change in a search result.
+   */
+  const branding = await readBranding().catch(() => BRANDING_DEFAULT);
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body
         className={`${archivo.variable} ${martianMono.variable} font-sans antialiased`}
       >
+        <JsonLd
+          data={[
+            organization({ name: branding.siteName, logo: branding.logoUrl }),
+            website({ name: branding.siteName }),
+          ]}
+        />
         <Providers>{children}</Providers>
       </body>
     </html>
