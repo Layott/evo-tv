@@ -26,6 +26,17 @@ export const metadata: Metadata = {
   title: "Shows",
   description:
     "Every show on EVO TV: esports, anime and lifestyle, with the episodes behind each one.",
+  /*
+   * Without this the page has no canonical, so a crawler arriving with a
+   * tracking parameter on the URL treats `?utm_source=x` as a separate page
+   * and splits the ranking between them.
+   */
+  alternates: { canonical: "/shows" },
+  openGraph: {
+    title: "Shows",
+    description: "Every show on EVO TV: esports, anime and lifestyle, with the episodes behind each one.",
+    url: "/shows",
+  },
 };
 
 const PILLARS: { key: "esports" | "anime" | "lifestyle"; label: string }[] = [

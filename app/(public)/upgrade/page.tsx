@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { UPGRADE_FAQ } from "@/lib/content/upgrade-faq";
 import * as React from "react";
 import Link from "next/link";
 
@@ -43,24 +44,7 @@ import { PaystackMark } from "@/components/shop/paystack-button";
  * to rule it out.
  */
 
-const FAQ = [
-  {
-    q: "Can I cancel anytime?",
-    a: "Yes. Your benefits continue to the end of the period you have paid for, and nothing renews after that.",
-  },
-  {
-    q: "Which payment methods work?",
-    a: "Card and bank transfer through Paystack. Card details never touch EVO TV's servers.",
-  },
-  {
-    q: "What happens to my account if I stop paying?",
-    a: "Nothing is deleted. You drop back to Free, keep your follows, watch history and profile, and the ads come back.",
-  },
-  {
-    q: "Do I need to pay to chat?",
-    a: "No. Chat is free on every stream. Paid plans add a badge and access to premium-only rooms.",
-  },
-];
+const FAQ = UPGRADE_FAQ;
 
 export default function UpgradePage() {
   const { data: tiers = [], isPending, isError, refetch } = useQuery({
