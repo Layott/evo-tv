@@ -20,12 +20,14 @@
     "db:migrate": "tsx db/migrate.ts",
     "db:reset": "node -e \"require('fs').rmSync('./data',{recursive:true,force:true})\" && pnpm db:migrate",
     "db:studio": "drizzle-kit studio",
-    "audit:coverage": "node scripts/audit-coverage.mjs --max 0"
+    "audit:coverage": "node scripts/audit-coverage.mjs --max 0",
+    "geoip:download": "bash deploy/geoip-refresh.sh ./data/city.mmdb"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1105.0",
     "@aws-sdk/s3-request-presigner": "^3.1105.0",
     "@hookform/resolvers": "^3.10.0",
+    "@maxmind/geoip2-node": "^7.1.0",
     "@phosphor-icons/react": "^2.1.10",
     "@radix-ui/react-accordion": "1.2.2",
     "@radix-ui/react-alert-dialog": "1.1.4",

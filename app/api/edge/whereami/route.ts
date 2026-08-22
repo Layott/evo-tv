@@ -1,15 +1,16 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { geoConfig, locateIp } from "@/lib/geo/ip-location";
 
 /**
  * GET /api/edge/whereami
  *
- * What the edge says about the caller, and nothing else.
+ * What each location source says about the caller, and nothing else.
  *
- * Sign-in forensics reads Cloudflare's location headers, and whether those
- * headers arrive depends on a switch in somebody's dashboard rather than on
- * anything in this repository. There was no way to answer "is it on yet"
- * without signing in and waiting for a real login to land, which is a slow way
- * to check a toggle.
+ * Sign-in forensics has three sources and every one of them depends on
+ * something outside this repository: a switch in a Cloudflare dashboard, a
+ * database file on the box, an API token in an env file. There was no way to
+ * answer "is it working yet" without signing in and waiting for a real login
+ * row to land, which is a slow way to check a toggle.
  *
  * It reports the caller's own location and no one else's, which is information
  * the caller already had. It stores nothing, and it deliberately does not echo
@@ -23,24 +24,42 @@ export async function GET(req: NextRequest) {
   const city = h.get("cf-ipcity");
   const region = h.get("cf-region");
 
+  const ip =
+    h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? h.get("x-real-ip") ?? null;
+  const located = await locateIp(ip);
+  const config = geoConfig();
+
+  const cloudflare = city
+    ? "on, with city"
+    : country
+      ? "proxied, but the visitor location transform is off"
+      : "not proxied: this request did not pass through Cloudflare";
+
+  const lookup = located
+    ? `${located.source} answered ${[located.city, located.region, located.country].filter(Boolean).join(", ")}`
+    : config.dbPath || config.ipinfo
+      ? "no source could place this address"
+      : "nothing configured";
+
   return NextResponse.json(
     {
-      // Present on every proxied request, transform or not.
-      country: country ?? null,
-      // These two need the "Add visitor location headers" managed transform.
-      city: city ?? null,
-      region: region ?? null,
-      continent: h.get("cf-ipcontinent") ?? null,
-      timezone: h.get("cf-timezone") ?? null,
+      cloudflare: {
+        country: country ?? null,
+        city: city ?? null,
+        region: region ?? null,
+        continent: h.get("cf-ipcontinent") ?? null,
+        timezone: h.get("cf-timezone") ?? null,
+      },
+      lookup: located,
+      configured: {
+        localDatabase: config.dbPath,
+        ipinfoToken: config.ipinfo,
+      },
       /**
-       * The one line worth reading. Country alone means the request reached us
-       * through Cloudflare but the transform is off; city means it is on.
+       * The one line worth reading. A sign-in records a location if either half
+       * of this sentence found one, so Cloudflare being off is survivable.
        */
-      verdict: city
-        ? "Visitor location headers are on: sign-ins will record a city."
-        : country
-          ? "Behind Cloudflare, but the visitor location headers transform is off. Rules > Settings > Managed Transforms."
-          : "No Cloudflare headers at all: this request did not come through the proxy.",
+      verdict: `Cloudflare: ${cloudflare}. Lookup: ${lookup}.`,
     },
     { headers: { "cache-control": "no-store" } },
   );
