@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import crypto from "node:crypto";
+import { locateIp } from "@/lib/geo/ip-location";
 import { and, eq, gte } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/guards";
@@ -35,12 +36,20 @@ function minuteBucket(): string {
   return d.toISOString();
 }
 
-function hashIp(req: NextRequest): string {
-  const fwd =
+function clientIp(req: NextRequest): string | null {
+  return (
     req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
     req.headers.get("x-real-ip") ??
-    "unknown";
-  return crypto.createHash("sha256").update(fwd).digest("hex").slice(0, 32);
+    null
+  );
+}
+
+function hashIp(req: NextRequest): string {
+  return crypto
+    .createHash("sha256")
+    .update(clientIp(req) ?? "unknown")
+    .digest("hex")
+    .slice(0, 32);
 }
 
 /**
@@ -85,7 +94,23 @@ export async function POST(
   const bucket = minuteBucket();
   const channelId = stream.channelId;
 
-  const country = (req.headers.get("cf-ipcountry") ?? "").slice(0, 2).toUpperCase();
+  /*
+   * Which country the viewer is in.
+   *
+   * The website is proxied and so carries `cf-ipcountry`. The app talks to
+   * api.evotv.co, which is not proxied, so it carries nothing and every app
+   * viewer landed in the audience breakdown with no country beside a website
+   * viewer who had one. The lookup covers that, and is cached per address, so
+   * a viewer sending a heartbeat every fifteen seconds is one lookup a day.
+   */
+  const headerCountry = (req.headers.get("cf-ipcountry") ?? "").slice(0, 2).toUpperCase();
+  const country =
+    headerCountry && headerCountry !== "XX"
+      ? headerCountry
+      // No `remote`: this row stores the country and nothing finer, and the
+      // local file supplies a country for effectively every address, so a
+      // paid call here would buy something already in hand.
+      : ((await locateIp(clientIp(req)))?.country ?? "");
 
   /*
    * What the viewer is watching on.

@@ -51,7 +51,7 @@ cd "$ROOT"
 # autodeploy.sh, nginx-rtmp.conf and cloudflare-firewall.sh ended up committed,
 # pulled, and absent from the droplet.
 echo "==> syncing deploy files from the repo"
-for f in Caddyfile docker-compose.yml cron.sh autodeploy.sh nginx-rtmp.conf cloudflare-firewall.sh maintenance.html deploy.sh; do
+for f in Caddyfile docker-compose.yml cron.sh autodeploy.sh nginx-rtmp.conf cloudflare-firewall.sh maintenance.html geoip-refresh.sh deploy.sh; do
 	if ! cmp -s "$ROOT/api/deploy/$f" "$ROOT/$f"; then
 		cp "$ROOT/api/deploy/$f" "$ROOT/$f.tmp"
 		mv "$ROOT/$f.tmp" "$ROOT/$f"
@@ -65,7 +65,7 @@ for f in Caddyfile docker-compose.yml cron.sh autodeploy.sh nginx-rtmp.conf clou
 		[ "$f" = "deploy.sh" ] && echo "    (deploy.sh changed; the new version runs next deploy)"
 	fi
 done
-chmod +x "$ROOT/cron.sh" "$ROOT/autodeploy.sh" "$ROOT/cloudflare-firewall.sh" "$ROOT/deploy.sh"
+chmod +x "$ROOT/cron.sh" "$ROOT/autodeploy.sh" "$ROOT/cloudflare-firewall.sh" "$ROOT/geoip-refresh.sh" "$ROOT/deploy.sh"
 
 echo "==> building image ($SHA)"
 docker compose build api-1

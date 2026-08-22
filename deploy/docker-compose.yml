@@ -41,6 +41,17 @@ x-api: &api
     retries: 3
   # SIGTERM lets open SSE streams close cleanly instead of being cut.
   stop_grace_period: 30s
+  volumes:
+    # The city database read by lib/geo/ip-location.ts, which is how a sign-in
+    # gets a location at all: sign-in goes to api.evotv.co, that hostname is not
+    # proxied, and so the request carries no cf-* headers to read.
+    #
+    # Mounted rather than baked into the image because it is 124 MB that changes
+    # monthly and the application does not: baking it would put a nine-figure
+    # layer into every deploy to ship code that did not touch it. Read-only, and
+    # absent is survivable: the reader logs one line and falls through to
+    # IPinfo. Refresh it with deploy/geoip-refresh.sh from cron.
+    - ./geoip:/srv/evotv/geoip:ro
   logging:
     driver: json-file
     options:
