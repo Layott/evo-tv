@@ -2,6 +2,7 @@ import "server-only";
 import crypto from "node:crypto";
 import { headers as nextHeaders } from "next/headers";
 import { db, schema } from "@/lib/db";
+import { formatLocation, locateIp } from "@/lib/geo/ip-location";
 
 const SALT = process.env.LOGIN_HASH_SALT ?? "evotv-fallback-salt";
 
@@ -31,22 +32,28 @@ export async function recordLoginEvent(session: { userId: string }): Promise<voi
    * information was unavailable but because it was being asked for in the
    * wrong language.
    *
-   * Cloudflare always sends the country. City and region arrive only if the
-   * "Add visitor location headers" managed transform is switched on, so both
-   * are optional and the answer degrades to the country alone.
+   * Correcting the names was necessary and not sufficient: sign-in goes to
+   * BETTER_AUTH_URL, which is api.evotv.co, and that hostname is not proxied.
+   * Requests reach the droplet directly, so there are no `cf-*` headers on
+   * this request at all and there will not be until the DNS record changes.
+   * `locateIp` is what covers that gap, from a local database file and then
+   * IPinfo.
    *
-   * The IP itself stays hashed. City is as precise as this gets on purpose:
-   * an exact address is not something a broadcaster needs in order to spot the
-   * same person signing in under two names.
+   * The address itself stays hashed. City is as precise as this gets on
+   * purpose: an exact address is not something a broadcaster needs in order to
+   * spot the same person signing in under two names.
    */
-  const city = h.get("cf-ipcity") ?? h.get("x-vercel-ip-city");
-  const regionName = h.get("cf-region") ?? h.get("x-vercel-ip-country-region");
-  const country =
-    h.get("cf-ipcountry") ?? h.get("x-vercel-ip-country") ?? null;
+  const headerCity = h.get("cf-ipcity");
+  const headerRegion = h.get("cf-region");
+  const headerCountry = h.get("cf-ipcountry");
+  const located = headerCity ? null : await locateIp(ip);
+
   const region =
-    [city, regionName, country === "XX" ? null : country]
-      .filter(Boolean)
-      .join(", ") || null;
+    formatLocation({
+      city: headerCity ?? located?.city ?? null,
+      region: headerRegion ?? located?.region ?? null,
+      country: headerCountry ?? located?.country ?? null,
+    }) ?? null;
 
   const id = "lg_" + crypto.randomBytes(8).toString("hex");
   const ipHash = ip ? hashIp(ip) : null;
