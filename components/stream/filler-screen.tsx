@@ -4,6 +4,7 @@ import * as React from "react";
 
 import type { Ad } from "@/lib/types";
 import { looksLikeVideo } from "@/lib/media/file-kind";
+import { useFirstFrameWatchdog } from "@/components/stream/use-first-frame-watchdog";
 
 /**
  * What plays when the channel is showing nothing.
@@ -39,6 +40,22 @@ export function FillerScreen({
 }) {
   const [ad, setAd] = React.useState<Ad | null>(null);
   const [failed, setFailed] = React.useState(false);
+  const videoRef = React.useRef<HTMLVideoElement | null>(null);
+
+  /*
+   * A creative that never starts is a failure, even though nothing errors.
+   *
+   * The filler that shipped was 78 MB with its index at the end, so the browser
+   * had to download all of it before it could decode a frame. It raised no
+   * error, `onError` never fired, and off air showed a black rectangle instead
+   * of the poster and the time the channel comes back.
+   */
+  useFirstFrameWatchdog({
+    videoRef,
+    armed: enabled && !!ad && !failed,
+    creativeKey: ad?.id ?? null,
+    onStall: () => setFailed(true),
+  });
 
   React.useEffect(() => {
     let cancelled = false;
@@ -77,6 +94,7 @@ export function FillerScreen({
     <div className="relative aspect-video w-full bg-black">
       <video
         key={ad.id}
+        ref={videoRef}
         src={ad.mediaUrl}
         className="h-full w-full object-contain"
         autoPlay
