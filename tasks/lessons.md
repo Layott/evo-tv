@@ -103,3 +103,37 @@ API change.
 `isLoading` shows a spinner forever when the read fails. Check `isError` too,
 and say what went wrong. The app's on-air card manager did exactly this until
 the walk at 390 caught it.
+
+## 2026-08-28 - The branch rule applies to a docs commit too
+
+**I committed straight to `dev` and pushed.** `dev` is PR-only in the branch
+rule, and the commit was a handover doc, which is exactly the kind of change
+that feels too small to deserve a branch. That feeling is the whole failure
+mode: the rule exists so that no judgement call is needed about which changes
+are worth a PR.
+
+Worse, it cannot be cleanly undone. Removing a pushed commit from `dev` means
+rewriting history, and a revert would be a second direct commit, so every fix
+compounds the original. The only honest move afterwards is to say so.
+
+**Before every `git commit`, run `git rev-parse --abbrev-ref HEAD`.** On `main`,
+`staging` or `dev`, branch first. This applies with no exception for docs,
+handover files, lesson entries or one-line typos. I did this correctly four
+times in the same session and then dropped it on the fifth, because the fifth
+was "just a doc".
+
+## 2026-08-28 - A deploy detector only sees the surface it watches
+
+I fingerprinted the JS chunk list on `/home` to tell when a deploy landed. It
+worked for the filler fix, which changes components `/home` renders, and was
+useless for the follow-up, which only touches `media-upload.tsx` and a new
+`lib/` module. The watch sat for twenty minutes and reported "no change", which
+looked like a failed deploy and was nothing of the sort.
+
+**Ask the changed surface to behave.** For an admin-only change that means
+opening the admin form on prod and driving it. The bundle hash is a proxy, and
+a proxy that is blind to the change you shipped is worse than no signal, because
+its silence reads as a verdict.
+
+Sibling of the "HEAD is not deployed" rule above, and of the checker rules: a
+signal that cannot fail when the thing is broken is not evidence.
