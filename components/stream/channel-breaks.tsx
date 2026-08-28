@@ -3,6 +3,7 @@
 import * as React from "react";
 import { looksLikeVideo } from "@/lib/media/file-kind";
 import { LowerThird, UpNextCard } from "@/components/stream/channel-overlays";
+import { useFirstFrameWatchdog } from "@/components/stream/use-first-frame-watchdog";
 import type { OverlayStyle, UpNextStyle } from "@/lib/channel-breaks-shape";
 
 /**
@@ -109,6 +110,8 @@ async function fetchAd(placement: "mid_roll" | "live_filler"): Promise<Ad | null
 
 export function ChannelBreaks({ children, nowNext }: Props) {
   const wrapRef = React.useRef<HTMLDivElement>(null);
+  /** The ad's own element, so the watchdog can ask whether it ever started. */
+  const adVideoRef = React.useRef<HTMLVideoElement | null>(null);
   const [config, setConfig] = React.useState<BreaksConfig | null>(null);
   const [ad, setAd] = React.useState<Ad | null>(null);
   const [adKind, setAdKind] = React.useState<"mid_roll" | "live_filler" | null>(null);
@@ -189,6 +192,22 @@ export function ChannelBreaks({ children, nowNext }: Props) {
       /* a player mid-teardown is not worth an error */
     }
   }, [liveVideo]);
+
+  /*
+   * A creative that never shows a frame gives the channel back.
+   *
+   * `onError` below is the only thing that ended a broken ad, and the file that
+   * broke the channel never errored: an mp4 with its index at the end downloads
+   * silently and decodes nothing, so the layer sat over the player as a black
+   * rectangle. `adMaxSec` would eventually lift a mid-roll, but filler loops
+   * and has no such stop, which is how off air stayed black indefinitely.
+   */
+  useFirstFrameWatchdog({
+    videoRef: adVideoRef,
+    armed: !!ad,
+    creativeKey: ad?.id ?? null,
+    onStall: endAd,
+  });
 
   // ------------------------------------------------------------ ad breaks
   React.useEffect(() => {
@@ -364,6 +383,7 @@ export function ChannelBreaks({ children, nowNext }: Props) {
         <div className="absolute inset-0 z-20 bg-black">
           <video
             key={ad.id}
+            ref={adVideoRef}
             src={ad.mediaUrl}
             className="h-full w-full object-contain"
             autoPlay
