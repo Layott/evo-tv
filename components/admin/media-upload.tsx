@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { apiGet } from "@/lib/client";
+import { readMp4LayoutOfFile } from "@/lib/media/mp4-faststart";
 
 /**
  * The admin's file picker.
@@ -221,6 +222,50 @@ function readImageSize(file: File): Promise<{ width: number; height: number }> {
   });
 }
 
+/**
+ * Roughly what this file costs per second, in megabits.
+ *
+ * Above this a phone on a Nigerian mobile connection cannot keep up, so the
+ * picture stalls whatever else is right about the file. The quality ladder's
+ * top rung is 5.6 Mbps for a full-screen 1080p broadcast; a creative has no
+ * business being heavier than that.
+ */
+const HEAVY_VIDEO_MBPS = 6;
+
+/**
+ * Average bitrate of a picked video, or null when it cannot be measured.
+ *
+ * Size over duration rather than anything the container declares, because that
+ * is the number that decides whether a connection can keep up. Only safe to
+ * call once the file is known to be faststart: reading the duration means
+ * reading the index, and on an index-at-end file the browser would pull the
+ * whole thing to answer.
+ */
+function readAverageMbps(file: File): Promise<number | null> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const video = document.createElement("video");
+    const done = (value: number | null) => {
+      URL.revokeObjectURL(url);
+      resolve(value);
+    };
+    // Never let a slow read hold up an upload: this is advice, not a gate.
+    const timer = setTimeout(() => done(null), 5_000);
+    video.preload = "metadata";
+    video.onloadedmetadata = () => {
+      clearTimeout(timer);
+      const seconds = video.duration;
+      if (!Number.isFinite(seconds) || seconds <= 0) return done(null);
+      done((file.size * 8) / seconds / 1_000_000);
+    };
+    video.onerror = () => {
+      clearTimeout(timer);
+      done(null);
+    };
+    video.src = url;
+  });
+}
+
 export function MediaUpload({
   label,
   value,
@@ -262,6 +307,43 @@ export function MediaUpload({
     if (file.size > maxBytes) {
       toast.error(`That file is ${formatMb(file.size)}. The limit is ${formatMb(maxBytes)}.`);
       return;
+    }
+
+    /*
+     * An mp4 that keeps its index at the end cannot stream.
+     *
+     * `moov` is the index and a player decodes nothing without it, so a file
+     * that carries it after the picture has to be downloaded whole before the
+     * first frame. Nothing errors while that happens, which is the dangerous
+     * part: the live filler was 78 MB written that way, and off air showed a
+     * black rectangle rather than the channel's own advert for as long as the
+     * tab was open. Refused here because the person who can re-export it is
+     * the person standing in front of this form.
+     */
+    if (kind === "video" && file.type === "video/mp4") {
+      if ((await readMp4LayoutOfFile(file)) === "index-at-end") {
+        toast.error(
+          `This MP4 keeps its index at the end, so nothing appears until all ${formatMb(file.size)} has downloaded. Re-export it with faststart (ffmpeg: -movflags +faststart) and upload it again.`,
+          { duration: 12_000 },
+        );
+        return;
+      }
+
+      /*
+       * Said, not enforced: how heavy the file is per second of picture.
+       *
+       * The filler was 34 Mbps of 1440p120, four times the whole quality
+       * ladder, so even written correctly it would have stalled on a phone.
+       * A warning rather than a refusal because a short high-quality sting is
+       * a legitimate choice and only the operator knows which this is.
+       */
+      const mbps = await readAverageMbps(file);
+      if (mbps !== null && mbps > HEAVY_VIDEO_MBPS) {
+        toast.warning(
+          `That video averages ${mbps.toFixed(1)} Mbps. Most viewers are on phones, so anything over about ${HEAVY_VIDEO_MBPS} Mbps will stall. Uploading anyway.`,
+          { duration: 10_000 },
+        );
+      }
     }
 
     // Checked before the upload starts, not after: a rejected poster should
