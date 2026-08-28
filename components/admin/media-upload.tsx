@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { apiGet } from "@/lib/client";
 import { readMp4LayoutOfFile } from "@/lib/media/mp4-faststart";
+import { formatFileSize } from "@/lib/media/file-size";
 
 /**
  * The admin's file picker.
@@ -167,10 +168,6 @@ function safeFileName(name: string): string {
   return `${cleanStem}${ext.replace(/[^a-z0-9.]/g, "")}`;
 }
 
-function formatMb(bytes: number): string {
-  return `${Math.round(bytes / (1024 * 1024))} MB`;
-}
-
 /**
  * PUT with a progress callback.
  *
@@ -305,7 +302,7 @@ export function MediaUpload({
       maxBytesProp ??
       (kind === "image" ? IMAGE_MAX_BYTES : (backend?.maxBytes ?? 512 * 1024 * 1024));
     if (file.size > maxBytes) {
-      toast.error(`That file is ${formatMb(file.size)}. The limit is ${formatMb(maxBytes)}.`);
+      toast.error(`That file is ${formatFileSize(file.size)}. The limit is ${formatFileSize(maxBytes)}.`);
       return;
     }
 
@@ -323,7 +320,7 @@ export function MediaUpload({
     if (kind === "video" && file.type === "video/mp4") {
       if ((await readMp4LayoutOfFile(file)) === "index-at-end") {
         toast.error(
-          `This MP4 keeps its index at the end, so nothing appears until all ${formatMb(file.size)} has downloaded. Re-export it with faststart (ffmpeg: -movflags +faststart) and upload it again.`,
+          `This MP4 keeps its index at the end, so a viewer sees nothing until the whole file (${formatFileSize(file.size)}) has downloaded. Re-export it with faststart (ffmpeg: -movflags +faststart) and upload it again.`,
           { duration: 12_000 },
         );
         return;
@@ -502,7 +499,7 @@ export function MediaUpload({
         <p className="text-xs text-muted-foreground">
           {[
             hint,
-            spec ? `${spec.label}, up to ${formatMb(IMAGE_MAX_BYTES)}` : null,
+            spec ? `${spec.label}, up to ${formatFileSize(IMAGE_MAX_BYTES)}` : null,
             // What the file dialog will actually accept. Finding this out by
             // being rejected is a poor way to learn it.
             kind === "image"
